@@ -204,6 +204,57 @@ const HotelAdminIDVerify = () => {
     }
   };
 
+  const handleRunAiCheck = async (user) => {
+    const verificationId = user?.hotelIdVerificationId?._id;
+
+    if (!verificationId) {
+      setPageStatus({
+        type: "error",
+        message: "No uploaded ID found for this user.",
+      });
+      return;
+    }
+
+    if (!adminToken) {
+      navigate("/hotel-admin-login");
+      return;
+    }
+
+    setActionLoadingId(`ai-${verificationId}`);
+    setPageStatus({ type: "", message: "" });
+
+    try {
+      const res = await fetch(`${API_BASE}/admin-run-ai-id-check/${verificationId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to run AI ID check.");
+      }
+
+      setPageStatus({
+        type: data.verification?.aiConnectionStatus === "connected" ? "success" : "error",
+        message: data.message || "AI ID check finished.",
+      });
+
+      await fetchUsers();
+    } catch (err) {
+      console.error("handleRunAiCheck error:", err);
+      setPageStatus({
+        type: "error",
+        message: err.message || "Failed to run AI ID check.",
+      });
+    } finally {
+      setActionLoadingId("");
+    }
+  };
+
   const handleApprove = async (userId) => {
     if (!adminToken) {
       navigate("/hotel-admin-login");
@@ -324,6 +375,39 @@ const HotelAdminIDVerify = () => {
     }
   };
 
+
+  const getAiChip = (status) => {
+    switch (status) {
+      case "connected":
+        return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+      case "missing_key":
+        return "bg-amber-100 text-amber-700 border border-amber-200";
+      case "error":
+        return "bg-rose-100 text-rose-700 border border-rose-200";
+      case "not_supported":
+        return "bg-slate-100 text-slate-700 border border-slate-200";
+      default:
+        return "bg-slate-100 text-slate-700 border border-slate-200";
+    }
+  };
+
+  const getAiLabel = (status) => {
+    switch (status) {
+      case "connected":
+        return "AI Connected";
+      case "missing_key":
+        return "AI Key Missing";
+      case "error":
+        return "AI Failed";
+      case "not_supported":
+        return "Not Supported";
+      default:
+        return "Not Checked";
+    }
+  };
+
+  const formatValue = (value) => String(value || "unknown").replaceAll("_", " ");
+
   return (
     <HotelAdminShell
       title="Hotel ID Verification"
@@ -375,6 +459,7 @@ const HotelAdminIDVerify = () => {
                   <th className="px-4 py-3 text-sm font-semibold">Email Verified</th>
                   <th className="px-4 py-3 text-sm font-semibold">ID Status</th>
                   <th className="px-4 py-3 text-sm font-semibold">Uploaded ID</th>
+                  <th className="px-4 py-3 text-sm font-semibold">AI Check</th>
                   <th className="px-4 py-3 text-sm font-semibold">Remarks</th>
                   <th className="px-4 py-3 text-sm font-semibold">Actions</th>
                 </tr>
@@ -383,13 +468,13 @@ const HotelAdminIDVerify = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="9" className="px-4 py-8 text-center text-sm text-[#355E3B]/70">
+                    <td colSpan="10" className="px-4 py-8 text-center text-sm text-[#355E3B]/70">
                       Loading users...
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="px-4 py-8 text-center text-sm text-[#355E3B]/70">
+                    <td colSpan="10" className="px-4 py-8 text-center text-sm text-[#355E3B]/70">
                       No users found.
                     </td>
                   </tr>
@@ -401,7 +486,10 @@ const HotelAdminIDVerify = () => {
                     const isBusy = actionLoadingId === String(user._id);
 
                     const verification = user.hotelIdVerificationId || null;
-                    const hasFile = Boolean(verification?._id);
+                    const verificationId = verification?._id;
+                    const hasFile = Boolean(verificationId);
+                    const aiStatus = verification?.aiConnectionStatus || "not_checked";
+                    const aiBusy = actionLoadingId === `ai-${verificationId}`;
 
                     return (
                       <tr key={user._id} className="border-b border-[#edf0ea] align-top">
@@ -450,6 +538,59 @@ const HotelAdminIDVerify = () => {
                               <span className="text-[11px] text-[#355E3B]/70">
                                 {verification?.idFile?.originalName || "Uploaded file"}
                               </span>
+                            </div>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+
+                        <td className="min-w-[260px] px-4 py-4 text-sm text-[#355E3B]">
+                          {hasFile ? (
+                            <div className="space-y-2">
+                              <span
+                                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getAiChip(
+                                  aiStatus
+                                )}`}
+                              >
+                                {getAiLabel(aiStatus)}
+                              </span>
+
+                              <div className="space-y-1 text-xs text-[#355E3B]/80">
+                                <p>
+                                  <span className="font-bold">Decision:</span>{" "}
+                                  <span className="capitalize">{formatValue(verification?.aiDecision)}</span>
+                                </p>
+                                <p>
+                                  <span className="font-bold">Risk:</span>{" "}
+                                  <span className="capitalize">{formatValue(verification?.aiRiskLevel)}</span>
+                                </p>
+                                <p>
+                                  <span className="font-bold">Score:</span>{" "}
+                                  {Number.isFinite(Number(verification?.confidenceScore))
+                                    ? `${verification.confidenceScore}%`
+                                    : "—"}
+                                </p>
+                              </div>
+
+                              {verification?.aiSummary ? (
+                                <p className="text-xs leading-relaxed text-[#355E3B]/70">
+                                  {verification.aiSummary}
+                                </p>
+                              ) : null}
+
+                              {verification?.aiError ? (
+                                <p className="text-xs font-semibold text-rose-700">
+                                  {verification.aiError}
+                                </p>
+                              ) : null}
+
+                              <button
+                                onClick={() => handleRunAiCheck(user)}
+                                disabled={aiBusy || !hasFile}
+                                className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {aiBusy ? "Checking AI..." : aiStatus === "connected" ? "Rerun AI Check" : "Run AI Check"}
+                              </button>
                             </div>
                           ) : (
                             "—"
@@ -538,6 +679,23 @@ const HotelAdminIDVerify = () => {
                 <p className="text-sm text-[#355E3B]/80">
                   {`${previewUser.firstName || ""} ${previewUser.lastName || ""}`.trim() || "User"}
                 </p>
+                {previewUser?.hotelIdVerificationId ? (
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                    <span
+                      className={`rounded-full px-3 py-1 font-semibold ${getAiChip(
+                        previewUser.hotelIdVerificationId.aiConnectionStatus || "not_checked"
+                      )}`}
+                    >
+                      {getAiLabel(previewUser.hotelIdVerificationId.aiConnectionStatus || "not_checked")}
+                    </span>
+                    <span className="rounded-full bg-[#f6f6f3] px-3 py-1 font-semibold text-[#355E3B]">
+                      Decision: {formatValue(previewUser.hotelIdVerificationId.aiDecision)}
+                    </span>
+                    <span className="rounded-full bg-[#f6f6f3] px-3 py-1 font-semibold text-[#355E3B]">
+                      Risk: {formatValue(previewUser.hotelIdVerificationId.aiRiskLevel)}
+                    </span>
+                  </div>
+                ) : null}
               </div>
 
               <button
@@ -547,6 +705,18 @@ const HotelAdminIDVerify = () => {
                 Close
               </button>
             </div>
+
+            {previewUser?.hotelIdVerificationId?.aiSummary ? (
+              <div className="mb-4 rounded-xl border border-[#d7dbd2] bg-[#f6f6f3] p-4 text-sm text-[#355E3B]">
+                <p className="font-extrabold">AI ID Pre-check Summary</p>
+                <p className="mt-1 leading-relaxed">{previewUser.hotelIdVerificationId.aiSummary}</p>
+                {previewUser.hotelIdVerificationId.aiError ? (
+                  <p className="mt-2 text-xs font-semibold text-rose-700">
+                    {previewUser.hotelIdVerificationId.aiError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             {previewLoading ? (
               <div className="rounded-xl bg-[#f6f6f3] p-6 text-sm text-[#355E3B]/80">

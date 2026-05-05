@@ -6,6 +6,7 @@ import {
   isValidObjectId,
   signHotelAdminToken,
 } from "../utils/hotelAuthHelpers.js";
+import { analyzeUploadedId } from "../utils/hotelIdScreening.js";
 
 export const adminLogin = async (req, res) => {
   try {
@@ -75,7 +76,7 @@ export const getAllHotelUsers = async (req, res) => {
       .populate({
         path: "hotelIdVerificationId",
         select:
-          "idFile screeningStatus confidenceScore reviewDecision reviewRemarks reasons createdAt",
+          "idFile screeningStatus confidenceScore reviewDecision reviewRemarks reasons createdAt aiConnected aiConnectionStatus aiProvider aiModel aiCheckedAt aiSummary aiDocumentType aiRiskLevel aiDecision aiError",
       })
       .select(
         "-password -verificationToken -verificationTokenExpiry -usedVerificationTokens -resetPasswordToken -resetPasswordExpiry -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
@@ -103,7 +104,7 @@ export const getHotelUserById = async (req, res) => {
       .populate({
         path: "hotelIdVerificationId",
         select:
-          "idFile screeningStatus confidenceScore reviewDecision reviewRemarks reasons createdAt",
+          "idFile screeningStatus confidenceScore reviewDecision reviewRemarks reasons createdAt aiConnected aiConnectionStatus aiProvider aiModel aiCheckedAt aiSummary aiDocumentType aiRiskLevel aiDecision aiError",
       })
       .select(
         "-password -verificationToken -verificationTokenExpiry -usedVerificationTokens -resetPasswordToken -resetPasswordExpiry -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
@@ -389,6 +390,104 @@ export const adminRejectHotelId = async (req, res) => {
   } catch (err) {
     console.error("adminRejectHotelId error:", err);
     return res.status(500).json({ message: "Error rejecting user ID." });
+  }
+};
+
+
+export const adminRunHotelIdAiCheck = async (req, res) => {
+  const guard = requireHotelAdminAuth(req);
+  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  const { verificationId } = req.params;
+
+  if (!isValidObjectId(verificationId)) {
+    return res.status(400).json({ message: "Invalid verificationId" });
+  }
+
+  try {
+    const verification = await HotelIdVerification.findById(verificationId).select(
+      "+idFile.data idFile.mimeType idFile.originalName idFile.size hotelUserId"
+    );
+
+    if (!verification) {
+      return res.status(404).json({ message: "Verification record not found." });
+    }
+
+    if (!verification.idFile?.data) {
+      return res.status(404).json({ message: "No ID file found." });
+    }
+
+    const analysis = await analyzeUploadedId({
+      file: {
+        buffer: verification.idFile.data,
+        data: verification.idFile.data,
+        originalname: verification.idFile.originalName,
+        originalName: verification.idFile.originalName,
+        mimetype: verification.idFile.mimeType,
+        mimeType: verification.idFile.mimeType,
+        size: verification.idFile.size,
+      },
+      idType: verification.idType || "uploaded_id",
+    });
+
+    verification.screeningStatus = analysis.screeningStatus;
+    verification.confidenceScore = analysis.confidenceScore;
+    verification.extractedText = analysis.extractedText;
+    verification.matchedKeywords = analysis.matchedKeywords;
+    verification.checks = analysis.checks;
+    verification.reasons = analysis.reasons;
+    verification.reviewDecision = "manual_review";
+    verification.aiConnected = Boolean(analysis.aiConnected);
+    verification.aiConnectionStatus = analysis.aiConnectionStatus || "not_checked";
+    verification.aiProvider = analysis.aiProvider || "";
+    verification.aiModel = analysis.aiModel || "";
+    verification.aiCheckedAt = analysis.aiCheckedAt || new Date();
+    verification.aiSummary = analysis.aiSummary || "";
+    verification.aiDocumentType = analysis.aiDocumentType || "unknown";
+    verification.aiRiskLevel = analysis.aiRiskLevel || "unknown";
+    verification.aiDecision = analysis.aiDecision || "needs_manual_review";
+    verification.aiError = analysis.aiError || "";
+    verification.aiRawResult = analysis.aiRawResult || null;
+
+    await verification.save();
+
+    const user = await HotelUser.findById(verification.hotelUserId);
+    if (user && !verification.reviewedByAdmin && user.idVerificationStatus !== "verified") {
+      user.idVerificationStatus = "pending";
+      user.isIdentityVerified = false;
+      user.idVerificationRemarks =
+        analysis.aiConnectionStatus === "connected"
+          ? "AI pre-check completed. Waiting for admin final review."
+          : `AI pre-check could not complete: ${analysis.aiSummary || analysis.aiError || "Unknown AI error."}`;
+      await user.save();
+    }
+
+    return res.status(200).json({
+      message:
+        analysis.aiConnectionStatus === "connected"
+          ? "AI ID check completed. Please review the result before approving or rejecting."
+          : "AI ID check could not complete. Review the AI status and check your OpenAI key/credits.",
+      verification: {
+        _id: verification._id,
+        screeningStatus: verification.screeningStatus,
+        confidenceScore: verification.confidenceScore,
+        reviewDecision: verification.reviewDecision,
+        reasons: verification.reasons,
+        aiConnected: verification.aiConnected,
+        aiConnectionStatus: verification.aiConnectionStatus,
+        aiProvider: verification.aiProvider,
+        aiModel: verification.aiModel,
+        aiCheckedAt: verification.aiCheckedAt,
+        aiSummary: verification.aiSummary,
+        aiDocumentType: verification.aiDocumentType,
+        aiRiskLevel: verification.aiRiskLevel,
+        aiDecision: verification.aiDecision,
+        aiError: verification.aiError,
+      },
+    });
+  } catch (err) {
+    console.error("adminRunHotelIdAiCheck error:", err);
+    return res.status(500).json({ message: "Error running AI ID check." });
   }
 };
 

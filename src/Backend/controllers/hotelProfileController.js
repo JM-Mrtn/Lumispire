@@ -26,9 +26,15 @@ export const getHotelUserProfile = async (req, res) => {
   try {
     const userId = getUserIdFromDecoded(auth.decoded);
 
-    const user = await HotelUser.findById(userId).select(
-      "-password -passwordHash -verificationToken -verificationTokenExpiry -usedVerificationTokens -resetPasswordToken -resetPasswordExpiry -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
-    );
+    const user = await HotelUser.findById(userId)
+      .populate({
+        path: "hotelIdVerificationId",
+        select:
+          "screeningStatus confidenceScore reviewDecision reviewRemarks reasons createdAt aiConnected aiConnectionStatus aiProvider aiModel aiCheckedAt aiSummary aiDocumentType aiRiskLevel aiDecision aiError",
+      })
+      .select(
+        "-password -passwordHash -verificationToken -verificationTokenExpiry -usedVerificationTokens -resetPasswordToken -resetPasswordExpiry -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
+      );
 
     if (!user) return res.status(404).json({ message: "User not found." });
 

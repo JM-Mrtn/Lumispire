@@ -8,6 +8,26 @@ function getUserIdFromDecoded(decoded = {}) {
   return decoded.userId || decoded.id || decoded.hotelUserId || decoded._id || "";
 }
 
+function buildUserFacingAiRemark(analysis) {
+  if (analysis.aiConnectionStatus === "connected") {
+    return "ID uploaded successfully. AI pre-check completed and is waiting for admin review.";
+  }
+
+  if (analysis.aiConnectionStatus === "missing_key") {
+    return "ID uploaded successfully. AI pre-check did not run because the OpenAI key is not configured yet. Admin can still review the ID manually.";
+  }
+
+  if (analysis.aiConnectionStatus === "error") {
+    return `ID uploaded successfully. AI pre-check could not finish: ${analysis.aiSummary || analysis.aiError || "OpenAI request failed."} Admin can rerun the AI check later.`;
+  }
+
+  if (analysis.aiConnectionStatus === "not_supported") {
+    return "ID uploaded successfully. AI pre-check did not run because this file type is not supported for AI reading. Admin can review it manually.";
+  }
+
+  return "ID uploaded successfully and is pending manual review.";
+}
+
 export const uploadHotelIdForVerification = async (req, res) => {
   const auth = requireHotelUserAuth(req);
   if (!auth.ok) return res.status(auth.status).json({ message: auth.message });
@@ -36,9 +56,9 @@ export const uploadHotelIdForVerification = async (req, res) => {
       await HotelIdVerification.findByIdAndDelete(user.hotelIdVerificationId);
     }
 
-    const analysis = analyzeUploadedId({
+    const analysis = await analyzeUploadedId({
       file: req.file,
-      idType: "",
+      idType: "uploaded_id",
     });
 
     const verification = await HotelIdVerification.create({
@@ -60,41 +80,33 @@ export const uploadHotelIdForVerification = async (req, res) => {
       matchedKeywords: analysis.matchedKeywords,
       checks: analysis.checks,
       reasons: analysis.reasons,
-      reviewDecision: analysis.reviewDecision,
+      reviewDecision: "manual_review",
       reviewedByAdmin: false,
       reviewedAt: null,
       reviewRemarks: "",
+      aiConnected: Boolean(analysis.aiConnected),
+      aiConnectionStatus: analysis.aiConnectionStatus || "not_checked",
+      aiProvider: analysis.aiProvider || "",
+      aiModel: analysis.aiModel || "",
+      aiCheckedAt: analysis.aiCheckedAt || null,
+      aiSummary: analysis.aiSummary || "",
+      aiDocumentType: analysis.aiDocumentType || "unknown",
+      aiRiskLevel: analysis.aiRiskLevel || "unknown",
+      aiDecision: analysis.aiDecision || "needs_manual_review",
+      aiError: analysis.aiError || "",
+      aiRawResult: analysis.aiRawResult || null,
     });
 
     user.hotelIdVerificationId = verification._id;
-
-    if (analysis.reviewDecision === "auto_rejected") {
-      user.idVerificationStatus = "rejected";
-      user.isIdentityVerified = false;
-      user.idVerifiedAt = null;
-      user.idVerificationRemarks = analysis.reasons.join(" ");
-    } else if (analysis.reviewDecision === "auto_approved") {
-      user.idVerificationStatus = "verified";
-      user.isIdentityVerified = true;
-      user.idVerifiedAt = new Date();
-      user.idVerificationRemarks = "Automatically approved by ID screening.";
-    } else {
-      user.idVerificationStatus = "pending";
-      user.isIdentityVerified = false;
-      user.idVerifiedAt = null;
-      user.idVerificationRemarks =
-        "ID uploaded successfully and is pending manual review.";
-    }
+    user.idVerificationStatus = "pending";
+    user.isIdentityVerified = false;
+    user.idVerifiedAt = null;
+    user.idVerificationRemarks = buildUserFacingAiRemark(analysis);
 
     await user.save();
 
     return res.status(200).json({
-      message:
-        analysis.reviewDecision === "auto_rejected"
-          ? "ID was automatically rejected."
-          : analysis.reviewDecision === "auto_approved"
-          ? "ID was automatically approved."
-          : "ID uploaded successfully. Verification is pending review.",
+      message: user.idVerificationRemarks,
       idVerificationStatus: user.idVerificationStatus,
       isIdentityVerified: user.isIdentityVerified,
       idVerificationRemarks: user.idVerificationRemarks,
@@ -102,6 +114,17 @@ export const uploadHotelIdForVerification = async (req, res) => {
       screeningStatus: verification.screeningStatus,
       reviewDecision: verification.reviewDecision,
       confidenceScore: verification.confidenceScore,
+      aiConnected: verification.aiConnected,
+      aiConnectionStatus: verification.aiConnectionStatus,
+      aiProvider: verification.aiProvider,
+      aiModel: verification.aiModel,
+      aiCheckedAt: verification.aiCheckedAt,
+      aiSummary: verification.aiSummary,
+      aiDocumentType: verification.aiDocumentType,
+      aiRiskLevel: verification.aiRiskLevel,
+      aiDecision: verification.aiDecision,
+      aiError: verification.aiError,
+      reasons: verification.reasons,
     });
   } catch (err) {
     console.error("uploadHotelIdForVerification error:", err);

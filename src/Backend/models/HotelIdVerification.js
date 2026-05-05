@@ -106,6 +106,68 @@ const hotelIdVerificationSchema = new mongoose.Schema(
       default: "manual_review",
     },
 
+
+    aiConnected: {
+      type: Boolean,
+      default: false,
+    },
+
+    aiConnectionStatus: {
+      type: String,
+      enum: ["not_checked", "missing_key", "connected", "error", "not_supported"],
+      default: "not_checked",
+    },
+
+    aiProvider: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    aiModel: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    aiCheckedAt: {
+      type: Date,
+      default: null,
+    },
+
+    aiSummary: {
+      type: String,
+      default: "",
+    },
+
+    aiDocumentType: {
+      type: String,
+      default: "unknown",
+      trim: true,
+    },
+
+    aiRiskLevel: {
+      type: String,
+      enum: ["low", "medium", "high", "unknown"],
+      default: "unknown",
+    },
+
+    aiDecision: {
+      type: String,
+      enum: ["approve", "needs_manual_review", "reject", "unknown"],
+      default: "unknown",
+    },
+
+    aiError: {
+      type: String,
+      default: "",
+    },
+
+    aiRawResult: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+
     reviewedByAdmin: {
       type: Boolean,
       default: false,

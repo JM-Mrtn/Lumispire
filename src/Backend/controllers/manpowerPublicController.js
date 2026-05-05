@@ -107,13 +107,15 @@ function buildApplicationIdVerificationState(screening) {
 
   if (reviewDecision === "auto_rejected") {
     return {
-      idVerificationStatus: "rejected",
+      idVerificationStatus: "pending",
       isIdentityVerified: false,
       idVerifiedAt: null,
       idVerificationRemarks:
         Array.isArray(screening?.reasons) && screening.reasons.length
-          ? screening.reasons.join(" ")
-          : "Valid ID was automatically rejected.",
+          ? `Valid ID was flagged by AI screening and is pending HR review. ${screening.reasons.join(
+              " "
+            )}`
+          : "Valid ID was flagged by AI screening and is pending HR review.",
     };
   }
 
@@ -136,7 +138,9 @@ export async function listManpowerVacancies(_req, res) {
         _id: job._id,
         title: job.title,
         description: job.description || "",
-        qualifications: Array.isArray(job.qualifications) ? job.qualifications : [],
+        qualifications: Array.isArray(job.qualifications)
+          ? job.qualifications
+          : [],
         dailyRate: Number(job.dailyRate || 0),
         active: job.active !== false,
       })),
@@ -204,33 +208,42 @@ export async function submitManpowerApplication(req, res) {
     const nationality = sanitizeAlphaText(req.body?.nationality);
 
     if (!vacancy) {
-      return res.status(400).json({ message: "Please select an active job vacancy." });
+      return res.status(400).json({
+        message: "Please select an active job vacancy.",
+      });
     }
 
     if (!isValidName(firstName)) {
       return res.status(400).json({
-        message: "First name must contain letters only and must not include numbers.",
+        message:
+          "First name must contain letters only and must not include numbers.",
       });
     }
 
     if (!isValidName(lastName)) {
       return res.status(400).json({
-        message: "Last name must contain letters only and must not include numbers.",
+        message:
+          "Last name must contain letters only and must not include numbers.",
       });
     }
 
     if (!isValidOptionalName(middleName)) {
       return res.status(400).json({
-        message: "Middle name must contain letters only and must not include numbers.",
+        message:
+          "Middle name must contain letters only and must not include numbers.",
       });
     }
 
     if (!isValidEmail(email)) {
-      return res.status(400).json({ message: "Please enter a valid email address." });
+      return res.status(400).json({
+        message: "Please enter a valid email address.",
+      });
     }
 
     if (!completeAddress || completeAddress.length < 5) {
-      return res.status(400).json({ message: "Please enter a valid complete address." });
+      return res.status(400).json({
+        message: "Please enter a valid complete address.",
+      });
     }
 
     if (!isValidContact(contactNo)) {
@@ -240,27 +253,39 @@ export async function submitManpowerApplication(req, res) {
     }
 
     if (!Number.isFinite(age) || age < 18 || age > 60) {
-      return res.status(400).json({ message: "Age must be between 18 and 60." });
+      return res.status(400).json({
+        message: "Age must be between 18 and 60.",
+      });
     }
 
     if (!["Male", "Female", "Prefer not to say"].includes(gender)) {
-      return res.status(400).json({ message: "Please select a valid gender." });
+      return res.status(400).json({
+        message: "Please select a valid gender.",
+      });
     }
 
     if (!/^\d{10}$/.test(sssNumber)) {
-      return res.status(400).json({ message: "SSS number must contain exactly 10 digits." });
+      return res.status(400).json({
+        message: "SSS number must contain exactly 10 digits.",
+      });
     }
 
     if (!isValidTin(tinNumber)) {
-      return res.status(400).json({ message: "TIN number must contain 9 or 12 digits." });
+      return res.status(400).json({
+        message: "TIN number must contain 9 or 12 digits.",
+      });
     }
 
     if (!/^\d{12}$/.test(pagibigNumber)) {
-      return res.status(400).json({ message: "Pag-IBIG number must contain exactly 12 digits." });
+      return res.status(400).json({
+        message: "Pag-IBIG number must contain exactly 12 digits.",
+      });
     }
 
     if (!/^\d{12}$/.test(philhealthNumber)) {
-      return res.status(400).json({ message: "PhilHealth number must contain exactly 12 digits." });
+      return res.status(400).json({
+        message: "PhilHealth number must contain exactly 12 digits.",
+      });
     }
 
     if (!isValidBirthPlace(birthPlace)) {
@@ -274,7 +299,9 @@ export async function submitManpowerApplication(req, res) {
         civilStatus
       )
     ) {
-      return res.status(400).json({ message: "Please select a valid civil status." });
+      return res.status(400).json({
+        message: "Please select a valid civil status.",
+      });
     }
 
     if (!isValidReligion(religion)) {
@@ -285,14 +312,19 @@ export async function submitManpowerApplication(req, res) {
 
     if (!isValidNationality(nationality)) {
       return res.status(400).json({
-        message: "Nationality must contain letters only and must not include numbers.",
+        message:
+          "Nationality must contain letters only and must not include numbers.",
       });
     }
 
-    const existingApplication = await ManpowerApplication.findOne({ email }).lean();
+    const existingApplication = await ManpowerApplication.findOne({
+      email,
+    }).lean();
+
     if (existingApplication) {
       return res.status(409).json({
-        message: "This email address has already been used for a manpower application.",
+        message:
+          "This email address has already been used for a manpower application.",
       });
     }
 
@@ -301,6 +333,7 @@ export async function submitManpowerApplication(req, res) {
 
     for (const key of REQUIRED_REQUIREMENTS) {
       const file = getUploadedFile(req, key);
+
       if (!file) {
         missingRequirements.push(key);
       } else {
@@ -371,15 +404,6 @@ export async function submitManpowerApplication(req, res) {
       idType: "",
     });
 
-    if (screening.reviewDecision === "auto_rejected") {
-      return res.status(400).json({
-        message:
-          screening.reasons?.[0] ||
-          "Valid ID failed automatic screening. Please upload a clearer valid ID or PDF.",
-        idScreening: screening,
-      });
-    }
-
     const resumeScreening = await analyzeResumeAgainstVacancy({
       file: resumeFile,
       vacancy,
@@ -413,6 +437,17 @@ export async function submitManpowerApplication(req, res) {
       checks: screening.checks,
       matchedKeywords: screening.matchedKeywords,
       reasons: screening.reasons,
+      aiConnected: screening.aiConnected,
+      aiConnectionStatus: screening.aiConnectionStatus,
+      aiProvider: screening.aiProvider,
+      aiModel: screening.aiModel,
+      aiCheckedAt: screening.aiCheckedAt,
+      aiSummary: screening.aiSummary,
+      aiDocumentType: screening.aiDocumentType,
+      aiRiskLevel: screening.aiRiskLevel,
+      aiDecision: screening.aiDecision,
+      aiError: screening.aiError,
+      aiRawResult: screening.aiRawResult,
     });
 
     const idState = buildApplicationIdVerificationState(screening);
@@ -448,6 +483,18 @@ export async function submitManpowerApplication(req, res) {
         confidenceScore: screening.confidenceScore,
         matchedKeywords: screening.matchedKeywords,
         reasons: screening.reasons,
+
+        aiConnected: screening.aiConnected,
+        aiConnectionStatus: screening.aiConnectionStatus,
+        aiProvider: screening.aiProvider,
+        aiModel: screening.aiModel,
+        aiCheckedAt: screening.aiCheckedAt,
+        aiSummary: screening.aiSummary,
+        aiDocumentType: screening.aiDocumentType,
+        aiRiskLevel: screening.aiRiskLevel,
+        aiDecision: screening.aiDecision,
+        aiError: screening.aiError,
+
         checkedAt: new Date(),
         reviewedByAdmin: false,
         reviewedAt: null,
@@ -488,6 +535,14 @@ export async function submitManpowerApplication(req, res) {
         status: screening.screeningStatus,
         reviewDecision: screening.reviewDecision,
         confidenceScore: screening.confidenceScore,
+        aiConnected: screening.aiConnected,
+        aiConnectionStatus: screening.aiConnectionStatus,
+        aiProvider: screening.aiProvider,
+        aiModel: screening.aiModel,
+        aiSummary: screening.aiSummary,
+        aiRiskLevel: screening.aiRiskLevel,
+        aiDecision: screening.aiDecision,
+        aiError: screening.aiError,
       },
       resumeScreening: {
         score: application?.resumeScreening?.score || 0,
@@ -501,7 +556,8 @@ export async function submitManpowerApplication(req, res) {
 
     if (error?.code === 11000 && error?.keyPattern?.email) {
       return res.status(409).json({
-        message: "This email address has already been used for a manpower application.",
+        message:
+          "This email address has already been used for a manpower application.",
       });
     }
 

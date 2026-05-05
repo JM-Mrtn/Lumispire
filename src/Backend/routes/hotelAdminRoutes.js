@@ -10,6 +10,7 @@ import {
   deleteDeactivatedUser,
   adminApproveHotelId,
   adminRejectHotelId,
+  adminRunHotelIdAiCheck,
   adminGetHotelIdFile,
 } from "../controllers/hotelAdminController.js";
 
@@ -27,6 +28,7 @@ router.delete("/hotel-users/:userId", deleteDeactivatedUser);
 
 router.put("/admin-approve-id/:userId", adminApproveHotelId);
 router.put("/admin-reject-id/:userId", adminRejectHotelId);
+router.post("/admin-run-ai-id-check/:verificationId", adminRunHotelIdAiCheck);
 
 // ✅ reads hotel ID directly from MongoDB
 router.get("/admin-hotel-id-file/:verificationId", adminGetHotelIdFile);

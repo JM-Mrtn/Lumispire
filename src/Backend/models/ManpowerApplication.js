@@ -66,6 +66,62 @@ const idVerificationSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+
+    aiConnected: {
+      type: Boolean,
+      default: false,
+    },
+    aiConnectionStatus: {
+      type: String,
+      enum: [
+        "not_checked",
+        "connected",
+        "missing_key",
+        "not_supported",
+        "error",
+      ],
+      default: "not_checked",
+    },
+    aiProvider: {
+      type: String,
+      default: "none",
+      trim: true,
+    },
+    aiModel: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    aiCheckedAt: {
+      type: Date,
+      default: null,
+    },
+    aiSummary: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    aiDocumentType: {
+      type: String,
+      default: "unknown",
+      trim: true,
+    },
+    aiRiskLevel: {
+      type: String,
+      enum: ["low", "medium", "high", "unknown"],
+      default: "unknown",
+    },
+    aiDecision: {
+      type: String,
+      enum: ["approve", "needs_manual_review", "reject"],
+      default: "needs_manual_review",
+    },
+    aiError: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     checkedAt: {
       type: Date,
       default: null,

@@ -1,8 +1,17 @@
-// src/Backend/utils/manpowerResumeScreening.js
+import OpenAI from "openai";
+
 const SUPPORTED_RESUME_MIME_TYPES = new Set([
   "application/pdf",
   "text/plain",
   "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
+const SUPPORTED_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
   "image/png",
   "image/webp",
 ]);
@@ -166,12 +175,14 @@ function clampScore(value = 0) {
 
 function uniqueStrings(values = [], max = 8) {
   const out = [];
+
   for (const value of values || []) {
     const text = String(value || "").trim();
     if (!text) continue;
     if (!out.includes(text)) out.push(text);
     if (out.length >= max) break;
   }
+
   return out;
 }
 
@@ -183,13 +194,16 @@ function deriveStatus(score = 0, recommendation = "") {
   const rec = String(recommendation || "").toLowerCase();
 
   if (rec.includes("strong")) return "strong_match";
-  if (rec.includes("possible") || rec.includes("potential")) return "possible_match";
+  if (rec.includes("possible") || rec.includes("potential")) {
+    return "possible_match";
+  }
   if (rec.includes("weak")) return "weak_match";
   if (rec.includes("manual")) return "manual_review";
 
   if (score >= 85) return "strong_match";
   if (score >= 65) return "possible_match";
   if (score >= 40) return "weak_match";
+
   return "manual_review";
 }
 
@@ -213,9 +227,14 @@ function fallbackResumeScreening({ file, vacancy = "", note = "" }) {
       note ||
       "Resume uploaded successfully. AI screening needs manual HR review.",
     matchedKeywords,
-    missingKeywords: keywords.filter((item) => !matchedKeywords.includes(item)).slice(0, 6),
+    missingKeywords: keywords
+      .filter((item) => !matchedKeywords.includes(item))
+      .slice(0, 6),
     strengths: matchedKeywords.length
-      ? ["Resume file uploaded successfully.", "Some vacancy-related keywords were detected."]
+      ? [
+          "Resume file uploaded successfully.",
+          "Some vacancy-related keywords were detected.",
+        ]
       : ["Resume file uploaded successfully."],
     concerns: [
       "Automatic AI scoring could not fully evaluate this file format or content.",
@@ -237,6 +256,7 @@ function extractJson(text = "") {
   }
 
   const fenced = raw.match(/```json\s*([\s\S]*?)```/i);
+
   if (fenced?.[1]) {
     try {
       return JSON.parse(fenced[1]);
@@ -247,6 +267,7 @@ function extractJson(text = "") {
 
   const firstBrace = raw.indexOf("{");
   const lastBrace = raw.lastIndexOf("}");
+
   if (firstBrace >= 0 && lastBrace > firstBrace) {
     try {
       return JSON.parse(raw.slice(firstBrace, lastBrace + 1));
@@ -258,11 +279,12 @@ function extractJson(text = "") {
   return null;
 }
 
-function normalizeAiResult(parsed, vacancy = "", method = "gemini", model = "") {
+function normalizeAiResult(parsed, vacancy = "", method = "openai", model = "") {
   const vacancyKeywords = getVacancyKeywords(vacancy);
 
   const score = clampScore(parsed?.score || 0);
-  const recommendation = String(parsed?.recommendation || "").trim() || "manual_review";
+  const recommendation =
+    String(parsed?.recommendation || "").trim() || "manual_review";
 
   const matchedKeywords = uniqueStrings(
     Array.isArray(parsed?.matchedKeywords) ? parsed.matchedKeywords : [],
@@ -288,9 +310,92 @@ function normalizeAiResult(parsed, vacancy = "", method = "gemini", model = "") 
     strengths: uniqueStrings(parsed?.strengths || [], 6),
     concerns: uniqueStrings(parsed?.concerns || [], 6),
     screeningMethod: method,
-    model: model || "gemini",
+    model: model || "openai",
     screenedAt: new Date(),
   };
+}
+
+function getResponseText(response) {
+  if (response?.output_text) return response.output_text;
+
+  const parts = [];
+
+  for (const item of response?.output || []) {
+    for (const content of item?.content || []) {
+      if (content?.text) parts.push(content.text);
+    }
+  }
+
+  return parts.join("\n").trim();
+}
+
+function buildResumeInput(file) {
+  const mimeType = String(file?.mimetype || "").toLowerCase();
+  const originalName = String(file?.originalname || "resume").trim();
+  const buffer = file?.buffer;
+
+  if (!buffer) return null;
+
+  if (mimeType === "text/plain") {
+    const text = Buffer.from(buffer).toString("utf8").slice(0, 20000);
+
+    return {
+      type: "text",
+      content: {
+        type: "input_text",
+        text: text || "Text resume was uploaded, but no readable text was found.",
+      },
+    };
+  }
+
+  const base64 = Buffer.from(buffer).toString("base64");
+
+  if (SUPPORTED_IMAGE_MIME_TYPES.has(mimeType)) {
+    return {
+      type: "image",
+      content: {
+        type: "input_image",
+        image_url: `data:${mimeType};base64,${base64}`,
+        detail: "high",
+      },
+    };
+  }
+
+  if (mimeType === "application/pdf") {
+    return {
+      type: "file",
+      content: {
+        type: "input_file",
+        filename: originalName.toLowerCase().endsWith(".pdf")
+          ? originalName
+          : `${originalName}.pdf`,
+        file_data: `data:application/pdf;base64,${base64}`,
+      },
+    };
+  }
+
+  return null;
+}
+
+function getFriendlyOpenAiError(err) {
+  const message =
+    err?.error?.message ||
+    err?.message ||
+    "OpenAI resume screening failed. Manual HR review is required.";
+
+  if (/quota|credit|billing|insufficient/i.test(message)) {
+    return "OpenAI is connected, but billing or credits are not available yet. Manual HR review is required.";
+  }
+
+  if (/model|not found|does not exist/i.test(message)) {
+    return "OpenAI is connected, but the selected model is not available for this API key. Change OPENAI_RESUME_MODEL or OPENAI_MODEL in Render.";
+  }
+
+  if (/api key|auth|permission|unauthorized/i.test(message)) {
+    return "OpenAI API key is missing, invalid, or has insufficient permission. Manual HR review is required.";
+  }
+
+  return message;
 }
 
 export async function analyzeResumeAgainstVacancy({ file, vacancy = "" }) {
@@ -303,6 +408,7 @@ export async function analyzeResumeAgainstVacancy({ file, vacancy = "" }) {
   }
 
   const mimeType = String(file?.mimetype || "").toLowerCase();
+
   if (!SUPPORTED_RESUME_MIME_TYPES.has(mimeType)) {
     return fallbackResumeScreening({
       file,
@@ -312,15 +418,30 @@ export async function analyzeResumeAgainstVacancy({ file, vacancy = "" }) {
     });
   }
 
-  const apiKey = String(process.env.GEMINI_API_KEY || "").trim();
-  const model = String(process.env.GEMINI_MODEL || "gemini-2.5-flash-lite").trim();
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  const model = String(
+    process.env.OPENAI_RESUME_MODEL ||
+      process.env.OPENAI_MODEL ||
+      "gpt-5.4-mini"
+  ).trim();
 
   if (!apiKey) {
     return fallbackResumeScreening({
       file,
       vacancy,
       note:
-        "Resume was uploaded successfully, but AI screening is not configured. Manual review is required.",
+        "Resume was uploaded successfully, but OPENAI_API_KEY is not configured. Manual review is required.",
+    });
+  }
+
+  const resumeInput = buildResumeInput(file);
+
+  if (!resumeInput) {
+    return fallbackResumeScreening({
+      file,
+      vacancy,
+      note:
+        "Resume was uploaded successfully, but the file could not be prepared for AI screening. Manual review is required.",
     });
   }
 
@@ -353,67 +474,61 @@ Rules:
 - matchedKeywords and missingKeywords must be short strings
 - strengths and concerns must be short bullet-style strings
 - do not include markdown
-- base the evaluation only on the attached file
+- base the evaluation only on the attached resume
+- this is only a screening assistant; HR must make the final hiring decision
 `.trim();
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-        model
-      )}:generateContent?key=${encodeURIComponent(apiKey)}`,
+    const client = new OpenAI({ apiKey });
+
+    const content = [
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: prompt },
-                {
-                  inlineData: {
-                    mimeType,
-                    data: Buffer.from(file.buffer).toString("base64"),
-                  },
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: "application/json",
-          },
-        }),
-      }
-    );
+        type: "input_text",
+        text: prompt,
+      },
+      resumeInput.content,
+    ];
 
-    const data = await res.json().catch(() => ({}));
+    const response = await client.responses.create({
+      model,
+      max_output_tokens: 1200,
+      input: [
+        {
+          role: "system",
+          content:
+            "You are a careful HR resume screening assistant. You provide structured screening support only. You do not make final hiring decisions.",
+        },
+        {
+          role: "user",
+          content,
+        },
+      ],
+    });
 
-    const rawText =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((part) => part?.text || "")
-        .join("\n")
-        .trim() || "";
-
+    const rawText = getResponseText(response);
     const parsed = extractJson(rawText);
 
-    if (!res.ok || !parsed) {
+    if (!parsed) {
       return fallbackResumeScreening({
         file,
         vacancy,
         note:
-          data?.error?.message ||
-          "Resume was uploaded successfully, but AI response could not be parsed. Manual review is required.",
+          "Resume was uploaded successfully, but OpenAI response could not be parsed. Manual review is required.",
       });
     }
 
-    return normalizeAiResult(parsed, vacancy, "gemini", model);
+    return normalizeAiResult(parsed, vacancy, "openai", model);
   } catch (error) {
+    console.error("OpenAI resume screening error:", error?.message || error);
+
     return fallbackResumeScreening({
       file,
       vacancy,
-      note:
-        error?.message ||
-        "Resume was uploaded successfully, but AI screening failed. Manual review is required.",
+      note: getFriendlyOpenAiError(error),
     });
   }
 }
+
+export default {
+  analyzeResumeAgainstVacancy,
+};

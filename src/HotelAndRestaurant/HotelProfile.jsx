@@ -28,6 +28,14 @@ const HotelProfile = () => {
     idVerificationStatus: "not_submitted",
     isIdentityVerified: false,
     idVerificationRemarks: "",
+    aiConnected: false,
+    aiConnectionStatus: "not_checked",
+    aiSummary: "",
+    aiDecision: "unknown",
+    aiRiskLevel: "unknown",
+    aiDocumentType: "unknown",
+    aiCheckedAt: null,
+    aiError: "",
   });
 
   const [loading, setLoading] = useState(true);
@@ -39,6 +47,7 @@ const HotelProfile = () => {
   const [idFile, setIdFile] = useState(null);
   const [consentGiven, setConsentGiven] = useState(false);
   const [idUploading, setIdUploading] = useState(false);
+  const [lastAiResult, setLastAiResult] = useState(null);
 
   const goToProfile = () => navigate("/hotel-profile");
 
@@ -79,6 +88,8 @@ const HotelProfile = () => {
         return;
       }
 
+      const verification = data.hotelIdVerificationId || {};
+
       setForm({
         firstName: data.firstName || "",
         lastName: data.lastName || "",
@@ -89,6 +100,14 @@ const HotelProfile = () => {
         idVerificationStatus: data.idVerificationStatus || "not_submitted",
         isIdentityVerified: Boolean(data.isIdentityVerified),
         idVerificationRemarks: data.idVerificationRemarks || "",
+        aiConnected: Boolean(verification.aiConnected),
+        aiConnectionStatus: verification.aiConnectionStatus || "not_checked",
+        aiSummary: verification.aiSummary || "",
+        aiDecision: verification.aiDecision || "unknown",
+        aiRiskLevel: verification.aiRiskLevel || "unknown",
+        aiDocumentType: verification.aiDocumentType || "unknown",
+        aiCheckedAt: verification.aiCheckedAt || null,
+        aiError: verification.aiError || "",
       });
     } catch (err) {
       console.error(err);
@@ -277,8 +296,22 @@ const HotelProfile = () => {
         throw new Error(data.message || "Failed to upload ID.");
       }
 
+      const aiResult = {
+        aiConnected: Boolean(data.aiConnected),
+        aiConnectionStatus: data.aiConnectionStatus || "not_checked",
+        aiSummary: data.aiSummary || "",
+        aiDecision: data.aiDecision || "unknown",
+        aiRiskLevel: data.aiRiskLevel || "unknown",
+        aiDocumentType: data.aiDocumentType || "unknown",
+        aiCheckedAt: data.aiCheckedAt || null,
+        aiError: data.aiError || "",
+        confidenceScore: data.confidenceScore,
+        reasons: Array.isArray(data.reasons) ? data.reasons : [],
+      };
+
+      setLastAiResult(aiResult);
       setStatus({
-        type: "success",
+        type: data.aiConnectionStatus === "connected" ? "success" : "error",
         message: data.message || "ID uploaded successfully.",
       });
 
@@ -340,6 +373,47 @@ const HotelProfile = () => {
       className: "bg-slate-100 text-slate-700 border border-slate-200",
     };
   }, [form.idVerificationStatus]);
+
+
+  const aiBadge = useMemo(() => {
+    const source = lastAiResult || form;
+    const status = source.aiConnectionStatus || "not_checked";
+
+    if (status === "connected") {
+      return {
+        label: "AI Connected",
+        className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      };
+    }
+
+    if (status === "missing_key") {
+      return {
+        label: "AI Key Missing",
+        className: "border-amber-200 bg-amber-50 text-amber-700",
+      };
+    }
+
+    if (status === "error") {
+      return {
+        label: "AI Check Failed",
+        className: "border-rose-200 bg-rose-50 text-rose-700",
+      };
+    }
+
+    if (status === "not_supported") {
+      return {
+        label: "AI Not Supported",
+        className: "border-slate-200 bg-slate-50 text-slate-700",
+      };
+    }
+
+    return {
+      label: "AI Not Checked",
+      className: "border-slate-200 bg-slate-50 text-slate-700",
+    };
+  }, [form, lastAiResult]);
+
+  const aiDisplay = lastAiResult || form;
 
   return (
     <div className="min-h-screen bg-[#f6f6f3] font-['Inter',sans-serif] text-[#36523d]">
@@ -560,7 +634,7 @@ const HotelProfile = () => {
               </h3>
 
               <p className="mt-2 text-sm text-[#36523d]/80">
-                Upload a valid government ID for account verification.
+                Upload a valid government ID. After upload, the backend will try to connect to OpenAI and run an AI pre-check. The hotel admin still makes the final approval or rejection.
               </p>
 
               <div className="mt-5">
@@ -620,6 +694,46 @@ const HotelProfile = () => {
                   <p className="mt-2 text-sm text-[#36523d]/80">
                     Remarks: {form.idVerificationRemarks}
                   </p>
+                ) : null}
+              </div>
+
+              <div className={`mt-4 rounded-xl border px-4 py-4 ${aiBadge.className}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-extrabold">OpenAI ID Pre-check</p>
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-bold">
+                    {aiBadge.label}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
+                  <div>
+                    <span className="block text-xs font-bold uppercase opacity-70">AI Decision</span>
+                    <span className="font-semibold capitalize">
+                      {String(aiDisplay.aiDecision || "unknown").replaceAll("_", " ")}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold uppercase opacity-70">Risk Level</span>
+                    <span className="font-semibold capitalize">{aiDisplay.aiRiskLevel || "unknown"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold uppercase opacity-70">Document Type</span>
+                    <span className="font-semibold capitalize">
+                      {String(aiDisplay.aiDocumentType || "unknown").replaceAll("_", " ")}
+                    </span>
+                  </div>
+                </div>
+
+                {aiDisplay.aiSummary ? (
+                  <p className="mt-3 text-sm leading-relaxed">{aiDisplay.aiSummary}</p>
+                ) : (
+                  <p className="mt-3 text-sm leading-relaxed">
+                    Upload your ID to test if OpenAI is connected. If credits are not added yet, the upload will still be saved and the admin can rerun the AI check later.
+                  </p>
+                )}
+
+                {aiDisplay.aiError ? (
+                  <p className="mt-2 text-xs font-semibold text-rose-700">AI Error: {aiDisplay.aiError}</p>
                 ) : null}
               </div>
 
