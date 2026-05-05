@@ -116,6 +116,9 @@ const COLORS = {
   fieldBg: "rgba(255,255,255,0.55)",
 };
 
+const MAX_ADDITIONAL_PAX = 20;
+const ADDITIONAL_PAX_RATE = 250;
+
 function getApiBase() {
   const raw = (
     import.meta.env.VITE_HOTEL_API_BASE ||
@@ -617,9 +620,14 @@ export default function HotelBookingForm() {
     });
   }, [basePrice, form.date, monthlyConfirmedBookingCount]);
 
-  const price = dynamicPricing.finalPrice || null;
-  const maxPax =
+  const baseAmount = dynamicPricing.finalPrice || null;
+  const baseMaxPax =
     Number(selectedVariant?.maxPax || selectedPackage?.maxPax || 0) || null;
+  const maxPax = baseMaxPax ? baseMaxPax + MAX_ADDITIONAL_PAX : null;
+  const selectedPax = Number(form.pax || 0);
+  const additionalPax = baseMaxPax ? Math.max(0, selectedPax - baseMaxPax) : 0;
+  const additionalPaxCharge = additionalPax * ADDITIONAL_PAX_RATE;
+  const price = baseAmount ? baseAmount + additionalPaxCharge : null;
 
   const timeOptions = useMemo(() => {
     return (selectedVariant?.timeSlots || []).map((time) => ({
@@ -1099,7 +1107,7 @@ export default function HotelBookingForm() {
     } else if (!Number.isFinite(pax) || pax <= 0) {
       next.pax = "Pax must be at least 1.";
     } else if (maxPax && pax > maxPax) {
-      next.pax = `Maximum ${maxPax} pax only for this room.`;
+      next.pax = `Maximum bookable pax is ${maxPax} pax (${baseMaxPax} base + ${MAX_ADDITIONAL_PAX} additional).`;
     }
 
     if (!price) next.price = "Price cannot be computed.";
@@ -1176,8 +1184,14 @@ export default function HotelBookingForm() {
       roomType: form.roomType,
       duration: normalizeDuration(form.duration),
       pax: Number(form.pax),
+      baseMaxPax,
       maxPax: maxPax || Number(form.pax),
+      maxAdditionalPax: MAX_ADDITIONAL_PAX,
+      additionalPax,
+      additionalPaxRate: ADDITIONAL_PAX_RATE,
+      additionalPaxCharge,
       basePrice,
+      baseAmount,
       price,
       totalAmount: price,
       dynamicPricing,
@@ -1462,6 +1476,24 @@ export default function HotelBookingForm() {
             />
           </div>
 
+          {maxPax ? (
+            <div className="mt-3 rounded-xl bg-white/15 px-4 py-3 text-xs font-semibold text-white/90">
+              <p>Base room capacity: {baseMaxPax} pax</p>
+              <p>
+                Additional pax allowed: up to {MAX_ADDITIONAL_PAX} pax at{" "}
+                {formatPeso(ADDITIONAL_PAX_RATE)} per person
+              </p>
+              <p className="font-extrabold">Maximum bookable pax: {maxPax} pax</p>
+              {additionalPax > 0 ? (
+                <p className="mt-1 text-amber-100">
+                  Additional charge: {additionalPax} pax ×{" "}
+                  {formatPeso(ADDITIONAL_PAX_RATE)} ={" "}
+                  {formatPeso(additionalPaxCharge)}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {selectedVariant ? (
             <div className="mt-6 rounded-2xl border border-[#3f5b44]/20 bg-white p-5">
               <p className="text-sm font-extrabold text-[#3f5b44]">
@@ -1478,7 +1510,7 @@ export default function HotelBookingForm() {
                 </span>
 
                 <span className="rounded-full bg-[#3f5b44]/10 px-4 py-2 text-xs font-extrabold text-[#3f5b44]">
-                  Base: {formatPeso(basePrice)}
+                  Base: {formatPeso(baseAmount)}
                 </span>
 
                 <span className="rounded-full bg-[#3f5b44]/10 px-4 py-2 text-xs font-extrabold text-[#3f5b44]">
@@ -1487,7 +1519,7 @@ export default function HotelBookingForm() {
 
                 {maxPax ? (
                   <span className="rounded-full bg-[#3f5b44]/10 px-4 py-2 text-xs font-extrabold text-[#3f5b44]">
-                    Max {maxPax} pax
+                    Max {maxPax} pax ({baseMaxPax} base + {MAX_ADDITIONAL_PAX} additional)
                   </span>
                 ) : null}
 
@@ -1501,6 +1533,18 @@ export default function HotelBookingForm() {
           ) : null}
 
           <PricingBreakdown pricing={dynamicPricing} />
+
+          <div className="mt-4 rounded-2xl border border-[#3f5b44]/20 bg-white p-5 text-[#3f5b44]">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-extrabold">Final Total With Additional Pax</p>
+              <p className="text-2xl font-extrabold">{formatPeso(price)}</p>
+            </div>
+            <div className="mt-3 grid gap-2 text-xs font-bold text-black/55 sm:grid-cols-3">
+              <p>Base dynamic price: {formatPeso(baseAmount)}</p>
+              <p>Additional pax: {additionalPax}</p>
+              <p>Additional charge: {formatPeso(additionalPaxCharge)}</p>
+            </div>
+          </div>
 
           {selectedPackage ? (
             <div className="mt-6 rounded-2xl border border-[#3f5b44]/20 bg-[#f7f7f5] p-5">

@@ -299,22 +299,31 @@ app.get("/", (_req, res) => {
 /* ---------- SOCKET.IO HOTEL CHAT ---------- */
 const getHotelJwtSecret = () => {
   return (
-    process.env.HOTEL_JWT_SECRET ||
-    process.env.JWT_SECRET ||
-    process.env.SECRET_KEY ||
-    "hotel_secret_key"
+    String(process.env.HOTEL_JWT_SECRET || "").trim() ||
+    String(process.env.JWT_SECRET || "").trim() ||
+    String(process.env.SECRET_KEY || "").trim()
   );
 };
 
 const getHotelAdminJwtSecret = () => {
   return (
-    process.env.HOTEL_ADMIN_JWT_SECRET ||
-    process.env.ADMIN_JWT_SECRET ||
-    process.env.JWT_SECRET ||
-    process.env.SECRET_KEY ||
-    "hotel_admin_secret_key"
+    String(process.env.HOTEL_ADMIN_JWT_SECRET || "").trim() ||
+    String(process.env.ADMIN_JWT_SECRET || "").trim() ||
+    String(process.env.JWT_SECRET || "").trim() ||
+    String(process.env.SECRET_KEY || "").trim()
   );
 };
+
+function getUserIdFromDecoded(decoded = {}) {
+  return (
+    decoded.id ||
+    decoded._id ||
+    decoded.userId ||
+    decoded.hotelUserId ||
+    decoded.sub ||
+    ""
+  );
+}
 
 const server = http.createServer(app);
 
@@ -338,42 +347,53 @@ io.use(async (socket, next) => {
     }
 
     if (role === "admin") {
-      const decoded = jwt.verify(token, getHotelAdminJwtSecret());
+      const secret = getHotelAdminJwtSecret();
+
+      if (!secret) {
+        return next(new Error("Hotel admin socket secret is missing."));
+      }
+
+      const decoded = jwt.verify(token, secret);
+      const tokenRole = String(decoded?.role || decoded?.type || "").toLowerCase();
+
+      const isHotelAdmin =
+        decoded?.isHotelAdmin === true ||
+        decoded?.hotelAdmin === true ||
+        decoded?.scope === "hotel" ||
+        tokenRole === "hotel_admin";
+
+      if (!isHotelAdmin) {
+        return next(new Error("Hotel admin socket access required."));
+      }
 
       socket.data.role = "admin";
-      socket.data.adminId =
-        decoded.id ||
-        decoded._id ||
-        decoded.adminId ||
-        decoded.userId ||
-        decoded.sub ||
-        "hotel-admin";
+      socket.data.adminId = getUserIdFromDecoded(decoded) || "hotel-admin";
 
       return next();
     }
 
-    const decoded = jwt.verify(token, getHotelJwtSecret());
+    const secret = getHotelJwtSecret();
 
-    const userId =
-      decoded.id ||
-      decoded._id ||
-      decoded.userId ||
-      decoded.hotelUserId ||
-      decoded.sub;
+    if (!secret) {
+      return next(new Error("Hotel user socket secret is missing."));
+    }
+
+    const decoded = jwt.verify(token, secret);
+    const userId = getUserIdFromDecoded(decoded);
 
     if (!userId) {
       return next(new Error("Invalid hotel user token."));
     }
 
     const user = await HotelUser.findById(userId).select(
-      "isActive idVerificationStatus isIdentityVerified"
+      "active idVerificationStatus isIdentityVerified"
     );
 
     if (!user) {
       return next(new Error("Hotel user not found."));
     }
 
-    if (user.isActive === false) {
+    if (user.active === false) {
       return next(new Error("Hotel user account is deactivated."));
     }
 
@@ -390,15 +410,13 @@ io.use(async (socket, next) => {
 
     return next();
   } catch (error) {
-    console.error("Socket auth error:", error.message);
+    console.error("Socket auth error:", error?.message || error);
     return next(new Error("Socket authentication failed."));
   }
 });
 
 io.on("connection", (socket) => {
-  const role = socket.data.role;
-
-  if (role === "admin") {
+  if (socket.data.role === "admin") {
     socket.join("hotel-chat-admins");
 
     socket.on("hotelChat:joinAdmin", () => {
@@ -418,7 +436,7 @@ io.on("connection", (socket) => {
     return;
   }
 
-  if (role === "user") {
+  if (socket.data.role === "user") {
     const userId = socket.data.userId;
 
     socket.join(`hotel-chat-user-${userId}`);

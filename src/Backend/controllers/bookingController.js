@@ -11,10 +11,12 @@ import {
 const BOOKING_GAP_MINUTES = 60;
 const BOOKING_GAP_MS = BOOKING_GAP_MINUTES * 60 * 1000;
 
-
 const SEASONAL_MARKUP_PERCENT = 10;
 const WEEKEND_MARKUP_PERCENT = 5;
 const MONTHLY_BOOKING_MARKUP_PERCENT = 1;
+
+const MAX_ADDITIONAL_PAX = 20;
+const ADDITIONAL_PAX_RATE = 250;
 
 function getDatePartsFromISO(dateString = "") {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ""))) return null;
@@ -54,7 +56,11 @@ function getMonthRange(dateString = "") {
   };
 }
 
-function calculateDynamicPrice({ basePrice = 0, date = "", monthlyBookingCount = 0 }) {
+function calculateDynamicPrice({
+  basePrice = 0,
+  date = "",
+  monthlyBookingCount = 0,
+}) {
   const safeBasePrice = Number(basePrice || 0);
   const safeMonthlyCount = Math.max(0, Number(monthlyBookingCount || 0));
 
@@ -64,9 +70,12 @@ function calculateDynamicPrice({ basePrice = 0, date = "", monthlyBookingCount =
   const weekendIncreasePercent = isWeekendDate(date)
     ? WEEKEND_MARKUP_PERCENT
     : 0;
-  const monthlyBookingIncreasePercent = safeMonthlyCount * MONTHLY_BOOKING_MARKUP_PERCENT;
+  const monthlyBookingIncreasePercent =
+    safeMonthlyCount * MONTHLY_BOOKING_MARKUP_PERCENT;
   const totalIncreasePercent =
-    seasonalIncreasePercent + weekendIncreasePercent + monthlyBookingIncreasePercent;
+    seasonalIncreasePercent +
+    weekendIncreasePercent +
+    monthlyBookingIncreasePercent;
 
   return {
     basePrice: safeBasePrice,
@@ -80,7 +89,6 @@ function calculateDynamicPrice({ basePrice = 0, date = "", monthlyBookingCount =
     totalIncreasePercent,
   };
 }
-
 
 const EIGHT_HOUR_TIME_SLOTS = [
   "Daytime: 6:00 AM - 2:00 PM",
@@ -511,7 +519,11 @@ async function computePrice(venue, category) {
   return Number(variant.price || 0);
 }
 
-async function countMonthlyConfirmedResortBookings({ venue, date, excludeBookingId = "" }) {
+async function countMonthlyConfirmedResortBookings({
+  venue,
+  date,
+  excludeBookingId = "",
+}) {
   const range = getMonthRange(date);
   if (!range) return 0;
 
@@ -528,7 +540,6 @@ async function countMonthlyConfirmedResortBookings({ venue, date, excludeBooking
 
   return ResortBooking.countDocuments(query);
 }
-
 
 function todayLocalISO() {
   const d = new Date();
@@ -786,14 +797,17 @@ export const createResortBooking = async (req, res) => {
 
     const selectedPackage = await findPackageForVenue(venue);
     const capacityLimit = getPackageCapacityLimit(selectedPackage, venue);
+    const maxBookablePax = capacityLimit
+      ? capacityLimit + MAX_ADDITIONAL_PAX
+      : null;
 
     if (!Number.isFinite(pax) || pax <= 0) {
       return res.status(400).json({ message: "Pax must be at least 1." });
     }
 
-    if (capacityLimit && pax > capacityLimit) {
+    if (maxBookablePax && pax > maxBookablePax) {
       return res.status(400).json({
-        message: `Maximum capacity for this venue is ${capacityLimit} pax.`,
+        message: `Maximum bookable pax for this venue is ${maxBookablePax} pax (${capacityLimit} base + ${MAX_ADDITIONAL_PAX} additional).`,
       });
     }
 
@@ -840,7 +854,10 @@ export const createResortBooking = async (req, res) => {
       monthlyBookingCount: monthlyConfirmedBookings,
     });
 
-    const price = dynamicPricing.finalPrice;
+    const baseAmount = dynamicPricing.finalPrice;
+    const additionalPax = capacityLimit ? Math.max(0, pax - capacityLimit) : 0;
+    const additionalPaxCharge = additionalPax * ADDITIONAL_PAX_RATE;
+    const price = baseAmount + additionalPaxCharge;
 
     const conflict = await findConfirmedTimeConflict({
       venue,
@@ -875,6 +892,13 @@ export const createResortBooking = async (req, res) => {
       kids: 0,
       price,
       basePrice: dynamicPricing.basePrice,
+      baseAmount,
+      baseCapacity: capacityLimit || 0,
+      maxBookablePax: maxBookablePax || pax,
+      maxAdditionalPax: MAX_ADDITIONAL_PAX,
+      additionalPax,
+      additionalPaxRate: ADDITIONAL_PAX_RATE,
+      additionalPaxCharge,
       seasonalIncreasePercent: dynamicPricing.seasonalIncreasePercent,
       weekendIncreasePercent: dynamicPricing.weekendIncreasePercent,
       monthlyBookingIncreasePercent: dynamicPricing.monthlyBookingIncreasePercent,
@@ -986,6 +1010,8 @@ export const checkResortAvailability = async (req, res) => {
       available: !conflict,
       basePrice,
       price: dynamicPricing.finalPrice,
+      maxAdditionalPax: MAX_ADDITIONAL_PAX,
+      additionalPaxRate: ADDITIONAL_PAX_RATE,
       dynamicPricing,
       startDateTime: interval.startDateTime,
       endDateTime: interval.endDateTime,
@@ -1021,14 +1047,36 @@ export const getMyResortBookings = async (req, res) => {
 
 export const adminGetAllResortBookings = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      success: false,
+      message: guard.message,
+    });
+  }
 
   try {
-    const rows = await ResortBooking.find().sort({ createdAt: -1 });
-    return res.status(200).json(rows);
+    const bookings = await ResortBooking.find()
+      .populate(
+        "userId",
+        "firstName lastName fullName name email phone contactNumber"
+      )
+      .select("-proof.data")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      bookings,
+    });
   } catch (err) {
     console.error("adminGetAllResortBookings error:", err);
-    return res.status(500).json({ message: "Error fetching bookings." });
+
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching resort bookings.",
+      bookings: [],
+    });
   }
 };
 
@@ -1334,7 +1382,11 @@ export const adminGetResortRescheduleOptions = async (req, res) => {
     ]);
 
     const candidates = [
-      ...resortRows.map((row) => ({ ...row, bookingType: "resort", sourceLabel: "Resort & Venue" })),
+      ...resortRows.map((row) => ({
+        ...row,
+        bookingType: "resort",
+        sourceLabel: "Resort & Venue",
+      })),
       ...eventRows.map((row) => ({
         ...row,
         date: row.eventDate,

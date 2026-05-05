@@ -8,6 +8,8 @@ import {
   scheduleManpowerInterview,
   rejectManpowerApplicant,
   hireManpowerApplicant,
+  rescreenManpowerApplicantResume,
+  rescreenManpowerApplicantResumes,
   listManpowerEmployees,
   listManpowerLeavesForHr,
   approveManpowerLeave,
@@ -36,6 +38,16 @@ router.post(
 );
 router.post("/applications/:id/reject", verifyManpowerHr, rejectManpowerApplicant);
 router.post("/applications/:id/hire", verifyManpowerHr, hireManpowerApplicant);
+router.post(
+  "/applications/:id/rescreen-resume",
+  verifyManpowerHr,
+  rescreenManpowerApplicantResume
+);
+router.post(
+  "/applications/rescreen-resumes",
+  verifyManpowerHr,
+  rescreenManpowerApplicantResumes
+);
 
 router.get("/employees", verifyManpowerHr, listManpowerEmployees);
 

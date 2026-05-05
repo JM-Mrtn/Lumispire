@@ -34,6 +34,9 @@ import HotelGuestReviews from "./HotelAndRestaurant/HotelGuestReviews";
 import HotelAdminReviews from "./HotelAndRestaurant/HotelAdminReviews";
 import HotelChat from "./HotelAndRestaurant/HotelChat";
 import HotelAdminChat from "./HotelAndRestaurant/HotelAdminChat";
+import HotelFaqs from "./HotelAndRestaurant/HotelFaqs";
+import HotelChatButton from "./HotelAndRestaurant/HotelChatButton";
+
 
 /* ===================== HOTEL AUTH ===================== */
 import HotelLogIn from "./HotelAndRestaurant/HotelLogIn";
@@ -45,7 +48,6 @@ import HotelChangePassword from "./HotelAndRestaurant/HotelChangePassword";
 
 /* ===================== HOTEL PROFILE ===================== */
 import HotelProfile from "./HotelAndRestaurant/HotelProfile";
-import HotelEditProfile from "./HotelAndRestaurant/HotelEditProfile";
 import HotelContactUs from "./HotelAndRestaurant/HotelContactUs";
 
 /* ===================== HOTEL ADMIN ===================== */
@@ -185,6 +187,57 @@ const LtcAdminProtectedRoute = ({ children }) => {
   return token ? children : <Navigate to="/ltc-admin-login" replace />;
 };
 
+const HOTEL_CHAT_ALLOWED_PATHS = [
+  "/hotel-resort",
+  "/resort-venue",
+  "/hotel-condo",
+  "/event-package",
+  "/virtual-tour",
+  "/hotel-faqs",
+  "/hotel-contact-us",
+  "/hotel-profile",
+  "/hotel-guest-reviews",
+  "/hotel-recommendations",
+  "/event-form",
+  "/event-summary",
+  "/resort-form",
+  "/resort-summary",
+  "/hotel-booking-form",
+  "/hotel-booking-summary",
+];
+
+const HOTEL_CHAT_BLOCKED_PATH_PREFIXES = [
+  "/hotel-chat",
+  "/hotel-admin",
+  "/hotel-login",
+  "/hotel-signup",
+  "/hotel-forgot-password",
+  "/hotel-reset-password",
+  "/hotel-change-password",
+  "/email-confirmation",
+];
+
+const FloatingAssistants = () => {
+  const { pathname } = useLocation();
+
+  const showHotelChatButton =
+    HOTEL_CHAT_ALLOWED_PATHS.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`)
+    ) &&
+    !HOTEL_CHAT_BLOCKED_PATH_PREFIXES.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`)
+    );
+
+  const showManpowerChatbot = pathname.startsWith("/manpower");
+
+  return (
+    <>
+      {showHotelChatButton ? <HotelChatButton /> : null}
+      {showManpowerChatbot ? <ManpowerChatbot /> : null}
+    </>
+  );
+};
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Router>
@@ -212,6 +265,8 @@ createRoot(document.getElementById("root")).render(
         <Route path="/hotel-condo" element={<HotelOrCondo />} />
         <Route path="/event-package" element={<EventPackage />} />
         <Route path="/virtual-tour" element={<VirtualTour />} />
+        <Route path="/hotel-faqs" element={<HotelFaqs />} />
+        
 
         <Route
           path="/event-form"
@@ -306,14 +361,6 @@ createRoot(document.getElementById("root")).render(
           }
         />
 
-        <Route
-          path="/hotel-edit-profile"
-          element={
-            <HotelProtectedRoute>
-              <HotelEditProfile />
-            </HotelProtectedRoute>
-          }
-        />
 
         <Route
           path="/hotel-guest-reviews"
@@ -807,7 +854,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      <ManpowerChatbot />
+      <FloatingAssistants />
     </Router>
   </StrictMode>
 );

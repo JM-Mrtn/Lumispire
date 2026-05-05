@@ -75,6 +75,8 @@ const hotelChatMessageSchema = new mongoose.Schema(
 
 hotelChatMessageSchema.index({ conversationUser: 1, createdAt: 1 });
 hotelChatMessageSchema.index({ conversationUser: 1, concernType: 1, createdAt: -1 });
+hotelChatMessageSchema.index({ senderRole: 1, readByAdmin: 1, createdAt: -1 });
+hotelChatMessageSchema.index({ senderRole: 1, readByUser: 1, createdAt: -1 });
 
 const HotelChatMessage =
   mongoose.models.HotelChatMessage ||

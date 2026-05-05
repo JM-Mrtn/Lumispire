@@ -421,6 +421,24 @@ export async function hotelLogIn(req, res) {
 /* ===================== VERIFY EMAIL ===================== */
 
 export async function verifyEmail(req, res) {
+  const shouldRedirect =
+    String(req.query?.redirect || "") === "1" ||
+    !String(req.headers.accept || "").includes("application/json");
+
+  const getLoginRedirectUrl = (status = "success") => {
+    const frontendBase = (
+      process.env.CORS_ORIGIN ||
+      process.env.FRONTEND_URL ||
+      "http://localhost:5173"
+    ).replace(/\/+$/, "");
+
+    return `${frontendBase}/hotel-login?verified=${encodeURIComponent(status)}`;
+  };
+
+  const redirectToLogin = (status = "success") => {
+    return res.redirect(302, getLoginRedirectUrl(status));
+  };
+
   try {
     const verificationToken = cleanText(
       req.params?.verificationToken ||
@@ -432,6 +450,8 @@ export async function verifyEmail(req, res) {
     );
 
     if (!verificationToken) {
+      if (shouldRedirect) return redirectToLogin("missing-token");
+
       return res.status(400).json({
         success: false,
         message: "Verification token is required.",
@@ -448,6 +468,8 @@ export async function verifyEmail(req, res) {
     );
 
     if (!user) {
+      if (shouldRedirect) return redirectToLogin("invalid-or-expired");
+
       return res.status(400).json({
         success: false,
         message: "Invalid or expired verification token.",
@@ -458,6 +480,8 @@ export async function verifyEmail(req, res) {
       user.verificationTokenExpiry || user.emailVerificationExpiresAt || null;
 
     if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
+      if (shouldRedirect) return redirectToLogin("expired");
+
       return res.status(400).json({
         success: false,
         message: "Verification token has expired. Please request a new one.",
@@ -476,6 +500,8 @@ export async function verifyEmail(req, res) {
 
     await user.save();
 
+    if (shouldRedirect) return redirectToLogin("success");
+
     return res.status(200).json({
       success: true,
       message: "Email verified successfully.",
@@ -483,6 +509,8 @@ export async function verifyEmail(req, res) {
     });
   } catch (error) {
     console.error("verifyEmail error:", error);
+
+    if (shouldRedirect) return redirectToLogin("server-error");
 
     return res.status(500).json({
       success: false,

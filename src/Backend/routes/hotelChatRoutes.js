@@ -11,11 +11,11 @@ import {
 
 const router = express.Router();
 
-/* User private conversation with admin */
+/* USER: verified hotel guest conversation */
 router.get("/my/messages", requireHotelVerifiedUser, getMyHotelChatMessages);
 router.post("/my/messages", requireHotelVerifiedUser, sendMyHotelChatMessage);
 
-/* Admin conversation inbox */
+/* ADMIN: support inbox */
 router.get(
   "/admin/conversations",
   requireHotelAdmin,

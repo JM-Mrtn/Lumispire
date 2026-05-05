@@ -1,33 +1,102 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import ChatbotWidget from "./ChatbotWidget";
 
 const LOGO = "/LTCLogo.jpg";
-
-const BRAND = "#355E3B";
-const ACCENT = "#1F8F5A";
 const CONTACT_ROUTE = "/contact";
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontActor = { fontFamily: "'Actor', sans-serif" };
 const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 
+const mapUrl =
+  "https://www.google.com/maps?q=5411%20Light%20Tower%20Center%20Curie%20Street%20Palanan%20Makati%20City&output=embed";
+
+const ContactIcon = ({ type }) => {
+  const commonClass = "h-4 w-4 text-white";
+
+  if (type === "location") {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        className={commonClass}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 21s7-4.6 7-11a7 7 0 1 0-14 0c0 6.4 7 11 7 11z"
+        />
+        <circle cx="12" cy="10" r="2.5" />
+      </svg>
+    );
+  }
+
+  if (type === "mail") {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        className={commonClass}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4V6z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m4 7 8 6 8-6" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={commonClass}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2" />
+    </svg>
+  );
+};
+
+const ContactInfoItem = ({ icon, title, children }) => (
+  <div className="flex gap-3">
+    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#355E3B]">
+      <ContactIcon type={icon} />
+    </div>
+
+    <div className="min-w-0">
+      <h4
+        className="text-[14px] font-extrabold leading-tight text-black md:text-[15px]"
+        style={fontMontserrat}
+      >
+        {title}
+      </h4>
+
+      <div
+        className="mt-1 space-y-0.5 text-[12px] leading-relaxed text-gray-600 md:text-[13px]"
+        style={fontPontano}
+      >
+        {children}
+      </div>
+    </div>
+  </div>
+);
+
 const Contact = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const goTo = (path) => {
-    navigate(path);
-    setIsSidebarOpen(false);
-  };
-
-  const MAPS_LINK = "https://maps.app.goo.gl/F7xcQs3L9EgGhChJ8";
-
-  const MAP_EMBED_URL =
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.647939883225!2d120.99862151054666!3d14.56211427795927!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c991472da61b%3A0x3a4930acd0ee798d!2s5441%20Curie%20St%2C%20Makati%20City%2C%201235%20Metro%20Manila!5e0!3m2!1sen!2sph!4v1772554535835!5m2!1sen!2sph";
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
 
   const navLinks = [
     { label: "HOME", to: "/" },
@@ -36,95 +105,52 @@ const Contact = () => {
     { label: "CONTACT", to: CONTACT_ROUTE },
   ];
 
-  const onChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-    alert("Message sent!");
-    setForm({ name: "", email: "", message: "" });
+  const goTo = (path) => {
+    navigate(path);
+    setIsSidebarOpen(false);
   };
 
-  const Row = ({ icon, title, children }) => (
-    <div className="flex gap-4">
-      <div className="mt-0.5 text-[#355E3B]">{icon}</div>
-      <div>
-        <p className="text-[15px] font-bold text-gray-900 md:text-[16px]" style={fontMontserrat}>
-          {title}
-        </p>
-        <div
-          className="mt-1 text-sm leading-relaxed text-gray-600 md:text-[15px]"
-          style={fontPontano}
-        >
-          {children}
-        </div>
-      </div>
-    </div>
-  );
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-  const IconPin = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z"
-      />
-      <circle cx="12" cy="10" r="2.5" />
-    </svg>
-  );
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-  const IconBuilding = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 21V3h10v18" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14 21V7h6v14" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h2M8 11h2M8 15h2" />
-    </svg>
-  );
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
-  const IconPhone = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M22 16.9v3a2 2 0 0 1-2.2 2c-9.9-.9-17.8-8.8-18.7-18.7A2 2 0 0 1 3.1 1h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L7 9c1.5 3 4 5.5 7 7l1.5-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6A2 2 0 0 1 22 16.9z"
-      />
-    </svg>
-  );
-
-  const IconMail = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4h16v16H4V4z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="m4 7 8 6 8-6" />
-    </svg>
-  );
-
-  const IconClock = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
-    </svg>
-  );
+    setFormData({
+      name: "",
+      email: "",
+      message: "",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-white text-gray-900" style={fontPontano}>
       <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[#355E3B] text-white shadow-md">
-        <div className="mx-auto flex h-[74px] max-w-[1600px] items-center justify-between px-4 md:h-[84px] md:px-6 lg:h-[88px] lg:px-8">
-          <div className="flex min-w-0 items-center gap-2 md:gap-3 lg:gap-4">
+        <div className="mx-auto flex h-[64px] max-w-[1600px] items-center justify-between px-4 md:h-[72px] md:px-6 lg:h-[76px] lg:px-8">
+          <div className="flex min-w-0 items-center gap-2 md:gap-3">
             <img
               src={LOGO}
               alt="LTC Logo"
-              className="h-10 w-10 shrink-0 rounded-full bg-white object-cover md:h-[50px] md:w-[50px] lg:h-[56px] lg:w-[56px]"
+              className="h-9 w-9 shrink-0 rounded-full bg-white object-cover md:h-[44px] md:w-[44px] lg:h-[48px] lg:w-[48px]"
             />
 
             <div className="min-w-0 leading-tight">
               <h1
-                className="truncate text-[16px] font-extrabold uppercase tracking-tight md:text-[24px] lg:text-[28px]"
+                className="truncate text-[15px] font-extrabold uppercase tracking-tight md:text-[21px] lg:text-[24px]"
                 style={fontMontserrat}
               >
                 LTC GROUP OF COMPANIES
-                <span className="align-top text-[8px] md:text-[10px] lg:text-[11px]">®</span>
+                <span className="align-top text-[8px] md:text-[10px]">®</span>
               </h1>
+
               <p
-                className="truncate text-[8px] text-white/90 md:text-[12px] lg:text-[13px]"
+                className="truncate text-[8px] text-white/90 md:text-[11px] lg:text-[12px]"
                 style={fontPontano}
               >
                 Providing quality services and training solutions.
@@ -132,18 +158,25 @@ const Contact = () => {
             </div>
           </div>
 
-          <nav className="hidden items-center gap-5 md:flex lg:gap-6" style={fontPoppins}>
+          <nav className="hidden items-center gap-5 md:flex lg:gap-7" style={fontPoppins}>
             {navLinks.map((link) => {
-              const isActive = link.to === CONTACT_ROUTE;
+              const isActive = location.pathname === link.to;
+
               return (
                 <button
                   key={link.label}
                   onClick={() => goTo(link.to)}
-                  className={`text-[12px] font-medium uppercase tracking-tight transition ${
-                    isActive ? "text-white" : "text-white/90 hover:text-white"
+                  className={`group relative pb-1 text-[13px] font-semibold uppercase tracking-normal transition ${
+                    isActive ? "text-white" : "text-white/85 hover:text-white"
                   }`}
                 >
                   {link.label}
+
+                  <span
+                    className={`absolute -bottom-1 left-0 h-[2px] rounded-full bg-white transition-all duration-300 ${
+                      isActive ? "w-full" : "w-0 group-hover:w-full"
+                    }`}
+                  />
                 </button>
               );
             })}
@@ -171,11 +204,13 @@ const Contact = () => {
       {isSidebarOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setIsSidebarOpen(false)} />
+
           <div className="absolute right-0 top-0 h-full w-[300px] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b px-4 py-4">
               <p className="text-sm font-bold tracking-widest text-gray-800" style={fontPoppins}>
                 MENU
               </p>
+
               <button
                 type="button"
                 className="rounded-md p-2 hover:bg-gray-100"
@@ -196,13 +231,16 @@ const Contact = () => {
 
             <div className="p-4" style={fontPoppins}>
               {navLinks.map((link) => {
-                const isActive = link.to === CONTACT_ROUTE;
+                const isActive = location.pathname === link.to;
+
                 return (
                   <button
                     key={link.label}
                     onClick={() => goTo(link.to)}
-                    className={`mb-2 w-full rounded-lg px-4 py-3 text-left text-sm font-semibold tracking-wide ${
-                      isActive ? "bg-[#355E3B] text-white" : "text-gray-800 hover:bg-gray-100"
+                    className={`mb-2 w-full rounded-lg px-4 py-3 text-left text-base font-medium tracking-normal transition ${
+                      isActive
+                        ? "bg-[#355E3B] text-white"
+                        : "text-gray-800 hover:bg-gray-100 hover:text-[#355E3B]"
                     }`}
                   >
                     {link.label}
@@ -214,244 +252,272 @@ const Contact = () => {
         </div>
       )}
 
-      <main className="bg-[#F5F5F3] pt-[74px] md:pt-[84px] lg:pt-[88px]">
-        <section
-          className="relative h-[280px] w-full md:h-[360px]"
-          style={{
-            backgroundImage:
-              "url('https://placehold.co/1600x700/284A35/FFFFFF?text=CONTACT+US')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
-          <div className="absolute inset-0 bg-[#183B29]/55" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#183B29]/20 to-[#183B29]/50" />
+      <main className="bg-[#F5F5F3] pt-[64px] md:pt-[72px] lg:pt-[76px]">
+        <section className="relative h-[200px] w-full overflow-hidden bg-[#183B29] md:h-[230px] lg:h-[250px]">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#183B29] via-[#204A32] to-[#183B29]" />
+
+          <div
+            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[80px] font-black uppercase tracking-tight text-white/20 md:block lg:text-[105px]"
+            style={fontMontserrat}
+          >
+            CONTACT US
+          </div>
 
           <div className="relative mx-auto flex h-full max-w-[1600px] items-center justify-center px-6 text-center">
             <div className="max-w-4xl">
               <h2
-                className="text-[42px] font-extrabold leading-tight text-white md:text-[64px]"
+                className="text-[30px] font-extrabold leading-tight text-white md:text-[44px]"
                 style={fontMontserrat}
               >
                 Contact Us
               </h2>
-              <p className="mt-4 text-[17px] text-white/85 md:text-[19px]" style={fontPontano}>
-                We're here to help with all your inquiries and needs
+
+              <p
+                className="mt-3 text-[14px] font-semibold text-white/95 md:text-[18px]"
+                style={fontPontano}
+              >
+                We’d Love to Hear From You
               </p>
-              <div className="mx-auto mt-6 h-[5px] w-20 rounded-full bg-[#1F8F5A]" />
+
+              <p
+                className="mx-auto mt-2 max-w-2xl text-[12.5px] leading-relaxed text-white/80 md:text-[14px]"
+                style={fontPontano}
+              >
+                Reach out to us through our contact details or send us a message.
+              </p>
+
+              <div className="mx-auto mt-4 h-[4px] w-16 rounded-full bg-[#1F8F5A]" />
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1600px] px-4 py-12 md:px-8 md:py-14">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div className="overflow-hidden rounded-2xl bg-[#F3F3F3] shadow-[0_18px_35px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_28px_55px_rgba(0,0,0,0.22)]">
-              <div className="h-5 bg-[#355E3B]" />
-              <div className="p-7 md:p-8">
+        <section className="mx-auto max-w-[1250px] px-4 py-6 md:px-8 md:py-7">
+          <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2">
+            <section className="flex h-full min-h-[405px] flex-col overflow-hidden rounded-2xl bg-[#F3F3F3] shadow-[0_12px_26px_rgba(0,0,0,0.13)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.18)]">
+              <div className="h-4 shrink-0 bg-[#355E3B]" />
+
+              <div className="flex flex-1 flex-col px-5 py-4 md:px-6 md:py-5">
                 <h3
-                  className="text-[34px] font-extrabold leading-tight text-[#355E3B] md:text-[52px]"
+                  className="text-[24px] font-extrabold leading-tight text-[#355E3B] md:text-[30px]"
                   style={fontMontserrat}
                 >
                   Get in Touch
                 </h3>
 
-                <div className="mt-7 space-y-6">
-                  <Row icon={<IconPin />} title="Main Office">
-                    5411 Light Tower Center &amp; Realty Development, Inc., Building II,
-                    <br />
-                    Curie Street, Palanan, Makati City
-                  </Row>
+                <p
+                  className="mt-2 max-w-3xl text-[12px] leading-relaxed text-gray-600 md:text-[13px]"
+                  style={fontPontano}
+                >
+                  Reach us through our contact information below. We will be happy to assist you
+                  with your questions about our services.
+                </p>
 
-                  <Row icon={<IconBuilding />} title="Training Center">
-                    Light Tower Center, 1730 Dian Street, Palanan, Makati City
-                  </Row>
+                <div className="mt-5 grid flex-1 grid-cols-1 gap-4">
+                  <ContactInfoItem icon="location" title="Main Office">
+                    <p>
+                      5411 Light Tower Center &amp; Realty Development, Inc., Building II, Curie
+                      Street, Palanan, Makati City.
+                    </p>
+                  </ContactInfoItem>
 
-                  <Row icon={<IconPhone />} title="Phone Numbers">
-                    (02) 8632 6513
-                    <br />
-                    (02) 7254 0275
-                  </Row>
+                  <ContactInfoItem icon="location" title="Additional Address">
+                    <p>Light Tower Center, 1730 Dian Street, Palanan, Makati City.</p>
+                  </ContactInfoItem>
 
-                  <Row icon={<IconMail />} title="Email Contacts">
-                    lornacastigador@ltcmultiservices.com
-                    <br />
-                    lorengladius@ltcmultiservices.com
-                    <br />
-                    Admin@ltcmultiservices.com
-                  </Row>
+                  <ContactInfoItem icon="mail" title="Email Contacts">
+                    <p>lornacastigador@ltcmultiservices.com</p>
+                    <p>lorengladius@ltcmultiservices.com</p>
+                    <p>Admin@ltcmultiservices.com</p>
+                  </ContactInfoItem>
 
-                  <Row icon={<IconClock />} title="Operating Hours">
-                    Monday - Friday : 8:00 AM - 5:00 PM
-                    <br />
-                    Saturday : 9:00 AM - 12:00 PM
-                    <br />
-                    Sunday : Closed
-                  </Row>
+                  <ContactInfoItem icon="time" title="Operating Hours">
+                    <p>Monday - Friday: 8:00 AM - 5:00 PM</p>
+                    <p>Saturday: 9:00 AM - 12:00 PM</p>
+                    <p>Sunday: Closed</p>
+                  </ContactInfoItem>
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div className="overflow-hidden rounded-2xl bg-[#F3F3F3] shadow-[0_18px_35px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_28px_55px_rgba(0,0,0,0.22)]">
-              <div className="h-5 bg-[#355E3B]" />
-              <div className="p-7 md:p-8">
+            <section className="flex h-full min-h-[405px] flex-col overflow-hidden rounded-2xl bg-[#F3F3F3] shadow-[0_12px_26px_rgba(0,0,0,0.13)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.18)]">
+              <div className="h-4 shrink-0 bg-[#355E3B]" />
+
+              <form onSubmit={handleSubmit} className="flex flex-1 flex-col px-5 py-4 md:px-6 md:py-5">
                 <h3
-                  className="text-center text-[34px] font-extrabold leading-tight text-[#355E3B] md:text-left md:text-[52px]"
+                  className="text-[24px] font-extrabold leading-tight text-[#355E3B] md:text-[30px]"
                   style={fontMontserrat}
                 >
                   Send Us a Message
                 </h3>
 
-                <form onSubmit={onSubmit} className="mt-7">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                      <label
-                        className="mb-2 block text-sm font-bold text-[#355E3B]"
-                        style={fontMontserrat}
-                      >
-                        Name
-                      </label>
-                      <input
-                        name="name"
-                        value={form.name}
-                        onChange={onChange}
-                        className="h-12 w-full rounded-md bg-gray-200/90 px-4 outline-none transition focus:ring-2 focus:ring-emerald-300"
-                        style={fontPontano}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        className="mb-2 block text-sm font-bold text-[#355E3B]"
-                        style={fontMontserrat}
-                      >
-                        Email Address
-                      </label>
-                      <input
-                        name="email"
-                        value={form.email}
-                        onChange={onChange}
-                        className="h-12 w-full rounded-md bg-gray-200/90 px-4 outline-none transition focus:ring-2 focus:ring-emerald-300"
-                        style={fontPontano}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
                     <label
-                      className="mb-2 block text-sm font-bold text-[#355E3B]"
+                      htmlFor="name"
+                      className="text-[12px] font-bold text-[#355E3B] md:text-[13px]"
                       style={fontMontserrat}
                     >
-                      Your Message
+                      Name
                     </label>
-                    <textarea
-                      name="message"
-                      value={form.message}
-                      onChange={onChange}
-                      rows={8}
-                      className="w-full resize-none rounded-md bg-gray-200/90 px-4 py-3 outline-none transition focus:ring-2 focus:ring-emerald-300"
-                      style={fontPontano}
+
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="mt-1.5 h-10 w-full rounded-lg border border-transparent bg-[#E6E9ED] px-3 text-[13px] outline-none transition focus:border-[#355E3B] focus:bg-white"
                     />
                   </div>
 
-                  <div className="mt-8 flex justify-center md:justify-start">
-                    <button
-                      type="submit"
-                      className="inline-flex items-center justify-center rounded-full bg-[#355E3B] px-10 py-4 text-[18px] font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-[#2C5233] hover:shadow-lg md:text-[20px]"
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="text-[12px] font-bold text-[#355E3B] md:text-[13px]"
                       style={fontMontserrat}
                     >
-                      Send Message
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
+                      Email Address
+                    </label>
 
-          <section className="mt-14">
-            <div className="overflow-hidden rounded-2xl bg-[#F3F3F3] shadow-[0_18px_35px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_28px_55px_rgba(0,0,0,0.22)]">
-              <div className="h-5 bg-[#355E3B]" />
-              <div className="p-7 md:p-10">
-                <div className="text-center">
-                  <h3
-                    className="text-[34px] font-extrabold leading-tight text-[#355E3B] md:text-[56px]"
-                    style={fontMontserrat}
-                  >
-                    Find Us
-                  </h3>
-                  <div className="mx-auto mt-4 h-[5px] w-24 rounded-full bg-[#355E3B]" />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="mt-1.5 h-10 w-full rounded-lg border border-transparent bg-[#E6E9ED] px-3 text-[13px] outline-none transition focus:border-[#355E3B] focus:bg-white"
+                    />
+                  </div>
                 </div>
 
-                <div className="mt-8 overflow-hidden rounded-xl bg-gray-100">
-                  <iframe
-                    title="LTC Location Map"
-                    src={MAP_EMBED_URL}
-                    className="h-[260px] w-full md:h-[420px]"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
+                <div className="mt-4 flex flex-1 flex-col">
+                  <label
+                    htmlFor="message"
+                    className="text-[12px] font-bold text-[#355E3B] md:text-[13px]"
+                    style={fontMontserrat}
+                  >
+                    Your Message
+                  </label>
+
+                  <textarea
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    className="mt-1.5 min-h-[150px] flex-1 resize-none rounded-lg border border-transparent bg-[#E6E9ED] px-3 py-3 text-[13px] outline-none transition focus:border-[#355E3B] focus:bg-white"
                   />
                 </div>
 
-                <div className="mt-7 flex justify-center">
-                  <a
-                    href={MAPS_LINK}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-full bg-[#355E3B] px-10 py-4 text-[18px] font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-[#2C5233] hover:shadow-lg md:text-[20px]"
+                <button
+                  type="submit"
+                  className="mt-5 inline-flex w-fit items-center justify-center rounded-full bg-[#355E3B] px-6 py-2.5 text-[13px] font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-[#2C5233] hover:shadow-lg"
+                  style={fontMontserrat}
+                >
+                  Send Message
+                </button>
+              </form>
+            </section>
+          </div>
+
+          <section className="mt-5 overflow-hidden rounded-2xl bg-[#F3F3F3] shadow-[0_12px_26px_rgba(0,0,0,0.13)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.18)]">
+            <div className="h-4 bg-[#355E3B]" />
+
+            <div className="px-5 py-5 md:px-6">
+              <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h3
+                    className="text-[22px] font-extrabold leading-tight text-[#355E3B] md:text-[30px]"
                     style={fontMontserrat}
                   >
-                    Open in Google Maps
-                  </a>
+                    Find Us on Map
+                  </h3>
+
+                  <p
+                    className="mt-1 text-[12px] leading-relaxed text-gray-600 md:text-[13px]"
+                    style={fontPontano}
+                  >
+                    5411 Light Tower Center &amp; Realty Development, Inc., Building II, Curie
+                    Street, Palanan, Makati City.
+                  </p>
                 </div>
+
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=5411%20Light%20Tower%20Center%20Curie%20Street%20Palanan%20Makati%20City"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex w-fit items-center justify-center rounded-full bg-[#355E3B] px-5 py-2 text-[12.5px] font-semibold text-white transition hover:bg-[#2C5233] md:mt-0"
+                  style={fontMontserrat}
+                >
+                  Open Map
+                </a>
+              </div>
+
+              <div className="h-[260px] overflow-hidden rounded-xl border border-[#D8DED8] bg-white md:h-[300px] lg:h-[320px]">
+                <iframe
+                  title="LTC Group of Companies Location Map"
+                  src={mapUrl}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
               </div>
             </div>
           </section>
         </section>
 
         <footer className="bg-[#355E3B] text-white">
-          <div className="mx-auto max-w-[1600px] px-4 py-3 md:px-6 md:py-4">
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-[1.35fr_1fr_1.2fr_1.2fr] md:gap-0">
-              <div className="flex items-center gap-3 pr-0 md:pr-6">
+          <div className="mx-auto max-w-[1600px] px-4 py-1.5 md:px-6 md:py-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.2fr_0.9fr_1fr_1fr] md:gap-0">
+              <div className="flex items-center gap-2 pr-0 md:pr-4">
                 <img
                   src={LOGO}
                   alt="LTC Logo"
-                  className="h-10 w-10 shrink-0 rounded-full bg-white object-cover md:h-[44px] md:w-[44px]"
+                  className="h-7 w-7 shrink-0 rounded-full bg-white object-cover md:h-[32px] md:w-[32px]"
                 />
+
                 <div className="min-w-0">
                   <h2
-                    className="text-[32px] font-black uppercase leading-none md:text-[42px]"
+                    className="text-[13px] font-black uppercase leading-tight md:text-[15px]"
                     style={fontMontserrat}
                   >
-                    LUMISPIRE
+                    LTC GROUP OF COMPANIES
                   </h2>
                 </div>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-6">
+              <div className="md:border-l md:border-white/35 md:px-4">
                 <h3
-                  className="text-[11px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-wide"
                   style={fontMontserrat}
                 >
                   MENU
                 </h3>
-                <div className="mt-1 h-[2px] w-[110px] bg-white/35" />
-                <ul className="mt-2 space-y-[4px] text-[12px] text-white/90" style={fontPontano}>
+
+                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+
+                <ul
+                  className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
+                  style={fontPontano}
+                >
                   <li>
                     <button onClick={() => goTo("/")} className="hover:text-white">
                       Home
                     </button>
                   </li>
+
                   <li>
                     <button onClick={() => goTo("/about-us")} className="hover:text-white">
                       About Us
                     </button>
                   </li>
+
                   <li>
                     <button onClick={() => goTo("/team")} className="hover:text-white">
                       Team
                     </button>
                   </li>
+
                   <li>
                     <button onClick={() => goTo(CONTACT_ROUTE)} className="hover:text-white">
                       Contact Us
@@ -460,16 +526,18 @@ const Contact = () => {
                 </ul>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-6">
+              <div className="md:border-l md:border-white/35 md:px-4">
                 <h3
-                  className="text-[11px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-wide"
                   style={fontMontserrat}
                 >
                   CONTACT
                 </h3>
-                <div className="mt-1 h-[2px] w-[110px] bg-white/35" />
+
+                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+
                 <ul
-                  className="mt-2 space-y-[4px] text-[12px] leading-relaxed text-white/90"
+                  className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
                   style={fontPontano}
                 >
                   <li>lornacastigador@ltcmultiservices.com</li>
@@ -478,29 +546,33 @@ const Contact = () => {
                 </ul>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-6">
+              <div className="md:border-l md:border-white/35 md:px-4">
                 <h3
-                  className="text-[11px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-wide"
                   style={fontMontserrat}
                 >
                   ADDRESS
                 </h3>
-                <div className="mt-1 h-[2px] w-[110px] bg-white/35" />
+
+                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+
                 <ul
-                  className="mt-2 space-y-[6px] text-[12px] leading-relaxed text-white/90"
+                  className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
                   style={fontPontano}
                 >
                   <li>
-                    5411 Light Tower Center &amp; Realty Development, Inc. Building II, Curie
+                    5411 Light Tower Center &amp; Realty Development, Inc., Building II, Curie
                     Street, Palanan, Makati City.
                   </li>
+
                   <li>Light Tower Center, 1730 Dian Street, Palanan, Makati City.</li>
                 </ul>
               </div>
             </div>
 
-            <div className="mt-3 flex flex-col gap-1 border-t border-white/15 pt-2 text-[10px] text-white/90 md:flex-row md:items-center md:justify-between">
-              <p style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights</p>
+            <div className="mt-2 flex flex-col gap-1 border-t border-white/15 pt-1.5 text-[9.5px] leading-snug text-white/90 md:flex-row md:items-center md:justify-between">
+              <p style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
+
               <p className="text-left md:text-right" style={fontPontano}>
                 Developed by CRMS Tech Alliance
               </p>
@@ -508,6 +580,7 @@ const Contact = () => {
           </div>
         </footer>
       </main>
+
       <ChatbotWidget />
     </div>
   );

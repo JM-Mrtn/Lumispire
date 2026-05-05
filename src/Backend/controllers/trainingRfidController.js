@@ -4,18 +4,37 @@ import TraineeRfidLog from "../models/TraineeRfidLog.js";
 import TrainingRfidSession from "../models/TrainingRfidSession.js";
 
 const RFID_TIMEOUT_COOLDOWN_MINUTES = 10;
-const HOUSEKEEPING_COURSE = "Housekeeping";
-const DEFAULT_STATION = "Housekeeping RFID Station";
+const DEFAULT_STATION = "Training RFID Station";
 
 function getFullName(user) {
   return `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
 }
 
+function toTitleCase(value = "") {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function normalizeCourseName(value = "") {
-  const clean = String(value || "").trim().toLowerCase();
+  const raw = String(value || "").trim();
+  const clean = raw.toLowerCase();
+
   if (clean === "housekeeping") return "Housekeeping";
-  if (clean === "event management") return "Event Management";
-  return String(value || "").trim();
+  if (clean === "event management" || clean === "events management") {
+    return "Event Management";
+  }
+  if (clean === "cookery") return "Cookery";
+
+  return raw || toTitleCase(value);
+}
+
+function normalizeUid(value = "") {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
 }
 
 function getProfessorAllowedCourses(req) {
@@ -23,13 +42,55 @@ function getProfessorAllowedCourses(req) {
     ? req.professor.courseAssignments
     : [];
 
-  return [
-    ...new Set(raw.map((item) => normalizeCourseName(item)).filter(Boolean)),
-  ];
+  return [...new Set(raw.map((item) => normalizeCourseName(item)).filter(Boolean))];
 }
 
 function isProfessorAllowedForCourse(req, course = "") {
-  return getProfessorAllowedCourses(req).includes(normalizeCourseName(course));
+  const normalized = normalizeCourseName(course);
+  return getProfessorAllowedCourses(req).includes(normalized);
+}
+
+function resolveProfessorCourse(req, requestedCourse = "") {
+  const allowedCourses = getProfessorAllowedCourses(req);
+  const normalizedRequested = normalizeCourseName(requestedCourse);
+
+  if (!allowedCourses.length) {
+    return {
+      ok: false,
+      status: 403,
+      message: "Professor has no assigned course.",
+      course: "",
+      allowedCourses,
+    };
+  }
+
+  if (normalizedRequested) {
+    if (!allowedCourses.includes(normalizedRequested)) {
+      return {
+        ok: false,
+        status: 403,
+        message: "You are not allowed to manage RFID attendance for this course.",
+        course: "",
+        allowedCourses,
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      message: "",
+      course: normalizedRequested,
+      allowedCourses,
+    };
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    message: "",
+    course: allowedCourses[0],
+    allowedCourses,
+  };
 }
 
 function getManilaDateOnly(date = new Date()) {
@@ -49,6 +110,7 @@ function getManilaDateOnly(date = new Date()) {
 
 function formatManilaDateTime(value) {
   if (!value) return "-";
+
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "-";
 
@@ -62,6 +124,11 @@ function formatManilaDateTime(value) {
   });
 }
 
+function csvEscape(value = "") {
+  const safe = String(value ?? "");
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+
 function getCooldownRemainingParts(cooldownUntil) {
   const diffMs = new Date(cooldownUntil).getTime() - Date.now();
   const safe = Math.max(0, diffMs);
@@ -70,22 +137,20 @@ function getCooldownRemainingParts(cooldownUntil) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
 
-  return {
-    totalSeconds,
-    minutes,
-    seconds,
-  };
+  return { totalSeconds, minutes, seconds };
 }
 
 function buildCooldownMessage(cooldownUntil) {
   const { minutes, seconds } = getCooldownRemainingParts(cooldownUntil);
+
   if (minutes <= 0) {
     return `Please wait ${seconds} second(s) before timing out again.`;
   }
+
   return `Please wait ${minutes} minute(s) and ${seconds} second(s) before timing out again.`;
 }
 
-function mapSession(session) {
+function mapSession(session, extra = {}) {
   if (!session) return null;
 
   return {
@@ -101,6 +166,9 @@ function mapSession(session) {
     openedByProfessorEmail: session.openedByProfessorEmail || "",
     closedByProfessorName: session.closedByProfessorName || "",
     closedByProfessorEmail: session.closedByProfessorEmail || "",
+    scanCount: Number(extra.scanCount || 0),
+    timeInCount: Number(extra.timeInCount || 0),
+    timeOutCount: Number(extra.timeOutCount || 0),
   };
 }
 
@@ -125,15 +193,19 @@ function getLogMessage(log) {
   return "RFID scan processed.";
 }
 
-function mapLog(log) {
+function mapLog(log, traineeMap = new Map()) {
+  const traineeId = log?.traineeId ? String(log.traineeId) : "";
+  const trainee = traineeMap.get(traineeId);
+
   return {
     _id: log._id,
     id: String(log._id),
-    traineeId: log?.traineeId ? String(log.traineeId) : "",
+    traineeId,
     sessionId: log?.sessionId ? String(log.sessionId) : "",
     uid: log?.uid || "",
-    traineeName: log?.traineeName || "",
-    course: log?.course || "",
+    traineeName: log?.traineeName || trainee?.fullName || "",
+    traineeEmail: trainee?.email || "",
+    course: log?.course || trainee?.course || "",
     attendanceDate: log?.attendanceDate || "",
     action: log?.action || "time_in",
     status: log?.status || "success",
@@ -146,9 +218,73 @@ function mapLog(log) {
   };
 }
 
+async function buildTraineeMapForLogs(logs = []) {
+  const traineeIds = [
+    ...new Set(
+      logs
+        .map((log) => (log?.traineeId ? String(log.traineeId) : ""))
+        .filter(Boolean)
+    ),
+  ];
+
+  if (!traineeIds.length) return new Map();
+
+  const trainees = await TraineeUser.find({ _id: { $in: traineeIds } })
+    .select("_id firstName lastName email course")
+    .lean();
+
+  return new Map(
+    trainees.map((trainee) => [
+      String(trainee._id),
+      {
+        fullName: getFullName(trainee),
+        email: trainee.email || "",
+        course: trainee.course || "",
+      },
+    ])
+  );
+}
+
+async function getSessionLogSummary(sessionIds = []) {
+  const ids = sessionIds
+    .filter(Boolean)
+    .map((id) => new mongoose.Types.ObjectId(String(id)));
+
+  if (!ids.length) return new Map();
+
+  const rows = await TraineeRfidLog.aggregate([
+    {
+      $match: {
+        sessionId: { $in: ids },
+        status: "success",
+      },
+    },
+    {
+      $group: {
+        _id: "$sessionId",
+        scanCount: { $sum: 1 },
+        timeInCount: {
+          $sum: {
+            $cond: [{ $eq: ["$action", "time_in"] }, 1, 0],
+          },
+        },
+        timeOutCount: {
+          $sum: {
+            $cond: [{ $eq: ["$action", "time_out"] }, 1, 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  return new Map(rows.map((row) => [String(row._id), row]));
+}
+
 async function closeOtherOpenSessions(course, excludeId, closer = {}) {
+  const normalizedCourse = normalizeCourseName(course);
+
   const filter = {
-    course,
+    course: normalizedCourse,
     isOpen: true,
   };
 
@@ -167,11 +303,25 @@ async function closeOtherOpenSessions(course, excludeId, closer = {}) {
   });
 }
 
-export const getRfidTrainees = async (req, res) => {
+async function findTraineeByNormalizedUid(normalizedUid = "") {
+  const cleanUid = normalizeUid(normalizedUid);
+  if (!cleanUid) return null;
+
+  return TraineeUser.findOne({
+    $or: [
+      { rfidUid: cleanUid },
+      { rfidUid: String(normalizedUid || "").trim().toUpperCase() },
+    ],
+  });
+}
+
+export const getRfidTrainees = async (_req, res) => {
   try {
     const trainees = await TraineeUser.find({})
-      .select("_id firstName lastName email active rfidUid trainingStatus course")
-      .sort({ firstName: 1, lastName: 1 });
+      .select(
+        "_id firstName lastName email active rfidUid trainingStatus course batchCode batchName"
+      )
+      .sort({ course: 1, firstName: 1, lastName: 1 });
 
     const formatted = trainees.map((trainee) => ({
       _id: trainee._id,
@@ -181,6 +331,8 @@ export const getRfidTrainees = async (req, res) => {
       rfidUid: trainee.rfidUid || "",
       trainingStatus: trainee.trainingStatus || "",
       course: trainee.course || "",
+      batchCode: trainee.batchCode || "",
+      batchName: trainee.batchName || "",
     }));
 
     return res.json(formatted);
@@ -194,19 +346,12 @@ export const getRfidTrainees = async (req, res) => {
 
 export const registerTraineeRfid = async (req, res) => {
   try {
-    const { traineeId, uid } = req.body;
+    const { traineeId, uid } = req.body || {};
+    const normalizedUid = normalizeUid(uid);
 
-    if (!traineeId || !uid) {
+    if (!traineeId || !normalizedUid) {
       return res.status(400).json({
-        message: "traineeId and uid are required.",
-      });
-    }
-
-    const normalizedUid = String(uid).trim().toUpperCase();
-
-    if (!normalizedUid) {
-      return res.status(400).json({
-        message: "RFID UID is required.",
+        message: "traineeId and valid uid are required.",
       });
     }
 
@@ -233,6 +378,7 @@ export const registerTraineeRfid = async (req, res) => {
         _id: trainee._id,
         fullName: getFullName(trainee),
         email: trainee.email || "",
+        course: trainee.course || "",
         rfidUid: trainee.rfidUid,
       },
     });
@@ -264,6 +410,7 @@ export const removeTraineeRfid = async (req, res) => {
         _id: trainee._id,
         fullName: getFullName(trainee),
         email: trainee.email || "",
+        course: trainee.course || "",
         rfidUid: "",
       },
     });
@@ -277,40 +424,46 @@ export const removeTraineeRfid = async (req, res) => {
 
 export const openProfessorRfidAttendance = async (req, res) => {
   try {
-    const requestedCourse = normalizeCourseName(
-      req.body?.course || req.query?.course || HOUSEKEEPING_COURSE
+    const courseContext = resolveProfessorCourse(
+      req,
+      req.body?.course || req.query?.course || ""
     );
 
-    if (requestedCourse !== HOUSEKEEPING_COURSE) {
-      return res.status(400).json({
+    if (!courseContext.ok) {
+      return res.status(courseContext.status).json({
         success: false,
-        message: "RFID attendance is available for Housekeeping only.",
+        message: courseContext.message,
+        allowedCourses: courseContext.allowedCourses,
       });
     }
 
-    if (!isProfessorAllowedForCourse(req, HOUSEKEEPING_COURSE)) {
-      return res.status(403).json({
-        success: false,
-        message: "Only the Housekeeping professor can open RFID attendance.",
-      });
-    }
-
+    const course = courseContext.course;
     const attendanceDate = String(
-      req.body?.attendanceDate || req.query?.attendanceDate || getManilaDateOnly()
+      req.body?.attendanceDate ||
+        req.query?.attendanceDate ||
+        getManilaDateOnly()
     ).trim();
 
-    const station = String(req.body?.station || DEFAULT_STATION).trim() || DEFAULT_STATION;
+    const station =
+      String(req.body?.station || req.query?.station || "").trim() ||
+      `${course} RFID Station`;
 
     const existingOpen = await TrainingRfidSession.findOne({
-      course: HOUSEKEEPING_COURSE,
+      course,
       isOpen: true,
     }).sort({ openedAt: -1 });
 
     if (existingOpen && String(existingOpen.attendanceDate) === attendanceDate) {
+      const summaryMap = await getSessionLogSummary([existingOpen._id]);
+
       return res.status(200).json({
         success: true,
-        message: "RFID attendance is already open.",
-        session: mapSession(existingOpen),
+        message: `${course} RFID attendance is already open.`,
+        allowedCourses: courseContext.allowedCourses,
+        session: mapSession(
+          existingOpen,
+          summaryMap.get(String(existingOpen._id)) || {}
+        ),
       });
     }
 
@@ -323,14 +476,14 @@ export const openProfessorRfidAttendance = async (req, res) => {
       await existingOpen.save();
     }
 
-    await closeOtherOpenSessions(HOUSEKEEPING_COURSE, null, {
+    await closeOtherOpenSessions(course, null, {
       id: req.professor?.id || null,
       name: req.professor?.name || "",
       email: req.professor?.email || "",
     });
 
     const session = await TrainingRfidSession.create({
-      course: HOUSEKEEPING_COURSE,
+      course,
       attendanceDate,
       station,
       isOpen: true,
@@ -342,11 +495,20 @@ export const openProfessorRfidAttendance = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Housekeeping RFID attendance opened successfully.",
+      message: `${course} RFID attendance opened successfully.`,
+      allowedCourses: courseContext.allowedCourses,
       session: mapSession(session),
     });
   } catch (error) {
     console.error("openProfessorRfidAttendance error:", error);
+
+    if (Number(error?.code || 0) === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "RFID attendance is already open for this course.",
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Failed to open RFID attendance.",
@@ -356,24 +518,35 @@ export const openProfessorRfidAttendance = async (req, res) => {
 
 export const closeProfessorRfidAttendance = async (req, res) => {
   try {
-    if (!isProfessorAllowedForCourse(req, HOUSEKEEPING_COURSE)) {
-      return res.status(403).json({
-        success: false,
-        message: "Only the Housekeeping professor can close RFID attendance.",
-      });
-    }
-
     const sessionId = String(req.body?.sessionId || req.query?.sessionId || "").trim();
-
     let session = null;
 
     if (sessionId && mongoose.Types.ObjectId.isValid(sessionId)) {
       session = await TrainingRfidSession.findById(sessionId);
+      if (session && !isProfessorAllowedForCourse(req, session.course)) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not allowed to close RFID attendance for this course.",
+        });
+      }
     }
 
     if (!session) {
+      const courseContext = resolveProfessorCourse(
+        req,
+        req.body?.course || req.query?.course || ""
+      );
+
+      if (!courseContext.ok) {
+        return res.status(courseContext.status).json({
+          success: false,
+          message: courseContext.message,
+          allowedCourses: courseContext.allowedCourses,
+        });
+      }
+
       session = await TrainingRfidSession.findOne({
-        course: HOUSEKEEPING_COURSE,
+        course: courseContext.course,
         isOpen: true,
       }).sort({ openedAt: -1 });
     }
@@ -392,10 +565,12 @@ export const closeProfessorRfidAttendance = async (req, res) => {
     session.closedByProfessorEmail = req.professor?.email || "";
     await session.save();
 
+    const summaryMap = await getSessionLogSummary([session._id]);
+
     return res.status(200).json({
       success: true,
-      message: "Housekeeping RFID attendance closed successfully.",
-      session: mapSession(session),
+      message: `${session.course} RFID attendance closed successfully.`,
+      session: mapSession(session, summaryMap.get(String(session._id)) || {}),
     });
   } catch (error) {
     console.error("closeProfessorRfidAttendance error:", error);
@@ -408,47 +583,73 @@ export const closeProfessorRfidAttendance = async (req, res) => {
 
 export const getProfessorRfidAttendanceStatus = async (req, res) => {
   try {
-    if (!isProfessorAllowedForCourse(req, HOUSEKEEPING_COURSE)) {
+    const allowedCourses = getProfessorAllowedCourses(req);
+
+    if (!allowedCourses.length) {
       return res.status(403).json({
         success: false,
-        message: "Only the Housekeeping professor can view RFID attendance.",
+        message: "Professor has no assigned course.",
+        allowedCourses: [],
       });
     }
 
+    const requestedCourse = normalizeCourseName(req.query?.course || "");
     const attendanceDate = String(
       req.query?.attendanceDate || getManilaDateOnly()
     ).trim();
 
+    if (requestedCourse && !allowedCourses.includes(requestedCourse)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to view RFID attendance for this course.",
+        allowedCourses,
+      });
+    }
+
+    const query = {
+      course: requestedCourse || { $in: allowedCourses },
+      attendanceDate,
+    };
+
     const requestedSessionId = String(req.query?.sessionId || "").trim();
 
-    const sessions = await TrainingRfidSession.find({
-      course: HOUSEKEEPING_COURSE,
-      attendanceDate,
-    })
-      .sort({ openedAt: -1 })
+    const sessions = await TrainingRfidSession.find(query)
+      .sort({ openedAt: -1, createdAt: -1 })
       .lean();
 
-    let selectedSession =
+    const summaryMap = await getSessionLogSummary(
+      sessions.map((session) => session._id)
+    );
+
+    const selectedSession =
       sessions.find((item) => String(item._id) === requestedSessionId) ||
       sessions.find((item) => item.isOpen === true) ||
       sessions[0] ||
       null;
 
-    const logs = selectedSession
-      ? await TraineeRfidLog.find({
-          sessionId: selectedSession._id,
-        })
+    const rawLogs = selectedSession
+      ? await TraineeRfidLog.find({ sessionId: selectedSession._id })
           .sort({ createdAt: -1 })
-          .limit(200)
+          .limit(500)
           .lean()
       : [];
 
+    const traineeMap = await buildTraineeMapForLogs(rawLogs);
+
     return res.status(200).json({
       success: true,
+      allowedCourses,
       cooldownMinutes: RFID_TIMEOUT_COOLDOWN_MINUTES,
-      session: mapSession(selectedSession),
-      sessions: sessions.map(mapSession),
-      logs: logs.map(mapLog),
+      session: selectedSession
+        ? mapSession(
+            selectedSession,
+            summaryMap.get(String(selectedSession._id)) || {}
+          )
+        : null,
+      sessions: sessions.map((session) =>
+        mapSession(session, summaryMap.get(String(session._id)) || {})
+      ),
+      logs: rawLogs.map((log) => mapLog(log, traineeMap)),
     });
   } catch (error) {
     console.error("getProfessorRfidAttendanceStatus error:", error);
@@ -459,20 +660,139 @@ export const getProfessorRfidAttendanceStatus = async (req, res) => {
   }
 };
 
+export const exportProfessorRfidAttendance = async (req, res) => {
+  try {
+    const allowedCourses = getProfessorAllowedCourses(req);
+
+    if (!allowedCourses.length) {
+      return res.status(403).json({
+        success: false,
+        message: "Professor has no assigned course.",
+      });
+    }
+
+    const sessionId = String(req.query?.sessionId || "").trim();
+    const requestedCourse = normalizeCourseName(req.query?.course || "");
+    const attendanceDate = String(
+      req.query?.attendanceDate || getManilaDateOnly()
+    ).trim();
+
+    let session = null;
+
+    if (sessionId && mongoose.Types.ObjectId.isValid(sessionId)) {
+      session = await TrainingRfidSession.findById(sessionId).lean();
+
+      if (session && !allowedCourses.includes(normalizeCourseName(session.course))) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not allowed to export RFID attendance for this course.",
+        });
+      }
+    }
+
+    if (!session) {
+      if (requestedCourse && !allowedCourses.includes(requestedCourse)) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not allowed to export RFID attendance for this course.",
+        });
+      }
+
+      session = await TrainingRfidSession.findOne({
+        course: requestedCourse || { $in: allowedCourses },
+        attendanceDate,
+      })
+        .sort({ openedAt: -1 })
+        .lean();
+    }
+
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: "RFID attendance session not found.",
+      });
+    }
+
+    const rawLogs = await TraineeRfidLog.find({ sessionId: session._id })
+      .sort({ createdAt: 1 })
+      .lean();
+
+    const traineeMap = await buildTraineeMapForLogs(rawLogs);
+    const logs = rawLogs.map((log) => mapLog(log, traineeMap));
+
+    const rows = [
+      [
+        "Course",
+        "Session Date",
+        "Station",
+        "Session Status",
+        "Opened At",
+        "Closed At",
+        "Trainee Name",
+        "Trainee Email",
+        "UID",
+        "Action",
+        "Scan Status",
+        "Scan Time",
+        "Message",
+      ],
+      ...logs.map((log) => [
+        session.course || "",
+        session.attendanceDate || "",
+        session.station || "",
+        session.isOpen ? "Open" : "Closed",
+        formatManilaDateTime(session.openedAt),
+        formatManilaDateTime(session.closedAt),
+        log.traineeName || "",
+        log.traineeEmail || "",
+        log.uid || "",
+        log.action || "",
+        log.status || "",
+        formatManilaDateTime(log.createdAt),
+        log.message || "",
+      ]),
+    ];
+
+    const csv = rows
+      .map((row) => row.map((cell) => csvEscape(cell)).join(","))
+      .join("\n");
+
+    const safeCourse = String(session.course || "rfid")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const filename = `${safeCourse}-rfid-attendance-${session.attendanceDate || "session"}.csv`;
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+    return res.status(200).send(csv);
+  } catch (error) {
+    console.error("exportProfessorRfidAttendance error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to export RFID attendance.",
+    });
+  }
+};
+
 export const scanTraineeRfid = async (req, res) => {
   try {
-    const { uid, station = DEFAULT_STATION } = req.body;
+    const uid = req.body?.uid;
+    const station =
+      String(req.body?.station || DEFAULT_STATION).trim() || DEFAULT_STATION;
+    const normalizedUid = normalizeUid(uid);
 
-    if (!uid) {
+    if (!normalizedUid) {
       return res.status(400).json({
+        ok: false,
         message: "UID is required.",
       });
     }
 
-    const normalizedUid = String(uid).trim().toUpperCase();
     const scanDate = getManilaDateOnly();
-
-    const trainee = await TraineeUser.findOne({ rfidUid: normalizedUid });
+    const trainee = await findTraineeByNormalizedUid(normalizedUid);
 
     if (!trainee) {
       const unknownLog = await TraineeRfidLog.create({
@@ -511,15 +831,21 @@ export const scanTraineeRfid = async (req, res) => {
       });
     }
 
-    if (traineeCourse !== HOUSEKEEPING_COURSE) {
+    if (!traineeCourse) {
       return res.status(403).json({
         ok: false,
-        message: "RFID attendance is enabled for Housekeeping trainees only.",
+        message: "This trainee has no assigned course.",
+        trainee: {
+          _id: trainee._id,
+          fullName: getFullName(trainee),
+          email: trainee.email || "",
+          course: trainee.course || "",
+        },
       });
     }
 
     const activeSession = await TrainingRfidSession.findOne({
-      course: HOUSEKEEPING_COURSE,
+      course: traineeCourse,
       isOpen: true,
     }).sort({ openedAt: -1 });
 
@@ -537,7 +863,13 @@ export const scanTraineeRfid = async (req, res) => {
 
       return res.status(403).json({
         ok: false,
-        message: "RFID attendance is not open right now.",
+        message: `RFID attendance is not open right now for ${traineeCourse}.`,
+        trainee: {
+          _id: trainee._id,
+          fullName: getFullName(trainee),
+          email: trainee.email || "",
+          course: trainee.course || "",
+        },
         log: mapLog(noSessionLog),
       });
     }
@@ -564,13 +896,11 @@ export const scanTraineeRfid = async (req, res) => {
     if (successfulTimeIn && successfulTimeOut) {
       return res.status(409).json({
         ok: false,
-        message: `${getFullName(
-          trainee
-        )} already completed RFID attendance for this open session.`,
+        message: `${getFullName(trainee)} already completed RFID attendance for this open session.`,
         trainee: {
           _id: trainee._id,
           fullName: getFullName(trainee),
-          email: trainee.email,
+          email: trainee.email || "",
           course: trainee.course || "",
         },
         session: mapSession(activeSession),
@@ -593,7 +923,7 @@ export const scanTraineeRfid = async (req, res) => {
           trainee: {
             _id: trainee._id,
             fullName: getFullName(trainee),
-            email: trainee.email,
+            email: trainee.email || "",
             course: trainee.course || "",
           },
           session: mapSession(activeSession),
@@ -615,13 +945,14 @@ export const scanTraineeRfid = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
+      success: true,
       message: `${getFullName(trainee)} ${
         nextAction === "time_in" ? "timed in" : "timed out"
       } successfully.`,
       trainee: {
         _id: trainee._id,
         fullName: getFullName(trainee),
-        email: trainee.email,
+        email: trainee.email || "",
         course: trainee.course || "",
       },
       session: mapSession(activeSession),
@@ -630,6 +961,7 @@ export const scanTraineeRfid = async (req, res) => {
   } catch (error) {
     console.error("scanTraineeRfid error:", error);
     return res.status(500).json({
+      ok: false,
       message: "Failed to process trainee RFID scan.",
     });
   }
@@ -637,32 +969,27 @@ export const scanTraineeRfid = async (req, res) => {
 
 export const getTraineeRfidLogs = async (req, res) => {
   try {
-    const { traineeId, date, sessionId, course } = req.query;
+    const { traineeId, date, sessionId, course } = req.query || {};
 
     const filter = {};
 
-    if (traineeId) {
-      filter.traineeId = traineeId;
-    }
+    if (traineeId) filter.traineeId = traineeId;
 
     if (sessionId && mongoose.Types.ObjectId.isValid(String(sessionId))) {
       filter.sessionId = sessionId;
     }
 
-    if (course) {
-      filter.course = normalizeCourseName(course);
-    }
-
-    if (date) {
-      filter.attendanceDate = String(date).trim();
-    }
+    if (course) filter.course = normalizeCourseName(course);
+    if (date) filter.attendanceDate = String(date).trim();
 
     const logs = await TraineeRfidLog.find(filter)
       .sort({ createdAt: -1 })
       .limit(200)
       .lean();
 
-    return res.json(logs.map(mapLog));
+    const traineeMap = await buildTraineeMapForLogs(logs);
+
+    return res.json(logs.map((log) => mapLog(log, traineeMap)));
   } catch (error) {
     console.error("getTraineeRfidLogs error:", error);
     return res.status(500).json({

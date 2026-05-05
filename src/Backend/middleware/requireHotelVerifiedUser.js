@@ -1,21 +1,35 @@
 import jwt from "jsonwebtoken";
 import HotelUser from "../models/hotelUser.js";
 
-const getHotelJwtSecret = () => {
+function getHotelJwtSecret() {
   return (
-    process.env.HOTEL_JWT_SECRET ||
-    process.env.JWT_SECRET ||
-    process.env.SECRET_KEY ||
-    "hotel_secret_key"
+    String(process.env.HOTEL_JWT_SECRET || "").trim() ||
+    String(process.env.JWT_SECRET || "").trim() ||
+    String(process.env.SECRET_KEY || "").trim()
   );
-};
+}
+
+function getBearerToken(req) {
+  const authHeader = String(req.headers.authorization || "").trim();
+  return authHeader.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7).trim()
+    : "";
+}
+
+function getUserIdFromDecoded(decoded = {}) {
+  return (
+    decoded.id ||
+    decoded._id ||
+    decoded.userId ||
+    decoded.hotelUserId ||
+    decoded.sub ||
+    ""
+  );
+}
 
 export default async function requireHotelVerifiedUser(req, res, next) {
   try {
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null;
+    const token = getBearerToken(req);
 
     if (!token) {
       return res.status(401).json({
@@ -24,14 +38,17 @@ export default async function requireHotelVerifiedUser(req, res, next) {
       });
     }
 
-    const decoded = jwt.verify(token, getHotelJwtSecret());
+    const secret = getHotelJwtSecret();
 
-    const userId =
-      decoded.id ||
-      decoded._id ||
-      decoded.userId ||
-      decoded.hotelUserId ||
-      decoded.sub;
+    if (!secret) {
+      return res.status(500).json({
+        success: false,
+        message: "HOTEL_JWT_SECRET, JWT_SECRET, or SECRET_KEY is missing in .env.",
+      });
+    }
+
+    const decoded = jwt.verify(token, secret);
+    const userId = getUserIdFromDecoded(decoded);
 
     if (!userId) {
       return res.status(401).json({
@@ -40,7 +57,9 @@ export default async function requireHotelVerifiedUser(req, res, next) {
       });
     }
 
-    const user = await HotelUser.findById(userId).select("-password");
+    const user = await HotelUser.findById(userId).select(
+      "firstName lastName fullName name email phone active idVerificationStatus isIdentityVerified"
+    );
 
     if (!user) {
       return res.status(404).json({
@@ -49,7 +68,8 @@ export default async function requireHotelVerifiedUser(req, res, next) {
       });
     }
 
-    if (user.isActive === false) {
+    // Your HotelUser model uses `active`, not `isActive`.
+    if (user.active === false) {
       return res.status(403).json({
         success: false,
         message: "Your account is deactivated.",
@@ -57,8 +77,7 @@ export default async function requireHotelVerifiedUser(req, res, next) {
     }
 
     const isVerified =
-      user.isIdentityVerified === true ||
-      user.idVerificationStatus === "verified";
+      user.isIdentityVerified === true || user.idVerificationStatus === "verified";
 
     if (!isVerified) {
       return res.status(403).json({
@@ -69,10 +88,11 @@ export default async function requireHotelVerifiedUser(req, res, next) {
 
     req.hotelUser = user;
     req.hotelUserId = user._id;
+    req.hotelUserDecoded = decoded;
 
-    next();
+    return next();
   } catch (error) {
-    console.error("requireHotelVerifiedUser error:", error);
+    console.error("requireHotelVerifiedUser error:", error?.message || error);
     return res.status(401).json({
       success: false,
       message: "Invalid or expired hotel user token.",

@@ -3,19 +3,26 @@ import { useLocation } from "react-router-dom";
 
 function normalizeApiBase(raw) {
   const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
+
   if (clean.endsWith("/api")) return clean;
-  if (clean.includes("/api/")) return clean.replace(/\/api\/.*$/i, "/api");
+
+  if (clean.includes("/api/")) {
+    return clean.replace(/\/api\/.*$/i, "/api");
+  }
+
   return `${clean}/api`;
 }
 
 const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
-const STORAGE_KEY = "manpower-chatbot-messages-v2";
+const STORAGE_KEY = "manpower-chatbot-messages-v3";
+const REQUEST_TIMEOUT_MS = 15000;
+const MAX_STORED_MESSAGES = 30;
 
 const INITIAL_MESSAGES = [
   {
     id: "welcome",
     role: "assistant",
-    text: "Hi. I’m the LTC Manpower Services assistant. Ask me about job openings, requirements, application steps, exams, interview schedules, payroll, or contact details.",
+    text: "Hi. I’m the LTC Manpower Services assistant. Ask me about job openings, requirements, application steps, exams, interview schedules, payroll, leave requests, employee login, OTP password change, or contact details.",
   },
 ];
 
@@ -23,7 +30,7 @@ const QUICK_ACTIONS = [
   "What job openings are available?",
   "What requirements do I need?",
   "How do I apply?",
-  "Will I take an exam after applying?",
+  "How can I check my payroll?",
 ];
 
 function shouldShowChatbot(pathname = "") {
@@ -38,15 +45,35 @@ function shouldShowChatbot(pathname = "") {
   return true;
 }
 
+function createMessage(role, text) {
+  return {
+    id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    role,
+    text: String(text || "").trim(),
+  };
+}
+
+function sanitizeMessages(value) {
+  if (!Array.isArray(value)) return INITIAL_MESSAGES;
+
+  const cleaned = value
+    .map((item) => ({
+      id: String(item?.id || `${item?.role || "message"}-${Date.now()}`),
+      role: item?.role === "user" ? "user" : "assistant",
+      text: String(item?.text || "").trim(),
+    }))
+    .filter((item) => item.text)
+    .slice(-MAX_STORED_MESSAGES);
+
+  return cleaned.length ? cleaned : INITIAL_MESSAGES;
+}
+
 function loadStoredMessages() {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return INITIAL_MESSAGES;
 
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || !parsed.length) return INITIAL_MESSAGES;
-
-    return parsed;
+    return sanitizeMessages(JSON.parse(raw));
   } catch {
     return INITIAL_MESSAGES;
   }
@@ -130,7 +157,7 @@ function MessageBubble({ role, text }) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${
+        className={`max-w-[85%] whitespace-pre-line break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${
           isUser
             ? "rounded-br-md bg-[#395345] text-white"
             : "rounded-bl-md border border-[#d7decf] bg-[#f8faf6] text-[#24352c]"
@@ -152,6 +179,41 @@ function TypingBubble() {
   );
 }
 
+async function postChatbotMessage({ question, history }) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${API_BASE}/manpower/chatbot`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ question, history }),
+      signal: controller.signal,
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data?.message || "Failed to contact the chatbot.");
+    }
+
+    return (
+      String(data?.reply || "").trim() ||
+      "Sorry, I could not answer that right now."
+    );
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("The chatbot took too long to respond. Please try again.");
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 export default function ManpowerChatbot() {
   const location = useLocation();
 
@@ -168,13 +230,16 @@ export default function ManpowerChatbot() {
   const bodyRef = useRef(null);
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    const cleaned = sanitizeMessages(messages);
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
   }, [messages]);
 
   useEffect(() => {
     if (!open) return;
+
     const node = bodyRef.current;
     if (!node) return;
+
     node.scrollTop = node.scrollHeight;
   }, [messages, loading, open]);
 
@@ -184,62 +249,36 @@ export default function ManpowerChatbot() {
     const question = String(rawText || input).trim();
     if (!question || loading) return;
 
-    const userMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      text: question,
-    };
-
-    const nextMessages = [...messages, userMessage];
+    const userMessage = createMessage("user", question);
+    const nextMessages = sanitizeMessages([...messages, userMessage]);
 
     setMessages(nextMessages);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/manpower/chatbot`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question,
-          history: nextMessages.slice(-8).map((item) => ({
-            role: item.role,
-            text: item.text,
-          })),
-        }),
+      const reply = await postChatbotMessage({
+        question,
+        history: nextMessages.slice(-8).map((item) => ({
+          role: item.role,
+          text: item.text,
+        })),
       });
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to contact the chatbot.");
-      }
-
-      const reply =
-        String(data?.reply || "").trim() ||
-        "Sorry, I could not answer that right now.";
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          text: reply,
-        },
-      ]);
+      setMessages((prev) =>
+        sanitizeMessages([...prev, createMessage("assistant", reply)])
+      );
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-error-${Date.now()}`,
-          role: "assistant",
-          text:
+      setMessages((prev) =>
+        sanitizeMessages([
+          ...prev,
+          createMessage(
+            "assistant",
             error?.message ||
-            "Sorry, something went wrong while contacting the chatbot.",
-        },
-      ]);
+              "Sorry, something went wrong while contacting the chatbot. Please check if the backend server is running."
+          ),
+        ])
+      );
     } finally {
       setLoading(false);
     }
@@ -271,8 +310,8 @@ export default function ManpowerChatbot() {
                   Manpower Services Chat
                 </h3>
                 <p className="mt-1 text-xs text-white/85">
-                  Ask about jobs, requirements, application steps, exams, and
-                  contact details.
+                  Ask about jobs, requirements, application steps, exams,
+                  payroll, leave requests, and contact details.
                 </p>
               </div>
 

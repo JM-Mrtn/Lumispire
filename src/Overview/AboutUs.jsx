@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import ChatbotWidget from "./ChatbotWidget";
 import { getPublicLtcContent, pickPublicLtcImage } from "./ltcContentApi";
 
@@ -10,7 +10,7 @@ const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
 const fontActor = { fontFamily: "'Actor', sans-serif" };
 const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 
-const RevealOnScroll = ({ children, className = "", delay = 0, y = 28 }) => {
+const RevealOnScroll = ({ children, className = "", delay = 0, y = 20 }) => {
   const ref = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -27,7 +27,7 @@ const RevealOnScroll = ({ children, className = "", delay = 0, y = 28 }) => {
       },
       {
         threshold: 0.12,
-        rootMargin: "0px 0px -50px 0px",
+        rootMargin: "0px 0px -40px 0px",
       }
     );
 
@@ -42,7 +42,7 @@ const RevealOnScroll = ({ children, className = "", delay = 0, y = 28 }) => {
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
-        transition: "opacity 700ms ease, transform 700ms ease",
+        transition: "opacity 650ms ease, transform 650ms ease",
         transitionDelay: `${delay}ms`,
         willChange: "opacity, transform",
       }}
@@ -55,7 +55,7 @@ const RevealOnScroll = ({ children, className = "", delay = 0, y = 28 }) => {
 const EyeIcon = () => (
   <svg
     viewBox="0 0 24 24"
-    className="h-12 w-12 text-[#355E3B]"
+    className="h-8 w-8 text-[#355E3B]"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
@@ -72,7 +72,7 @@ const EyeIcon = () => (
 const FlagIcon = () => (
   <svg
     viewBox="0 0 24 24"
-    className="h-12 w-12 text-[#355E3B]"
+    className="h-8 w-8 text-[#355E3B]"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
@@ -83,13 +83,15 @@ const FlagIcon = () => (
 );
 
 const StarIcon = () => (
-  <svg viewBox="0 0 24 24" className="h-10 w-10 text-[#F3C326]" fill="currentColor">
+  <svg viewBox="0 0 24 24" className="h-9 w-9 text-[#F3C326]" fill="currentColor">
     <path d="M12 2.5l2.86 6.12 6.64.57-5.03 4.35 1.52 6.46L12 16.9 6.01 20l1.52-6.46L2.5 9.19l6.64-.57L12 2.5z" />
   </svg>
 );
 
 const AboutUs = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All Photos");
   const [ltcContent, setLtcContent] = useState(null);
@@ -286,36 +288,40 @@ const AboutUs = () => {
 
   useEffect(() => {
     if (selectedCategory === "All Photos") return;
+
     const exists = highlightCategories.includes(selectedCategory);
+
     if (!exists) setSelectedCategory("All Photos");
   }, [highlightCategories, selectedCategory]);
 
   const visibleHighlights = useMemo(() => {
     if (selectedCategory === "All Photos") return highlightItems;
+
     return highlightItems.filter((item) => item.category === selectedCategory);
   }, [selectedCategory, highlightItems]);
 
   return (
     <div className="min-h-screen bg-white text-gray-900" style={fontPontano}>
       <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[#355E3B] text-white shadow-md">
-        <div className="mx-auto flex h-[74px] max-w-[1600px] items-center justify-between px-4 md:h-[84px] md:px-6 lg:h-[88px] lg:px-8">
-          <div className="flex min-w-0 items-center gap-2 md:gap-3 lg:gap-4">
+        <div className="mx-auto flex h-[64px] max-w-[1600px] items-center justify-between px-4 md:h-[72px] md:px-6 lg:h-[76px] lg:px-8">
+          <div className="flex min-w-0 items-center gap-2 md:gap-3">
             <img
               src={LOGO}
               alt="LTC Logo"
-              className="h-10 w-10 shrink-0 rounded-full bg-white object-cover md:h-[50px] md:w-[50px] lg:h-[56px] lg:w-[56px]"
+              className="h-9 w-9 shrink-0 rounded-full bg-white object-cover md:h-[44px] md:w-[44px] lg:h-[48px] lg:w-[48px]"
             />
 
             <div className="min-w-0 leading-tight">
               <h1
-                className="truncate text-[16px] font-extrabold uppercase tracking-tight md:text-[24px] lg:text-[28px]"
+                className="truncate text-[15px] font-extrabold uppercase tracking-tight md:text-[21px] lg:text-[24px]"
                 style={fontMontserrat}
               >
                 LTC GROUP OF COMPANIES
-                <span className="align-top text-[8px] md:text-[10px] lg:text-[11px]">®</span>
+                <span className="align-top text-[8px] md:text-[10px]">®</span>
               </h1>
+
               <p
-                className="truncate text-[8px] text-white/90 md:text-[12px] lg:text-[13px]"
+                className="truncate text-[8px] text-white/90 md:text-[11px] lg:text-[12px]"
                 style={fontPontano}
               >
                 Providing quality services and training solutions.
@@ -323,18 +329,25 @@ const AboutUs = () => {
             </div>
           </div>
 
-          <nav className="hidden items-center gap-5 md:flex lg:gap-6" style={fontPoppins}>
+          <nav className="hidden items-center gap-5 md:flex lg:gap-7" style={fontPoppins}>
             {navLinks.map((link) => {
-              const isActive = link.to === "/about-us";
+              const isActive = location.pathname === link.to;
+
               return (
                 <button
                   key={link.label}
                   onClick={() => goTo(link.to)}
-                  className={`text-[12px] font-medium uppercase tracking-tight transition ${
-                    isActive ? "text-white" : "text-white/90 hover:text-white"
+                  className={`group relative pb-1 text-[13px] font-semibold uppercase tracking-normal transition ${
+                    isActive ? "text-white" : "text-white/85 hover:text-white"
                   }`}
                 >
                   {link.label}
+
+                  <span
+                    className={`absolute -bottom-1 left-0 h-[2px] rounded-full bg-white transition-all duration-300 ${
+                      isActive ? "w-full" : "w-0 group-hover:w-full"
+                    }`}
+                  />
                 </button>
               );
             })}
@@ -362,11 +375,13 @@ const AboutUs = () => {
       {isSidebarOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setIsSidebarOpen(false)} />
+
           <div className="absolute right-0 top-0 h-full w-[300px] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b px-4 py-4">
               <p className="text-sm font-bold tracking-widest text-gray-800" style={fontPoppins}>
                 MENU
               </p>
+
               <button
                 type="button"
                 className="rounded-md p-2 hover:bg-gray-100"
@@ -387,13 +402,16 @@ const AboutUs = () => {
 
             <div className="p-4" style={fontPoppins}>
               {navLinks.map((link) => {
-                const isActive = link.to === "/about-us";
+                const isActive = location.pathname === link.to;
+
                 return (
                   <button
                     key={link.label}
                     onClick={() => goTo(link.to)}
-                    className={`mb-2 w-full rounded-lg px-4 py-3 text-left text-sm font-semibold tracking-wide ${
-                      isActive ? "bg-[#355E3B] text-white" : "text-gray-800 hover:bg-gray-100"
+                    className={`mb-2 w-full rounded-lg px-4 py-3 text-left text-base font-medium tracking-normal transition ${
+                      isActive
+                        ? "bg-[#355E3B] text-white"
+                        : "text-gray-800 hover:bg-gray-100 hover:text-[#355E3B]"
                     }`}
                   >
                     {link.label}
@@ -405,60 +423,63 @@ const AboutUs = () => {
         </div>
       )}
 
-      <main className="bg-[#F5F5F3] pt-[74px] md:pt-[84px] lg:pt-[88px]">
-        <section className="mx-auto max-w-[1600px] bg-[#F5F5F3] px-4 py-10 md:px-8 md:py-14">
+      <main className="bg-[#F5F5F3] pt-[64px] md:pt-[72px] lg:pt-[76px]">
+        <section className="mx-auto max-w-[1400px] bg-[#F5F5F3] px-4 py-7 md:px-8 md:py-8">
           <RevealOnScroll className="text-center">
             <h2
-              className="text-4xl font-extrabold tracking-tight text-black md:text-[58px]"
+              className="text-[30px] font-extrabold tracking-tight text-black md:text-[44px]"
               style={fontMontserrat}
             >
               About us
             </h2>
-            <div className="mx-auto mt-3 h-[4px] w-24 rounded-full bg-[#355E3B]" />
-            <p className="mt-4 text-sm text-gray-500 md:text-[18px]" style={fontPontano}>
+
+            <div className="mx-auto mt-2.5 h-[4px] w-16 rounded-full bg-[#355E3B]" />
+
+            <p className="mt-3 text-[13px] text-gray-500 md:text-[15px]" style={fontPontano}>
               Learn about our history, mission, vision, and values
             </p>
 
             <h3
-              className="mt-10 text-[28px] font-black uppercase tracking-tight text-[#355E3B] md:text-[48px]"
+              className="mt-7 text-[28px] font-black uppercase tracking-tight text-[#355E3B] md:text-[40px]"
               style={fontMontserrat}
             >
               OUR COMPANY
             </h3>
-            <div className="mx-auto mt-3 h-[4px] w-40 rounded-full bg-[#355E3B]" />
+
+            <div className="mx-auto mt-2.5 h-[4px] w-28 rounded-full bg-[#355E3B]" />
           </RevealOnScroll>
 
-          <div className="relative mx-auto mt-14 max-w-6xl">
-            <div className="absolute bottom-0 left-4 top-0 w-[3px] bg-[#BFD1C1] md:left-1/2 md:-translate-x-1/2" />
+          <div className="relative mx-auto mt-10 max-w-5xl">
+            <div className="absolute bottom-0 left-4 top-0 w-[2px] bg-[#C9D7CB] md:left-1/2 md:-translate-x-1/2" />
 
-            <div className="space-y-3 md:space-y-0">
+            <div className="space-y-1 md:space-y-0">
               {timeline.map((item, index) => {
                 const isLeft = item.side === "left";
 
                 return (
                   <RevealOnScroll
                     key={`${item.title}-${index}`}
-                    delay={index * 120}
-                    className={`relative flex py-8 md:min-h-[220px] md:items-center ${
+                    delay={index * 90}
+                    className={`relative flex py-5 md:min-h-[170px] md:items-center ${
                       isLeft ? "md:justify-start" : "md:justify-end"
                     }`}
                   >
-                    <div className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[#2D6B45] ring-8 ring-[#F5F5F3] md:left-1/2 md:-translate-x-1/2" />
+                    <div className="absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-[#355E3B] ring-4 ring-[#F5F5F3] md:left-1/2 md:-translate-x-1/2" />
 
                     <div
-                      className={`w-full pl-12 md:w-[42%] md:pl-0 ${
-                        isLeft ? "md:pr-16 md:text-right" : "md:pl-16 md:text-left"
+                      className={`w-full pl-10 md:w-[40%] md:pl-0 ${
+                        isLeft ? "md:pr-12 md:text-right" : "md:pl-12 md:text-left"
                       }`}
                     >
                       <p
-                        className="text-[18px] font-bold text-[#3E7146] md:text-[22px]"
+                        className="text-[15px] font-bold text-[#3E7146] md:text-[18px]"
                         style={fontPoppins}
                       >
                         {item.date}
                       </p>
 
                       <h4
-                        className="mt-1 text-[26px] font-extrabold leading-tight text-[#1B1B1B] md:text-[42px]"
+                        className="mt-1 text-[22px] font-extrabold leading-tight text-[#1B1B1B] md:text-[32px]"
                         style={fontMontserrat}
                       >
                         {item.title}
@@ -477,7 +498,7 @@ const AboutUs = () => {
                         if (bodyLines.length === 1) {
                           return (
                             <p
-                              className="mt-3 text-sm leading-relaxed text-gray-500 md:text-[15px]"
+                              className="mt-2.5 text-[12.5px] leading-relaxed text-gray-500 md:text-[14px]"
                               style={fontPontano}
                             >
                               {bodyLines[0]}
@@ -487,10 +508,11 @@ const AboutUs = () => {
 
                         return (
                           <div
-                            className="mt-3 space-y-2 text-sm leading-relaxed text-gray-500 md:text-[15px]"
+                            className="mt-2.5 space-y-1.5 text-[12.5px] leading-relaxed text-gray-500 md:text-[14px]"
                             style={fontPontano}
                           >
                             <p>{bodyLines[0]}</p>
+
                             <div className="space-y-1">
                               {bodyLines.slice(1).map((line, lineIndex) => (
                                 <p key={lineIndex}>{line}</p>
@@ -507,24 +529,24 @@ const AboutUs = () => {
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-12">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-14">
+        <section className="mx-auto max-w-[1200px] px-4 py-5 md:px-8 md:py-6">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-2">
             <RevealOnScroll>
-              <div className="overflow-hidden rounded-[18px] bg-[#EFEFEF] shadow-[0_18px_35px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_24px_50px_rgba(0,0,0,0.20)]">
-                <div className="bg-[#355E3B] px-6 py-5 md:px-8 md:py-6">
+              <div className="flex h-[240px] flex-col overflow-hidden rounded-2xl bg-[#EFEFEF] shadow-[0_12px_26px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_34px_rgba(0,0,0,0.18)] md:h-[255px]">
+                <div className="bg-[#355E3B] px-5 py-3.5 md:px-6">
                   <h3
-                    className="text-[28px] font-black uppercase tracking-tight text-white md:text-[46px]"
+                    className="text-[21px] font-black uppercase tracking-tight text-white md:text-[28px]"
                     style={fontMontserrat}
                   >
                     OUR VISION
                   </h3>
                 </div>
-                <div className="px-6 py-8 text-center md:px-12 md:py-10">
-                  <div className="flex justify-center">
-                    <EyeIcon />
-                  </div>
+
+                <div className="flex flex-1 flex-col items-center justify-center px-5 py-5 text-center md:px-7">
+                  <EyeIcon />
+
                   <p
-                    className="mx-auto mt-6 max-w-[560px] text-[18px] leading-relaxed text-gray-500 md:text-[20px]"
+                    className="mx-auto mt-4 max-w-[500px] text-[13px] leading-relaxed text-gray-500 md:text-[15px]"
                     style={fontActor}
                   >
                     "To be the most reliable partner of government and corporate industry in
@@ -535,22 +557,22 @@ const AboutUs = () => {
               </div>
             </RevealOnScroll>
 
-            <RevealOnScroll delay={120}>
-              <div className="overflow-hidden rounded-[18px] bg-[#EFEFEF] shadow-[0_18px_35px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_24px_50px_rgba(0,0,0,0.20)]">
-                <div className="bg-[#355E3B] px-6 py-5 md:px-8 md:py-6">
+            <RevealOnScroll delay={100}>
+              <div className="flex h-[240px] flex-col overflow-hidden rounded-2xl bg-[#EFEFEF] shadow-[0_12px_26px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_34px_rgba(0,0,0,0.18)] md:h-[255px]">
+                <div className="bg-[#355E3B] px-5 py-3.5 md:px-6">
                   <h3
-                    className="text-[28px] font-black uppercase tracking-tight text-white md:text-[46px]"
+                    className="text-[21px] font-black uppercase tracking-tight text-white md:text-[28px]"
                     style={fontMontserrat}
                   >
                     OUR MISSION
                   </h3>
                 </div>
-                <div className="px-6 py-8 text-center md:px-12 md:py-10">
-                  <div className="flex justify-center">
-                    <FlagIcon />
-                  </div>
+
+                <div className="flex flex-1 flex-col items-center justify-center px-5 py-5 text-center md:px-7">
+                  <FlagIcon />
+
                   <p
-                    className="mx-auto mt-6 max-w-[560px] text-[18px] leading-relaxed text-gray-500 md:text-[20px]"
+                    className="mx-auto mt-4 max-w-[500px] text-[13px] leading-relaxed text-gray-500 md:text-[15px]"
                     style={fontActor}
                   >
                     "To be the Top of the Mind provider of training, assessment and job services
@@ -563,16 +585,18 @@ const AboutUs = () => {
             </RevealOnScroll>
           </div>
 
-          <RevealOnScroll delay={100} className="mt-12 text-center md:mt-16">
+          <RevealOnScroll delay={80} className="mt-8 text-center md:mt-10">
             <h3
-              className="text-[30px] font-black uppercase tracking-tight text-[#355E3B] md:text-[60px]"
+              className="text-[24px] font-black uppercase tracking-tight text-[#355E3B] md:text-[38px]"
               style={fontMontserrat}
             >
               OUR CORPORATE VALUES
             </h3>
-            <div className="mx-auto mt-4 h-[4px] w-40 rounded-full bg-[#355E3B] md:w-[390px]" />
+
+            <div className="mx-auto mt-3 h-[4px] w-28 rounded-full bg-[#355E3B] md:w-[220px]" />
+
             <p
-              className="mx-auto mt-6 max-w-5xl text-[18px] leading-relaxed text-gray-600 md:text-[24px]"
+              className="mx-auto mt-4 max-w-4xl text-[13px] leading-relaxed text-gray-600 md:text-[16px]"
               style={fontPontano}
             >
               Values are the principles or standards of behavior that are considered important in
@@ -582,28 +606,31 @@ const AboutUs = () => {
           </RevealOnScroll>
         </section>
 
-        <section className="mx-auto max-w-[1600px] px-4 pb-8 pt-2 md:px-8 md:pb-14">
-          <div className="mx-auto max-w-6xl space-y-6">
+        <section className="mx-auto max-w-[1400px] px-4 pb-6 pt-1 md:px-8 md:pb-8">
+          <div className="mx-auto max-w-5xl space-y-4">
             {lightCards.map((card, index) => (
-              <RevealOnScroll key={card.title} delay={index * 90}>
-                <div className="overflow-hidden rounded-2xl bg-[#EFEFEF] shadow-[0_16px_30px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_24px_50px_rgba(0,0,0,0.22)]">
-                  <div className="flex min-h-[132px]">
+              <RevealOnScroll key={card.title} delay={index * 80}>
+                <div className="overflow-hidden rounded-2xl bg-[#EFEFEF] shadow-[0_12px_28px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
+                  <div className="flex min-h-[110px]">
                     <div
-                      className="flex w-[92px] shrink-0 items-center justify-center bg-[#F5F5F5] text-[72px] font-black text-[#2D6242] transition-transform duration-300 hover:scale-105 md:w-[110px] md:text-[86px]"
+                      className="flex w-[70px] shrink-0 items-center justify-center bg-[#F5F5F5] text-[50px] font-black text-[#2D6242] md:w-[84px] md:text-[62px]"
                       style={fontMontserrat}
                     >
                       {card.letter}
                     </div>
+
                     <div className="w-[2px] bg-[#8AAC8D]" />
-                    <div className="flex-1 px-5 py-4 md:px-6 md:py-5">
+
+                    <div className="flex-1 px-4 py-4 md:px-5">
                       <h4
-                        className="text-[22px] font-black uppercase leading-none text-black md:text-[38px]"
+                        className="text-[18px] font-black uppercase leading-none text-black md:text-[28px]"
                         style={fontMontserrat}
                       >
                         {card.title}
                       </h4>
+
                       <p
-                        className="mt-2 text-sm leading-relaxed text-gray-600 md:text-[16px]"
+                        className="mt-2 text-[12.5px] leading-relaxed text-gray-600 md:text-[14px]"
                         style={fontPontano}
                       >
                         {card.body}
@@ -615,65 +642,60 @@ const AboutUs = () => {
             ))}
           </div>
 
-          <RevealOnScroll delay={120} className="relative mx-auto mt-12 min-h-[290px] max-w-6xl">
-            <div className="mx-auto max-w-4xl px-4 pt-4 text-center">
-              <p
-                className="text-[28px] font-medium leading-snug text-[#4C7A4E] md:text-[34px]"
-                style={fontActor}
-              >
-                A symbol of holiness, goodness,
-                <br />
-                knowledge, wisdom, grace, hope, and
-                <br />
-                God's revelation
-              </p>
-            </div>
-
-            <img
-              src="https://placehold.co/340x520/F7F1E4/9C7A50?text=Lamp+Image"
-              alt="Lamp"
-              className="pointer-events-none absolute bottom-0 right-0 hidden w-[180px] object-contain md:block lg:w-[230px]"
-            />
+          <RevealOnScroll delay={100} className="mx-auto mt-6 max-w-4xl text-center">
+            <p
+              className="mx-auto max-w-3xl text-[20px] italic leading-relaxed text-[#4C7A4E] md:text-[28px]"
+              style={fontActor}
+            >
+              A symbol of holiness, goodness, knowledge, wisdom, grace, hope, and God&apos;s
+              revelation.
+            </p>
           </RevealOnScroll>
         </section>
 
-        <section className="mx-auto max-w-[1600px] px-4 pb-10 pt-4 md:px-8 md:pb-16">
+        <section className="mx-auto max-w-[1400px] px-4 pb-8 pt-2 md:px-8 md:pb-10">
           <RevealOnScroll className="text-center">
             <h3
-              className="text-[30px] font-black uppercase tracking-tight text-[#355E3B] md:text-[58px]"
+              className="text-[24px] font-black uppercase tracking-tight text-[#355E3B] md:text-[38px]"
               style={fontMontserrat}
             >
               OUR ACHIEVEMENTS
             </h3>
-            <div className="mx-auto mt-4 h-[4px] w-44 rounded-full bg-[#355E3B] md:w-[320px]" />
+
+            <div className="mx-auto mt-3 h-[4px] w-28 rounded-full bg-[#355E3B] md:w-[200px]" />
           </RevealOnScroll>
 
-          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+          <div className="mt-7 flex flex-wrap justify-center gap-6">
             {achievements.map((item, index) => (
-              <RevealOnScroll key={item.title} delay={index * 110}>
-                <div className="overflow-hidden rounded-xl bg-[#EFEFEF] shadow-[0_16px_28px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_24px_50px_rgba(0,0,0,0.22)]">
-                  <div className="h-[10px] bg-[#355E3B]" />
-                  <div className="px-5 py-7 text-center md:px-6 md:py-8">
-                    <div className="flex justify-center transition-transform duration-300 hover:scale-110">
+              <RevealOnScroll
+                key={`${item.title}-${index}`}
+                delay={index * 80}
+                className="w-full max-w-[360px] md:w-[calc(50%_-_12px)] lg:w-[calc(33.333%_-_16px)]"
+              >
+                <div className="flex h-[250px] flex-col overflow-hidden rounded-xl bg-[#EFEFEF] shadow-[0_12px_26px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_34px_rgba(0,0,0,0.18)]">
+                  <div className="h-[8px] shrink-0 bg-[#355E3B]" />
+
+                  <div className="flex flex-1 flex-col px-4 py-5 text-center md:px-5 md:py-6">
+                    <div className="flex justify-center">
                       <StarIcon />
                     </div>
 
                     <h4
-                      className="mt-4 text-[12px] font-black uppercase tracking-wide text-gray-900 md:text-[14px]"
+                      className="mt-3 min-h-[34px] text-[11px] font-black uppercase tracking-wide text-gray-900 md:text-[13px]"
                       style={fontMontserrat}
                     >
                       {item.title}
                     </h4>
 
                     <p
-                      className="mt-4 text-[13px] leading-relaxed text-gray-600 md:text-[14px]"
+                      className="mt-3 line-clamp-3 text-[12.5px] leading-relaxed text-gray-600 md:text-[13px]"
                       style={fontPontano}
                     >
                       {item.body}
                     </p>
 
                     <p
-                      className="mt-4 whitespace-pre-line text-[12px] leading-relaxed text-gray-500"
+                      className="mt-3 line-clamp-2 whitespace-pre-line text-[11.5px] leading-relaxed text-gray-500"
                       style={fontActor}
                     >
                       {item.footer}
@@ -685,30 +707,32 @@ const AboutUs = () => {
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1600px] px-4 pb-16 pt-2 md:px-8 md:pb-20">
+        <section className="mx-auto max-w-[1400px] px-4 pb-12 pt-1 md:px-8 md:pb-14">
           <RevealOnScroll className="text-center">
             <h3
-              className="text-[34px] font-black tracking-tight text-[#355E3B] md:text-[60px]"
+              className="text-[26px] font-black tracking-tight text-[#355E3B] md:text-[40px]"
               style={fontMontserrat}
             >
               Our Highlights
             </h3>
-            <div className="mx-auto mt-3 h-[4px] w-40 rounded-full bg-[#355E3B] md:w-[230px]" />
+
+            <div className="mx-auto mt-3 h-[4px] w-28 rounded-full bg-[#355E3B] md:w-[180px]" />
           </RevealOnScroll>
 
-          <RevealOnScroll delay={80} className="mt-8">
+          <RevealOnScroll delay={60} className="mt-6">
             <div
-              className="flex flex-wrap items-center justify-center gap-3 md:gap-4"
+              className="flex flex-wrap items-center justify-center gap-2.5 md:gap-3"
               style={fontPoppins}
             >
               {highlightCategories.map((category) => {
                 const active = selectedCategory === category;
+
                 return (
                   <button
                     key={category}
                     type="button"
                     onClick={() => setSelectedCategory(category)}
-                    className={`rounded-full px-5 py-3 text-sm font-medium shadow-sm transition-all duration-300 md:min-w-[170px] ${
+                    className={`rounded-full px-4 py-2 text-[12px] font-medium shadow-sm transition-all duration-300 md:min-w-[150px] ${
                       active
                         ? "bg-[#355E3B] text-white shadow-md"
                         : "bg-[#355E3B] text-white/90 hover:-translate-y-1 hover:bg-[#2B4F31]"
@@ -721,23 +745,26 @@ const AboutUs = () => {
             </div>
           </RevealOnScroll>
 
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
             {visibleHighlights.slice(0, 6).map((item, index) => (
-              <RevealOnScroll key={`${item.title}-${index}`} delay={index * 90}>
-                <div className="group overflow-hidden rounded-xl bg-[#EFEFEF] shadow-[0_16px_28px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_24px_50px_rgba(0,0,0,0.22)]">
-                  <div className="h-[10px] bg-[#355E3B]" />
-                  <div className="relative h-[220px] overflow-hidden bg-[#F6F6F6]">
+              <RevealOnScroll key={`${item.title}-${index}`} delay={index * 70}>
+                <div className="group overflow-hidden rounded-xl bg-[#EFEFEF] shadow-[0_12px_26px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_34px_rgba(0,0,0,0.18)]">
+                  <div className="h-[8px] bg-[#355E3B]" />
+
+                  <div className="relative h-[180px] overflow-hidden bg-[#F6F6F6]">
                     <img
                       src={item.image}
                       alt={item.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
-                  <div className="px-5 py-4">
-                    <p className="text-base font-bold text-[#355E3B]" style={fontMontserrat}>
+
+                  <div className="px-4 py-4">
+                    <p className="text-[15px] font-bold text-[#355E3B]" style={fontMontserrat}>
                       {item.title}
                     </p>
-                    <p className="mt-1 text-sm text-gray-500" style={fontPontano}>
+
+                    <p className="mt-1 text-[12.5px] text-gray-500" style={fontPontano}>
                       {item.subtitle}
                     </p>
                   </div>
@@ -748,33 +775,39 @@ const AboutUs = () => {
         </section>
 
         <footer className="bg-[#355E3B] text-white">
-          <div className="mx-auto max-w-[1600px] px-4 py-3 md:px-6 md:py-4">
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-[1.35fr_1fr_1.2fr_1.2fr] md:gap-0">
-              <div className="flex items-center gap-3 pr-0 md:pr-6">
+          <div className="mx-auto max-w-[1600px] px-4 py-1.5 md:px-6 md:py-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.2fr_0.9fr_1fr_1fr] md:gap-0">
+              <div className="flex items-center gap-2 pr-0 md:pr-4">
                 <img
                   src={LOGO}
                   alt="LTC Logo"
-                  className="h-10 w-10 shrink-0 rounded-full bg-white object-cover md:h-[44px] md:w-[44px]"
+                  className="h-7 w-7 shrink-0 rounded-full bg-white object-cover md:h-[32px] md:w-[32px]"
                 />
+
                 <div className="min-w-0">
                   <h2
-                    className="text-[32px] font-black uppercase leading-none md:text-[42px]"
+                    className="text-[13px] font-black uppercase leading-tight md:text-[15px]"
                     style={fontMontserrat}
                   >
-                    LUMISPIRE
+                    LTC GROUP OF COMPANIES
                   </h2>
                 </div>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-6">
+              <div className="md:border-l md:border-white/35 md:px-4">
                 <h3
-                  className="text-[11px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-wide"
                   style={fontMontserrat}
                 >
                   MENU
                 </h3>
-                <div className="mt-1 h-[2px] w-[110px] bg-white/35" />
-                <ul className="mt-2 space-y-[4px] text-[12px] text-white/90" style={fontPontano}>
+
+                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+
+                <ul
+                  className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
+                  style={fontPontano}
+                >
                   <li>
                     <button onClick={() => goTo("/")} className="hover:text-white">
                       Home
@@ -798,16 +831,18 @@ const AboutUs = () => {
                 </ul>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-6">
+              <div className="md:border-l md:border-white/35 md:px-4">
                 <h3
-                  className="text-[11px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-wide"
                   style={fontMontserrat}
                 >
                   CONTACT
                 </h3>
-                <div className="mt-1 h-[2px] w-[110px] bg-white/35" />
+
+                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+
                 <ul
-                  className="mt-2 space-y-[4px] text-[12px] leading-relaxed text-white/90"
+                  className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
                   style={fontPontano}
                 >
                   <li>lornacastigador@ltcmultiservices.com</li>
@@ -816,29 +851,31 @@ const AboutUs = () => {
                 </ul>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-6">
+              <div className="md:border-l md:border-white/35 md:px-4">
                 <h3
-                  className="text-[11px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-wide"
                   style={fontMontserrat}
                 >
                   ADDRESS
                 </h3>
-                <div className="mt-1 h-[2px] w-[110px] bg-white/35" />
+
+                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+
                 <ul
-                  className="mt-2 space-y-[6px] text-[12px] leading-relaxed text-white/90"
+                  className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
                   style={fontPontano}
                 >
                   <li>
                     5411 Light Tower Center &amp; Realty Development, Inc., Building II, Curie
-                    Street, Palanan, Makati City
+                    Street, Palanan, Makati City.
                   </li>
-                  <li>Light Tower Center, 1730 Dian Street, Palanan, Makati City</li>
+                  <li>Light Tower Center, 1730 Dian Street, Palanan, Makati City.</li>
                 </ul>
               </div>
             </div>
 
-            <div className="mt-3 flex flex-col gap-1 border-t border-white/15 pt-2 text-[10px] text-white/90 md:flex-row md:items-center md:justify-between">
-              <p style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights</p>
+            <div className="mt-2 flex flex-col gap-1 border-t border-white/15 pt-1.5 text-[9.5px] leading-snug text-white/90 md:flex-row md:items-center md:justify-between">
+              <p style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
               <p className="text-left md:text-right" style={fontPontano}>
                 Developed by CRMS Tech Alliance
               </p>

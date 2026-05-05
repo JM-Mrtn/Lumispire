@@ -1,6 +1,8 @@
 // HotelRecommendations.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import HotelHeader from "./HotelHeader";
+import HotelChatButton from "./HotelChatButton";
 
 const SERVICE_OPTIONS = ["Any", "Hotel", "Resort & Venue", "Event Package"];
 const VIBE_OPTIONS = [
@@ -156,7 +158,8 @@ const HotelRecommendations = () => {
 
   return (
     <div className="min-h-screen" style={{ background: COLORS.soft }}>
-      <div className="mx-auto max-w-7xl px-6 py-10">
+      <HotelHeader />
+      <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.22em] text-[#3f5b44]/70">
@@ -272,6 +275,7 @@ const HotelRecommendations = () => {
           </div>
         ) : null}
       </div>
+      <HotelChatButton />
     </div>
   );
 };

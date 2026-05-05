@@ -83,13 +83,23 @@ function splitMenuChoices(value = "") {
     .filter(Boolean);
 }
 
-function getMenuValidationError({ appetizer = "", mainDish = "", dessert = "", drinks = "" }) {
+function getMenuValidationError({
+  appetizer = "",
+  mainDish = "",
+  dessert = "",
+  drinks = "",
+}) {
   const appetizerItems = splitMenuChoices(appetizer);
   const mainDishItems = splitMenuChoices(mainDish);
   const dessertItems = splitMenuChoices(dessert);
   const drinksItems = splitMenuChoices(drinks);
 
-  if (!appetizerItems.length || !mainDishItems.length || !dessertItems.length || !drinksItems.length) {
+  if (
+    !appetizerItems.length ||
+    !mainDishItems.length ||
+    !dessertItems.length ||
+    !drinksItems.length
+  ) {
     return "Please complete the food menu choices.";
   }
 
@@ -178,6 +188,17 @@ function getPackageCapacityLimit(pkg, venue = "") {
   }
 
   return DEFAULT_EVENT_VENUE_CAPACITY[normalizeVenue(venue)] || 0;
+}
+
+function getVenueMaxBookablePax(venueCapacity = 0) {
+  const safeCapacity = Number(venueCapacity || 0);
+  return safeCapacity > 0 ? safeCapacity + MAX_ADDITIONAL_PAX : 0;
+}
+
+function getVenueCapacityErrorMessage({ venue = "", venueCapacity = 0, requestedPax = 0 }) {
+  const venueMaxBookablePax = getVenueMaxBookablePax(venueCapacity);
+
+  return `${normalizeVenue(venue) || "Selected venue"} can only accept up to ${venueMaxBookablePax} pax (${venueCapacity} max pax plus ${MAX_ADDITIONAL_PAX} additional pax). Your selected pax is ${requestedPax}.`;
 }
 
 function normalizeTimeLabel(value = "") {
@@ -378,7 +399,10 @@ function getActiveEventVariants(selectedPackage = {}) {
           const pax = Number(variant?.pax || parsePaxFromLabel(variant?.label));
           const timeSlots = cleanTimeSlots(
             variant?.timeSlots,
-            variant?.timeVariationLabel || variant?.duration || variant?.label || "8 Hours"
+            variant?.timeVariationLabel ||
+              variant?.duration ||
+              variant?.label ||
+              "8 Hours"
           );
           const timeVariationLabel = inferTimeLabelFromSlots(timeSlots);
           const label =
@@ -443,7 +467,8 @@ async function resolveEventPrice({
     return {
       ok: false,
       status: 400,
-      message: "Selected venue is not active or does not exist in Resort & Venue packages.",
+      message:
+        "Selected venue is not active or does not exist in Resort & Venue packages.",
     };
   }
 
@@ -487,9 +512,7 @@ async function resolveEventPrice({
     }
   }
 
-  const baseAmount = Number(
-    selectedVariant?.price || selectedPackage.price || 0
-  );
+  const baseAmount = Number(selectedVariant?.price || selectedPackage.price || 0);
 
   if (!baseAmount) {
     return {
@@ -500,7 +523,10 @@ async function resolveEventPrice({
   }
 
   const finalBasePax = Number(
-    selectedVariant?.pax || basePax || extractMaxCapacity(selectedPackage.capacity) || pax
+    selectedVariant?.pax ||
+      basePax ||
+      extractMaxCapacity(selectedPackage.capacity) ||
+      pax
   );
 
   if (!finalBasePax || finalBasePax <= 0) {
@@ -511,19 +537,44 @@ async function resolveEventPrice({
     };
   }
 
-  const maxAllowedPax = finalBasePax + MAX_ADDITIONAL_PAX;
+  const packageMaxAllowedPax = finalBasePax + MAX_ADDITIONAL_PAX;
+  const venueMaxAllowedPax = getVenueMaxBookablePax(venueCapacity);
+  const maxAllowedPax = venueMaxAllowedPax
+    ? Math.min(packageMaxAllowedPax, venueMaxAllowedPax)
+    : packageMaxAllowedPax;
 
-  if (pax > maxAllowedPax) {
+  if (venueMaxAllowedPax && finalBasePax > venueMaxAllowedPax) {
     return {
       ok: false,
       status: 400,
-      message: `Maximum pax for this package capacity is ${maxAllowedPax} (${finalBasePax} base pax plus ${MAX_ADDITIONAL_PAX} additional pax only).`,
+      message: getVenueCapacityErrorMessage({
+        venue: normalizedVenue,
+        venueCapacity,
+        requestedPax: finalBasePax,
+      }),
     };
   }
 
-  // Food is included in the selected package pax tier.
-  // Example: 50 Pax variation = package food price for 50 pax.
-  // If the user books more than the selected variation pax, charge per extra pax.
+  if (pax > packageMaxAllowedPax) {
+    return {
+      ok: false,
+      status: 400,
+      message: `Maximum pax for this package capacity is ${packageMaxAllowedPax} (${finalBasePax} base pax plus ${MAX_ADDITIONAL_PAX} additional pax only).`,
+    };
+  }
+
+  if (venueMaxAllowedPax && pax > venueMaxAllowedPax) {
+    return {
+      ok: false,
+      status: 400,
+      message: getVenueCapacityErrorMessage({
+        venue: normalizedVenue,
+        venueCapacity,
+        requestedPax: pax,
+      }),
+    };
+  }
+
   const foodIncludedPax = finalBasePax;
   const chargeableFoodPax = Math.max(0, pax - foodIncludedPax);
   const foodChargePerExtraPax = ADDITIONAL_PAX_RATE;
@@ -552,6 +603,9 @@ async function resolveEventPrice({
     foodChargePerExtraPax,
     foodCharge,
     venueCapacity,
+    venueMaxAllowedPax,
+    packageMaxAllowedPax,
+    maxAllowedPax,
     maxAdditionalPax: MAX_ADDITIONAL_PAX,
     additionalPax,
     additionalPaxRate: ADDITIONAL_PAX_RATE,
@@ -593,7 +647,9 @@ async function getEventBookingsForAvailability({ venue, from, to }) {
 
   const [eventRows, resortRows] = await Promise.all([
     EventBooking.find(eventQuery)
-      .select("_id eventPackage eventDate venue time status startDateTime endDateTime createdAt")
+      .select(
+        "_id eventPackage eventDate venue time status startDateTime endDateTime createdAt"
+      )
       .lean(),
     ResortBooking.find(resortQuery)
       .select("_id venue date category time status startDateTime endDateTime createdAt")
@@ -622,7 +678,11 @@ async function getEventBookingsForAvailability({ venue, from, to }) {
   });
 }
 
-function getBlockedTimeSlotsForDate(bookings = [], eventDate, candidateSlots = EVENT_TIME_SLOTS_ALL) {
+function getBlockedTimeSlotsForDate(
+  bookings = [],
+  eventDate,
+  candidateSlots = EVENT_TIME_SLOTS_ALL
+) {
   return candidateSlots.filter((slot) => {
     const candidate = buildBookingInterval(eventDate, slot);
     if (!candidate) return true;
@@ -641,12 +701,23 @@ function getBlockedTimeSlotsForDate(bookings = [], eventDate, candidateSlots = E
   });
 }
 
-function getAvailableTimeSlotsForDate(bookings = [], eventDate, candidateSlots = EVENT_TIME_SLOTS_ALL) {
-  const blocked = new Set(getBlockedTimeSlotsForDate(bookings, eventDate, candidateSlots));
+function getAvailableTimeSlotsForDate(
+  bookings = [],
+  eventDate,
+  candidateSlots = EVENT_TIME_SLOTS_ALL
+) {
+  const blocked = new Set(
+    getBlockedTimeSlotsForDate(bookings, eventDate, candidateSlots)
+  );
   return candidateSlots.filter((slot) => !blocked.has(slot));
 }
 
-async function findEventTimeConflict({ venue, eventDate, time, excludeBookingId = "" }) {
+async function findEventTimeConflict({
+  venue,
+  eventDate,
+  time,
+  excludeBookingId = "",
+}) {
   const interval = buildBookingInterval(eventDate, time);
 
   if (!interval) return null;
@@ -678,7 +749,9 @@ async function findEventTimeConflict({ venue, eventDate, time, excludeBookingId 
 
 async function resolveEventTimeOptionsFromRequest(query = {}) {
   const packageId = cleanText(query.packageId || query.selectedPackageId || "");
-  const eventPackage = cleanText(query.eventPackage || query.selectedPackageTitle || "");
+  const eventPackage = cleanText(
+    query.eventPackage || query.selectedPackageTitle || ""
+  );
   const variantId = cleanText(query.variantId || query.selectedVariantId || "");
   const basePax = toNumber(query.basePax);
 
@@ -776,7 +849,11 @@ export const getEventBookedDates = async (req, res) => {
     const startDate = new Date(`${from}T00:00:00+08:00`);
     const endDate = new Date(`${to}T00:00:00+08:00`);
 
-    for (let cursor = new Date(startDate); cursor <= endDate; cursor.setDate(cursor.getDate() + 1)) {
+    for (
+      let cursor = new Date(startDate);
+      cursor <= endDate;
+      cursor.setDate(cursor.getDate() + 1)
+    ) {
       const iso = cursor.toISOString().slice(0, 10);
       const blocked = getBlockedTimeSlotsForDate(rows, iso, candidateSlots);
       const available = candidateSlots.filter((slot) => !blocked.includes(slot));
@@ -824,6 +901,8 @@ export const checkEventAvailability = async (req, res) => {
     const venue = normalizeVenue(req.query.venue || "");
     const eventDate = cleanText(req.query.eventDate || req.query.date || "");
     const time = cleanText(req.query.time || "");
+    const requestedPax = toNumber(req.query.pax || req.query.totalPax || 0);
+    const requestedBasePax = toNumber(req.query.basePax || 0);
 
     if (!venue || !eventDate) {
       return res.status(400).json({
@@ -863,6 +942,29 @@ export const checkEventAvailability = async (req, res) => {
     const candidateSlots = timeOptions.timeSlots?.length
       ? timeOptions.timeSlots
       : EVENT_TIME_SLOTS_ALL;
+    const venueCapacity = getPackageCapacityLimit(venuePackage, venue) || 0;
+    const venueMaxAllowedPax = getVenueMaxBookablePax(venueCapacity);
+    const selectedVariantPax = Number(timeOptions.selectedVariant?.pax || 0);
+    const capacityToCheck = selectedVariantPax || requestedBasePax || requestedPax;
+
+    if (venueMaxAllowedPax && capacityToCheck && capacityToCheck > venueMaxAllowedPax) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: getVenueCapacityErrorMessage({
+          venue,
+          venueCapacity,
+          requestedPax: capacityToCheck,
+        }),
+        reason: "VENUE_CAPACITY_EXCEEDED",
+        venueCapacity,
+        venueMaxAllowedPax,
+        maxAdditionalPax: MAX_ADDITIONAL_PAX,
+        timeSlots: candidateSlots,
+        timeVariationLabel: timeOptions.timeVariationLabel,
+        selectedVariant: timeOptions.selectedVariant,
+      });
+    }
 
     if (time) {
       if (!isValidEventTimeSlot(time, candidateSlots)) {
@@ -893,7 +995,11 @@ export const checkEventAvailability = async (req, res) => {
       from: eventDate,
       to: eventDate,
     });
-    const blockedTimeSlots = getBlockedTimeSlotsForDate(rows, eventDate, candidateSlots);
+    const blockedTimeSlots = getBlockedTimeSlotsForDate(
+      rows,
+      eventDate,
+      candidateSlots
+    );
     const availableTimeSlots = candidateSlots.filter(
       (slot) => !blockedTimeSlots.includes(slot)
     );
@@ -1101,6 +1207,9 @@ export const createEventBooking = async (req, res) => {
       pax,
       basePax: priceResult.basePax,
       venueCapacity: priceResult.venueCapacity,
+      venueMaxAllowedPax: priceResult.venueMaxAllowedPax,
+      packageMaxAllowedPax: priceResult.packageMaxAllowedPax,
+      maxAllowedPax: priceResult.maxAllowedPax,
       maxAdditionalPax: priceResult.maxAdditionalPax,
       additionalPax: priceResult.additionalPax,
       additionalPaxRate: priceResult.additionalPaxRate,
@@ -1215,17 +1324,26 @@ export const adminGetAllEventBookings = async (req, res) => {
   }
 
   try {
-    const rows = await EventBooking.find()
+    const bookings = await EventBooking.find()
+      .populate(
+        "userId",
+        "firstName lastName fullName name email phone contactNumber"
+      )
       .select("-proof.data")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    return res.status(200).json(rows);
+    return res.status(200).json({
+      success: true,
+      bookings,
+    });
   } catch (err) {
     console.error("adminGetAllEventBookings error:", err);
 
     return res.status(500).json({
       success: false,
       message: "Error fetching event bookings.",
+      bookings: [],
     });
   }
 };
@@ -1445,9 +1563,10 @@ export const adminRescheduleEventBooking = async (req, res) => {
 
     booking.venue = normalizeVenue(booking.venue);
 
-    const allowedSlots = Array.isArray(booking.selectedTimeSlots) && booking.selectedTimeSlots.length
-      ? booking.selectedTimeSlots.map((slot) => cleanText(slot)).filter(Boolean)
-      : EVENT_TIME_SLOTS_ALL;
+    const allowedSlots =
+      Array.isArray(booking.selectedTimeSlots) && booking.selectedTimeSlots.length
+        ? booking.selectedTimeSlots.map((slot) => cleanText(slot)).filter(Boolean)
+        : EVENT_TIME_SLOTS_ALL;
 
     if (!isValidEventTimeSlot(time, allowedSlots)) {
       return res.status(400).json({
@@ -1505,8 +1624,6 @@ export const adminRescheduleEventBooking = async (req, res) => {
   }
 };
 
-
-
 function getAdminRescheduleRange(query = {}) {
   const from = cleanText(query.from || todayLocalISO());
   const days = Math.min(365, Math.max(1, Number(query.days || 180)));
@@ -1556,6 +1673,7 @@ export const adminGetEventRescheduleOptions = async (req, res) => {
   }
 
   const range = getAdminRescheduleRange(req.query);
+
   if (!range.ok) {
     return res.status(400).json({
       success: false,
@@ -1581,9 +1699,10 @@ export const adminGetEventRescheduleOptions = async (req, res) => {
     }
 
     const venue = normalizeVenue(booking.venue);
-    const timeSlots = Array.isArray(booking.selectedTimeSlots) && booking.selectedTimeSlots.length
-      ? booking.selectedTimeSlots.map((slot) => cleanText(slot)).filter(Boolean)
-      : EVENT_TIME_SLOTS_ALL;
+    const timeSlots =
+      Array.isArray(booking.selectedTimeSlots) && booking.selectedTimeSlots.length
+        ? booking.selectedTimeSlots.map((slot) => cleanText(slot)).filter(Boolean)
+        : EVENT_TIME_SLOTS_ALL;
 
     const rows = await getEventBookingsForAvailability({
       venue,
@@ -1592,7 +1711,9 @@ export const adminGetEventRescheduleOptions = async (req, res) => {
     });
 
     const candidates = rows.filter((row) => {
-      return !(row.bookingType === "event" && String(row._id) === String(bookingId));
+      return !(
+        row.bookingType === "event" && String(row._id) === String(bookingId)
+      );
     });
 
     const blockedTimeSlotsByDate = {};
@@ -1636,6 +1757,7 @@ export const adminGetEventRescheduleOptions = async (req, res) => {
     });
   } catch (err) {
     console.error("adminGetEventRescheduleOptions error:", err);
+
     return res.status(500).json({
       success: false,
       message: "Error loading event reschedule blocked dates.",

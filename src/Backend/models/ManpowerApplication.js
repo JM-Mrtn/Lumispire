@@ -73,13 +73,7 @@ const idVerificationSchema = new mongoose.Schema(
     },
     aiConnectionStatus: {
       type: String,
-      enum: [
-        "not_checked",
-        "connected",
-        "missing_key",
-        "not_supported",
-        "error",
-      ],
+      enum: ["not_checked", "connected", "missing_key", "not_supported", "error"],
       default: "not_checked",
     },
     aiProvider: {
@@ -138,6 +132,67 @@ const idVerificationSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
+    },
+  },
+  { _id: false }
+);
+
+const resumeScreeningSchema = new mongoose.Schema(
+  {
+    score: {
+      type: Number,
+      default: 0,
+    },
+    status: {
+      type: String,
+      enum: [
+        "strong_match",
+        "possible_match",
+        "weak_match",
+        "manual_review",
+        "not_screened",
+      ],
+      default: "not_screened",
+    },
+    recommendation: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    summary: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    matchedKeywords: {
+      type: [String],
+      default: [],
+    },
+    missingKeywords: {
+      type: [String],
+      default: [],
+    },
+    strengths: {
+      type: [String],
+      default: [],
+    },
+    concerns: {
+      type: [String],
+      default: [],
+    },
+    screeningMethod: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    model: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    screenedAt: {
+      type: Date,
+      default: null,
     },
   },
   { _id: false }
@@ -465,6 +520,11 @@ const manpowerApplicationSchema = new mongoose.Schema(
       default: () => ({}),
     },
 
+    resumeScreening: {
+      type: resumeScreeningSchema,
+      default: () => ({}),
+    },
+
     assessment: {
       type: assessmentSchema,
       default: () => ({}),
@@ -535,6 +595,7 @@ const manpowerApplicationSchema = new mongoose.Schema(
 
     requirements: {
       validId: fileRefSchema,
+      resume: fileRefSchema,
       nbi: fileRefSchema,
       barangayClearance: fileRefSchema,
       sss: fileRefSchema,

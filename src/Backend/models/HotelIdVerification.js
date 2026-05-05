@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 
 const idFileSchema = new mongoose.Schema(
   {
-    // ✅ ID FILE STORED IN MONGODB
     data: {
       type: Buffer,
       required: true,
@@ -102,10 +101,35 @@ const hotelIdVerificationSchema = new mongoose.Schema(
 
     reviewDecision: {
       type: String,
-      enum: ["auto_approved", "auto_rejected", "manual_review"],
+      enum: [
+        "auto_approved",
+        "auto_rejected",
+        "manual_review",
+        "approved",
+        "rejected",
+      ],
       default: "manual_review",
     },
 
+    reviewedByAdmin: {
+      type: Boolean,
+      default: false,
+    },
+
+    reviewedAt: {
+      type: Date,
+      default: null,
+    },
+
+    reviewRemarks: {
+      type: String,
+      default: "",
+    },
+
+    nextAllowedUploadAt: {
+      type: Date,
+      default: null,
+    },
 
     aiConnected: {
       type: Boolean,
@@ -114,8 +138,8 @@ const hotelIdVerificationSchema = new mongoose.Schema(
 
     aiConnectionStatus: {
       type: String,
-      enum: ["not_checked", "missing_key", "connected", "error", "not_supported"],
       default: "not_checked",
+      trim: true,
     },
 
     aiProvider: {
@@ -148,14 +172,14 @@ const hotelIdVerificationSchema = new mongoose.Schema(
 
     aiRiskLevel: {
       type: String,
-      enum: ["low", "medium", "high", "unknown"],
       default: "unknown",
+      trim: true,
     },
 
     aiDecision: {
       type: String,
-      enum: ["approve", "needs_manual_review", "reject", "unknown"],
-      default: "unknown",
+      default: "needs_manual_review",
+      trim: true,
     },
 
     aiError: {
@@ -166,21 +190,6 @@ const hotelIdVerificationSchema = new mongoose.Schema(
     aiRawResult: {
       type: mongoose.Schema.Types.Mixed,
       default: null,
-    },
-
-    reviewedByAdmin: {
-      type: Boolean,
-      default: false,
-    },
-
-    reviewedAt: {
-      type: Date,
-      default: null,
-    },
-
-    reviewRemarks: {
-      type: String,
-      default: "",
     },
   },
   { timestamps: true }

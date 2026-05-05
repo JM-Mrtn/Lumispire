@@ -295,9 +295,14 @@ export async function submitManpowerApplication(req, res) {
     }
 
     if (
-      !["Single", "Married", "Widowed", "Divorced", "Separated", "Annulled"].includes(
-        civilStatus
-      )
+      ![
+        "Single",
+        "Married",
+        "Widowed",
+        "Divorced",
+        "Separated",
+        "Annulled",
+      ].includes(civilStatus)
     ) {
       return res.status(400).json({
         message: "Please select a valid civil status.",

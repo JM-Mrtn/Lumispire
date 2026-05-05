@@ -320,6 +320,7 @@ function getInitialTouched() {
     batchId: false,
     educationAttainment: false,
     otherEducationText: false,
+    employmentStatus: false,
     birthCertificate: false,
     form137138: false,
     diplomaTor: false,
@@ -449,6 +450,14 @@ function getValidationErrors(form, options = {}) {
     } else if (otherEducationText.length > MAX_LENGTHS.otherEducationText) {
       errors.otherEducationText = `Other educational attainment must be ${MAX_LENGTHS.otherEducationText} characters or less.`;
     }
+  }
+
+  const employmentSelectedCount = Object.values(form.employmentStatus).filter(
+    Boolean
+  ).length;
+
+  if (employmentSelectedCount === 0) {
+    errors.employmentStatus = "Please select at least one employment status.";
   }
 
   Object.entries(FILE_RULES).forEach(([fieldName, rule]) => {
@@ -706,6 +715,19 @@ export default function TrainingEnrollmentForm() {
     clearMessage();
   };
 
+  const onEmploymentChange = (key) => {
+    setForm((prev) => ({
+      ...prev,
+      employmentStatus: {
+        ...prev.employmentStatus,
+        [key]: !prev.employmentStatus[key],
+      },
+    }));
+
+    markTouched("employmentStatus");
+    clearMessage();
+  };
+
   const onFileChange = (e) => {
     const { name, files } = e.target;
     const file = files?.[0] || null;
@@ -914,7 +936,7 @@ export default function TrainingEnrollmentForm() {
             aria-label="TAMSI Home"
           >
             <img
-              src="/TAMSILogoTransparent.png"
+              src="/TamsiLogo.png"
               alt="TAMSI Logo"
               className="h-11 w-11 object-contain"
             />
@@ -1357,6 +1379,55 @@ export default function TrainingEnrollmentForm() {
                 )}
               </section>
 
+              {/* EMPLOYMENT STATUS */}
+              <section>
+                <SectionTitle title="Employment Status" />
+
+                <div className="mt-5 grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                  <CheckItem
+                    label="Casual"
+                    checked={form.employmentStatus.casual}
+                    onChange={() => onEmploymentChange("casual")}
+                  />
+
+                  <CheckItem
+                    label="Job Order"
+                    checked={form.employmentStatus.jobOrder}
+                    onChange={() => onEmploymentChange("jobOrder")}
+                  />
+
+                  <CheckItem
+                    label="Probationary"
+                    checked={form.employmentStatus.probationary}
+                    onChange={() => onEmploymentChange("probationary")}
+                  />
+
+                  <CheckItem
+                    label="Permanent"
+                    checked={form.employmentStatus.permanent}
+                    onChange={() => onEmploymentChange("permanent")}
+                  />
+
+                  <CheckItem
+                    label="OFW"
+                    checked={form.employmentStatus.ofw}
+                    onChange={() => onEmploymentChange("ofw")}
+                  />
+
+                  <CheckItem
+                    label="Self-Employed"
+                    checked={form.employmentStatus.selfEmployed}
+                    onChange={() => onEmploymentChange("selfEmployed")}
+                  />
+                </div>
+
+                {touched.employmentStatus && errors.employmentStatus && (
+                  <p className="mt-3 text-xs font-semibold text-red-200">
+                    {errors.employmentStatus}
+                  </p>
+                )}
+              </section>
+
               {/* UPLOAD REQUIREMENTS */}
               <section>
                 <SectionTitle title="Upload Requirements" />
@@ -1469,7 +1540,7 @@ export default function TrainingEnrollmentForm() {
             <div className="border-[#d6ded2] md:border-r md:pr-7">
               <div className="flex items-center gap-4">
                 <img
-                  src="/LTCLogo.png"
+                  src="/TamsiLogo.png"
                   alt="Lumispire Logo"
                   className="h-14 w-14 object-contain"
                   onError={(e) => {

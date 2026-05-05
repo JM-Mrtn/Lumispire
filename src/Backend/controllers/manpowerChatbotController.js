@@ -110,6 +110,24 @@ function lowerText(value = "") {
   return cleanText(value).toLowerCase();
 }
 
+function hasWord(text = "", word = "") {
+  const escaped = String(word || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(
+    String(text || "")
+  );
+}
+
+function hasAnyWord(text = "", words = []) {
+  return words.some((word) => hasWord(text, word));
+}
+
+function hasAnyPhrase(text = "", phrases = []) {
+  const value = String(text || "").toLowerCase();
+  return phrases.some((phrase) =>
+    value.includes(String(phrase || "").toLowerCase())
+  );
+}
+
 function uniqueList(items = []) {
   return [
     ...new Set(items.map((item) => String(item || "").trim()).filter(Boolean)),
@@ -240,6 +258,10 @@ function getPayrollReply() {
   return "After logging in to the manpower employee account, go to the Payroll section to view available payroll history and saved payroll details.";
 }
 
+function getLeaveReply() {
+  return "Employees can file leave requests after logging in to the manpower employee account. Go to the Leave section, choose the leave type, select the start and end dates, enter your reason, and submit the request for HR review.";
+}
+
 function getContactReply() {
   return `You can contact LTC Manpower Services at ${CONTACT_INFO.address}. Phone: ${CONTACT_INFO.phones.join(
     " / "
@@ -265,110 +287,127 @@ function detectIntent(text = "") {
 
   if (!q) return "";
 
+  // Use whole-word matching for short words like "hi" so words such as
+  // "PhilHealth" or "which" do not accidentally trigger a greeting.
   if (
-    q.includes("hello") ||
-    q.includes("hi") ||
-    q.includes("good morning") ||
-    q.includes("good afternoon")
+    hasAnyWord(q, ["hello", "hi", "hey"]) ||
+    hasAnyPhrase(q, ["good morning", "good afternoon", "good evening"])
   ) {
     return "greeting";
   }
 
   if (
-    q.includes("requirement") ||
-    q.includes("requirements") ||
-    q.includes("document") ||
-    q.includes("documents")
+    hasAnyWord(q, [
+      "requirement",
+      "requirements",
+      "document",
+      "documents",
+      "resume",
+      "nbi",
+      "sss",
+      "philhealth",
+      "pagibig",
+      "tin",
+      "diploma",
+    ]) ||
+    hasAnyPhrase(q, [
+      "valid id",
+      "barangay clearance",
+      "birth certificate",
+      "transcript of records",
+      "1x1",
+      "2x2",
+      "what do i need",
+      "what should i submit",
+    ])
   ) {
     return "requirements";
   }
 
   if (
-    q.includes("apply") ||
-    q.includes("application") ||
-    q.includes("how to apply")
+    hasAnyWord(q, ["apply", "application"]) ||
+    hasAnyPhrase(q, ["how to apply", "submit application", "apply now"])
   ) {
     return "apply";
   }
 
-  if (q.includes("exam") || q.includes("qualifying")) {
+  if (hasAnyWord(q, ["exam", "qualifying", "assessment", "test"])) {
     return "exam";
   }
 
-  if (
-    q.includes("interview") ||
-    q.includes("schedule") ||
-    q.includes("scheduled")
-  ) {
+  if (hasAnyWord(q, ["interview", "schedule", "scheduled", "appointment"])) {
     return "interview";
   }
 
   if (
-    q.includes("hired") ||
-    q.includes("hire") ||
-    q.includes("employee account")
+    hasAnyWord(q, ["hired", "hire", "employed"]) ||
+    hasAnyPhrase(q, ["employee account"])
   ) {
     return "hire";
   }
 
   if (
-    q.includes("otp") ||
-    q.includes("change password") ||
-    q.includes("forgot password")
+    hasAnyWord(q, ["otp", "password"]) ||
+    hasAnyPhrase(q, ["change password", "forgot password", "reset password"])
   ) {
     return "otp";
   }
 
-  if (q.includes("payroll") || q.includes("salary")) {
+  if (hasAnyWord(q, ["payroll", "salary", "payslip", "wage", "pay"])) {
     return "payroll";
   }
 
+  if (hasAnyWord(q, ["leave", "vacation", "sick"])) {
+    return "leave";
+  }
+
   if (
-    q.includes("contact") ||
-    q.includes("address") ||
-    q.includes("location") ||
-    q.includes("phone") ||
-    q.includes("office")
+    hasAnyWord(q, ["contact", "address", "location", "phone", "office"])
   ) {
     return "contact";
   }
 
   if (
-    q.includes("already used") ||
-    q.includes("used my email") ||
-    q.includes("duplicate email")
+    hasAnyPhrase(q, [
+      "already used",
+      "used my email",
+      "duplicate email",
+      "email already",
+    ])
   ) {
     return "email_used";
   }
 
-  if (q.includes("age")) {
+  if (hasAnyWord(q, ["age"])) {
     return "age";
   }
 
   if (
-    q.includes("login") ||
-    q.includes("log in") ||
-    q.includes("sign in") ||
-    q.includes("employee")
+    hasAnyPhrase(q, ["log in", "sign in", "employee login"]) ||
+    hasAnyWord(q, ["login"])
   ) {
     return "employee_login";
   }
 
   if (
-    q.includes("job") ||
-    q.includes("jobs") ||
-    q.includes("vacancy") ||
-    q.includes("vacancies") ||
-    q.includes("job offer") ||
-    q.includes("positions") ||
-    q.includes("opening") ||
-    q.includes("openings")
+    hasAnyWord(q, [
+      "job",
+      "jobs",
+      "vacancy",
+      "vacancies",
+      "position",
+      "positions",
+      "opening",
+      "openings",
+    ]) ||
+    hasAnyPhrase(q, ["job offer", "job offers"])
   ) {
     return "vacancy";
   }
 
   return "";
 }
+
 
 function replyFromIntent(intent = "", context = {}) {
   switch (intent) {
@@ -390,6 +429,8 @@ function replyFromIntent(intent = "", context = {}) {
       return getOtpReply();
     case "payroll":
       return getPayrollReply();
+    case "leave":
+      return getLeaveReply();
     case "contact":
       return getContactReply();
     case "email_used":

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import HotelFaqBot from "./HotelFaqBot";
 
 const BANK_QR_IMAGE = "/bank-transfer-qr.png";
 const GCASH_QR_IMAGE = "/gcash-qr.png";
@@ -289,6 +290,7 @@ export default function EventSummary() {
       </main>
       <Footer />
       {isOpen && <MobileMenu onClose={() => setIsOpen(false)} navigate={navigate} goToProfile={goToProfile} />}
+      <HotelFaqBot />
     </div>
   );
 }
@@ -460,6 +462,8 @@ function Header({ navigate, goToProfile, openMenu }) {
           <NavButton label="Home" onClick={() => navigate("/")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
+          <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
+          <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
         </nav>
 
         <button
@@ -686,6 +690,14 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
             onClick={() => {
               onClose();
               navigate("/hotel-contact-us");
+            }}
+          />
+
+          <MenuItem
+            label="FAQS"
+            onClick={() => {
+              onClose();
+              navigate("/hotel-faqs");
             }}
           />
 

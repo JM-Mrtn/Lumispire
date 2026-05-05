@@ -14,9 +14,14 @@ import {
   adminGetHotelIdFile,
 } from "../controllers/hotelAdminController.js";
 
+import { adminGetAllHotelBookings } from "../controllers/hotelAdminBookingController.js";
+
 const router = express.Router();
 
 router.post("/admin-login", adminLogin);
+
+/* Combined admin bookings endpoint */
+router.get("/admin/bookings", adminGetAllHotelBookings);
 
 router.get("/hotel-users", getAllHotelUsers);
 router.get("/hotel-users/:userId", getHotelUserById);
@@ -30,7 +35,6 @@ router.put("/admin-approve-id/:userId", adminApproveHotelId);
 router.put("/admin-reject-id/:userId", adminRejectHotelId);
 router.post("/admin-run-ai-id-check/:verificationId", adminRunHotelIdAiCheck);
 
-// ✅ reads hotel ID directly from MongoDB
 router.get("/admin-hotel-id-file/:verificationId", adminGetHotelIdFile);
 
 export default router;

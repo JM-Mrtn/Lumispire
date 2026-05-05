@@ -4,6 +4,21 @@ export function hotelAppBaseUrl() {
   return (process.env.CORS_ORIGIN || "http://localhost:5173").replace(/\/+$/, "");
 }
 
+export function hotelApiBaseUrl() {
+  const raw = (
+    process.env.SERVER_URL ||
+    process.env.VITE_SERVER_URL ||
+    process.env.API_BASE_URL ||
+    process.env.BACKEND_URL ||
+    `http://localhost:${process.env.PORT || 5000}`
+  ).replace(/\/+$/, "");
+
+  if (raw.endsWith("/api/hotel")) return raw;
+  if (raw.endsWith("/api")) return `${raw}/hotel`;
+
+  return `${raw}/api/hotel`;
+}
+
 function normalizeText(value = "") {
   return String(value || "").trim();
 }
@@ -80,7 +95,18 @@ async function sendHotelEmail({ to, subject, html, text }) {
 
 export async function sendHotelVerificationEmail(toEmail, token) {
   const safeToken = encodeURIComponent(String(token || ""));
-  const verifyLink = `${hotelAppBaseUrl()}/email-confirmation/${safeToken}`;
+
+  /*
+    IMPORTANT:
+    This link now goes to the BACKEND first.
+
+    Flow:
+    Gmail Verify Email button
+    -> http://localhost:5000/api/hotel/verify-email/:token?redirect=1
+    -> backend verifies the token
+    -> backend redirects browser to http://localhost:5173/hotel-login
+  */
+  const verifyLink = `${hotelApiBaseUrl()}/verify-email/${safeToken}?redirect=1`;
 
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937">
@@ -93,6 +119,7 @@ export async function sendHotelVerificationEmail(toEmail, token) {
           Verify Email
         </a>
       </p>
+      <p>After verification, you will be redirected to the login page.</p>
       <p>If the button does not work, open this link:</p>
       <p>${escapeHtml(verifyLink)}</p>
     </div>
@@ -103,6 +130,8 @@ Email Verification
 
 Open this link to verify your email:
 ${verifyLink}
+
+After verification, you will be redirected to the login page.
   `.trim();
 
   return sendHotelEmail({
@@ -184,7 +213,6 @@ This OTP will expire in 10 minutes.
 
 /*
   Compatibility aliases.
-  These help if an older Hotel controller still uses the old generic names.
 */
 export const appBaseUrl = hotelAppBaseUrl;
 export const buildTransporter = buildHotelTransporter;
@@ -194,6 +222,7 @@ export const sendChangePasswordOtpEmail = sendHotelChangePasswordOtpEmail;
 
 export default {
   hotelAppBaseUrl,
+  hotelApiBaseUrl,
   buildHotelTransporter,
   sendHotelVerificationEmail,
   sendHotelResetPasswordEmail,

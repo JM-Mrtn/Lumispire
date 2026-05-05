@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import HotelFaqBot from "./HotelFaqBot";
 
 const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
 
+function getHotelToken() {
+  return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
+}
+
 const HotelAndResortPage = () => {
   const navigate = useNavigate();
+
   const [isOpen, setIsOpen] = useState(false);
   const [currentBg, setCurrentBg] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(Boolean(getHotelToken()));
+
+  const authLabel = isLoggedIn ? "PROFILE" : "SIGN IN";
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -16,13 +25,27 @@ const HotelAndResortPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const goToProfile = () => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/hotel-profile");
-    } else {
-      navigate("/hotel-login");
-    }
+  useEffect(() => {
+    const syncLoginState = () => {
+      setIsLoggedIn(Boolean(getHotelToken()));
+    };
+
+    syncLoginState();
+
+    window.addEventListener("storage", syncLoginState);
+    window.addEventListener("focus", syncLoginState);
+
+    return () => {
+      window.removeEventListener("storage", syncLoginState);
+      window.removeEventListener("focus", syncLoginState);
+    };
+  }, []);
+
+  const goToProfileOrSignIn = () => {
+    const hasToken = Boolean(getHotelToken());
+
+    setIsLoggedIn(hasToken);
+    navigate(hasToken ? "/hotel-profile" : "/hotel-login");
   };
 
   return (
@@ -60,6 +83,7 @@ const HotelAndResortPage = () => {
                 alt="Lumispire Logo"
                 className="h-12 w-12 rounded-full object-cover md:h-14 md:w-14"
               />
+
               <span className="font-['Montserrat',sans-serif] text-[20px] font-semibold tracking-[0.24em] text-white md:text-[26px]">
                 LUMISPIRE
               </span>
@@ -68,28 +92,35 @@ const HotelAndResortPage = () => {
             {/* Desktop Nav */}
             <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-10 lg:flex xl:gap-14">
               <NavButton label="HOME" onClick={() => navigate("/")} />
+
               <NavButton
                 label="VIRTUAL TOUR"
                 onClick={() => navigate("/virtual-tour")}
               />
+
               <NavButton
                 label="CONTACT"
                 onClick={() => navigate("/hotel-contact-us")}
               />
+
+              <NavButton
+                label="FAQS"
+                onClick={() => navigate("/hotel-faqs")}
+              />
             </nav>
 
-            {/* Desktop Profile */}
+            {/* Desktop Auth Button */}
             <div className="hidden lg:block">
               <button
-                onClick={goToProfile}
+                onClick={goToProfileOrSignIn}
                 type="button"
                 className="font-['Montserrat',sans-serif] text-[17px] font-semibold uppercase tracking-wide text-white transition hover:text-white/80"
               >
-                PROFILE
+                {authLabel}
               </button>
             </div>
 
-            {/* Mobile Menu */}
+            {/* Mobile Menu Button */}
             <button
               className="rounded-full border border-white/20 bg-white/10 p-2 text-white backdrop-blur-sm lg:hidden"
               onClick={() => setIsOpen(true)}
@@ -180,6 +211,7 @@ const HotelAndResortPage = () => {
               address="2/F 5441 Currie Street, Palanan, Makati City"
               align="left"
             />
+
             <LocationBlock
               title="Bacoor Cavite"
               address="2/F 5441 Currie Street, Palanan, Makati City"
@@ -233,6 +265,7 @@ const HotelAndResortPage = () => {
                     navigate("/");
                   }}
                 />
+
                 <MenuItem
                   label="VIRTUAL TOUR"
                   onClick={() => {
@@ -240,6 +273,7 @@ const HotelAndResortPage = () => {
                     navigate("/virtual-tour");
                   }}
                 />
+
                 <MenuItem
                   label="CONTACT"
                   onClick={() => {
@@ -247,11 +281,12 @@ const HotelAndResortPage = () => {
                     navigate("/hotel-contact-us");
                   }}
                 />
+
                 <MenuItem
-                  label="PROFILE"
+                  label={authLabel}
                   onClick={() => {
                     setIsOpen(false);
-                    goToProfile();
+                    goToProfileOrSignIn();
                   }}
                 />
               </div>
@@ -259,6 +294,7 @@ const HotelAndResortPage = () => {
           </div>
         )}
       </section>
+      <HotelFaqBot />
     </div>
   );
 };
@@ -302,6 +338,7 @@ function LocationBlock({ title, address, align = "left" }) {
         <div className="font-['Montserrat',sans-serif] text-[24px] font-medium leading-none md:text-[34px]">
           {title}
         </div>
+
         <div className="mt-1 font-['Inter',sans-serif] text-[12px] font-medium leading-tight text-white/90 md:text-[15px]">
           {address}
         </div>
@@ -327,6 +364,7 @@ function LocationIcon() {
         strokeLinejoin="round"
         d="M12 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z"
       />
+
       <path
         strokeLinecap="round"
         strokeLinejoin="round"

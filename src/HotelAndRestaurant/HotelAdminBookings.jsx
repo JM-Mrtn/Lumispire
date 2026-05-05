@@ -1,10 +1,9 @@
-// HotelAndRestaurant/HotelAdminBookings.jsx
-import React, { useEffect, useMemo, useState } from "react";
+// HotelAdminBookings.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HotelAdminShell from "./HotelAdminShell";
 
 const GREEN_DARK = "#2A4F33";
-const SIDEBAR_BG = "#3A5F3C";
 const CARD_BG = "#EDEADF";
 
 const SERVICE_FILTERS = [
@@ -21,7 +20,7 @@ const STATUS_FILTERS = [
   { id: "CANCELLED", label: "Cancelled" },
 ];
 
-function getApiBase() {
+function getHotelApiBase() {
   const raw = (
     import.meta.env.VITE_HOTEL_API_BASE ||
     import.meta.env.VITE_API_BASE ||
@@ -30,7 +29,17 @@ function getApiBase() {
   ).replace(/\/+$/, "");
 
   if (raw.endsWith("/api/hotel")) return raw;
+
+  if (raw.endsWith("/api/hotel-admin")) {
+    return raw.replace(/\/api\/hotel-admin$/, "/api/hotel");
+  }
+
   if (raw.endsWith("/api")) return `${raw}/hotel`;
+
+  if (raw.includes("/api/hotel-admin")) {
+    return raw.replace("/api/hotel-admin", "/api/hotel");
+  }
+
   if (raw.includes("/api/hotel")) return raw;
 
   return `${raw}/api/hotel`;
@@ -38,10 +47,47 @@ function getApiBase() {
 
 function getAdminToken() {
   return (
-    localStorage.getItem("adminToken") ||
     localStorage.getItem("hotelAdminToken") ||
+    localStorage.getItem("adminToken") ||
     ""
   );
+}
+
+function getAdminHeaders() {
+  const token = getAdminToken();
+
+  return {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+function toNumber(value, fallback = 0) {
+  if (value === null || value === undefined || value === "") return fallback;
+
+  const amount = Number(String(value).replace(/[^\d.-]/g, ""));
+
+  if (!Number.isFinite(amount)) return fallback;
+
+  return amount;
+}
+
+function firstMoneyValue(...values) {
+  for (const value of values) {
+    const amount = toNumber(value, NaN);
+    if (Number.isFinite(amount) && amount > 0) return amount;
+  }
+
+  return 0;
+}
+
+function firstDefinedValue(...values) {
+  for (const value of values) {
+    if (value !== null && value !== undefined && value !== "") return value;
+  }
+
+  return "";
 }
 
 function formatPeso(value) {
@@ -56,7 +102,7 @@ function formatPeso(value) {
   }).format(amount);
 }
 
-function formatDateMMDDYYYY(value) {
+function formatDate(value) {
   if (!value) return "—";
 
   const text = String(value);
@@ -67,57 +113,92 @@ function formatDateMMDDYYYY(value) {
   }
 
   const parsed = new Date(text);
+
   if (Number.isNaN(parsed.getTime())) return text;
 
   return parsed.toLocaleDateString("en-PH", {
+    year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    year: "numeric",
   });
 }
 
 function normalizeStatus(value) {
   const status = String(value || "PENDING").toUpperCase();
 
-  if (status === "APPROVED") return "CONFIRMED";
-  if (status === "CANCELED" || status === "REJECTED" || status === "DECLINED") {
+  if (status === "APPROVED" || status === "CONFIRMED") return "CONFIRMED";
+
+  if (
+    status === "CANCELLED" ||
+    status === "CANCELED" ||
+    status === "REJECTED" ||
+    status === "DECLINED"
+  ) {
     return "CANCELLED";
   }
-
-  if (["PENDING", "CONFIRMED", "CANCELLED"].includes(status)) return status;
 
   return "PENDING";
 }
 
-function getServiceLabel(type) {
-  if (type === "resort") return "Resort & Venue";
-  if (type === "event") return "Event Package";
-  if (type === "hotel_room") return "Hotel & Condo";
-  return "Booking";
+function normalizePaymentTerm(value = "", paidAmount = 0, totalAmount = 0) {
+  const raw = String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (
+    raw.includes("DOWN") ||
+    raw.includes("PARTIAL") ||
+    raw === "DP" ||
+    raw === "DEPOSIT"
+  ) {
+    return "DOWN_PAYMENT";
+  }
+
+  if (
+    raw.includes("FULL") ||
+    raw === "PAID" ||
+    raw === "FULLY_PAID" ||
+    raw === "FULL_PAYMENT"
+  ) {
+    return "FULL_PAYMENT";
+  }
+
+  if (paidAmount > 0 && totalAmount > 0 && paidAmount < totalAmount) {
+    return "DOWN_PAYMENT";
+  }
+
+  if (paidAmount > 0 && totalAmount > 0 && paidAmount >= totalAmount) {
+    return "FULL_PAYMENT";
+  }
+
+  return raw || "";
 }
 
-function getServiceBadgeClass(type) {
-  const base =
-    "inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-extrabold";
+function getPaymentTermLabel(term = "") {
+  if (term === "DOWN_PAYMENT") return "Downpayment";
+  if (term === "FULL_PAYMENT") return "Full Payment";
+  return "Not recorded";
+}
 
-  if (type === "resort") {
+function getPaymentChipClass(term = "") {
+  const base =
+    "inline-flex rounded-full border px-3 py-1 text-[11px] font-extrabold";
+
+  if (term === "DOWN_PAYMENT") {
+    return `${base} border-amber-200 bg-amber-50 text-amber-700`;
+  }
+
+  if (term === "FULL_PAYMENT") {
     return `${base} border-emerald-200 bg-emerald-50 text-emerald-700`;
   }
 
-  if (type === "event") {
-    return `${base} border-violet-200 bg-violet-50 text-violet-700`;
-  }
-
-  if (type === "hotel_room") {
-    return `${base} border-sky-200 bg-sky-50 text-sky-700`;
-  }
-
-  return `${base} border-slate-200 bg-slate-50 text-slate-700`;
+  return `${base} border-slate-200 bg-slate-50 text-slate-600`;
 }
 
 function getStatusChipClass(status) {
   const base =
-    "inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-extrabold";
+    "inline-flex rounded-full border px-3 py-1 text-[11px] font-extrabold";
 
   if (status === "PENDING") {
     return `${base} border-amber-200 bg-amber-50 text-amber-700`;
@@ -134,312 +215,655 @@ function getStatusChipClass(status) {
   return `${base} border-slate-200 bg-slate-50 text-slate-700`;
 }
 
+function getServiceBadgeClass(type) {
+  const base =
+    "inline-flex rounded-full border px-3 py-1 text-[11px] font-extrabold";
+
+  if (type === "resort") {
+    return `${base} border-emerald-200 bg-emerald-50 text-emerald-700`;
+  }
+
+  if (type === "event") {
+    return `${base} border-violet-200 bg-violet-50 text-violet-700`;
+  }
+
+  if (type === "hotel_room") {
+    return `${base} border-sky-200 bg-sky-50 text-sky-700`;
+  }
+
+  return `${base} border-slate-200 bg-slate-50 text-slate-700`;
+}
+
 function getStatusBoxClass(type) {
   if (type === "success") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  }
-
-  if (type === "error") {
-    return "border-rose-200 bg-rose-50 text-rose-700";
   }
 
   if (type === "warning") {
     return "border-amber-200 bg-amber-50 text-amber-700";
   }
 
+  if (type === "error") {
+    return "border-rose-200 bg-rose-50 text-rose-700";
+  }
+
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
-function normalizeResortBooking(booking = {}) {
+function getNestedUser(booking = {}) {
+  const user = booking.userId || booking.user || booking.hotelUser || {};
+  return typeof user === "object" && user !== null ? user : {};
+}
+
+function getCustomerName(booking = {}) {
+  const user = getNestedUser(booking);
+
+  const firstName = booking.firstName || user.firstName || "";
+  const lastName = booking.lastName || user.lastName || "";
+
+  return (
+    booking.customerName ||
+    booking.fullName ||
+    user.fullName ||
+    user.name ||
+    `${firstName} ${lastName}`.trim() ||
+    booking.email ||
+    user.email ||
+    "Hotel Guest"
+  );
+}
+
+function getCustomerEmail(booking = {}) {
+  const user = getNestedUser(booking);
+  return booking.email || user.email || "";
+}
+
+function getCustomerPhone(booking = {}) {
+  const user = getNestedUser(booking);
+  return booking.phone || user.phone || user.contactNumber || "";
+}
+
+function getProofEndpoint(apiBase, booking) {
+  if (booking.bookingType === "resort") {
+    return `${apiBase}/admin/resort-bookings/${booking._id}/proof`;
+  }
+
+  if (booking.bookingType === "event") {
+    return `${apiBase}/admin/event-bookings/${booking._id}/proof`;
+  }
+
+  return `${apiBase}/admin/hotel-room-bookings/${booking._id}/proof`;
+}
+
+function getStatusEndpoint(apiBase, booking) {
+  if (booking.bookingType === "resort") {
+    return `${apiBase}/admin/resort-bookings/${booking._id}/status`;
+  }
+
+  if (booking.bookingType === "event") {
+    return `${apiBase}/admin/event-bookings/${booking._id}/status`;
+  }
+
+  return `${apiBase}/admin/hotel-room-bookings/${booking._id}/status`;
+}
+
+function extractPaymentInfo(booking = {}) {
+  const raw = booking.raw || booking;
+
+  const totalAmount = firstMoneyValue(
+    booking.totalAmount,
+    booking.price,
+    booking.amount,
+    booking.fullTotalAmount,
+    raw.totalAmount,
+    raw.price,
+    raw.amount,
+    raw.fullTotalAmount,
+    raw.payment?.totalAmount
+  );
+
+  const explicitPaidAmount = firstMoneyValue(
+    booking.paidAmount,
+    booking.amountToPay,
+    booking.downPaymentAmount,
+    booking.downpaymentAmount,
+    booking.downPayment,
+    booking.downpayment,
+    booking.depositAmount,
+    booking.deposit,
+    booking.payment?.paidAmount,
+    booking.payment?.amountToPay,
+    booking.payment?.downPaymentAmount,
+    raw.paidAmount,
+    raw.amountToPay,
+    raw.downPaymentAmount,
+    raw.downpaymentAmount,
+    raw.downPayment,
+    raw.downpayment,
+    raw.depositAmount,
+    raw.deposit,
+    raw.payment?.paidAmount,
+    raw.payment?.amountToPay,
+    raw.payment?.downPaymentAmount
+  );
+
+  const explicitBalanceAmount = firstMoneyValue(
+    booking.balanceAmount,
+    booking.remainingBalance,
+    booking.balance,
+    booking.unpaidAmount,
+    booking.payment?.balanceAmount,
+    raw.balanceAmount,
+    raw.remainingBalance,
+    raw.balance,
+    raw.unpaidAmount,
+    raw.payment?.balanceAmount
+  );
+
+  const explicitPaymentTermRaw = firstDefinedValue(
+    booking.paymentTerm,
+    booking.paymentType,
+    booking.paymentStatus,
+    booking.payment?.paymentTerm,
+    raw.paymentTerm,
+    raw.paymentType,
+    raw.paymentStatus,
+    raw.payment?.paymentTerm
+  );
+
+  let paymentTerm = normalizePaymentTerm(
+    explicitPaymentTermRaw,
+    explicitPaidAmount,
+    totalAmount
+  );
+
+  let paidAmount = explicitPaidAmount;
+  let balanceAmount = explicitBalanceAmount;
+  let isPaymentInferred = false;
+
+  /*
+    IMPORTANT FIX:
+    Older records in your database may only have paymentMethod + totalAmount.
+    Your summary pages submit amountToPay / paidAmount / balanceAmount / paymentTerm,
+    but if the backend model/controller did not save those fields yet, the admin page
+    receives no downpayment info. In that case, show the expected 50/50 downpayment
+    instead of "Not recorded".
+  */
+  if (totalAmount > 0 && !paymentTerm && paidAmount <= 0 && balanceAmount <= 0) {
+    paymentTerm = "DOWN_PAYMENT";
+    paidAmount = Math.ceil(totalAmount / 2);
+    balanceAmount = Math.max(0, totalAmount - paidAmount);
+    isPaymentInferred = true;
+  }
+
+  if (totalAmount > 0 && paymentTerm === "DOWN_PAYMENT" && paidAmount <= 0) {
+    paidAmount = Math.ceil(totalAmount / 2);
+    balanceAmount = Math.max(0, totalAmount - paidAmount);
+    isPaymentInferred = true;
+  }
+
+  if (totalAmount > 0 && paymentTerm === "FULL_PAYMENT" && paidAmount <= 0) {
+    paidAmount = totalAmount;
+    balanceAmount = 0;
+    isPaymentInferred = true;
+  }
+
+  if (totalAmount > 0 && paidAmount > 0 && balanceAmount <= 0) {
+    balanceAmount = Math.max(0, totalAmount - paidAmount);
+  }
+
+  if (!paymentTerm) {
+    paymentTerm = normalizePaymentTerm("", paidAmount, totalAmount);
+  }
+
   return {
-    _id: String(booking._id || ""),
+    paymentTerm,
+    paymentTermLabel: getPaymentTermLabel(paymentTerm),
+    paidAmount,
+    amountToPay: paidAmount,
+    balanceAmount,
+    totalAmount,
+    isPaymentInferred,
+  };
+}
+
+function normalizeBooking(booking = {}, fallbackType = "") {
+  const raw = booking.raw || booking;
+  const bookingType = booking.bookingType || fallbackType || "resort";
+
+  if (bookingType === "event") {
+    const normalized = {
+      _id: String(booking._id || booking.id || ""),
+      bookingType: "event",
+      serviceLabel: booking.serviceLabel || "Event Package",
+      title:
+        booking.title ||
+        booking.eventPackage ||
+        booking.packageTitle ||
+        booking.packageName ||
+        raw.eventPackage ||
+        raw.packageTitle ||
+        "Event Package Booking",
+      customerName: getCustomerName(booking),
+      email: getCustomerEmail(booking) || "—",
+      phone: getCustomerPhone(booking) || "—",
+      date: booking.date || booking.eventDate || raw.eventDate || "",
+      time: booking.time || raw.time || "",
+      category:
+        booking.category ||
+        booking.timeVariationLabel ||
+        booking.selectedVariantLabel ||
+        booking.eventType ||
+        raw.timeVariationLabel ||
+        raw.selectedVariantLabel ||
+        raw.eventType ||
+        "Event Package",
+      location: booking.location || booking.venue || raw.venue || "",
+      pax: Number(booking.pax || booking.totalGuests || booking.guests || raw.pax || 0),
+      paymentMethod: booking.paymentMethod || raw.paymentMethod || "",
+      status: normalizeStatus(booking.status || raw.status),
+      isActive: booking.isActive !== false && raw.isActive !== false,
+      createdAt: booking.createdAt || raw.createdAt || booking.date || "",
+      raw,
+    };
+
+    const payment = extractPaymentInfo({ ...booking, raw });
+
+    return {
+      ...normalized,
+      ...payment,
+    };
+  }
+
+  if (bookingType === "hotel_room") {
+    const roomType =
+      booking.roomType ||
+      booking.location ||
+      booking.packageTitle ||
+      raw.roomType ||
+      raw.packageTitle ||
+      "Hotel Room";
+
+    const duration = booking.duration || booking.category || raw.duration || "";
+
+    const normalized = {
+      _id: String(booking._id || booking.id || ""),
+      bookingType: "hotel_room",
+      serviceLabel: booking.serviceLabel || "Hotel & Condo",
+      title:
+        booking.title ||
+        `${roomType}${duration ? ` - ${duration}` : ""}`,
+      customerName: getCustomerName(booking),
+      email: getCustomerEmail(booking) || "—",
+      phone: getCustomerPhone(booking) || "—",
+      date: booking.date || raw.date || "",
+      time: booking.time || raw.time || "",
+      category: duration || "Hotel Room",
+      location: roomType,
+      pax: Number(booking.pax || booking.totalGuests || booking.guests || raw.pax || 0),
+      paymentMethod: booking.paymentMethod || raw.paymentMethod || "",
+      status: normalizeStatus(booking.status || raw.status),
+      isActive: booking.isActive !== false && raw.isActive !== false,
+      createdAt: booking.createdAt || raw.createdAt || booking.date || "",
+      raw,
+    };
+
+    const payment = extractPaymentInfo({ ...booking, raw });
+
+    return {
+      ...normalized,
+      ...payment,
+    };
+  }
+
+  const normalized = {
+    _id: String(booking._id || booking.id || ""),
     bookingType: "resort",
-    serviceLabel: "Resort & Venue",
-    title: booking.venue || booking.packageName || "Resort & Venue Booking",
-    customerName: `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
-    firstName: booking.firstName || "",
-    lastName: booking.lastName || "",
-    email: booking.email || "",
-    phone: booking.phone || "",
-    date: booking.date || "",
-    time: booking.time || "",
-    category: booking.category || "",
-    location: booking.venue || "",
+    serviceLabel: booking.serviceLabel || "Resort & Venue",
+    title:
+      booking.title ||
+      booking.venue ||
+      booking.packageTitle ||
+      raw.venue ||
+      raw.packageTitle ||
+      "Resort & Venue Booking",
+    customerName: getCustomerName(booking),
+    email: getCustomerEmail(booking) || "—",
+    phone: getCustomerPhone(booking) || "—",
+    date: booking.date || raw.date || "",
+    time: booking.time || raw.time || "",
+    category: booking.category || booking.duration || raw.category || raw.duration || "",
+    location: booking.location || booking.venue || raw.venue || "",
     pax:
       Number(
         booking.pax ||
           booking.totalGuests ||
-          Number(booking.adults || 0) + Number(booking.kids || 0)
+          raw.pax ||
+          raw.totalGuests ||
+          Number(booking.adults || raw.adults || 0) +
+            Number(booking.kids || raw.kids || 0)
       ) || 0,
-    paymentMethod: booking.paymentMethod || "",
-    totalAmount: Number(booking.price || booking.totalAmount || 0),
-    status: normalizeStatus(booking.status),
-    createdAt: booking.createdAt || "",
-    raw: booking,
+    paymentMethod: booking.paymentMethod || raw.paymentMethod || "",
+    status: normalizeStatus(booking.status || raw.status),
+    isActive: booking.isActive !== false && raw.isActive !== false,
+    createdAt: booking.createdAt || raw.createdAt || booking.date || "",
+    raw,
   };
-}
 
-function normalizeEventBooking(booking = {}) {
-  return {
-    _id: String(booking._id || ""),
-    bookingType: "event",
-    serviceLabel: "Event Package",
-    title:
-      booking.eventPackage ||
-      booking.packageName ||
-      booking.eventType ||
-      "Event Package Booking",
-    customerName: `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
-    firstName: booking.firstName || "",
-    lastName: booking.lastName || "",
-    email: booking.email || "",
-    phone: booking.phone || "",
-    date: booking.eventDate || booking.date || "",
-    time: booking.time || "",
-    category: booking.eventType || "Event Package",
-    location: booking.venue || "",
-    pax: Number(booking.pax || booking.guests || 0),
-    paymentMethod: booking.paymentMethod || "",
-    totalAmount: Number(booking.totalAmount || booking.price || 0),
-    status: normalizeStatus(booking.status),
-    createdAt: booking.createdAt || "",
-    raw: booking,
-  };
-}
-
-function normalizeHotelRoomBooking(booking = {}) {
-  const roomType = booking.roomType || "Hotel Room";
-  const duration = booking.duration || "";
+  const payment = extractPaymentInfo({ ...booking, raw });
 
   return {
-    _id: String(booking._id || ""),
-    bookingType: "hotel_room",
-    serviceLabel: "Hotel & Condo",
-    title: `${roomType}${duration ? ` - ${duration}` : ""}`,
-    customerName: `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
-    firstName: booking.firstName || "",
-    lastName: booking.lastName || "",
-    email: booking.email || "",
-    phone: booking.phone || "",
-    date: booking.date || "",
-    time: booking.time || "",
-    category: duration || "Hotel Room",
-    location: roomType,
-    pax: Number(booking.pax || booking.guests || 0),
-    paymentMethod: booking.paymentMethod || "",
-    totalAmount: Number(booking.price || booking.totalAmount || 0),
-    status: normalizeStatus(booking.status),
-    createdAt: booking.createdAt || "",
-    raw: booking,
+    ...normalized,
+    ...payment,
   };
 }
 
-function getProofEndpoint(API_BASE, booking) {
-  if (booking.bookingType === "resort") {
-    return `${API_BASE}/admin/resort-bookings/${booking._id}/proof`;
-  }
+function uniqueBookings(rows = []) {
+  const map = new Map();
 
-  if (booking.bookingType === "event") {
-    return `${API_BASE}/admin/event-bookings/${booking._id}/proof`;
-  }
+  rows.forEach((item) => {
+    if (!item?._id) return;
+    map.set(`${item.bookingType}:${item._id}`, item);
+  });
 
-  return `${API_BASE}/admin/hotel-room-bookings/${booking._id}/proof`;
+  return Array.from(map.values());
 }
 
-function getStatusEndpoint(API_BASE, booking) {
-  if (booking.bookingType === "resort") {
-    return `${API_BASE}/admin/resort-bookings/${booking._id}/status`;
+function extractBookings(data, fallbackType = "") {
+  if (Array.isArray(data)) {
+    return data.map((item) => normalizeBooking(item, fallbackType));
   }
 
-  if (booking.bookingType === "event") {
-    return `${API_BASE}/admin/event-bookings/${booking._id}/status`;
+  if (Array.isArray(data?.bookings)) {
+    return data.bookings.map((item) => normalizeBooking(item, fallbackType));
   }
 
-  return `${API_BASE}/admin/hotel-room-bookings/${booking._id}/status`;
-}
-
-
-function getRescheduleEndpoint(API_BASE, booking) {
-  if (booking.bookingType === "resort") {
-    return `${API_BASE}/admin/resort-bookings/${booking._id}/reschedule`;
+  if (Array.isArray(data?.data)) {
+    return data.data.map((item) => normalizeBooking(item, fallbackType));
   }
 
-  if (booking.bookingType === "event") {
-    return `${API_BASE}/admin/event-bookings/${booking._id}/reschedule`;
+  if (Array.isArray(data?.rows)) {
+    return data.rows.map((item) => normalizeBooking(item, fallbackType));
   }
 
-  return `${API_BASE}/admin/hotel-room-bookings/${booking._id}/reschedule`;
+  return [];
 }
 
-function todayISO() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+function isImageMime(mimeType = "") {
+  return String(mimeType || "").startsWith("image/");
 }
 
-function addDaysISO(dateString, days) {
-  const [year, month, day] = String(dateString || todayISO()).split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day + Number(days || 0)));
-  return date.toISOString().slice(0, 10);
+function isPdfMime(mimeType = "") {
+  return String(mimeType || "").toLowerCase().includes("application/pdf");
 }
 
-function getRescheduleOptionsEndpoint(API_BASE, booking) {
-  const from = todayISO();
-  const to = addDaysISO(from, 365);
-  const query = `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+function getProofTitle(booking) {
+  if (!booking) return "Proof of Payment";
 
-  if (booking.bookingType === "resort") {
-    return `${API_BASE}/admin/resort-bookings/${booking._id}/reschedule-options?${query}`;
-  }
-
-  if (booking.bookingType === "event") {
-    return `${API_BASE}/admin/event-bookings/${booking._id}/reschedule-options?${query}`;
-  }
-
-  return `${API_BASE}/admin/hotel-room-bookings/${booking._id}/reschedule-options?${query}`;
+  return `${booking.serviceLabel || "Booking"} Proof`;
 }
 
-function getFallbackRescheduleTimes(booking) {
-  const raw = booking?.raw || {};
-  const candidates = [
-    ...(Array.isArray(raw.selectedTimeSlots) ? raw.selectedTimeSlots : []),
-    ...(Array.isArray(raw.timeSlots) ? raw.timeSlots : []),
-    ...(Array.isArray(raw.availableTimeSlots) ? raw.availableTimeSlots : []),
-    booking?.time,
-  ];
-
-  return [...new Set(candidates.map((item) => String(item || "").trim()).filter(Boolean))];
-}
-
-function getRescheduleTimeOptions(booking, options, date) {
-  const selectedDate = String(date || "").trim();
-
-  if (selectedDate && options?.availableTimeSlotsByDate?.[selectedDate]) {
-    return options.availableTimeSlotsByDate[selectedDate] || [];
-  }
-
-  if (Array.isArray(options?.timeSlots) && options.timeSlots.length) {
-    return options.timeSlots;
-  }
-
-  return getFallbackRescheduleTimes(booking);
-}
-
-function getBlockedTimeOptions(options, date) {
-  return options?.blockedTimeSlotsByDate?.[date] || [];
-}
-
-function isRescheduleDateFullyBooked(options, date) {
-  return Boolean(
-    date && Array.isArray(options?.fullBookedDates) && options.fullBookedDates.includes(date)
+function Th({ children, className = "" }) {
+  return (
+    <th
+      className={`px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-black/60 ${className}`}
+    >
+      {children}
+    </th>
   );
 }
 
-function getBlockedDatesForCalendar(options) {
-  /*
-    Only FULLY booked dates should be disabled in the calendar.
+function Td({ children, className = "" }) {
+  return (
+    <td className={`border-t border-black/5 px-4 py-4 align-top ${className}`}>
+      {children}
+    </td>
+  );
+}
 
-    Previous behavior also added every date from blockedTimeSlotsByDate,
-    so a date with only one unavailable time became grey and unclickable.
-    That made it look like too many dates were blocked.
+function FilterButton({ label, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-4 py-2 text-xs font-extrabold transition ${
+        active
+          ? "border-[#2A4F33] bg-[#2A4F33] text-white"
+          : "border-black/10 bg-white text-black/55 hover:border-[#2A4F33]/40 hover:text-[#2A4F33]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
-    Now:
-    - fullBookedDates/bookedDates = disabled grey date
-    - partiallyBlockedDates/blockedTimeSlotsByDate = date is still clickable,
-      but unavailable times are removed from the time dropdown
-  */
-  const blocked = new Set();
+function StatCard({ label, value, helper = "" }) {
+  return (
+    <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+      <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-black/40">
+        {label}
+      </p>
 
-  if (Array.isArray(options?.fullBookedDates)) {
-    options.fullBookedDates.forEach((date) => blocked.add(String(date || "")));
+      <p className="mt-2 text-3xl font-extrabold" style={{ color: GREEN_DARK }}>
+        {value}
+      </p>
+
+      {helper ? (
+        <p className="mt-2 text-xs font-semibold text-black/45">{helper}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function PaymentSummary({ booking, compact = false }) {
+  const paymentTerm = booking?.paymentTerm || "";
+  const paidAmount = Number(booking?.paidAmount || booking?.amountToPay || 0);
+  const balanceAmount = Number(booking?.balanceAmount || 0);
+  const totalAmount = Number(booking?.totalAmount || 0);
+
+  if (compact) {
+    return (
+      <div className="space-y-1">
+        <span className={getPaymentChipClass(paymentTerm)}>
+          {getPaymentTermLabel(paymentTerm)}
+        </span>
+
+        {booking?.isPaymentInferred ? (
+          <p className="mt-1 text-[11px] font-bold text-amber-700">
+            Computed as 50/50 because this booking has no saved payment-term fields.
+          </p>
+        ) : null}
+
+        <p className="text-xs font-extrabold text-[#2A4F33]">
+          Paid: {formatPeso(paidAmount)}
+        </p>
+
+        <p className="text-xs font-semibold text-black/55">
+          Balance: {formatPeso(balanceAmount)}
+        </p>
+      </div>
+    );
   }
 
-  if (Array.isArray(options?.bookedDates)) {
-    options.bookedDates.forEach((date) => blocked.add(String(date || "")));
-  }
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+      <div className="rounded-xl bg-white p-4">
+        <p className="text-[11px] font-extrabold uppercase tracking-wide text-black/40">
+          Payment Type
+        </p>
 
-  blocked.delete("");
-  return [...blocked];
+        <p className="mt-1 text-sm font-extrabold text-[#2A4F33]">
+          {getPaymentTermLabel(paymentTerm)}
+        </p>
+      </div>
+
+      <div className="rounded-xl bg-white p-4">
+        <p className="text-[11px] font-extrabold uppercase tracking-wide text-black/40">
+          Amount Paid
+        </p>
+
+        <p className="mt-1 text-sm font-extrabold text-[#2A4F33]">
+          {formatPeso(paidAmount)}
+        </p>
+      </div>
+
+      <div className="rounded-xl bg-white p-4">
+        <p className="text-[11px] font-extrabold uppercase tracking-wide text-black/40">
+          Balance
+        </p>
+
+        <p className="mt-1 text-sm font-extrabold text-[#2A4F33]">
+          {formatPeso(balanceAmount)}
+        </p>
+      </div>
+
+      <div className="rounded-xl bg-white p-4">
+        <p className="text-[11px] font-extrabold uppercase tracking-wide text-black/40">
+          Total
+        </p>
+
+        <p className="mt-1 text-sm font-extrabold text-[#2A4F33]">
+          {formatPeso(totalAmount)}
+        </p>
+      </div>
+    </div>
+  );
 }
 
-function getRescheduleDateDisabledReason(options, date) {
-  const iso = String(date || "").trim();
-  if (!iso) return "Invalid date";
+function ProofPreviewModal({
+  booking,
+  url,
+  mimeType,
+  loading,
+  error,
+  onClose,
+}) {
+  if (!booking) return null;
 
-  if (iso < todayISO()) return "Past date";
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4 py-6">
+      <div className="max-h-full w-full max-w-4xl overflow-auto rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-['Montserrat',sans-serif] text-xl font-extrabold text-[#355E3B]">
+              {getProofTitle(booking)}
+            </h2>
 
-  if (isRescheduleDateFullyBooked(options, iso)) {
-    return "Fully booked";
-  }
+            <p className="mt-1 text-sm font-semibold text-[#355E3B]/80">
+              {booking.customerName}
+            </p>
 
-  if (Array.isArray(options?.bookedDates) && options.bookedDates.includes(iso)) {
-    return "Fully booked";
-  }
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <span
+                className={`rounded-full border px-3 py-1 font-bold ${getServiceBadgeClass(
+                  booking.bookingType
+                )}`}
+              >
+                {booking.serviceLabel}
+              </span>
 
-  return "";
-}
+              <span
+                className={`rounded-full border px-3 py-1 font-bold ${getStatusChipClass(
+                  booking.status
+                )}`}
+              >
+                {booking.status}
+              </span>
 
-function formatBlockedDatePreview(dates = []) {
-  const list = Array.isArray(dates) ? dates.slice(0, 8) : [];
-  if (!list.length) return "No blocked dates in the loaded range.";
-  const suffix = dates.length > list.length ? ` +${dates.length - list.length} more` : "";
-  return `${list.map(formatDateMMDDYYYY).join(", ")}${suffix}`;
-}
+              <span className={getPaymentChipClass(booking.paymentTerm)}>
+                {getPaymentTermLabel(booking.paymentTerm)}
+              </span>
 
-function makeLocalDateFromISO(value = "") {
-  const fallback = todayISO();
-  const source = /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))
-    ? String(value)
-    : fallback;
-  const [year, month, day] = source.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
+              {booking.isPaymentInferred ? (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-bold text-amber-700">
+                  50/50 computed
+                </span>
+              ) : null}
 
-function dateToISO(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+              <span className="rounded-full bg-[#f6f6f3] px-3 py-1 font-bold text-[#355E3B]">
+                {formatDate(booking.date)}
+              </span>
+            </div>
+          </div>
 
-function formatCalendarMonth(date) {
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-[#355E3B] px-4 py-2 text-sm font-semibold text-[#355E3B] hover:bg-[#355E3B]/5"
+          >
+            Close
+          </button>
+        </div>
 
-function buildCalendarDays(monthDate) {
-  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const gridStart = new Date(firstDay);
-  gridStart.setDate(firstDay.getDate() - firstDay.getDay());
+        <div className="mb-4 rounded-xl border border-[#d7dbd2] bg-[#f6f6f3] p-4 text-sm text-[#355E3B]">
+          <p className="font-extrabold">Booking Details</p>
 
-  return Array.from({ length: 42 }, (_, index) => {
-    const item = new Date(gridStart);
-    item.setDate(gridStart.getDate() + index);
+          <div className="mt-2 grid grid-cols-1 gap-2 text-xs font-semibold text-[#355E3B]/80 sm:grid-cols-2">
+            <p>
+              <span className="font-extrabold">Booking:</span>{" "}
+              {booking.title || "—"}
+            </p>
 
-    return {
-      date: item,
-      iso: dateToISO(item),
-      day: item.getDate(),
-      isCurrentMonth: item.getMonth() === monthDate.getMonth(),
-    };
-  });
-}
+            <p>
+              <span className="font-extrabold">Category:</span>{" "}
+              {booking.category || "—"}
+            </p>
 
-function normalizeMonthDate(value) {
-  return new Date(value.getFullYear(), value.getMonth(), 1);
-}
+            <p>
+              <span className="font-extrabold">Time:</span>{" "}
+              {booking.time || "—"}
+            </p>
 
-function normalizeUpdatedBooking(bookingType, booking) {
-  if (bookingType === "resort") return normalizeResortBooking(booking);
-  if (bookingType === "event") return normalizeEventBooking(booking);
-  return normalizeHotelRoomBooking(booking);
+            <p>
+              <span className="font-extrabold">Payment Method:</span>{" "}
+              {booking.paymentMethod || "—"}
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <PaymentSummary booking={booking} />
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="rounded-xl bg-[#f6f6f3] p-8 text-center text-sm font-semibold text-[#355E3B]/80">
+            Loading proof of payment...
+          </div>
+        ) : error ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
+            {error}
+          </div>
+        ) : !url ? (
+          <div className="rounded-xl bg-[#f6f6f3] p-8 text-center text-sm font-semibold text-[#355E3B]/80">
+            No proof file found.
+          </div>
+        ) : isImageMime(mimeType) ? (
+          <img
+            src={url}
+            alt="Proof of payment"
+            className="max-h-[75vh] w-full rounded-xl bg-[#f6f6f3] object-contain"
+          />
+        ) : isPdfMime(mimeType) ? (
+          <iframe
+            src={url}
+            title="Proof of payment PDF"
+            className="h-[75vh] w-full rounded-xl border border-black/10 bg-[#f6f6f3]"
+          />
+        ) : (
+          <div className="rounded-xl bg-[#f6f6f3] p-8 text-center text-sm font-semibold text-[#355E3B]/80">
+            Preview is not supported for this file type.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function HotelAdminBookings() {
   const navigate = useNavigate();
-  const API_BASE = useMemo(() => getApiBase(), []);
+  const API_BASE = useMemo(() => getHotelApiBase(), []);
+
+  const objectUrlsRef = useRef([]);
 
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
@@ -451,110 +875,78 @@ export default function HotelAdminBookings() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("Recent");
 
-  const [rescheduleBooking, setRescheduleBooking] = useState(null);
-  const [rescheduleForm, setRescheduleForm] = useState({ date: "", time: "" });
-  const [rescheduleSaving, setRescheduleSaving] = useState(false);
-  const [rescheduleOptions, setRescheduleOptions] = useState(null);
-  const [rescheduleOptionsLoading, setRescheduleOptionsLoading] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(() =>
-    normalizeMonthDate(makeLocalDateFromISO(todayISO()))
-  );
+  const [proofModal, setProofModal] = useState({
+    open: false,
+    booking: null,
+    url: "",
+    mimeType: "",
+    loading: false,
+    error: "",
+  });
 
-  const pageSize = 10;
-  const [page, setPage] = useState(1);
-
-  const adminHeaders = () => {
-    const token = getAdminToken();
-
-    return {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
+  const registerObjectUrl = (url) => {
+    if (url) objectUrlsRef.current.push(url);
   };
+
+  const revokeProofUrl = (url) => {
+    if (!url) return;
+
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      // ignore
+    }
+  };
+
+  const cleanupObjectUrls = () => {
+    objectUrlsRef.current.forEach((url) => revokeProofUrl(url));
+    objectUrlsRef.current = [];
+  };
+
+  useEffect(() => {
+    return () => {
+      cleanupObjectUrls();
+    };
+  }, []);
 
   const kickToAdminLogin = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("hotelAdminToken");
+    localStorage.removeItem("hotelAdmin");
     navigate("/hotel-admin-login", { replace: true });
   };
-
-  useEffect(() => {
-    if (!getAdminToken()) kickToAdminLogin();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const fetchJson = async (url) => {
     const response = await fetch(url, {
       method: "GET",
-      headers: adminHeaders(),
+      headers: getAdminHeaders(),
     });
 
     const data = await response.json().catch(() => ({}));
 
     if (response.status === 401 || response.status === 403) {
+      kickToAdminLogin();
       return {
-        kicked: true,
+        authFailed: true,
         ok: false,
-        data: [],
-        message: data.message || "Unauthorized.",
+        data: null,
+        status: response.status,
       };
     }
 
     return {
-      kicked: false,
+      authFailed: false,
       ok: response.ok,
       data,
-      message: data.message || "",
+      status: response.status,
+      message: data?.message || "",
     };
   };
 
-  const loadRescheduleOptions = async (booking, dateValue = "") => {
-    if (!booking?._id) return null;
-
-    setRescheduleOptionsLoading(true);
-
-    try {
-      const response = await fetch(
-        getRescheduleOptionsEndpoint(API_BASE, booking),
-        {
-          method: "GET",
-          headers: adminHeaders(),
-        }
-      );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (response.status === 401 || response.status === 403) {
-        kickToAdminLogin();
-        return null;
-      }
-
-      if (!response.ok) {
-        setStatus({
-          type: "error",
-          message: data.message || "Failed to load blocked dates for rescheduling.",
-        });
-        setRescheduleOptions(null);
-        return null;
-      }
-
-      setRescheduleOptions(data);
-      return data;
-    } catch (error) {
-      console.error("loadRescheduleOptions error:", error);
-      setStatus({
-        type: "error",
-        message: "Network error while loading blocked dates for rescheduling.",
-      });
-      setRescheduleOptions(null);
-      return null;
-    } finally {
-      setRescheduleOptionsLoading(false);
-    }
-  };
-
   const fetchBookings = async () => {
-    if (!getAdminToken()) {
+    const token = getAdminToken();
+
+    if (!token) {
       kickToAdminLogin();
       return;
     }
@@ -563,62 +955,75 @@ export default function HotelAdminBookings() {
     setStatus({ type: "", message: "" });
 
     try {
-      const [resortResult, eventResult, hotelResult] = await Promise.all([
-        fetchJson(`${API_BASE}/admin/resort-bookings`),
-        fetchJson(`${API_BASE}/admin/event-bookings`),
-        fetchJson(`${API_BASE}/admin/hotel-room-bookings`),
-      ]);
+      const combined = await fetchJson(`${API_BASE}/admin/bookings`);
 
-      if (resortResult.kicked || eventResult.kicked || hotelResult.kicked) {
-        kickToAdminLogin();
-        return;
+      if (combined.authFailed) return;
+
+      let loadedBookings = [];
+
+      if (combined.ok) {
+        loadedBookings = extractBookings(combined.data);
       }
 
-      const resortRows = Array.isArray(resortResult.data)
-        ? resortResult.data
-        : Array.isArray(resortResult.data.bookings)
-        ? resortResult.data.bookings
-        : [];
+      if (!loadedBookings.length) {
+        const [resortResult, eventResult, hotelResult] = await Promise.all([
+          fetchJson(`${API_BASE}/admin/resort-bookings`),
+          fetchJson(`${API_BASE}/admin/event-bookings`),
+          fetchJson(`${API_BASE}/admin/hotel-room-bookings`),
+        ]);
 
-      const eventRows = Array.isArray(eventResult.data)
-        ? eventResult.data
-        : Array.isArray(eventResult.data.bookings)
-        ? eventResult.data.bookings
-        : [];
+        if (
+          resortResult.authFailed ||
+          eventResult.authFailed ||
+          hotelResult.authFailed
+        ) {
+          return;
+        }
 
-      const hotelRows = Array.isArray(hotelResult.data)
-        ? hotelResult.data
-        : Array.isArray(hotelResult.data.bookings)
-        ? hotelResult.data.bookings
-        : [];
+        const resortBookings = resortResult.ok
+          ? extractBookings(resortResult.data, "resort")
+          : [];
 
-      const merged = [
-        ...resortRows.map(normalizeResortBooking),
-        ...eventRows.map(normalizeEventBooking),
-        ...hotelRows.map(normalizeHotelRoomBooking),
-      ]
-        .filter((booking) => booking._id)
+        const eventBookings = eventResult.ok
+          ? extractBookings(eventResult.data, "event")
+          : [];
+
+        const hotelBookings = hotelResult.ok
+          ? extractBookings(hotelResult.data, "hotel_room")
+          : [];
+
+        loadedBookings = [
+          ...resortBookings,
+          ...eventBookings,
+          ...hotelBookings,
+        ];
+      }
+
+      const normalized = uniqueBookings(loadedBookings)
+        .filter((item) => item._id)
         .sort((a, b) => {
           const bTime = new Date(b.createdAt || b.date || 0).getTime();
           const aTime = new Date(a.createdAt || a.date || 0).getTime();
           return bTime - aTime;
         });
 
-      setBookings(merged);
+      setBookings(normalized);
 
-      if (!resortResult.ok || !eventResult.ok || !hotelResult.ok) {
+      if (!normalized.length) {
         setStatus({
           type: "warning",
           message:
-            "Some booking types could not be loaded. Please check the backend server and refresh.",
+            "No bookings found. If a user already submitted a booking, check MongoDB and confirm the booking was saved successfully.",
         });
       }
     } catch (error) {
       console.error("fetchBookings error:", error);
+
       setBookings([]);
       setStatus({
         type: "error",
-        message: "Network error while loading bookings.",
+        message:
+          "Network error while loading bookings. Make sure backend is running and VITE_API_URL is http://localhost:5000.",
       });
     } finally {
       setLoading(false);
@@ -639,18 +1044,33 @@ export default function HotelAdminBookings() {
       resort: 0,
       event: 0,
       hotel_room: 0,
+      downPaymentBookings: 0,
+      fullPaymentBookings: 0,
+      totalPaid: 0,
+      totalBalance: 0,
     };
 
     bookings.forEach((booking) => {
-      const bookingStatus = normalizeStatus(booking.status);
+      const normalizedStatus = normalizeStatus(booking.status);
 
-      if (result[bookingStatus] !== undefined) {
-        result[bookingStatus] += 1;
+      if (result[normalizedStatus] !== undefined) {
+        result[normalizedStatus] += 1;
       }
 
       if (result[booking.bookingType] !== undefined) {
         result[booking.bookingType] += 1;
       }
+
+      if (booking.paymentTerm === "DOWN_PAYMENT") {
+        result.downPaymentBookings += 1;
+      }
+
+      if (booking.paymentTerm === "FULL_PAYMENT") {
+        result.fullPaymentBookings += 1;
+      }
+
+      result.totalPaid += Number(booking.paidAmount || booking.amountToPay || 0);
+      result.totalBalance += Number(booking.balanceAmount || 0);
     });
 
     return result;
@@ -662,7 +1082,9 @@ export default function HotelAdminBookings() {
     let rows = bookings.slice();
 
     if (statusFilter !== "ALL") {
-      rows = rows.filter((booking) => booking.status === statusFilter);
+      rows = rows.filter(
+        (booking) => normalizeStatus(booking.status) === statusFilter
+      );
     }
 
     if (serviceFilter !== "ALL") {
@@ -671,7 +1093,7 @@ export default function HotelAdminBookings() {
 
     if (q) {
       rows = rows.filter((booking) => {
-        const haystack = [
+        const text = [
           booking.serviceLabel,
           booking.title,
           booking.customerName,
@@ -682,19 +1104,26 @@ export default function HotelAdminBookings() {
           booking.category,
           booking.location,
           booking.paymentMethod,
+          booking.paymentTermLabel,
           booking.status,
+          booking.totalAmount,
+          booking.paidAmount,
+          booking.balanceAmount,
         ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
 
-        return haystack.includes(q);
+        return text.includes(q);
       });
     }
 
     rows.sort((a, b) => {
       if (sortBy === "Oldest") {
-        return new Date(a.createdAt || a.date || 0) - new Date(b.createdAt || b.date || 0);
+        return (
+          new Date(a.createdAt || a.date || 0).getTime() -
+          new Date(b.createdAt || b.date || 0).getTime()
+        );
       }
 
       if (sortBy === "PriceHigh") {
@@ -705,45 +1134,64 @@ export default function HotelAdminBookings() {
         return Number(a.totalAmount || 0) - Number(b.totalAmount || 0);
       }
 
-      return new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0);
+      if (sortBy === "PaidHigh") {
+        return Number(b.paidAmount || 0) - Number(a.paidAmount || 0);
+      }
+
+      if (sortBy === "BalanceHigh") {
+        return Number(b.balanceAmount || 0) - Number(a.balanceAmount || 0);
+      }
+
+      return (
+        new Date(b.createdAt || b.date || 0).getTime() -
+        new Date(a.createdAt || a.date || 0).getTime()
+      );
     });
 
     return rows;
   }, [bookings, statusFilter, serviceFilter, search, sortBy]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / pageSize));
-  const pageSafe = Math.min(page, totalPages);
+  const closeProofModal = () => {
+    setProofModal((prev) => {
+      revokeProofUrl(prev.url);
 
-  const pageRows = useMemo(() => {
-    const start = (pageSafe - 1) * pageSize;
-    return filteredBookings.slice(start, start + pageSize);
-  }, [filteredBookings, pageSafe]);
-
-  const showActionsColumn = useMemo(() => {
-    return pageRows.some((booking) =>
-      ["PENDING", "CONFIRMED"].includes(normalizeStatus(booking.status))
-    );
-  }, [pageRows]);
-
-  const tableColSpan = showActionsColumn ? 10 : 9;
-
-  useEffect(() => {
-    setPage(1);
-  }, [statusFilter, serviceFilter, search, sortBy]);
+      return {
+        open: false,
+        booking: null,
+        url: "",
+        mimeType: "",
+        loading: false,
+        error: "",
+      };
+    });
+  };
 
   const openProof = async (booking) => {
     if (!booking?._id) return;
 
+    const token = getAdminToken();
+
+    if (!token) {
+      kickToAdminLogin();
+      return;
+    }
+
     setStatus({ type: "", message: "" });
 
+    setProofModal((prev) => {
+      revokeProofUrl(prev.url);
+
+      return {
+        open: true,
+        booking,
+        url: "",
+        mimeType: "",
+        loading: true,
+        error: "",
+      };
+    });
+
     try {
-      const token = getAdminToken();
-
-      if (!token) {
-        kickToAdminLogin();
-        return;
-      }
-
       const response = await fetch(getProofEndpoint(API_BASE, booking), {
         method: "GET",
         headers: {
@@ -752,46 +1200,76 @@ export default function HotelAdminBookings() {
       });
 
       if (response.status === 401 || response.status === 403) {
+        closeProofModal();
         kickToAdminLogin();
         return;
       }
 
       if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        setStatus({
-          type: "error",
-          message: text || "Failed to load proof of payment.",
-        });
+        let message = "Failed to load proof of payment.";
+
+        try {
+          const data = await response.json();
+          message = data.message || message;
+        } catch {
+          const text = await response.text().catch(() => "");
+          message = text || message;
+        }
+
+        setProofModal((prev) => ({
+          ...prev,
+          loading: false,
+          error: message,
+        }));
+
         return;
       }
 
       const blob = await response.blob();
+      const mimeType =
+        response.headers.get("Content-Type") ||
+        blob.type ||
+        "application/octet-stream";
+
       const url = URL.createObjectURL(blob);
+      registerObjectUrl(url);
 
-      window.open(url, "_blank", "noopener,noreferrer");
-
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 60_000);
+      setProofModal((prev) => ({
+        ...prev,
+        url,
+        mimeType,
+        loading: false,
+        error: "",
+      }));
     } catch (error) {
       console.error("openProof error:", error);
-      setStatus({
-        type: "error",
-        message: "Network error while opening proof of payment.",
-      });
+
+      setProofModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: "Network error while loading proof of payment.",
+      }));
     }
   };
 
   const updateStatus = async (booking, nextStatus) => {
     if (!booking?._id) return;
 
-    setBusyId(`${booking.bookingType}:${booking._id}`);
+    const token = getAdminToken();
+
+    if (!token) {
+      kickToAdminLogin();
+      return;
+    }
+
+    const busyKey = `${booking.bookingType}:${booking._id}`;
+    setBusyId(busyKey);
     setStatus({ type: "", message: "" });
 
     try {
       const response = await fetch(getStatusEndpoint(API_BASE, booking), {
         method: "PUT",
-        headers: adminHeaders(),
+        headers: getAdminHeaders(),
         body: JSON.stringify({ status: nextStatus }),
       });
 
@@ -810,20 +1288,15 @@ export default function HotelAdminBookings() {
         return;
       }
 
-      setBookings((prev) =>
-        prev.map((item) =>
-          item.bookingType === booking.bookingType && item._id === booking._id
-            ? { ...item, status: nextStatus }
-            : item
-        )
-      );
+      await fetchBookings();
 
       setStatus({
         type: "success",
-        message: `${getServiceLabel(booking.bookingType)} booking updated successfully.`,
+        message: `${booking.serviceLabel} booking updated successfully.`,
       });
     } catch (error) {
       console.error("updateStatus error:", error);
+
       setStatus({
         type: "error",
         message: "Network error while updating booking status.",
@@ -833,170 +1306,21 @@ export default function HotelAdminBookings() {
     }
   };
 
-  const confirmApprove = (booking) => {
-    updateStatus(booking, "CONFIRMED");
-  };
+  const handleCancel = (booking) => {
+    const message =
+      booking.status === "PENDING"
+        ? "Reject this pending booking? The slot will open again."
+        : "Cancel this approved booking? The slot will open again.";
 
-  const confirmCancel = (booking) => {
-    const isPending = booking?.status === "PENDING";
-    const isConfirmed = booking?.status === "CONFIRMED";
-
-    const message = isPending
-      ? "Reject this pending booking? The slot will open again."
-      : isConfirmed
-      ? "Cancel this approved booking? The slot will open again."
-      : "Cancel this booking?";
-
-    const ok = window.confirm(message);
-    if (!ok) return;
+    if (!window.confirm(message)) return;
 
     updateStatus(booking, "CANCELLED");
-  };
-
-  const openRescheduleModal = (booking) => {
-    if (!booking || booking.status !== "CONFIRMED") {
-      setStatus({
-        type: "error",
-        message: "Only approved bookings can be rescheduled.",
-      });
-      return;
-    }
-
-    const initialDate = booking.date || todayISO();
-
-    setRescheduleBooking(booking);
-    setRescheduleOptions(null);
-    setCalendarMonth(normalizeMonthDate(makeLocalDateFromISO(initialDate)));
-    setRescheduleForm({
-      date: initialDate,
-      time: booking.time || "",
-    });
-    setStatus({ type: "", message: "" });
-    loadRescheduleOptions(booking, initialDate);
-  };
-
-  const closeRescheduleModal = () => {
-    if (rescheduleSaving) return;
-    setRescheduleBooking(null);
-    setRescheduleForm({ date: "", time: "" });
-    setRescheduleOptions(null);
-  };
-
-  const submitReschedule = async (event) => {
-    event.preventDefault();
-
-    if (!rescheduleBooking?._id) return;
-
-    const date = String(rescheduleForm.date || "").trim();
-    const time = String(rescheduleForm.time || "").trim();
-
-    if (!date || !time) {
-      setStatus({
-        type: "error",
-        message: "Please provide the new date and time.",
-      });
-      return;
-    }
-
-    const dateDisabledReason = getRescheduleDateDisabledReason(rescheduleOptions, date);
-    const availableSlots = getRescheduleTimeOptions(rescheduleBooking, rescheduleOptions, date);
-
-    if (dateDisabledReason) {
-      setStatus({
-        type: "error",
-        message: `This date is blocked (${dateDisabledReason}). Please choose another date.`,
-      });
-      return;
-    }
-
-    if (!availableSlots.length) {
-      setStatus({
-        type: "error",
-        message: "This date has no available time slots. Please choose another date.",
-      });
-      return;
-    }
-
-    if (!availableSlots.includes(time)) {
-      setStatus({
-        type: "error",
-        message: "This time is already blocked or not allowed for this booking. Please choose an available time.",
-      });
-      return;
-    }
-
-    const busyKey = `${rescheduleBooking.bookingType}:${rescheduleBooking._id}`;
-    setBusyId(busyKey);
-    setRescheduleSaving(true);
-    setStatus({ type: "", message: "" });
-
-    try {
-      const response = await fetch(getRescheduleEndpoint(API_BASE, rescheduleBooking), {
-        method: "PUT",
-        headers: adminHeaders(),
-        body: JSON.stringify({ date, time }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (response.status === 401 || response.status === 403) {
-        kickToAdminLogin();
-        return;
-      }
-
-      if (!response.ok) {
-        setStatus({
-          type: "error",
-          message: data.message || "Failed to reschedule booking.",
-        });
-        return;
-      }
-
-      const updated = data.booking
-        ? normalizeUpdatedBooking(rescheduleBooking.bookingType, data.booking)
-        : {
-            ...rescheduleBooking,
-            date,
-            time,
-          };
-
-      setBookings((prev) =>
-        prev.map((item) =>
-          item.bookingType === rescheduleBooking.bookingType &&
-          item._id === rescheduleBooking._id
-            ? updated
-            : item
-        )
-      );
-
-      setStatus({
-        type: "success",
-        message: `${getServiceLabel(rescheduleBooking.bookingType)} booking rescheduled successfully.`,
-      });
-
-      closeRescheduleModal();
-    } catch (error) {
-      console.error("submitReschedule error:", error);
-      setStatus({
-        type: "error",
-        message: "Network error while rescheduling booking.",
-      });
-    } finally {
-      setBusyId("");
-      setRescheduleSaving(false);
-    }
-  };
-
-  const handleSignOut = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("hotelAdminToken");
-    navigate("/hotel-admin-login", { replace: true });
   };
 
   return (
     <HotelAdminShell
       title="Manage Bookings"
-      subtitle="View and manage resort, event package, and hotel room bookings in one unified table."
+      subtitle="View payment terms, downpayments, balances, and proof of payment for all bookings."
       activePage="bookings"
       maxWidth="max-w-7xl"
       actions={
@@ -1010,621 +1334,313 @@ export default function HotelAdminBookings() {
         </button>
       }
     >
-          {status.message ? (
-            <div
-              className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${getStatusBoxClass(
-                status.type
-              )}`}
-            >
-              {status.message}
-            </div>
-          ) : null}
+      {status.message ? (
+        <div
+          className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${getStatusBoxClass(
+            status.type
+          )}`}
+        >
+          {status.message}
+        </div>
+      ) : null}
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <StatCard label="All Bookings" value={counts.total} />
-            <StatCard label="Pending" value={counts.PENDING} />
-            <StatCard label="Confirmed" value={counts.CONFIRMED} />
-            <StatCard label="Cancelled" value={counts.CANCELLED} />
-          </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <StatCard label="All Bookings" value={counts.total} />
+        <StatCard label="Pending" value={counts.PENDING} />
+        <StatCard label="Confirmed" value={counts.CONFIRMED} />
+        <StatCard label="Cancelled" value={counts.CANCELLED} />
+      </div>
 
-          <div
-            className="mt-6 rounded-2xl border border-black/5 p-5 shadow-sm md:p-6"
-            style={{ backgroundColor: CARD_BG }}
-          >
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
-                Filter by booking status
-              </p>
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <StatCard
+          label="Downpayment Bookings"
+          value={counts.downPaymentBookings}
+          helper="Partial payments"
+        />
+        <StatCard
+          label="Full Payment Bookings"
+          value={counts.fullPaymentBookings}
+          helper="Fully paid bookings"
+        />
+        <StatCard
+          label="Total Paid / Collected"
+          value={formatPeso(counts.totalPaid)}
+          helper="Amount paid by guests"
+        />
+        <StatCard
+          label="Remaining Balance"
+          value={formatPeso(counts.totalBalance)}
+          helper="Unpaid balance"
+        />
+      </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                {STATUS_FILTERS.map((item) => (
-                  <FilterButton
-                    key={item.id}
-                    label={
-                      item.id === "ALL"
-                        ? `${item.label} (${bookings.length})`
-                        : `${item.label} (${counts[item.id] || 0})`
-                    }
-                    active={statusFilter === item.id}
-                    onClick={() => setStatusFilter(item.id)}
-                  />
-                ))}
-              </div>
-            </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard label="Resort & Venue" value={counts.resort} />
+        <StatCard label="Event Package" value={counts.event} />
+        <StatCard label="Hotel & Condo" value={counts.hotel_room} />
+      </div>
 
-            <div className="mt-5">
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
-                Filter by service
-              </p>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {SERVICE_FILTERS.map((item) => {
-                  const count =
-                    item.id === "ALL" ? bookings.length : counts[item.id] || 0;
-
-                  return (
-                    <FilterButton
-                      key={item.id}
-                      label={`${item.label} (${count})`}
-                      active={serviceFilter === item.id}
-                      onClick={() => setServiceFilter(item.id)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-xs font-bold text-black/60">
-                  Search
-                </label>
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search customer, email, service, package, date, time, payment..."
-                  className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#2A4F33]/20"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-xs font-bold text-black/60">
-                  Sort
-                </label>
-                <select
-                  value={sortBy}
-                  onChange={(event) => setSortBy(event.target.value)}
-                  className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#2A4F33]/20"
-                >
-                  <option value="Recent">Recent</option>
-                  <option value="Oldest">Oldest</option>
-                  <option value="PriceHigh">Price High to Low</option>
-                  <option value="PriceLow">Price Low to High</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 overflow-hidden rounded-2xl border border-black/5 shadow-sm">
-            <div className="overflow-x-auto bg-white">
-              <table className={`w-full text-sm ${showActionsColumn ? "min-w-[1180px]" : "min-w-[1060px]"}`}>
-                <thead>
-                  <tr className="bg-black/5 text-left">
-                    <Th>Service</Th>
-                    <Th>Customer</Th>
-                    <Th>Booking</Th>
-                    <Th>Date</Th>
-                    <Th>Time</Th>
-                    <Th>Pax</Th>
-                    <Th>Payment</Th>
-                    <Th>Total</Th>
-                    <Th>Status</Th>
-                    {showActionsColumn ? <Th className="text-right">Actions</Th> : null}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={tableColSpan} className="p-8 text-center text-black/50">
-                        Loading bookings...
-                      </td>
-                    </tr>
-                  ) : pageRows.length === 0 ? (
-                    <tr>
-                      <td colSpan={tableColSpan} className="p-8 text-center text-black/50">
-                        No bookings found.
-                      </td>
-                    </tr>
-                  ) : (
-                    pageRows.map((booking) => {
-                      const busyKey = `${booking.bookingType}:${booking._id}`;
-                      const isBusy = busyId === busyKey;
-                      const isPending = booking.status === "PENDING";
-                      const isConfirmed = booking.status === "CONFIRMED";
-                      const isCancelled = booking.status === "CANCELLED";
-
-                      return (
-                        <tr
-                          key={busyKey}
-                          className="border-t border-black/10 align-top"
-                        >
-                          <td className="p-4">
-                            <span className={getServiceBadgeClass(booking.bookingType)}>
-                              {booking.serviceLabel}
-                            </span>
-                          </td>
-
-                          <td className="p-4">
-                            <div className="font-bold text-black/80">
-                              {booking.customerName || "No name"}
-                            </div>
-                            <div className="mt-1 text-xs text-black/50">
-                              {booking.email || "No email"}
-                            </div>
-                            <div className="text-xs text-black/50">
-                              {booking.phone || "No phone"}
-                            </div>
-                          </td>
-
-                          <td className="p-4">
-                            <div className="font-extrabold text-black/75">
-                              {booking.title}
-                            </div>
-                            <div className="mt-1 text-xs text-black/50">
-                              {booking.location || "—"}
-                            </div>
-                            <div className="text-xs text-black/50">
-                              {booking.category || "—"}
-                            </div>
-                          </td>
-
-                          <td className="p-4 font-semibold text-black/70">
-                            {formatDateMMDDYYYY(booking.date)}
-                          </td>
-
-                          <td className="p-4 text-black/70">
-                            {booking.time || "—"}
-                          </td>
-
-                          <td className="p-4">
-                            <span className="font-extrabold text-black/75">
-                              {booking.pax || 0}
-                            </span>{" "}
-                            pax
-                          </td>
-
-                          <td className="p-4">
-                            <div className="font-bold text-black/70">
-                              {booking.paymentMethod || "—"}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => openProof(booking)}
-                              className="mt-2 h-8 rounded-full border border-black/10 bg-white px-3 text-xs font-extrabold hover:bg-black/5"
-                            >
-                              View Proof
-                            </button>
-                          </td>
-
-                          <td
-                            className="p-4 font-extrabold"
-                            style={{ color: GREEN_DARK }}
-                          >
-                            {formatPeso(booking.totalAmount)}
-                          </td>
-
-                          <td className="p-4">
-                            <span className={getStatusChipClass(booking.status)}>
-                              {booking.status}
-                            </span>
-                          </td>
-
-                          {showActionsColumn ? (
-                            <td className="p-4">
-                              <div className="flex flex-wrap items-center justify-end gap-2">
-                                {isPending ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => confirmApprove(booking)}
-                                      disabled={isBusy}
-                                      className="h-9 rounded-full px-4 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-50"
-                                      style={{ backgroundColor: GREEN_DARK }}
-                                    >
-                                      {isBusy ? "..." : "Approve"}
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => confirmCancel(booking)}
-                                      disabled={isBusy}
-                                      className="h-9 rounded-full border border-rose-200 bg-rose-50 px-4 text-xs font-extrabold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
-                                    >
-                                      {isBusy ? "..." : "Reject"}
-                                    </button>
-                                  </>
-                                ) : null}
-
-                                {isConfirmed ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => openRescheduleModal(booking)}
-                                      disabled={isBusy}
-                                      className="h-9 rounded-full border border-[#2A4F33]/20 bg-[#2A4F33]/10 px-4 text-xs font-extrabold text-[#2A4F33] hover:bg-[#2A4F33]/15 disabled:opacity-50"
-                                    >
-                                      Resched
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => confirmCancel(booking)}
-                                      disabled={isBusy}
-                                      className="h-9 rounded-full border border-rose-200 bg-rose-50 px-4 text-xs font-extrabold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
-                                    >
-                                      {isBusy ? "..." : "Cancel"}
-                                    </button>
-                                  </>
-                                ) : null}
-                              </div>
-                            </td>
-                          ) : null}
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-black/10 bg-white px-4 py-3">
-              <p className="text-xs text-black/50">
-                Showing{" "}
-                <span className="font-bold text-black/70">
-                  {filteredBookings.length === 0 ? 0 : (pageSafe - 1) * pageSize + 1}
-                </span>{" "}
-                to{" "}
-                <span className="font-bold text-black/70">
-                  {Math.min(pageSafe * pageSize, filteredBookings.length)}
-                </span>{" "}
-                of{" "}
-                <span className="font-bold text-black/70">
-                  {filteredBookings.length}
-                </span>{" "}
-                bookings
-              </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={pageSafe <= 1}
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  className="h-9 rounded-full border border-black/10 bg-white px-4 text-xs font-extrabold hover:bg-black/5 disabled:opacity-50"
-                >
-                  Prev
-                </button>
-
-                <div className="text-xs font-bold text-black/60">
-                  Page <span className="text-black/80">{pageSafe}</span> /{" "}
-                  {totalPages}
-                </div>
-
-                <button
-                  type="button"
-                  disabled={pageSafe >= totalPages}
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  className="h-9 rounded-full border border-black/10 bg-white px-4 text-xs font-extrabold hover:bg-black/5 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <p className="mt-4 text-xs text-black/50">
-            Tip: This table now combines Resort & Venue, Event Package, and Hotel
-            & Condo bookings. Click <b>View Proof</b> to open the uploaded payment
-            proof.
+      <div
+        className="mt-6 rounded-2xl border border-black/5 p-5 shadow-sm md:p-6"
+        style={{ backgroundColor: CARD_BG }}
+      >
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
+            Filter by booking status
           </p>
 
-          {rescheduleBooking ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6">
-              <form
-                onSubmit={submitReschedule}
-                className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/45">
-                      Reschedule Approved Booking
-                    </p>
-                    <h3 className="mt-1 text-xl font-black text-[#2A4F33]">
-                      {rescheduleBooking.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-black/55">
-                      {rescheduleBooking.customerName || "No customer name"} • {rescheduleBooking.serviceLabel}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={closeRescheduleModal}
-                    disabled={rescheduleSaving}
-                    className="rounded-full border border-black/10 px-3 py-1 text-xs font-extrabold text-black/55 hover:bg-black/5 disabled:opacity-50"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <div className="mt-5 rounded-2xl bg-black/[0.03] p-4 text-sm text-black/65">
-                  <p>
-                    Current: <b>{formatDateMMDDYYYY(rescheduleBooking.date)}</b> •{" "}
-                    <b>{rescheduleBooking.time || "No time"}</b>
-                  </p>
-                  <p className="mt-1 text-xs text-black/45">
-                    Rescheduling is available only for approved bookings. The backend will still check conflicts and the 1-hour interval rule.
-                  </p>
-                </div>
-
-                <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-                  <div>
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-black/50">
-                      New Date
-                    </span>
-
-                    <RescheduleCalendar
-                      value={rescheduleForm.date}
-                      month={calendarMonth}
-                      options={rescheduleOptions}
-                      loading={rescheduleOptionsLoading}
-                      onMonthChange={setCalendarMonth}
-                      onSelect={(nextDate) => {
-                        setRescheduleForm((prev) => ({
-                          ...prev,
-                          date: nextDate,
-                          time: "",
-                        }));
-                      }}
-                    />
-
-                    {getRescheduleDateDisabledReason(rescheduleOptions, rescheduleForm.date) ? (
-                      <p className="mt-2 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">
-                        Selected date is blocked: {getRescheduleDateDisabledReason(rescheduleOptions, rescheduleForm.date)}.
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <label className="block">
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-black/50">
-                      New Time
-                    </span>
-                    <select
-                      value={rescheduleForm.time}
-                      onChange={(e) =>
-                        setRescheduleForm((prev) => ({ ...prev, time: e.target.value }))
-                      }
-                      disabled={
-                        rescheduleOptionsLoading ||
-                        Boolean(getRescheduleDateDisabledReason(rescheduleOptions, rescheduleForm.date))
-                      }
-                      className="mt-2 h-11 w-full rounded-2xl border border-black/10 px-4 text-sm font-semibold outline-none focus:border-[#2A4F33] disabled:bg-black/5 disabled:text-black/35"
-                      required
-                    >
-                      <option value="">
-                        {rescheduleOptionsLoading
-                          ? "Loading available times..."
-                          : getRescheduleDateDisabledReason(rescheduleOptions, rescheduleForm.date)
-                          ? "Date is blocked"
-                          : "Select available time"}
-                      </option>
-                      {getRescheduleTimeOptions(
-                        rescheduleBooking,
-                        rescheduleOptions,
-                        rescheduleForm.date
-                      ).map((slot) => (
-                        <option key={slot} value={slot}>
-                          {slot}
-                        </option>
-                      ))}
-                    </select>
-
-                    <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">
-                      <p className="font-black uppercase tracking-wide">Blocked dates</p>
-                      <p className="mt-1">
-                        {formatBlockedDatePreview(getBlockedDatesForCalendar(rescheduleOptions))}
-                      </p>
-
-                      {getBlockedTimeOptions(rescheduleOptions, rescheduleForm.date).length ? (
-                        <p className="mt-2">
-                          Blocked times for selected date:{" "}
-                          <b>{getBlockedTimeOptions(rescheduleOptions, rescheduleForm.date).join(", ")}</b>
-                        </p>
-                      ) : (
-                        <p className="mt-2">No blocked times for the selected date.</p>
-                      )}
-
-                      <p className="mt-2 text-amber-700/80">
-                        Grey dates are fully booked and cannot be clicked. Dates with only some blocked times are still clickable, and unavailable times are removed from the time dropdown. The current booking is excluded from the check.
-                      </p>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                  <button
-                    type="button"
-                    onClick={closeRescheduleModal}
-                    disabled={rescheduleSaving}
-                    className="h-11 rounded-full border border-black/10 bg-white px-5 text-xs font-extrabold text-black/65 hover:bg-black/5 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={rescheduleSaving}
-                    className="h-11 rounded-full bg-[#2A4F33] px-6 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-60"
-                  >
-                    {rescheduleSaving ? "SAVING..." : "SAVE RESCHEDULE"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          ) : null}
-    </HotelAdminShell>
-  );
-}
-
-function RescheduleCalendar({
-  value,
-  month,
-  options,
-  loading,
-  onMonthChange,
-  onSelect,
-}) {
-  const days = buildCalendarDays(month);
-  const selectedValue = String(value || "");
-  const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-  const goToPreviousMonth = () => {
-    onMonthChange((current) =>
-      normalizeMonthDate(new Date(current.getFullYear(), current.getMonth() - 1, 1))
-    );
-  };
-
-  const goToNextMonth = () => {
-    onMonthChange((current) =>
-      normalizeMonthDate(new Date(current.getFullYear(), current.getMonth() + 1, 1))
-    );
-  };
-
-  return (
-    <div className="mt-2 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-black/10 bg-black/[0.03] px-3 py-2">
-        <button
-          type="button"
-          onClick={goToPreviousMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-lg font-black text-black/35 hover:bg-black/5 hover:text-black/70"
-          aria-label="Previous month"
-        >
-          ‹
-        </button>
-
-        <div className="text-sm font-black text-black/85">
-          {formatCalendarMonth(month)}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {STATUS_FILTERS.map((item) => (
+              <FilterButton
+                key={item.id}
+                label={item.label}
+                active={statusFilter === item.id}
+                onClick={() => setStatusFilter(item.id)}
+              />
+            ))}
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={goToNextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-lg font-black text-black/35 hover:bg-black/5 hover:text-black/70"
-          aria-label="Next month"
-        >
-          ›
-        </button>
-      </div>
+        <div className="mt-5">
+          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
+            Filter by service
+          </p>
 
-      <div className="grid grid-cols-7 gap-1 px-3 pt-3 text-center text-[11px] font-black text-black/75">
-        {weekDays.map((day) => (
-          <div key={day}>{day}</div>
-        ))}
-      </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {SERVICE_FILTERS.map((item) => {
+              const count =
+                item.id === "ALL" ? bookings.length : counts[item.id] || 0;
 
-      <div className="grid grid-cols-7 gap-1 p-3 pt-2">
-        {days.map((day) => {
-          const reason = getRescheduleDateDisabledReason(options, day.iso);
-          const isOutsideMonth = !day.isCurrentMonth;
-          const isSelected = selectedValue === day.iso;
-          const isToday = todayISO() === day.iso;
-          const disabled = loading || isOutsideMonth || Boolean(reason);
+              return (
+                <FilterButton
+                  key={item.id}
+                  label={`${item.label} (${count})`}
+                  active={serviceFilter === item.id}
+                  onClick={() => setServiceFilter(item.id)}
+                />
+              );
+            })}
+          </div>
+        </div>
 
-          return (
-            <button
-              key={day.iso}
-              type="button"
-              disabled={disabled}
-              title={reason || day.iso}
-              onClick={() => onSelect(day.iso)}
-              className={`relative flex h-9 items-center justify-center rounded-lg text-xs font-extrabold transition ${
-                isOutsideMonth
-                  ? "text-black/20"
-                  : disabled
-                  ? "cursor-not-allowed bg-slate-100 text-slate-300 line-through"
-                  : isSelected
-                  ? "bg-blue-100 text-blue-800 ring-2 ring-blue-200"
-                  : "text-black/85 hover:bg-blue-50 hover:text-blue-800"
-              } ${isToday && !isSelected && !disabled ? "ring-1 ring-[#2A4F33]/30" : ""}`}
+        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <label className="mb-2 block text-xs font-bold text-black/60">
+              Search
+            </label>
+
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search customer, email, service, package, payment, downpayment, balance..."
+              className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#2A4F33]/20"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-bold text-black/60">
+              Sort
+            </label>
+
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+              className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#2A4F33]/20"
             >
-              {day.day}
-            </button>
-          );
-        })}
+              <option value="Recent">Recent</option>
+              <option value="Oldest">Oldest</option>
+              <option value="PriceHigh">Total High to Low</option>
+              <option value="PriceLow">Total Low to High</option>
+              <option value="PaidHigh">Paid High to Low</option>
+              <option value="BalanceHigh">Balance High to Low</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-black/10 px-3 py-2 text-[11px] font-bold text-black/45">
-        <span className="inline-flex items-center gap-1">
-          <span className="h-3 w-3 rounded bg-blue-100 ring-1 ring-blue-200" />
-          Selected
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="h-3 w-3 rounded bg-slate-100" />
-          Fully booked / not clickable
-        </span>
+      <div className="mt-6 overflow-hidden rounded-2xl border border-black/5 shadow-sm">
+        <div className="overflow-x-auto bg-white">
+          <table className="w-full min-w-[1380px] text-sm">
+            <thead>
+              <tr className="bg-black/5 text-left">
+                <Th>Service</Th>
+                <Th>User</Th>
+                <Th>Booking</Th>
+                <Th>Date</Th>
+                <Th>Time</Th>
+                <Th>Pax</Th>
+                <Th>Method</Th>
+                <Th>Payment</Th>
+                <Th>Paid</Th>
+                <Th>Balance</Th>
+                <Th>Total</Th>
+                <Th>Status</Th>
+                <Th className="text-right">Actions</Th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={13} className="p-8 text-center text-black/50">
+                    Loading user bookings...
+                  </td>
+                </tr>
+              ) : filteredBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={13} className="p-8 text-center text-black/50">
+                    <p className="font-bold text-[#2A4F33]">
+                      No bookings found.
+                    </p>
+                    <p className="mt-1 text-xs">
+                      Try clicking Refresh, clearing filters, or checking if the
+                      booking was saved in the database.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredBookings.map((booking) => {
+                  const busy =
+                    busyId === `${booking.bookingType}:${booking._id}`;
+
+                  return (
+                    <tr key={`${booking.bookingType}-${booking._id}`}>
+                      <Td>
+                        <span
+                          className={getServiceBadgeClass(booking.bookingType)}
+                        >
+                          {booking.serviceLabel}
+                        </span>
+                      </Td>
+
+                      <Td>
+                        <p className="font-extrabold text-[#2A4F33]">
+                          {booking.customerName}
+                        </p>
+
+                        <p className="mt-1 text-xs font-semibold text-black/55">
+                          {booking.email || "—"}
+                        </p>
+
+                        <p className="mt-1 text-xs font-semibold text-black/55">
+                          {booking.phone || "—"}
+                        </p>
+                      </Td>
+
+                      <Td>
+                        <p className="font-extrabold text-black/75">
+                          {booking.title}
+                        </p>
+
+                        <p className="mt-1 text-xs font-semibold text-black/50">
+                          {booking.category || "—"}
+                        </p>
+
+                        <p className="mt-1 text-xs font-semibold text-black/50">
+                          {booking.location || "—"}
+                        </p>
+                      </Td>
+
+                      <Td>{formatDate(booking.date)}</Td>
+                      <Td>{booking.time || "—"}</Td>
+                      <Td>{booking.pax || "—"}</Td>
+                      <Td>{booking.paymentMethod || "—"}</Td>
+
+                      <Td>
+                        <span className={getPaymentChipClass(booking.paymentTerm)}>
+                          {booking.paymentTermLabel}
+                        </span>
+                      </Td>
+
+                      <Td className="font-extrabold text-[#2A4F33]">
+                        {formatPeso(booking.paidAmount)}
+                      </Td>
+
+                      <Td
+                        className={`font-extrabold ${
+                          Number(booking.balanceAmount || 0) > 0
+                            ? "text-amber-700"
+                            : "text-[#2A4F33]"
+                        }`}
+                      >
+                        {formatPeso(booking.balanceAmount)}
+                      </Td>
+
+                      <Td className="font-extrabold text-[#2A4F33]">
+                        {formatPeso(booking.totalAmount)}
+                      </Td>
+
+                      <Td>
+                        <span className={getStatusChipClass(booking.status)}>
+                          {booking.status}
+                        </span>
+                      </Td>
+
+                      <Td className="text-right">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openProof(booking)}
+                            className="rounded-xl border border-[#2A4F33]/20 px-3 py-2 text-xs font-extrabold text-[#2A4F33] hover:bg-[#2A4F33]/5"
+                          >
+                            Proof
+                          </button>
+
+                          {booking.status === "PENDING" ? (
+                            <>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() =>
+                                  updateStatus(booking, "CONFIRMED")
+                                }
+                                className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-60"
+                              >
+                                {busy ? "Saving..." : "Approve"}
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => handleCancel(booking)}
+                                className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-60"
+                              >
+                                {busy ? "Saving..." : "Reject"}
+                              </button>
+                            </>
+                          ) : null}
+
+                          {booking.status === "CONFIRMED" ? (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => handleCancel(booking)}
+                              className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-60"
+                            >
+                              {busy ? "Saving..." : "Cancel"}
+                            </button>
+                          ) : null}
+                        </div>
+                      </Td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
-}
 
-function MenuButton({ label, to, active = false }) {
-  const navigate = useNavigate();
-
-  return (
-    <button
-      type="button"
-      onClick={() => navigate(to)}
-      className={`w-full rounded-md px-4 py-3 text-left text-sm font-semibold text-white hover:bg-white/10 ${
-        active ? "bg-[#E9EFE4] !text-[#2F5E3A]" : ""
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function StatCard({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-black/5 bg-[#E9F1D9] p-5 shadow-sm">
-      <p className="text-sm font-semibold text-[#2F5E3A]">{label}</p>
-      <p className="mt-2 text-4xl font-extrabold leading-none text-[#2F5E3A]">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function FilterButton({ label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`h-9 rounded-full border px-5 text-xs font-extrabold transition ${
-        active
-          ? "border-[#2A4F33] bg-[#2A4F33] text-white"
-          : "border-black/10 bg-white text-black/70 hover:bg-black/5"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function Th({ children, className = "" }) {
-  return (
-    <th className={`px-4 py-3 text-xs font-extrabold text-black/60 ${className}`}>
-      {children}
-    </th>
+      {proofModal.open ? (
+        <ProofPreviewModal
+          booking={proofModal.booking}
+          url={proofModal.url}
+          mimeType={proofModal.mimeType}
+          loading={proofModal.loading}
+          error={proofModal.error}
+          onClose={closeProofModal}
+        />
+      ) : null}
+    </HotelAdminShell>
   );
 }

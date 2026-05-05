@@ -16,6 +16,7 @@ const API_BASE = normalizeApiBase(
 
 const ATTENDANCE_STATUSES = ["Pending", "Present", "Late", "Absent"];
 const ROWS_PER_PAGE = 5;
+const RFID_LOGS_PER_PAGE = 6;
 
 function professorAuthHeaders(extra = {}) {
   const token = localStorage.getItem("professorToken") || "";
@@ -28,6 +29,7 @@ function normalizeCourseName(value = "") {
 
   if (clean === "event management") return "Event Management";
   if (clean === "housekeeping") return "Housekeeping";
+  if (clean === "cookery") return "Cookery";
 
   return raw;
 }
@@ -217,6 +219,7 @@ function buildTrainingProtectedFileUrl(fileId = "") {
 
 function getReferencePhotoFile(trainee) {
   if (trainee?.picture2x2?.fileId) return trainee.picture2x2;
+  if (trainee?.profilePhoto?.fileId) return trainee.profilePhoto;
   return null;
 }
 
@@ -325,6 +328,14 @@ function buildAttendanceRecordLabel(record, index) {
   return `Record ${index + 1} • ${formatDateTime(primary)}`;
 }
 
+function buildRfidSessionLabel(session, index) {
+  const opened = formatDateTime(session?.openedAt);
+  const status = session?.isOpen ? "Open" : "Closed";
+  const scans = Number(session?.scanCount || 0);
+
+  return `RFID Session ${index + 1} • ${opened} • ${status} • ${scans} scan(s)`;
+}
+
 function modalBackdropClasses(open) {
   return open
     ? "fixed inset-0 z-[120] flex items-center justify-center bg-black/50 px-4 py-6"
@@ -396,6 +407,13 @@ export default function ProfessorAttendance() {
   const [uploadCloseAt, setUploadCloseAt] = useState(initialWindow.close);
   const [postRowsById, setPostRowsById] = useState({});
 
+  const [rfidLoading, setRfidLoading] = useState(false);
+  const [rfidSession, setRfidSession] = useState(null);
+  const [rfidSessions, setRfidSessions] = useState([]);
+  const [selectedRfidSessionId, setSelectedRfidSessionId] = useState("");
+  const [rfidLogs, setRfidLogs] = useState([]);
+  const [rfidPage, setRfidPage] = useState(1);
+
   const [page, setPage] = useState(1);
   const [msg, setMsg] = useState({ type: "", text: "" });
 
@@ -415,6 +433,11 @@ export default function ProfessorAttendance() {
     return allowedCourses.length > 1 ? ["All", ...allowedCourses] : allowedCourses;
   }, [allowedCourses]);
 
+  const selectedCourseForRfid = useMemo(() => {
+    if (course && course !== "All") return course;
+    return allowedCourses[0] || "";
+  }, [course, allowedCourses]);
+
   const selectedRecord = useMemo(
     () => recordOptions.find((item) => item.key === selectedRecordKey) || null,
     [recordOptions, selectedRecordKey]
@@ -426,6 +449,28 @@ export default function ProfessorAttendance() {
   );
 
   const recordsAttendanceDate = selectedRecord?.attendanceDate || todayLocalISO();
+
+  const selectedRfidSession = useMemo(
+    () =>
+      rfidSessions.find(
+        (session) =>
+          String(session?.id || session?._id || "") ===
+          String(selectedRfidSessionId || "")
+      ) ||
+      rfidSession ||
+      null,
+    [rfidSessions, selectedRfidSessionId, rfidSession]
+  );
+
+  const rfidTotalPages = Math.max(
+    1,
+    Math.ceil(rfidLogs.length / RFID_LOGS_PER_PAGE)
+  );
+
+  const paginatedRfidLogs = useMemo(() => {
+    const start = (rfidPage - 1) * RFID_LOGS_PER_PAGE;
+    return rfidLogs.slice(start, start + RFID_LOGS_PER_PAGE);
+  }, [rfidLogs, rfidPage]);
 
   const traineeQuery = useMemo(() => {
     const params = new URLSearchParams();
@@ -639,12 +684,65 @@ export default function ProfessorAttendance() {
     }
   }, [postingAttendanceQuery]);
 
+  const loadRfidStatus = useCallback(
+    async (sessionId = selectedRfidSessionId) => {
+      if (!selectedCourseForRfid) {
+        setRfidSession(null);
+        setRfidSessions([]);
+        setSelectedRfidSessionId("");
+        setRfidLogs([]);
+        return;
+      }
+
+      try {
+        setRfidLoading(true);
+
+        const params = new URLSearchParams();
+        params.set("course", selectedCourseForRfid);
+        params.set("attendanceDate", todayLocalISO());
+
+        if (sessionId) {
+          params.set("sessionId", sessionId);
+        }
+
+        const data = await fetchJson(
+          `${API_BASE}/training/rfid/professor/status?${params.toString()}`,
+          {
+            headers: professorAuthHeaders(),
+          }
+        );
+
+        const nextSessions = Array.isArray(data?.sessions) ? data.sessions : [];
+        const selectedId = String(data?.session?.id || data?.session?._id || "");
+
+        setRfidSession(data?.session || null);
+        setRfidSessions(nextSessions);
+        setSelectedRfidSessionId(selectedId);
+        setRfidLogs(Array.isArray(data?.logs) ? data.logs : []);
+        setRfidPage(1);
+      } catch (error) {
+        setMsg({
+          type: "error",
+          text: error.message || "Failed to load RFID attendance status.",
+        });
+      } finally {
+        setRfidLoading(false);
+      }
+    },
+    [selectedCourseForRfid, selectedRfidSessionId]
+  );
+
   const refreshPage = useCallback(async () => {
     setMsg({ type: "", text: "" });
 
     await Promise.all([loadTrainees(), loadRecordDateOptions()]);
-    await loadRecordAttendanceRows();
-  }, [loadTrainees, loadRecordDateOptions, loadRecordAttendanceRows]);
+    await Promise.all([loadRecordAttendanceRows(), loadRfidStatus()]);
+  }, [
+    loadTrainees,
+    loadRecordDateOptions,
+    loadRecordAttendanceRows,
+    loadRfidStatus,
+  ]);
 
   useEffect(() => {
     loadProfessorCourses();
@@ -664,6 +762,21 @@ export default function ProfessorAttendance() {
     setPage(1);
     loadRecordAttendanceRows();
   }, [allowedCourses.length, selectedRecordKey, loadRecordAttendanceRows]);
+
+  useEffect(() => {
+    if (!allowedCourses.length || !selectedCourseForRfid) return;
+    loadRfidStatus("");
+  }, [allowedCourses.length, selectedCourseForRfid]);
+
+  useEffect(() => {
+    if (!rfidSession?.isOpen) return;
+
+    const timer = setInterval(() => {
+      loadRfidStatus(selectedRfidSessionId);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [rfidSession?.isOpen, selectedRfidSessionId, loadRfidStatus]);
 
   useEffect(() => {
     const next = {};
@@ -765,6 +878,76 @@ export default function ProfessorAttendance() {
     }
   }
 
+  async function openRfidAttendance() {
+    try {
+      if (!selectedCourseForRfid) {
+        throw new Error("Please select a course first.");
+      }
+
+      setRfidLoading(true);
+      setMsg({ type: "", text: "" });
+
+      const data = await fetchJson(`${API_BASE}/training/rfid/professor/open`, {
+        method: "POST",
+        headers: professorAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          course: selectedCourseForRfid,
+          attendanceDate: todayLocalISO(),
+          station: `${selectedCourseForRfid} RFID Station`,
+        }),
+      });
+
+      const nextId = String(data?.session?.id || data?.session?._id || "");
+
+      setMsg({
+        type: "success",
+        text: data?.message || `${selectedCourseForRfid} RFID attendance opened.`,
+      });
+
+      await loadRfidStatus(nextId);
+    } catch (error) {
+      setMsg({
+        type: "error",
+        text: error.message || "Failed to open RFID attendance.",
+      });
+    } finally {
+      setRfidLoading(false);
+    }
+  }
+
+  async function closeRfidAttendance() {
+    try {
+      if (!selectedRfidSession?.id && !selectedRfidSession?._id) {
+        throw new Error("No RFID session selected.");
+      }
+
+      setRfidLoading(true);
+      setMsg({ type: "", text: "" });
+
+      const data = await fetchJson(`${API_BASE}/training/rfid/professor/close`, {
+        method: "PATCH",
+        headers: professorAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          sessionId: selectedRfidSession.id || selectedRfidSession._id,
+        }),
+      });
+
+      setMsg({
+        type: "success",
+        text: data?.message || "RFID attendance closed.",
+      });
+
+      await loadRfidStatus(selectedRfidSession.id || selectedRfidSession._id);
+    } catch (error) {
+      setMsg({
+        type: "error",
+        text: error.message || "Failed to close RFID attendance.",
+      });
+    } finally {
+      setRfidLoading(false);
+    }
+  }
+
   async function exportAttendance() {
     try {
       const params = new URLSearchParams();
@@ -811,6 +994,60 @@ export default function ProfessorAttendance() {
         text: error.message || "Failed to export attendance.",
       });
     }
+  }
+
+  async function exportRfidAttendance() {
+    try {
+      if (!selectedRfidSession?.id && !selectedRfidSession?._id) {
+        throw new Error("Please select an RFID session first.");
+      }
+
+      const params = new URLSearchParams();
+      params.set("sessionId", selectedRfidSession.id || selectedRfidSession._id);
+
+      const res = await fetch(
+        `${API_BASE}/training/rfid/professor/export?${params.toString()}`,
+        { headers: professorAuthHeaders() }
+      );
+
+      if (!res.ok) {
+        const data = await readJsonSafe(res);
+        throw new Error(data?.message || "Failed to export RFID attendance.");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+
+      const safeCourse = String(selectedRfidSession.course || "rfid")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+      a.href = url;
+      a.download = `${safeCourse}-rfid-attendance-${
+        selectedRfidSession.attendanceDate || todayLocalISO()
+      }.csv`;
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setMsg({
+        type: "error",
+        text: error.message || "Failed to export RFID attendance.",
+      });
+    }
+  }
+
+  function openScannerDisplay() {
+    if (!selectedCourseForRfid) return;
+
+    navigate(
+      `/trainee-rfid-scan?course=${encodeURIComponent(selectedCourseForRfid)}`
+    );
   }
 
   async function handleReview(modalRow, proofReviewStatus, status) {
@@ -861,6 +1098,8 @@ export default function ProfessorAttendance() {
 
     navigate("/professor-login");
   }
+
+  const rfidOpen = selectedRfidSession?.isOpen === true;
 
   return (
     <div className="min-h-screen bg-[#12391f] font-sans text-white">
@@ -942,6 +1181,208 @@ export default function ProfessorAttendance() {
                 {msg.text}
               </div>
             ) : null}
+
+            <div className="mb-7 rounded-2xl bg-[#2d5038] p-5 shadow-sm ring-1 ring-white/15">
+              <div className="grid gap-5 lg:grid-cols-[1fr_260px]">
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-xl font-black uppercase">
+                      {selectedCourseForRfid || "Course"} RFID Attendance
+                    </h3>
+
+                    <span
+                      className={`rounded-full px-4 py-1 text-xs font-black uppercase ${
+                        rfidOpen
+                          ? "bg-[#bdf0a4] text-[#2d5038]"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {rfidOpen ? "Open" : "Closed"}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 max-w-2xl text-sm font-bold text-white/85">
+                    View one RFID attendance session at a time. Select a session
+                    below to avoid a long scan list.
+                  </p>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
+                        RFID Session
+                      </label>
+
+                      <select
+                        value={selectedRfidSessionId}
+                        onChange={(e) => {
+                          const nextId = e.target.value;
+                          setSelectedRfidSessionId(nextId);
+                          loadRfidStatus(nextId);
+                        }}
+                        disabled={rfidLoading || !rfidSessions.length}
+                        className="mt-2 h-11 w-full rounded-xl border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none disabled:bg-white/70"
+                      >
+                        {!rfidSessions.length ? (
+                          <option value="">No RFID sessions today</option>
+                        ) : (
+                          rfidSessions.map((session, index) => (
+                            <option
+                              key={session.id || session._id}
+                              value={session.id || session._id}
+                            >
+                              {buildRfidSessionLabel(session, index)}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
+                        Selected Session Details
+                      </label>
+
+                      <div className="mt-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-white">
+                        <div>
+                          Date: {selectedRfidSession?.attendanceDate || todayLocalISO()}
+                        </div>
+                        <div>
+                          Station: {selectedRfidSession?.station || `${selectedCourseForRfid} RFID Station`}
+                        </div>
+                        <div>
+                          Time In: {Number(selectedRfidSession?.timeInCount || 0)} • Time Out:{" "}
+                          {Number(selectedRfidSession?.timeOutCount || 0)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl bg-white/10 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h4 className="text-sm font-black uppercase">
+                        Scans in selected session
+                      </h4>
+
+                      <div className="text-xs font-black text-white/70">
+                        Page {rfidPage} / {rfidTotalPages}
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {rfidLoading ? (
+                        <div className="rounded-xl bg-white/10 px-4 py-5 text-sm font-bold text-white/75 md:col-span-2">
+                          Loading RFID session...
+                        </div>
+                      ) : paginatedRfidLogs.length ? (
+                        paginatedRfidLogs.map((log) => (
+                          <div
+                            key={log.id || `${log.uid}-${log.createdAt}`}
+                            className="rounded-xl bg-white/10 px-4 py-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="font-black">
+                                  {log.traineeName || log.uid || "RFID Scan"}
+                                </div>
+                                <div className="mt-1 text-xs font-bold text-white/75">
+                                  {log.message || "RFID scan processed."}
+                                </div>
+                                <div className="mt-1 text-xs font-bold uppercase text-white/55">
+                                  {formatDateTime(log.createdAt)}
+                                </div>
+                              </div>
+
+                              <span
+                                className={`rounded-full px-3 py-1 text-[10px] font-black uppercase ${
+                                  log.status === "success"
+                                    ? "bg-[#bdf0a4] text-[#2d5038]"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {log.action || log.status || "scan"}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-xl bg-white/10 px-4 py-5 text-center text-sm font-bold text-white/75 md:col-span-2">
+                          No scans in this RFID session yet.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setRfidPage((prev) => Math.max(1, prev - 1))}
+                        disabled={rfidPage <= 1}
+                        className="rounded-lg border border-white/25 px-4 py-2 text-xs font-black uppercase disabled:opacity-40"
+                      >
+                        Previous
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRfidPage((prev) => Math.min(rfidTotalPages, prev + 1))
+                        }
+                        disabled={rfidPage >= rfidTotalPages}
+                        className="rounded-lg border border-white/25 px-4 py-2 text-xs font-black uppercase disabled:opacity-40"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={openRfidAttendance}
+                    disabled={rfidLoading || !selectedCourseForRfid}
+                    className="rounded-xl bg-white px-5 py-4 text-xs font-black uppercase tracking-widest text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Open RFID Attendance
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={openScannerDisplay}
+                    disabled={!rfidOpen}
+                    className="rounded-xl bg-[#bdf0a4] px-5 py-4 text-xs font-black uppercase tracking-widest text-[#2d5038] transition hover:bg-[#d7ffc7] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Open Scanner Display
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={closeRfidAttendance}
+                    disabled={rfidLoading || !rfidOpen}
+                    className="rounded-xl border border-white/25 px-5 py-4 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Close RFID
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => loadRfidStatus(selectedRfidSessionId)}
+                    disabled={rfidLoading}
+                    className="rounded-xl border border-white/25 px-5 py-4 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Refresh RFID
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={exportRfidAttendance}
+                    disabled={!selectedRfidSession}
+                    className="rounded-xl bg-white px-5 py-4 text-xs font-black uppercase tracking-widest text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Export RFID Session
+                  </button>
+                </div>
+              </div>
+            </div>
 
             <div className="mb-7 rounded-lg bg-[#2d5038] px-5 py-4 shadow-sm">
               <div className="grid gap-5 lg:grid-cols-[1fr_auto_auto_auto] lg:items-end">

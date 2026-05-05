@@ -59,6 +59,26 @@ const EVENT_TIME_SLOTS_8H = [
   "Nighttime: 9:00 PM - 5:00 AM next day",
 ];
 
+const EVENT_TIME_SLOTS_12H = [
+  "7:00 AM - 7:00 PM",
+  "8:00 AM - 8:00 PM",
+  "9:00 AM - 9:00 PM",
+  "10:00 AM - 10:00 PM",
+  "11:00 AM - 11:00 PM",
+  "12:00 PM - 12:00 AM",
+  "1:00 PM - 1:00 AM next day",
+  "2:00 PM - 2:00 AM next day",
+  "3:00 PM - 3:00 AM next day",
+  "4:00 PM - 4:00 AM next day",
+  "5:00 PM - 5:00 AM next day",
+];
+
+const EVENT_TIME_SLOTS_22H = [
+  "6:00 AM - 4:00 AM next day",
+  "7:00 AM - 5:00 AM next day",
+  "8:00 AM - 6:00 AM next day",
+];
+
 const DEFAULT_EVENT_VENUE_CAPACITY = {
   "LORENZO CAMPSITE": 30,
   "LORENZO VERANDA": 100,
@@ -104,6 +124,10 @@ function getApiBase() {
   if (raw.includes("/api/hotel")) return raw;
 
   return `${raw}/api/hotel`;
+}
+
+function getHotelToken() {
+  return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
 }
 
 function formatPeso(value) {
@@ -172,32 +196,8 @@ function normalizeTimeLabel(value = "") {
 function getDefaultTimeSlots(label = "8 Hours") {
   const normalized = normalizeTimeLabel(label);
 
-  if (normalized === "8 Hours") return EVENT_TIME_SLOTS_8H;
-
-  if (normalized === "12 Hours") {
-    return [
-      "7:00 AM - 7:00 PM",
-      "8:00 AM - 8:00 PM",
-      "9:00 AM - 9:00 PM",
-      "10:00 AM - 10:00 PM",
-      "11:00 AM - 11:00 PM",
-      "12:00 PM - 12:00 AM",
-      "1:00 PM - 1:00 AM next day",
-      "2:00 PM - 2:00 AM next day",
-      "3:00 PM - 3:00 AM next day",
-      "4:00 PM - 4:00 AM next day",
-      "5:00 PM - 5:00 AM next day",
-    ];
-  }
-
-  if (normalized === "22 Hours") {
-    return [
-      "6:00 AM - 4:00 AM next day",
-      "7:00 AM - 5:00 AM next day",
-      "8:00 AM - 6:00 AM next day",
-    ];
-  }
-
+  if (normalized === "22 Hours") return EVENT_TIME_SLOTS_22H;
+  if (normalized === "12 Hours") return EVENT_TIME_SLOTS_12H;
   return EVENT_TIME_SLOTS_8H;
 }
 
@@ -210,6 +210,7 @@ function inferTimeLabelFromSlots(slots = []) {
 
   for (const label of labels) {
     const defaults = getDefaultTimeSlots(label);
+
     if (
       defaults.length === normalized.length &&
       defaults.every((slot) => normalized.includes(slot))
@@ -226,7 +227,9 @@ function makeVariantKey(option = {}) {
     option._id ||
       option.id ||
       option.variantId ||
-      `${option.pax || "pax"}-${option.timeLabel || "time"}-${option.displayOrder || 0}`
+      `${option.pax || "pax"}-${option.timeLabel || "time"}-${
+        option.displayOrder || 0
+      }`
   );
 }
 
@@ -263,27 +266,79 @@ function getVenueCapacity(pkg = {}) {
   const capacityFromInclusions = Array.isArray(pkg.inclusions)
     ? Math.max(
         ...pkg.inclusions
-          .filter((line) => /(capacity|pax|guest|guests)/i.test(String(line || "")))
+          .filter((line) =>
+            /(capacity|pax|guest|guests)/i.test(String(line || ""))
+          )
           .map(parseMaxCapacity)
           .filter(Boolean),
         0
       )
     : 0;
 
-  return capacityFromInclusions || DEFAULT_EVENT_VENUE_CAPACITY[normalizedTitle] || 0;
+  return (
+    capacityFromInclusions ||
+    DEFAULT_EVENT_VENUE_CAPACITY[normalizedTitle] ||
+    0
+  );
+}
+
+function getVariantTimeSlots(variant = {}) {
+  const manual = Array.isArray(variant.timeSlots)
+    ? variant.timeSlots.map((slot) => String(slot || "").trim()).filter(Boolean)
+    : [];
+
+  if (manual.length) return manual;
+
+  return getDefaultTimeSlots(
+    variant.timeVariationLabel ||
+      variant.duration ||
+      variant.timeLabel ||
+      variant.label ||
+      "8 Hours"
+  );
+}
+
+function getTextPriceFallback(pkg = {}, pax = 0) {
+  const lines = [
+    pkg.subtitle,
+    pkg.description,
+    pkg.capacity,
+    ...(Array.isArray(pkg.inclusions) ? pkg.inclusions : []),
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const safePax = Number(pax || 0);
+  if (!safePax || !lines) return 0;
+
+  const regex = new RegExp(
+    `(?:₱|P|PHP)?\\s*([0-9][0-9,]*(?:\\.\\d+)?)\\s*(?:-|–|—|for|/)\\s*${safePax}\\s*(?:pax|persons|guests)|${safePax}\\s*(?:pax|persons|guests)\\s*(?:-|–|—|for|/)\\s*(?:₱|P|PHP)?\\s*([0-9][0-9,]*(?:\\.\\d+)?)`,
+    "i"
+  );
+
+  const match = lines.match(regex);
+  if (!match) return 0;
+
+  return parseMoney(match[1] || match[2] || "");
 }
 
 function parsePriceOptions(pkg) {
-  if (Array.isArray(pkg?.variants) && pkg.variants.length > 0) {
+  if (!pkg) return [];
+
+  if (Array.isArray(pkg.variants) && pkg.variants.length > 0) {
     return pkg.variants
       .filter((variant) => variant?.isActive !== false)
       .map((variant, index) => {
         const label = String(variant.label || "").trim();
         const pax = Number(variant.pax || parsePax(label));
-        const timeSlots = Array.isArray(variant.timeSlots) && variant.timeSlots.length
-          ? variant.timeSlots.map((slot) => String(slot || "").trim()).filter(Boolean)
-          : getDefaultTimeSlots(variant.timeVariationLabel || variant.duration || "8 Hours");
-        const timeLabel = inferTimeLabelFromSlots(timeSlots);
+        const timeSlots = getVariantTimeSlots(variant);
+        const timeLabel =
+          variant.timeVariationLabel || inferTimeLabelFromSlots(timeSlots);
+
+        const directPrice = Number(variant.price || 0);
+        const fallbackPrice = getTextPriceFallback(pkg, pax);
+        const price = directPrice > 0 ? directPrice : fallbackPrice;
+
         const option = {
           _id: variant._id || variant.id || "",
           variantId: variant._id || variant.id || "",
@@ -291,7 +346,8 @@ function parsePriceOptions(pkg) {
           label: label || `${pax} Pax - ${timeLabel}`,
           timeLabel,
           timeSlots,
-          price: Number(variant.price || 0),
+          price: Number(price || 0),
+          hasConfiguredPrice: Number(price || 0) > 0,
           displayOrder: Number(variant.displayOrder || index + 1),
         };
 
@@ -300,7 +356,7 @@ function parsePriceOptions(pkg) {
           key: makeVariantKey(option),
         };
       })
-      .filter((item) => item.pax > 0 && item.price > 0 && item.timeSlots.length > 0)
+      .filter((item) => item.pax > 0 && item.timeSlots.length > 0)
       .sort(
         (a, b) =>
           Number(a.displayOrder || 0) - Number(b.displayOrder || 0) ||
@@ -314,33 +370,40 @@ function parsePriceOptions(pkg) {
   (pkg?.inclusions || []).forEach((line) => {
     const text = String(line || "");
 
-    if (!/price|₱|php/i.test(text)) return;
+    if (!/price|₱|php|p\s*\d/i.test(text)) return;
 
     const pax = parsePax(text);
     const price = parseMoney(text);
 
-    if (pax && price) {
+    if (pax) {
       const option = {
         pax,
         label: `${pax} PAX - 8 Hours`,
         price,
+        hasConfiguredPrice: price > 0,
         timeLabel: "8 Hours",
         timeSlots: EVENT_TIME_SLOTS_8H,
       };
+
       out.push({ ...option, key: makeVariantKey(option) });
     }
   });
 
-  if (!out.length && pkg?.capacity && pkg?.price) {
+  if (!out.length && pkg?.capacity) {
     const pax = parsePax(pkg.capacity);
-    const option = {
-      pax: pax || 1,
-      label: `${pkg.capacity || "Package Rate"} - 8 Hours`,
-      price: Number(pkg.price || 0),
-      timeLabel: "8 Hours",
-      timeSlots: EVENT_TIME_SLOTS_8H,
-    };
-    out.push({ ...option, key: makeVariantKey(option) });
+
+    if (pax) {
+      const option = {
+        pax,
+        label: `${pkg.capacity || "Package Rate"} - 8 Hours`,
+        price: Number(pkg.price || 0),
+        hasConfiguredPrice: Number(pkg.price || 0) > 0,
+        timeLabel: "8 Hours",
+        timeSlots: EVENT_TIME_SLOTS_8H,
+      };
+
+      out.push({ ...option, key: makeVariantKey(option) });
+    }
   }
 
   if (!out.length && pkg?.price) {
@@ -348,9 +411,11 @@ function parsePriceOptions(pkg) {
       pax: 1,
       label: "Package Rate - 8 Hours",
       price: Number(pkg.price || 0),
+      hasConfiguredPrice: Number(pkg.price || 0) > 0,
       timeLabel: "8 Hours",
       timeSlots: EVENT_TIME_SLOTS_8H,
     };
+
     out.push({ ...option, key: makeVariantKey(option) });
   }
 
@@ -370,6 +435,7 @@ function normalizeVenuePackage(pkg = {}) {
   const title = pkg.title || pkg.name || "";
   const normalizedTitle = normalizeVenue(title);
   const capacity = getVenueCapacity(pkg);
+  const maxBookablePax = capacity ? capacity + MAX_ADDITIONAL_PAX : 0;
 
   return {
     ...pkg,
@@ -377,7 +443,12 @@ function normalizeVenuePackage(pkg = {}) {
     title,
     normalizedTitle,
     capacity,
-    label: `${title}${capacity ? ` - Max ${capacity} pax` : ""}`,
+    maxBookablePax,
+    label: `${title}${
+      capacity
+        ? ` - Max ${capacity} pax + ${MAX_ADDITIONAL_PAX} additional pax`
+        : ""
+    }`,
   };
 }
 
@@ -387,6 +458,72 @@ function getSavedDraft() {
   } catch {
     return null;
   }
+}
+
+function getBestRateForPax(options = [], pax = 0, selectedTime = "") {
+  const safePax = Number(pax || 0);
+
+  if (!safePax) return null;
+
+  const eligible = options.filter((option) => {
+    const optionPax = Number(option.pax || 0);
+    const optionMax = optionPax + MAX_ADDITIONAL_PAX;
+    const timeOk = selectedTime ? option.timeSlots.includes(selectedTime) : true;
+
+    return optionPax > 0 && optionMax >= safePax && timeOk;
+  });
+
+  if (!eligible.length) return null;
+
+  const exact = eligible.find((option) => Number(option.pax) === safePax);
+  if (exact) return exact;
+
+  const baseCoversPax = eligible
+    .filter((option) => Number(option.pax) >= safePax)
+    .sort(
+      (a, b) =>
+        Number(a.pax || 0) - Number(b.pax || 0) ||
+        Number(a.price || 0) - Number(b.price || 0)
+    );
+
+  if (baseCoversPax.length) return baseCoversPax[0];
+
+  return eligible.sort(
+    (a, b) =>
+      Number(b.pax || 0) - Number(a.pax || 0) ||
+      Number(a.price || 0) - Number(b.price || 0)
+  )[0];
+}
+
+function buildTimeOptionsForRates(rates = [], blockedSlots = []) {
+  const blocked = new Set(blockedSlots);
+  const map = new Map();
+
+  rates.forEach((rate) => {
+    const timeLabel = rate.timeLabel || inferTimeLabelFromSlots(rate.timeSlots);
+
+    rate.timeSlots.forEach((slot) => {
+      if (blocked.has(slot)) return;
+
+      if (!map.has(slot)) {
+        map.set(slot, {
+          value: slot,
+          label: `${slot} (${timeLabel})`,
+          timeLabel,
+        });
+      }
+    });
+  });
+
+  return Array.from(map.values()).sort((a, b) => {
+    const order = { "8 Hours": 1, "12 Hours": 2, "22 Hours": 3 };
+    const orderA = order[a.timeLabel] || 99;
+    const orderB = order[b.timeLabel] || 99;
+
+    if (orderA !== orderB) return orderA - orderB;
+
+    return a.label.localeCompare(b.label);
+  });
 }
 
 export default function EventForm() {
@@ -442,22 +579,27 @@ export default function EventForm() {
       : Array.isArray(incomingDraft.appetizer)
       ? incomingDraft.appetizer
       : [],
-    rice: [],
-    pasta: [],
-    chicken: [],
-    pork: [],
-    vegetable: [],
+    rice: Array.isArray(incomingDraft.rice) ? incomingDraft.rice : [],
+    pasta: Array.isArray(incomingDraft.pasta) ? incomingDraft.pasta : [],
+    chicken: Array.isArray(incomingDraft.chicken) ? incomingDraft.chicken : [],
+    pork: Array.isArray(incomingDraft.pork) ? incomingDraft.pork : [],
+    vegetable: Array.isArray(incomingDraft.vegetable) ? incomingDraft.vegetable : [],
     dessert: Array.isArray(incomingDraft.dessert) ? incomingDraft.dessert : [],
     drinks: Array.isArray(incomingDraft.drinks) ? incomingDraft.drinks : [],
   });
 
   const todayLocalISO = useMemo(() => toLocalISO(new Date()), []);
   const oneYearAheadISO = useMemo(() => toLocalISO(addDays(new Date(), 365)), []);
+
   const selectedDateObj = useMemo(
     () => isoToLocalDateObj(form.eventDate),
     [form.eventDate]
   );
-  const minDateObj = useMemo(() => isoToLocalDateObj(todayLocalISO), [todayLocalISO]);
+
+  const minDateObj = useMemo(
+    () => isoToLocalDateObj(todayLocalISO),
+    [todayLocalISO]
+  );
 
   const excludeDateObjects = useMemo(
     () => bookedDates.map(isoToLocalDateObj).filter(Boolean),
@@ -488,27 +630,52 @@ export default function EventForm() {
     [selectedPackage]
   );
 
-  const selectedBaseOption = useMemo(() => {
-    if (form.selectedVariantId) {
-      return priceOptions.find((item) => makeVariantKey(item) === String(form.selectedVariantId)) || null;
+  const venueCapacity = Number(selectedVenue?.capacity || 0);
+  const venueMaxBookablePax = venueCapacity
+    ? venueCapacity + MAX_ADDITIONAL_PAX
+    : 0;
+
+  const packageMaxBookablePax = useMemo(() => {
+    if (!priceOptions.length) return 0;
+
+    return Math.max(
+      ...priceOptions.map((item) => Number(item.pax || 0) + MAX_ADDITIONAL_PAX)
+    );
+  }, [priceOptions]);
+
+  const maxAllowedPax = useMemo(() => {
+    if (venueMaxBookablePax && packageMaxBookablePax) {
+      return Math.min(venueMaxBookablePax, packageMaxBookablePax);
     }
 
-    const basePax = Number(form.basePax || 0);
-    return priceOptions.find((item) => Number(item.pax) === basePax) || null;
-  }, [form.basePax, form.selectedVariantId, priceOptions]);
+    return venueMaxBookablePax || packageMaxBookablePax || 0;
+  }, [venueMaxBookablePax, packageMaxBookablePax]);
 
-  const venueCapacity = Number(selectedVenue?.capacity || 0);
-  const packageBasePax = Number(selectedBaseOption?.pax || form.basePax || 0);
-  const maxAllowedPax = packageBasePax ? packageBasePax + MAX_ADDITIONAL_PAX : 0;
   const selectedPax = Number(form.pax || 0);
+
+  const eligibleRatesForSelectedPax = useMemo(() => {
+    if (!selectedPax) return priceOptions;
+
+    return priceOptions.filter((option) => {
+      const optionMax = Number(option.pax || 0) + MAX_ADDITIONAL_PAX;
+      return optionMax >= selectedPax;
+    });
+  }, [priceOptions, selectedPax]);
+
+  const selectedBaseOption = useMemo(() => {
+    return getBestRateForPax(priceOptions, selectedPax, form.time);
+  }, [priceOptions, selectedPax, form.time]);
+
+  const packageBasePax = Number(selectedBaseOption?.pax || 0);
   const foodIncludedPax = packageBasePax;
+
   const chargeableFoodPax = packageBasePax
     ? Math.max(0, selectedPax - packageBasePax)
     : 0;
+
   const foodChargePerExtraPax = ADDITIONAL_PAX_RATE;
   const foodCharge = chargeableFoodPax * foodChargePerExtraPax;
 
-  // Keep old names for EventSummary/backend compatibility.
   const additionalPax = chargeableFoodPax;
   const additionalPaxCharge = foodCharge;
   const baseAmount = Number(selectedBaseOption?.price || 0);
@@ -516,20 +683,11 @@ export default function EventForm() {
 
   const paxOptions = useMemo(() => {
     const max = maxAllowedPax || 0;
+
     if (!max) return [];
 
     return Array.from({ length: max }, (_, index) => index + 1);
   }, [maxAllowedPax]);
-
-  const selectedVariationTimeSlots = useMemo(() => {
-    return selectedBaseOption?.timeSlots?.length
-      ? selectedBaseOption.timeSlots
-      : EVENT_TIME_SLOTS_8H;
-  }, [selectedBaseOption]);
-
-  const selectedTimeVariationLabel = useMemo(() => {
-    return selectedBaseOption?.timeLabel || inferTimeLabelFromSlots(selectedVariationTimeSlots);
-  }, [selectedBaseOption, selectedVariationTimeSlots]);
 
   const selectedDateBlockedTimeSlots = useMemo(() => {
     if (!form.eventDate) return [];
@@ -538,16 +696,44 @@ export default function EventForm() {
     return Array.isArray(slots) ? slots : [];
   }, [blockedTimeSlotsByDate, form.eventDate]);
 
-  const availableEventTimeSlots = useMemo(() => {
-    if (!form.eventDate) return selectedVariationTimeSlots;
+  const availableTimeOptions = useMemo(() => {
+    return buildTimeOptionsForRates(
+      eligibleRatesForSelectedPax,
+      form.eventDate ? selectedDateBlockedTimeSlots : []
+    );
+  }, [eligibleRatesForSelectedPax, form.eventDate, selectedDateBlockedTimeSlots]);
 
-    const blocked = new Set(selectedDateBlockedTimeSlots);
-    return selectedVariationTimeSlots.filter((slot) => !blocked.has(slot));
-  }, [form.eventDate, selectedDateBlockedTimeSlots, selectedVariationTimeSlots]);
+  const availableEventTimeSlots = useMemo(
+    () => availableTimeOptions.map((item) => item.value),
+    [availableTimeOptions]
+  );
+
+  const selectedTimeVariationLabel = useMemo(() => {
+    if (selectedBaseOption?.timeLabel) return selectedBaseOption.timeLabel;
+
+    const matched = availableTimeOptions.find((item) => item.value === form.time);
+    return matched?.timeLabel || "All Time Variations";
+  }, [selectedBaseOption, availableTimeOptions, form.time]);
+
+  const selectedVariationTimeSlots = useMemo(() => {
+    if (selectedBaseOption?.timeSlots?.length) return selectedBaseOption.timeSlots;
+
+    return availableEventTimeSlots;
+  }, [selectedBaseOption, availableEventTimeSlots]);
 
   const selectedDateIsBooked = Boolean(
     form.eventDate && bookedDates.includes(form.eventDate)
   );
+
+  const selectedVenueBlockedByPax = Boolean(
+    selectedVenue &&
+      selectedPax &&
+      venueMaxBookablePax &&
+      selectedPax > venueMaxBookablePax
+  );
+
+  const hasAnyPackageRates = priceOptions.length > 0;
+  const hasAnyConfiguredPrice = priceOptions.some((item) => item.hasConfiguredPrice);
 
   const setField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -558,33 +744,114 @@ export default function EventForm() {
   const applyPackage = (pkg) => {
     if (!pkg) return;
 
-    const options = parsePriceOptions(pkg);
-    const defaultOption = options.length === 1 ? options[0] : null;
-    const defaultBasePax = defaultOption ? String(defaultOption.pax || "") : "";
-    const defaultVariantId = defaultOption ? makeVariantKey(defaultOption) : "";
-
     setForm((prev) => ({
       ...prev,
       packageId: pkg._id || "",
       eventPackage: pkg.title || "",
-      eventType: prev.eventType?.trim() ? prev.eventType : inferEventType(pkg.title),
-      selectedVariantId: defaultVariantId,
-      basePax: defaultBasePax,
-      pax: defaultBasePax,
+      eventType: prev.eventType?.trim()
+        ? prev.eventType
+        : inferEventType(pkg.title),
+      selectedVariantId: "",
+      basePax: "",
+      pax: "",
+      venue: "",
+      eventDate: "",
       time: "",
     }));
+
+    setBookedDates([]);
+    setBlockedTimeSlotsByDate({});
+    setErrors({});
+    setStatus({ type: "", message: "" });
   };
 
   const applyVenue = (value) => {
+    const venue = venues.find((item) => item.normalizedTitle === normalizeVenue(value));
+
+    if (
+      selectedPax &&
+      venue?.maxBookablePax &&
+      selectedPax > venue.maxBookablePax
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        venue: `This venue allows only up to ${venue.maxBookablePax} pax (${venue.capacity} base + ${MAX_ADDITIONAL_PAX} additional).`,
+      }));
+
+      setStatus({
+        type: "error",
+        message: `Selected pax is too high for ${venue.title}. Choose another venue or reduce pax.`,
+      });
+
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
       venue: value,
       eventDate: "",
       time: "",
-      pax: "",
     }));
+
     setBookedDates([]);
-    setErrors((prev) => ({ ...prev, venue: "", eventDate: "", time: "", pax: "" }));
+    setBlockedTimeSlotsByDate({});
+    setErrors((prev) => ({ ...prev, venue: "", eventDate: "", time: "" }));
+    setStatus({ type: "", message: "" });
+  };
+
+  const setPaxValue = (value) => {
+    const nextPax = String(value || "");
+    const best = getBestRateForPax(priceOptions, Number(nextPax), "");
+
+    setForm((prev) => {
+      const next = {
+        ...prev,
+        pax: nextPax,
+        time: "",
+        eventDate: "",
+        basePax: best ? String(best.pax || "") : "",
+        selectedVariantId: best ? makeVariantKey(best) : "",
+      };
+
+      const currentVenue = venues.find(
+        (item) => item.normalizedTitle === normalizeVenue(prev.venue)
+      );
+
+      if (
+        currentVenue?.maxBookablePax &&
+        Number(nextPax) > currentVenue.maxBookablePax
+      ) {
+        next.venue = "";
+      }
+
+      return next;
+    });
+
+    setBookedDates([]);
+    setBlockedTimeSlotsByDate({});
+    setErrors((prev) => ({
+      ...prev,
+      pax: "",
+      venue: "",
+      time: "",
+      eventDate: "",
+      basePax: "",
+      totalAmount: "",
+    }));
+    setStatus({ type: "", message: "" });
+  };
+
+  const setTimeValue = (value) => {
+    const best = getBestRateForPax(priceOptions, Number(form.pax), value);
+
+    setForm((prev) => ({
+      ...prev,
+      time: value,
+      basePax: best ? String(best.pax || "") : prev.basePax,
+      selectedVariantId: best ? makeVariantKey(best) : prev.selectedVariantId,
+    }));
+
+    setErrors((prev) => ({ ...prev, time: "", totalAmount: "" }));
     setStatus({ type: "", message: "" });
   };
 
@@ -702,7 +969,7 @@ export default function EventForm() {
   };
 
   const fetchBookedDates = async (venue) => {
-    const token = localStorage.getItem("token") || localStorage.getItem("hotelToken");
+    const token = getHotelToken();
 
     if (!token || !venue) return;
 
@@ -715,8 +982,6 @@ export default function EventForm() {
         to: oneYearAheadISO,
         packageId: form.packageId || "",
         eventPackage: form.eventPackage || "",
-        variantId: form.selectedVariantId || "",
-        basePax: form.basePax || "",
       });
 
       const res = await fetch(`${API_BASE}/event-bookings/booked-dates?${query}`, {
@@ -760,7 +1025,7 @@ export default function EventForm() {
   };
 
   const fetchProfile = async () => {
-    const token = localStorage.getItem("token") || localStorage.getItem("hotelToken");
+    const token = getHotelToken();
 
     if (!token) {
       navigate("/hotel-login");
@@ -816,7 +1081,7 @@ export default function EventForm() {
     if (!form.venue) return;
     fetchBookedDates(form.venue);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.venue, form.packageId, form.selectedVariantId, form.basePax]);
+  }, [form.venue, form.packageId]);
 
   useEffect(() => {
     if (presetAppliedRef.current || !packages.length) return;
@@ -830,18 +1095,13 @@ export default function EventForm() {
       );
 
     if (matched) {
-      const options = parsePriceOptions(matched);
-
-      const defaultOption = options.length === 1 ? options[0] : null;
-
       setForm((prev) => ({
         ...prev,
         packageId: matched._id || "",
         eventPackage: matched.title || "",
-        eventType: prev.eventType?.trim() ? prev.eventType : inferEventType(matched.title),
-        selectedVariantId: prev.selectedVariantId || (defaultOption ? makeVariantKey(defaultOption) : ""),
-        basePax: prev.basePax || (defaultOption ? String(defaultOption.pax || "") : ""),
-        pax: prev.pax || (defaultOption ? String(defaultOption.pax || "") : ""),
+        eventType: prev.eventType?.trim()
+          ? prev.eventType
+          : inferEventType(matched.title),
       }));
     }
 
@@ -849,8 +1109,17 @@ export default function EventForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packages]);
 
+  useEffect(() => {
+    if (!form.time) return;
+
+    if (!availableEventTimeSlots.includes(form.time)) {
+      setField("time", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableEventTimeSlots.join("|")]);
+
   const checkAvailability = async () => {
-    const token = localStorage.getItem("token") || localStorage.getItem("hotelToken");
+    const token = getHotelToken();
 
     if (!token) {
       navigate("/hotel-login");
@@ -863,8 +1132,8 @@ export default function EventForm() {
       time: form.time,
       packageId: form.packageId || "",
       eventPackage: form.eventPackage || "",
-      variantId: form.selectedVariantId || "",
-      basePax: form.basePax || "",
+      variantId: selectedBaseOption?.variantId || "",
+      basePax: selectedBaseOption?.pax || "",
     });
 
     const res = await fetch(`${API_BASE}/event-bookings/check?${query}`, {
@@ -910,9 +1179,17 @@ export default function EventForm() {
     }
 
     if (!form.packageId) next.packageId = "Choose an event package.";
-    if (!form.basePax) next.basePax = "Choose a package capacity.";
+
+    if (!hasAnyPackageRates) {
+      next.packageId =
+        "This package has no active pax/time rates. Please edit this package in admin.";
+    }
 
     if (!form.venue) next.venue = "Choose a venue.";
+
+    if (selectedVenueBlockedByPax) {
+      next.venue = `This venue allows only up to ${venueMaxBookablePax} pax.`;
+    }
 
     if (!form.eventDate) next.eventDate = "Choose a date.";
     else if (form.eventDate < todayLocalISO) {
@@ -921,22 +1198,21 @@ export default function EventForm() {
       next.eventDate = "This venue is fully booked for this date.";
     }
 
-    if (!form.time) next.time = "Choose time.";
-    else if (!selectedVariationTimeSlots.includes(form.time)) {
-      next.time = `Choose a valid ${selectedTimeVariationLabel} event time slot.`;
-    } else if (!availableEventTimeSlots.includes(form.time)) {
-      next.time = "This time slot is blocked by a pending or approved Resort & Venue / Event Package booking and the required 1-hour gap. If admin rejects or cancels that booking, the slot will open again.";
-    }
-
     const pax = Number(form.pax || 0);
 
     if (!form.pax) next.pax = "Choose number of pax.";
     else if (!Number.isFinite(pax) || pax <= 0) {
       next.pax = "Pax must be at least 1.";
-    } else if (!packageBasePax) {
-      next.pax = "Choose a package capacity first.";
     } else if (maxAllowedPax && pax > maxAllowedPax) {
-      next.pax = `Maximum ${maxAllowedPax} pax only for the selected package capacity (${packageBasePax} pax + ${MAX_ADDITIONAL_PAX} additional pax).`;
+      next.pax = `Maximum ${maxAllowedPax} pax only for this package and venue.`;
+    } else if (!selectedBaseOption) {
+      next.pax = `No package rate can support ${pax} pax.`;
+    }
+
+    if (!form.time) next.time = "Choose time.";
+    else if (!availableEventTimeSlots.includes(form.time)) {
+      next.time =
+        "This time slot is blocked or not available for the selected pax/package.";
     }
 
     if (!form.eventTheme.trim()) next.eventTheme = "Event theme is required.";
@@ -963,7 +1239,10 @@ export default function EventForm() {
       }
     });
 
-    if (!baseAmount) next.totalAmount = "Package price cannot be computed.";
+    if (!baseAmount) {
+      next.totalAmount =
+        "Package price is 0. Please set prices for this event package in admin.";
+    }
 
     return next;
   };
@@ -1014,7 +1293,7 @@ export default function EventForm() {
           ...prev,
           eventDate:
             availability.message ||
-            "This event time slot is already blocked by a pending or approved Resort & Venue / Event Package booking.",
+            "This event time slot is already blocked by a pending or approved booking.",
         }));
 
         setStatus({
@@ -1042,18 +1321,19 @@ export default function EventForm() {
       ...buildMenuPayload(),
       packageId: selectedPackage?._id || form.packageId,
       selectedPackageId: selectedPackage?._id || form.packageId,
-      selectedVariantId: form.selectedVariantId,
-      variantId: form.selectedVariantId,
+      selectedVariantId: selectedBaseOption?.variantId || makeVariantKey(selectedBaseOption),
+      variantId: selectedBaseOption?.variantId || makeVariantKey(selectedBaseOption),
       selectedVariantLabel: selectedBaseOption?.label || "",
       timeVariationLabel: selectedTimeVariationLabel,
       selectedTimeSlots: selectedVariationTimeSlots,
       eventPackage: selectedPackage?.title || form.eventPackage,
       selectedPackageTitle: selectedPackage?.title || form.eventPackage,
-      basePax: Number(form.basePax),
+      basePax: Number(packageBasePax),
       pax: Number(form.pax),
       venue: normalizeVenue(form.venue),
       venueDisplayName: selectedVenue?.title || form.venue,
       venueCapacity,
+      venueMaxBookablePax,
       maxAdditionalPax: MAX_ADDITIONAL_PAX,
       foodIncludedPax,
       chargeableFoodPax,
@@ -1064,7 +1344,7 @@ export default function EventForm() {
       baseAmount,
       additionalPaxCharge,
       totalAmount,
-      selectedCapacity: `${form.basePax} Pax`,
+      selectedCapacity: `${packageBasePax} Pax`,
       selectedInclusions: selectedPackage?.inclusions || [],
       packageMeta: selectedPackage,
     };
@@ -1082,7 +1362,7 @@ export default function EventForm() {
       : "bg-slate-50 text-slate-700 border-slate-200";
 
   const goToProfile = () => {
-    const token = localStorage.getItem("token") || localStorage.getItem("hotelToken");
+    const token = getHotelToken();
     navigate(token ? "/hotel-profile" : "/hotel-login");
   };
 
@@ -1105,391 +1385,429 @@ export default function EventForm() {
 
           <div className="rounded-md bg-white/15 px-5 py-8 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-[1px] sm:px-7 lg:px-8">
             {status.message ? (
-          <div className={`mt-5 rounded-xl border px-4 py-3 text-sm ${statusStyles}`}>
-            {status.message}
-          </div>
-        ) : null}
+              <div
+                className={`mt-5 rounded-xl border px-4 py-3 text-sm ${statusStyles}`}
+              >
+                {status.message}
+              </div>
+            ) : null}
 
-        <Section title="Personal Details">
-          <Field
-            label="First Name"
-            value={form.firstName}
-            disabled={loadingProfile}
-            error={errors.firstName}
-            placeholder="Enter first name"
-            onChange={(value) =>
-              setField("firstName", value.replace(/[^A-Za-z\s]/g, "").slice(0, 30))
-            }
-          />
+            <Section title="Personal Details">
+              <Field
+                label="First Name"
+                value={form.firstName}
+                disabled={loadingProfile}
+                error={errors.firstName}
+                placeholder="Enter first name"
+                onChange={(value) =>
+                  setField(
+                    "firstName",
+                    value.replace(/[^A-Za-z\s]/g, "").slice(0, 30)
+                  )
+                }
+              />
 
-          <Field
-            label="Last Name"
-            value={form.lastName}
-            disabled={loadingProfile}
-            error={errors.lastName}
-            placeholder="Enter last name"
-            onChange={(value) =>
-              setField("lastName", value.replace(/[^A-Za-z\s]/g, "").slice(0, 30))
-            }
-          />
+              <Field
+                label="Last Name"
+                value={form.lastName}
+                disabled={loadingProfile}
+                error={errors.lastName}
+                placeholder="Enter last name"
+                onChange={(value) =>
+                  setField(
+                    "lastName",
+                    value.replace(/[^A-Za-z\s]/g, "").slice(0, 30)
+                  )
+                }
+              />
 
-          <Field
-            label="Email"
-            type="email"
-            value={form.email}
-            disabled={loadingProfile}
-            error={errors.email}
-            placeholder="Enter email"
-            onChange={(value) =>
-              setField("email", value.replace(/\s/g, "").slice(0, 60))
-            }
-          />
+              <Field
+                label="Email"
+                type="email"
+                value={form.email}
+                disabled={loadingProfile}
+                error={errors.email}
+                placeholder="Enter email"
+                onChange={(value) =>
+                  setField("email", value.replace(/\s/g, "").slice(0, 60))
+                }
+              />
 
-          <Field
-            label="Phone Number"
-            value={form.phone}
-            disabled={loadingProfile}
-            error={errors.phone}
-            placeholder="09XXXXXXXXX"
-            inputMode="numeric"
-            onChange={(value) =>
-              setField("phone", value.replace(/\D/g, "").slice(0, 11))
-            }
-          />
-        </Section>
+              <Field
+                label="Phone Number"
+                value={form.phone}
+                disabled={loadingProfile}
+                error={errors.phone}
+                placeholder="09XXXXXXXXX"
+                inputMode="numeric"
+                onChange={(value) =>
+                  setField("phone", value.replace(/\D/g, "").slice(0, 11))
+                }
+              />
+            </Section>
 
-        <div className="mt-10">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <h2 className="font-['Montserrat',sans-serif] text-[25px] font-semibold text-white sm:text-[30px]">
-              Booking Details
-            </h2>
+            <div className="mt-10">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                <h2 className="font-['Montserrat',sans-serif] text-[25px] font-semibold text-white sm:text-[30px]">
+                  Booking Details
+                </h2>
 
-            <input
-              value="Event Package"
-              disabled
-              readOnly
-              className="h-8 w-full rounded-md border-0 bg-white px-3 text-[12px] font-semibold text-[#3f5b44] outline-none sm:w-[250px]"
-            />
-
-            <div className="text-sm font-bold text-white md:ml-auto">
-              Total: {formatPeso(totalAmount)}
-              <span className="ml-3 font-semibold opacity-80">
-                • Package: {form.eventPackage || "—"}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-3">
-            <SelectField
-              label="Choose Package"
-              value={form.packageId}
-              onChange={(value) =>
-                applyPackage(packages.find((item) => String(item._id) === String(value)))
-              }
-              options={packages.map((pkg) => ({
-                value: pkg._id,
-                label: pkg.title,
-              }))}
-              placeholder={loadingPackages ? "Loading packages..." : "Select package"}
-              error={errors.packageId}
-              disabled={loadingPackages}
-            />
-
-            <SelectField
-              label="Package Capacity / Time / Base Price"
-              value={form.selectedVariantId || (selectedBaseOption ? makeVariantKey(selectedBaseOption) : "")}
-              onChange={(value) => {
-                const selected = priceOptions.find((item) => makeVariantKey(item) === String(value));
-
-                setForm((prev) => ({
-                  ...prev,
-                  selectedVariantId: value,
-                  basePax: selected ? String(selected.pax || "") : "",
-                  pax: selected ? String(selected.pax || "") : "",
-                  time: "",
-                }));
-
-                setErrors((prev) => ({ ...prev, basePax: "", pax: "", time: "", totalAmount: "" }));
-                setStatus({ type: "", message: "" });
-              }}
-              options={priceOptions.map((item) => ({
-                value: makeVariantKey(item),
-                label: `${item.label || `${item.pax} PAX`} - ${formatPeso(item.price)}`,
-              }))}
-              placeholder="Select package rate and time variation"
-              error={errors.basePax}
-              disabled={!selectedPackage || priceOptions.length === 0}
-            />
-
-            <SelectField
-              label="Choose Venue"
-              value={form.venue}
-              onChange={applyVenue}
-              options={venues.map((item) => ({
-                value: item.normalizedTitle,
-                label: item.label,
-              }))}
-              placeholder={loadingVenues ? "Loading venues..." : "Venue type"}
-              error={errors.venue}
-              disabled={loadingVenues}
-            />
-
-            <div>
-              <label className="mb-2 block text-[13px] font-extrabold text-white">Choose Date</label>
-
-              <div className="relative">
-                <DatePicker
-                  selected={selectedDateObj}
-                  onChange={(date) => {
-                    setField("eventDate", date ? toLocalISO(date) : "");
-                    setField("time", "");
-                  }}
-                  minDate={minDateObj}
-                  excludeDates={excludeDateObjects}
-                  placeholderText={
-                    !form.venue
-                      ? "Choose venue first"
-                      : loadingDates
-                      ? "Loading dates..."
-                      : "mm/dd/yyyy"
-                  }
-                  dateFormat="MM/dd/yyyy"
-                  disabled={!form.venue || loadingDates}
-                  className="h-9 w-full rounded-md border border-black/10 bg-white px-3 pr-11 text-sm font-semibold text-[#3f5b44] outline-none transition placeholder:text-[#3f5b44]/45 focus:ring-2 focus:ring-white/70 disabled:opacity-70"
+                <input
+                  value="Event Package"
+                  disabled
+                  readOnly
+                  className="h-8 w-full rounded-md border-0 bg-white px-3 text-[12px] font-semibold text-[#3f5b44] outline-none sm:w-[250px]"
                 />
 
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-80">
-                  📅
-                </span>
+                <div className="text-sm font-bold text-white md:ml-auto">
+                  Total: {formatPeso(totalAmount)}
+                  <span className="ml-3 font-semibold opacity-80">
+                    • Package: {form.eventPackage || "—"}
+                  </span>
+                </div>
               </div>
 
-              {errors.eventDate ? (
-                <p className="mt-1 text-xs font-semibold text-rose-100">{errors.eventDate}</p>
+              <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-3">
+                <SelectField
+                  label="Choose Package"
+                  value={form.packageId}
+                  onChange={(value) =>
+                    applyPackage(
+                      packages.find((item) => String(item._id) === String(value))
+                    )
+                  }
+                  options={packages.map((pkg) => ({
+                    value: pkg._id,
+                    label: pkg.title,
+                  }))}
+                  placeholder={
+                    loadingPackages ? "Loading packages..." : "Select package"
+                  }
+                  error={errors.packageId}
+                  disabled={loadingPackages}
+                />
+
+                <SelectField
+                  label="Number of Pax"
+                  value={form.pax}
+                  onChange={setPaxValue}
+                  options={paxOptions.map((item) => ({
+                    value: String(item),
+                    label: `${item} pax`,
+                  }))}
+                  placeholder={
+                    selectedPackage
+                      ? hasAnyPackageRates
+                        ? `Select pax, max ${maxAllowedPax || "—"}`
+                        : "No active rates in package"
+                      : "Choose package first"
+                  }
+                  error={errors.pax}
+                  disabled={!selectedPackage || !paxOptions.length}
+                />
+
+                <SelectField
+                  label="Choose Venue"
+                  value={form.venue}
+                  onChange={applyVenue}
+                  options={venues.map((item) => ({
+                    value: item.normalizedTitle,
+                    label: item.label,
+                  }))}
+                  disabledOptions={venues
+                    .filter(
+                      (item) =>
+                        selectedPax &&
+                        item.maxBookablePax &&
+                        selectedPax > item.maxBookablePax
+                    )
+                    .map((item) => item.normalizedTitle)}
+                  placeholder={loadingVenues ? "Loading venues..." : "Venue type"}
+                  error={errors.venue}
+                  disabled={loadingVenues || !selectedPackage}
+                />
+
+                <div>
+                  <label className="mb-2 block text-[13px] font-extrabold text-white">
+                    Choose Date
+                  </label>
+
+                  <div className="relative">
+                    <DatePicker
+                      selected={selectedDateObj}
+                      onChange={(date) => {
+                        setField("eventDate", date ? toLocalISO(date) : "");
+                        setField("time", "");
+                      }}
+                      minDate={minDateObj}
+                      excludeDates={excludeDateObjects}
+                      placeholderText={
+                        !form.venue
+                          ? "Choose venue first"
+                          : loadingDates
+                          ? "Loading dates..."
+                          : "mm/dd/yyyy"
+                      }
+                      dateFormat="MM/dd/yyyy"
+                      disabled={!form.venue || loadingDates}
+                      className="h-9 w-full rounded-md border border-black/10 bg-white px-3 pr-11 text-sm font-semibold text-[#3f5b44] outline-none transition placeholder:text-[#3f5b44]/45 focus:ring-2 focus:ring-white/70 disabled:opacity-70"
+                    />
+
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-80">
+                      📅
+                    </span>
+                  </div>
+
+                  {errors.eventDate ? (
+                    <p className="mt-1 text-xs font-semibold text-rose-100">
+                      {errors.eventDate}
+                    </p>
+                  ) : null}
+
+                  {form.venue ? (
+                    <p className="mt-1 text-xs font-semibold text-white/75">
+                      Dates stay open while at least one time slot is available.
+                    </p>
+                  ) : null}
+                </div>
+
+                <SelectField
+                  label="Time"
+                  value={form.time}
+                  onChange={setTimeValue}
+                  options={availableTimeOptions}
+                  placeholder={
+                    selectedDateIsBooked
+                      ? "Date is fully booked"
+                      : !form.pax
+                      ? "Choose pax first"
+                      : availableTimeOptions.length
+                      ? "Choose 8 / 12 / 22 Hours slot"
+                      : "No time slots available"
+                  }
+                  error={errors.time}
+                  disabled={
+                    !form.eventDate ||
+                    !form.pax ||
+                    selectedDateIsBooked ||
+                    availableTimeOptions.length === 0
+                  }
+                />
+
+                <Field
+                  label="Event Type"
+                  value={form.eventType}
+                  error={errors.eventType}
+                  placeholder="Type event type"
+                  onChange={(value) => setField("eventType", value.slice(0, 40))}
+                />
+              </div>
+
+              {!hasAnyConfiguredPrice && selectedPackage ? (
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+                  This event package has pax/time rates but the prices are ₱0.
+                  Time slots will show, but booking cannot proceed until admin
+                  edits this package and sets the correct prices.
+                </div>
               ) : null}
 
-              {form.venue ? (
-                <p className="mt-1 text-xs font-semibold text-white/75">
-                  Dates stay open while at least one selected time-variation slot is available. Pending or approved Resort & Venue / Event Package bookings block matching slots with a required 1-hour gap. Rejected or cancelled bookings open the slot again.
+              {selectedVenue || selectedBaseOption ? (
+                <div className="mt-5 rounded-2xl border border-[#3f5b44]/20 bg-[#f7f7f4] p-5">
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <InfoBox
+                      label="Selected Base Rate"
+                      value={
+                        selectedBaseOption
+                          ? `${selectedBaseOption.pax} pax - ${selectedBaseOption.timeLabel}`
+                          : "Choose pax and time"
+                      }
+                    />
+                    <InfoBox
+                      label="Venue Base Capacity"
+                      value={venueCapacity ? `${venueCapacity} pax` : "Not set"}
+                    />
+                    <InfoBox
+                      label="Venue Max Bookable"
+                      value={
+                        venueMaxBookablePax
+                          ? `${venueMaxBookablePax} pax`
+                          : "Choose venue"
+                      }
+                    />
+                    <InfoBox
+                      label="Extra Food Rate"
+                      value={`${formatPeso(ADDITIONAL_PAX_RATE)} / pax`}
+                    />
+                  </div>
+
+                  <div className="mt-4 rounded-xl bg-white p-4 text-sm font-semibold text-[#2f4d36]">
+                    <p>
+                      Base package food price: {formatPeso(baseAmount)} for{" "}
+                      {foodIncludedPax || 0} pax
+                    </p>
+                    <p>
+                      Extra food pax charge: {chargeableFoodPax} ×{" "}
+                      {formatPeso(foodChargePerExtraPax)} ={" "}
+                      {formatPeso(foodCharge)}
+                    </p>
+                    <p className="mt-2 text-lg font-extrabold">
+                      Total: {formatPeso(totalAmount)}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {errors.totalAmount ? (
+                <p className="mt-4 text-center text-sm font-semibold text-rose-100">
+                  {errors.totalAmount}
                 </p>
               ) : null}
             </div>
 
-            <SelectField
-              label="Time"
-              value={form.time}
-              onChange={(value) => setField("time", value)}
-              options={availableEventTimeSlots.map((item) => ({
-                value: item,
-                label: item,
-              }))}
-              placeholder={
-                selectedDateIsBooked
-                  ? "Date is fully booked"
-                  : availableEventTimeSlots.length
-                  ? `Choose ${selectedTimeVariationLabel} slot`
-                  : "No time slots available"
-              }
-              error={errors.time}
-              disabled={!form.eventDate || !form.selectedVariantId || selectedDateIsBooked || availableEventTimeSlots.length === 0}
-            />
+            <Section title="Customize Package">
+              <Field
+                label="Event Theme"
+                value={form.eventTheme}
+                error={errors.eventTheme}
+                placeholder="Type event theme"
+                onChange={(value) => setField("eventTheme", value.slice(0, 60))}
+              />
 
-            <SelectField
-              label="Number of Pax"
-              value={form.pax}
-              onChange={(value) => setField("pax", value)}
-              options={paxOptions.map((item) => ({
-                value: String(item),
-                label:
-                  packageBasePax && item > packageBasePax
-                    ? `${item} pax (+${formatPeso((item - packageBasePax) * ADDITIONAL_PAX_RATE)})`
-                    : `${item} pax`,
-              }))}
-              placeholder={
-                form.basePax
-                  ? `Select pax, max ${maxAllowedPax}`
-                  : "Choose package capacity first"
-              }
-              error={errors.pax}
-              disabled={!form.basePax || !form.selectedVariantId}
-            />
+              <Field
+                label="Food Allergy"
+                value={form.foodAllergy}
+                placeholder="Type food allergy"
+                onChange={(value) => setField("foodAllergy", value.slice(0, 80))}
+              />
 
-            <Field
-              label="Event Type"
-              value={form.eventType}
-              error={errors.eventType}
-              placeholder="Type event type"
-              onChange={(value) => setField("eventType", value.slice(0, 40))}
-            />
-          </div>
+              <div className="md:col-span-3">
+                <label className="mb-2 block text-[13px] font-extrabold text-white">
+                  Special Request
+                </label>
 
-          {selectedVenue ? (
-            <div className="mt-5 rounded-2xl border border-[#3f5b44]/20 bg-[#f7f7f4] p-5">
-              <div className="grid gap-4 md:grid-cols-4">
-                <InfoBox label="Food Included Pax" value={`${foodIncludedPax || 0} pax`} />
-                <InfoBox label="Time Variation" value={selectedTimeVariationLabel || "8 Hours"} />
-                <InfoBox label="Venue Maximum Capacity" value={venueCapacity ? `${venueCapacity} pax` : "Not set"} />
-                <InfoBox label="Extra Food Rate" value={`${formatPeso(ADDITIONAL_PAX_RATE)} / pax`} />
-                <InfoBox label="Max Bookable Pax" value={`${maxAllowedPax || 0} pax`} />
+                <textarea
+                  value={form.specialRequest}
+                  onChange={(event) =>
+                    setField("specialRequest", event.target.value.slice(0, 300))
+                  }
+                  placeholder="Type special request"
+                  rows={4}
+                  className="w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                  style={{ borderColor: COLORS.border, background: COLORS.fieldBg }}
+                />
               </div>
+            </Section>
 
-              <div className="mt-4 rounded-xl bg-white p-4 text-sm font-semibold text-[#2f4d36]">
-                <p>Base package food price: {formatPeso(baseAmount)} for {foodIncludedPax || 0} pax</p>
-                <p>
-                  Extra food pax charge: {chargeableFoodPax} × {formatPeso(foodChargePerExtraPax)} = {formatPeso(foodCharge)}
+            <div className="mt-10">
+              <h2 className="font-['Montserrat',sans-serif] text-[25px] font-semibold text-white sm:text-[30px]">
+                Food Menu Choices
+              </h2>
+
+              <p className="mt-2 text-sm font-semibold text-black/50">
+                You can choose a maximum of {MAX_MENU_CHOICES_PER_CATEGORY} items
+                per food category.
+              </p>
+
+              {errors.mainMenu ? (
+                <p className="mt-2 text-sm font-semibold text-rose-100">
+                  {errors.mainMenu}
                 </p>
-                <p className="mt-2 text-lg font-extrabold">Total: {formatPeso(totalAmount)}</p>
+              ) : null}
+
+              <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                <CheckboxGroup
+                  label="Soup"
+                  options={MENU_OPTIONS.soup}
+                  selectedValues={form.soup}
+                  onToggle={(value) => toggleCheckboxValue("soup", value)}
+                  error={errors.soup}
+                  maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
+                />
+
+                <CheckboxGroup
+                  label="Rice"
+                  options={MENU_OPTIONS.rice}
+                  selectedValues={form.rice}
+                  onToggle={(value) => toggleCheckboxValue("rice", value)}
+                  error={errors.rice}
+                  maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
+                />
+
+                <CheckboxGroup
+                  label="Pasta"
+                  options={MENU_OPTIONS.pasta}
+                  selectedValues={form.pasta}
+                  onToggle={(value) => toggleCheckboxValue("pasta", value)}
+                  error={errors.pasta}
+                  maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
+                />
+
+                <CheckboxGroup
+                  label="Chicken"
+                  options={MENU_OPTIONS.chicken}
+                  selectedValues={form.chicken}
+                  onToggle={(value) => toggleCheckboxValue("chicken", value)}
+                  error={errors.chicken}
+                  maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
+                />
+
+                <CheckboxGroup
+                  label="Pork"
+                  options={MENU_OPTIONS.pork}
+                  selectedValues={form.pork}
+                  onToggle={(value) => toggleCheckboxValue("pork", value)}
+                  error={errors.pork}
+                  maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
+                />
+
+                <CheckboxGroup
+                  label="Vegetable"
+                  options={MENU_OPTIONS.vegetable}
+                  selectedValues={form.vegetable}
+                  onToggle={(value) => toggleCheckboxValue("vegetable", value)}
+                  error={errors.vegetable}
+                  maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
+                />
+
+                <CheckboxGroup
+                  label="Dessert"
+                  options={MENU_OPTIONS.dessert}
+                  selectedValues={form.dessert}
+                  onToggle={(value) => toggleCheckboxValue("dessert", value)}
+                  error={errors.dessert}
+                  maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
+                />
+
+                <CheckboxGroup
+                  label="Drinks"
+                  options={MENU_OPTIONS.drinks}
+                  selectedValues={form.drinks}
+                  onToggle={(value) => toggleCheckboxValue("drinks", value)}
+                  error={errors.drinks}
+                  maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
+                />
               </div>
             </div>
-          ) : null}
 
-          {errors.totalAmount ? (
-            <p className="mt-4 text-center text-sm font-semibold text-rose-700">
-              {errors.totalAmount}
-            </p>
-          ) : null}
-        </div>
+            <div className="mt-10 flex items-center justify-center gap-6">
+              <button
+                onClick={handleProceed}
+                disabled={submitting || loadingProfile}
+                className="h-8 w-full rounded-full bg-white px-12 font-['Montserrat',sans-serif] text-[10px] font-extrabold uppercase text-[#3f5b44] shadow-sm transition hover:bg-[#fffde9] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[220px]"
+                type="button"
+              >
+                {submitting ? "PROCESSING..." : "PROCEED"}
+              </button>
 
-        <Section title="Customize Package">
-          <Field
-            label="Event Theme"
-            value={form.eventTheme}
-            error={errors.eventTheme}
-            placeholder="Type event theme"
-            onChange={(value) => setField("eventTheme", value.slice(0, 60))}
-          />
-
-          <Field
-            label="Food Allergy"
-            value={form.foodAllergy}
-            placeholder="Type food allergy"
-            onChange={(value) => setField("foodAllergy", value.slice(0, 80))}
-          />
-
-          <div className="md:col-span-3">
-            <label className="mb-2 block text-[13px] font-extrabold text-white">Special Request</label>
-
-            <textarea
-              value={form.specialRequest}
-              onChange={(event) =>
-                setField("specialRequest", event.target.value.slice(0, 300))
-              }
-              placeholder="Type special request"
-              rows={4}
-              className="w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:ring-2"
-              style={{ borderColor: COLORS.border, background: COLORS.fieldBg }}
-            />
-          </div>
-        </Section>
-
-        <div className="mt-10">
-          <h2 className="font-['Montserrat',sans-serif] text-[25px] font-semibold text-white sm:text-[30px]">
-            Food Menu Choices
-          </h2>
-
-          <p className="mt-2 text-sm font-semibold text-black/50">
-            You can choose a maximum of {MAX_MENU_CHOICES_PER_CATEGORY} items per food category.
-          </p>
-
-          {errors.mainMenu ? (
-            <p className="mt-2 text-sm font-semibold text-rose-700">
-              {errors.mainMenu}
-            </p>
-          ) : null}
-
-          <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            <CheckboxGroup
-              label="Soup"
-              options={MENU_OPTIONS.soup}
-              selectedValues={form.soup}
-              onToggle={(value) => toggleCheckboxValue("soup", value)}
-              error={errors.soup}
-              maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
-            />
-
-            <CheckboxGroup
-              label="Rice"
-              options={MENU_OPTIONS.rice}
-              selectedValues={form.rice}
-              onToggle={(value) => toggleCheckboxValue("rice", value)}
-              error={errors.rice}
-              maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
-            />
-
-            <CheckboxGroup
-              label="Pasta"
-              options={MENU_OPTIONS.pasta}
-              selectedValues={form.pasta}
-              onToggle={(value) => toggleCheckboxValue("pasta", value)}
-              error={errors.pasta}
-              maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
-            />
-
-            <CheckboxGroup
-              label="Chicken"
-              options={MENU_OPTIONS.chicken}
-              selectedValues={form.chicken}
-              onToggle={(value) => toggleCheckboxValue("chicken", value)}
-              error={errors.chicken}
-              maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
-            />
-
-            <CheckboxGroup
-              label="Pork"
-              options={MENU_OPTIONS.pork}
-              selectedValues={form.pork}
-              onToggle={(value) => toggleCheckboxValue("pork", value)}
-              error={errors.pork}
-              maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
-            />
-
-            <CheckboxGroup
-              label="Vegetable"
-              options={MENU_OPTIONS.vegetable}
-              selectedValues={form.vegetable}
-              onToggle={(value) => toggleCheckboxValue("vegetable", value)}
-              error={errors.vegetable}
-              maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
-            />
-
-            <CheckboxGroup
-              label="Dessert"
-              options={MENU_OPTIONS.dessert}
-              selectedValues={form.dessert}
-              onToggle={(value) => toggleCheckboxValue("dessert", value)}
-              error={errors.dessert}
-              maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
-            />
-
-            <CheckboxGroup
-              label="Drinks"
-              options={MENU_OPTIONS.drinks}
-              selectedValues={form.drinks}
-              onToggle={(value) => toggleCheckboxValue("drinks", value)}
-              error={errors.drinks}
-              maxChoices={MAX_MENU_CHOICES_PER_CATEGORY}
-            />
-          </div>
-        </div>
-
-        <div className="mt-10 flex items-center justify-center gap-6">
-          <button
-            onClick={handleProceed}
-            disabled={submitting || loadingProfile}
-            className="h-8 w-full rounded-full bg-white px-12 font-['Montserrat',sans-serif] text-[10px] font-extrabold uppercase text-[#3f5b44] shadow-sm transition hover:bg-[#fffde9] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[220px]"
-            type="button"
-          >
-            {submitting ? "PROCESSING..." : "PROCEED"}
-          </button>
-
-          <button
-            onClick={() => navigate("/event-package")}
-            disabled={submitting}
-            className="h-8 w-full rounded-full bg-white px-12 font-['Montserrat',sans-serif] text-[10px] font-extrabold uppercase text-[#3f5b44] shadow-sm transition hover:bg-[#fffde9] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[220px]"
-            type="button"
-          >
-            CANCEL
-          </button>
-        </div>
+              <button
+                onClick={() => navigate("/event-package")}
+                disabled={submitting}
+                className="h-8 w-full rounded-full bg-white px-12 font-['Montserrat',sans-serif] text-[10px] font-extrabold uppercase text-[#3f5b44] shadow-sm transition hover:bg-[#fffde9] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[220px]"
+                type="button"
+              >
+                CANCEL
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -1507,14 +1825,13 @@ export default function EventForm() {
   );
 }
 
-
 function Section({ title, children }) {
   return (
     <section className="mt-9">
       <h2 className="font-['Montserrat',sans-serif] text-[25px] font-semibold text-white sm:text-[30px]">
         {title}
       </h2>
-      <div className="mt-1 h-[2px] w-[260px] bg-white/60" />
+      <div className="mx-auto mt-1 h-[2px] w-full max-w-[260px] bg-white/60 md:mx-0" />
 
       <div className="mt-7 grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-3">
         {children}
@@ -1670,7 +1987,9 @@ function CheckboxGroup({
         })}
       </div>
 
-      {error ? <p className="mt-2 text-xs font-semibold text-rose-700">{error}</p> : null}
+      {error ? (
+        <p className="mt-2 text-xs font-semibold text-rose-700">{error}</p>
+      ) : null}
     </div>
   );
 }
@@ -1685,7 +2004,6 @@ function InfoBox({ label, value }) {
     </div>
   );
 }
-
 
 function Header({ navigate, goToProfile, openMenu }) {
   return (
@@ -1739,7 +2057,11 @@ function Header({ navigate, goToProfile, openMenu }) {
             stroke="currentColor"
             strokeWidth={2}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           </svg>
         </button>
       </div>

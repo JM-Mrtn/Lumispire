@@ -2,8 +2,6 @@ import mongoose from "mongoose";
 import HotelChatMessage from "../models/HotelChatMessage.js";
 import HotelUser from "../models/hotelUser.js";
 
-const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
-
 const VALID_CONCERNS = ["reschedule", "cancel", "others"];
 
 const CONCERN_LABELS = {
@@ -12,27 +10,9 @@ const CONCERN_LABELS = {
   others: "Others",
 };
 
-const getUserDisplayName = (user) => {
-  if (!user) return "Hotel User";
-
-  return (
-    user.fullName ||
-    user.name ||
-    `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-    user.email ||
-    "Hotel User"
-  );
-};
-
-const buildUserInfo = (user) => ({
-  _id: user?._id,
-  fullName: getUserDisplayName(user),
-  name: getUserDisplayName(user),
-  email: user?.email || "",
-  phone: user?.phone || user?.contactNumber || "",
-  idVerificationStatus: user?.idVerificationStatus || "",
-  isIdentityVerified: user?.isIdentityVerified || false,
-});
+function isValidObjectId(id) {
+  return mongoose.Types.ObjectId.isValid(String(id || "").trim());
+}
 
 function cleanText(value = "") {
   return String(value || "").trim();
@@ -54,6 +34,30 @@ function sanitizeConcernDetails(value = {}) {
   );
 }
 
+function getUserDisplayName(user) {
+  if (!user) return "Hotel User";
+
+  return (
+    user.fullName ||
+    user.name ||
+    `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+    user.email ||
+    "Hotel User"
+  );
+}
+
+function buildUserInfo(user) {
+  return {
+    _id: user?._id || "",
+    fullName: getUserDisplayName(user),
+    name: getUserDisplayName(user),
+    email: user?.email || "",
+    phone: user?.phone || user?.contactNumber || "",
+    idVerificationStatus: user?.idVerificationStatus || "",
+    isIdentityVerified: user?.isIdentityVerified === true,
+  };
+}
+
 function getManilaDateParts() {
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Manila",
@@ -66,7 +70,6 @@ function getManilaDateParts() {
   const parts = formatter.formatToParts(new Date());
   const get = (type) => parts.find((part) => part.type === type)?.value || "";
 
-  const weekdayText = get("weekday");
   const weekdayMap = {
     Sun: 0,
     Mon: 1,
@@ -81,26 +84,26 @@ function getManilaDateParts() {
   if (hour === 24) hour = 0;
 
   return {
-    weekday: weekdayMap[weekdayText] ?? 0,
+    weekday: weekdayMap[get("weekday")] ?? 0,
     hour: Number.isFinite(hour) ? hour : 0,
     minute: Number(get("minute")) || 0,
   };
 }
 
 function parseWorkingDays() {
-  const raw = String(process.env.HOTEL_CHAT_WORKING_DAYS || "1,2,3,4,5,6")
+  const days = String(process.env.HOTEL_CHAT_WORKING_DAYS || "1,2,3,4,5,6")
     .split(",")
     .map((item) => Number(item.trim()))
     .filter((item) => Number.isInteger(item) && item >= 0 && item <= 6);
 
-  return raw.length > 0 ? raw : [1, 2, 3, 4, 5, 6];
+  return days.length ? days : [1, 2, 3, 4, 5, 6];
 }
 
 function getWorkingHoursStatus() {
   const startHour = Number(process.env.HOTEL_CHAT_WORKING_HOUR_START || 8);
   const endHour = Number(process.env.HOTEL_CHAT_WORKING_HOUR_END || 17);
-  const workingDays = parseWorkingDays();
   const now = getManilaDateParts();
+  const workingDays = parseWorkingDays();
 
   const isWorkingDay = workingDays.includes(now.weekday);
   const isWorkingHour =
@@ -120,23 +123,25 @@ function getWorkingHoursStatus() {
 function formatHour(hour) {
   const n = Number(hour);
   if (!Number.isFinite(n)) return "";
-
   if (n === 0) return "12:00 AM";
   if (n < 12) return `${n}:00 AM`;
   if (n === 12) return "12:00 PM";
   return `${n - 12}:00 PM`;
 }
 
-function buildBotReply({ concernType = "" }) {
+function buildBotReply({ concernType = "", force = false } = {}) {
   const status = getWorkingHoursStatus();
   const concernLabel = CONCERN_LABELS[concernType] || "your concern/needs";
 
   if (status.isOpen) {
+    if (!force) return null;
+
     return {
       autoReplyKind: "working_hours",
       text:
         `Thank you for your message about ${concernLabel.toLowerCase()}.\n\n` +
         "Please wait for the admin to reply to your concern/needs.",
+      workingHours: status,
     };
   }
 
@@ -147,6 +152,7 @@ function buildBotReply({ concernType = "" }) {
       `Our admin support is currently outside working hours. Please wait for our working hours ` +
       `(${formatHour(status.startHour)} - ${formatHour(status.endHour)}, Asia/Manila time).\n\n` +
       "For now, you may check our FAQs here: /hotel-faqs",
+    workingHours: status,
   };
 }
 
@@ -160,10 +166,9 @@ async function populateMessage(messageId) {
 }
 
 function emitMessage(io, userId, message) {
-  if (!io || !message) return;
+  if (!io || !userId || !message) return;
 
   io.to(`hotel-chat-user-${userId}`).emit("hotelChat:message", message);
-
   io.to("hotel-chat-admins").emit("hotelChat:newConversationMessage", {
     conversationUser: userId,
     message,
@@ -180,15 +185,11 @@ async function userAlreadySpecifiedConcern(userId) {
   return Boolean(existing);
 }
 
-/* ===================== USER: GET MY MESSAGES ===================== */
-
 export const getMyHotelChatMessages = async (req, res) => {
   try {
     const userId = req.hotelUserId;
 
-    const messages = await HotelChatMessage.find({
-      conversationUser: userId,
-    })
+    const messages = await HotelChatMessage.find({ conversationUser: userId })
       .sort({ createdAt: 1 })
       .lean();
 
@@ -201,7 +202,7 @@ export const getMyHotelChatMessages = async (req, res) => {
       { $set: { readByUser: true } }
     );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       messages,
     });
@@ -213,8 +214,6 @@ export const getMyHotelChatMessages = async (req, res) => {
     });
   }
 };
-
-/* ===================== USER: SEND MESSAGE ===================== */
 
 export const sendMyHotelChatMessage = async (req, res) => {
   try {
@@ -230,10 +229,6 @@ export const sendMyHotelChatMessage = async (req, res) => {
       });
     }
 
-    /*
-      User must send concern form first.
-      After that, every normal message is allowed.
-    */
     if (!concernType) {
       const hasConcern = await userAlreadySpecifiedConcern(userId);
 
@@ -259,40 +254,39 @@ export const sendMyHotelChatMessage = async (req, res) => {
 
     const populatedMessage = await populateMessage(savedMessage._id);
     const io = req.app.get("io");
-
     emitMessage(io, userId, populatedMessage);
 
-    /*
-      FIX:
-      Auto-reply now happens for EVERY user message:
-      - concern form messages
-      - normal follow-up chat messages
-    */
-    const botReply = buildBotReply({ concernType });
-    const workingHours = getWorkingHoursStatus();
-
-    const botMessage = await HotelChatMessage.create({
-      conversationUser: userId,
-      sender: null,
-      senderRole: "bot",
-      message: botReply.text,
-      messageType: "auto_reply",
+    const botReply = buildBotReply({
       concernType,
-      concernDetails,
-      isAutoReply: true,
-      autoReplyKind: botReply.autoReplyKind,
-      readByUser: false,
-      readByAdmin: true,
+      force: Boolean(concernType),
     });
 
-    const populatedBotMessage = await populateMessage(botMessage._id);
-    emitMessage(io, userId, populatedBotMessage);
+    let populatedBotMessage = null;
+
+    if (botReply) {
+      const botMessage = await HotelChatMessage.create({
+        conversationUser: userId,
+        sender: null,
+        senderRole: "bot",
+        message: botReply.text,
+        messageType: "auto_reply",
+        concernType,
+        concernDetails,
+        isAutoReply: true,
+        autoReplyKind: botReply.autoReplyKind,
+        readByUser: false,
+        readByAdmin: true,
+      });
+
+      populatedBotMessage = await populateMessage(botMessage._id);
+      emitMessage(io, userId, populatedBotMessage);
+    }
 
     return res.status(201).json({
       success: true,
       message: populatedMessage,
       botMessage: populatedBotMessage,
-      workingHours,
+      workingHours: botReply?.workingHours || getWorkingHoursStatus(),
     });
   } catch (error) {
     console.error("sendMyHotelChatMessage error:", error);
@@ -303,16 +297,10 @@ export const sendMyHotelChatMessage = async (req, res) => {
   }
 };
 
-/* ===================== ADMIN: GET CONVERSATIONS ===================== */
-
-export const getHotelAdminChatConversations = async (req, res) => {
+export const getHotelAdminChatConversations = async (_req, res) => {
   try {
     const latestMessages = await HotelChatMessage.aggregate([
-      {
-        $sort: {
-          createdAt: -1,
-        },
-      },
+      { $sort: { createdAt: -1 } },
       {
         $group: {
           _id: "$conversationUser",
@@ -336,24 +324,17 @@ export const getHotelAdminChatConversations = async (req, res) => {
           },
         },
       },
-      {
-        $sort: {
-          lastMessageAt: -1,
-        },
-      },
+      { $sort: { lastMessageAt: -1 } },
     ]);
 
     const userIds = latestMessages.map((item) => item._id).filter(Boolean);
 
     const [users, latestConcerns] = await Promise.all([
-      HotelUser.find({
-        _id: { $in: userIds },
-      })
+      HotelUser.find({ _id: { $in: userIds } })
         .select(
           "fullName name firstName lastName email phone contactNumber idVerificationStatus isIdentityVerified"
         )
         .lean(),
-
       HotelChatMessage.aggregate([
         {
           $match: {
@@ -362,11 +343,7 @@ export const getHotelAdminChatConversations = async (req, res) => {
             messageType: "inquiry",
           },
         },
-        {
-          $sort: {
-            createdAt: -1,
-          },
-        },
+        { $sort: { createdAt: -1 } },
         {
           $group: {
             _id: "$conversationUser",
@@ -379,7 +356,6 @@ export const getHotelAdminChatConversations = async (req, res) => {
     ]);
 
     const userMap = new Map(users.map((user) => [String(user._id), user]));
-
     const concernMap = new Map(
       latestConcerns.map((item) => [String(item._id), item])
     );
@@ -391,9 +367,9 @@ export const getHotelAdminChatConversations = async (req, res) => {
       return {
         conversationUser: item._id,
         user: buildUserInfo(user),
-        lastMessage: item.lastMessage,
-        lastMessageAt: item.lastMessageAt,
-        lastSenderRole: item.lastSenderRole,
+        lastMessage: item.lastMessage || "",
+        lastMessageAt: item.lastMessageAt || null,
+        lastSenderRole: item.lastSenderRole || "user",
         latestConcernType: concern?.latestConcernType || "",
         latestConcernDetails: concern?.latestConcernDetails || {},
         latestConcernAt: concern?.latestConcernAt || null,
@@ -401,7 +377,7 @@ export const getHotelAdminChatConversations = async (req, res) => {
       };
     });
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       conversations,
     });
@@ -413,8 +389,6 @@ export const getHotelAdminChatConversations = async (req, res) => {
     });
   }
 };
-
-/* ===================== ADMIN: GET CONVERSATION MESSAGES ===================== */
 
 export const getHotelAdminConversationMessages = async (req, res) => {
   try {
@@ -440,9 +414,7 @@ export const getHotelAdminConversationMessages = async (req, res) => {
       });
     }
 
-    const messages = await HotelChatMessage.find({
-      conversationUser: userId,
-    })
+    const messages = await HotelChatMessage.find({ conversationUser: userId })
       .sort({ createdAt: 1 })
       .lean();
 
@@ -455,7 +427,7 @@ export const getHotelAdminConversationMessages = async (req, res) => {
       { $set: { readByAdmin: true } }
     );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       user: buildUserInfo(user),
       messages,
@@ -468,8 +440,6 @@ export const getHotelAdminConversationMessages = async (req, res) => {
     });
   }
 };
-
-/* ===================== ADMIN: SEND REPLY ===================== */
 
 export const sendHotelAdminConversationMessage = async (req, res) => {
   try {
@@ -515,7 +485,6 @@ export const sendHotelAdminConversationMessage = async (req, res) => {
 
     const populatedMessage = await populateMessage(savedMessage._id);
     const io = req.app.get("io");
-
     emitMessage(io, userId, populatedMessage);
 
     return res.status(201).json({

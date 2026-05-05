@@ -1,6 +1,7 @@
 // VirtualTour.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import HotelFaqBot from "./HotelFaqBot";
 
 const VirtualTour = () => {
   const navigate = useNavigate();
@@ -9,7 +10,7 @@ const VirtualTour = () => {
   const CARD_BG = "#F3F1E8";
 
   const goToProfile = () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || localStorage.getItem("hotelToken");
     if (token) navigate("/hotel-profile");
     else navigate("/hotel-login");
   };
@@ -30,7 +31,7 @@ const VirtualTour = () => {
 
           <nav className="flex gap-8 pt-3">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/hotel-resort")}
               className="text-sm font-semibold tracking-wide hover:opacity-80"
               style={{ color: GREEN }}
             >
@@ -44,11 +45,18 @@ const VirtualTour = () => {
               CONTACT
             </button>
             <button
+              onClick={() => navigate("/hotel-faqs")}
+              className="text-sm font-semibold tracking-wide hover:opacity-80"
+              style={{ color: GREEN }}
+            >
+              FAQS
+            </button>
+            <button
               onClick={goToProfile}
               className="text-sm font-semibold tracking-wide hover:opacity-80"
               style={{ color: GREEN }}
             >
-              PROFILE
+              {localStorage.getItem("token") || localStorage.getItem("hotelToken") ? "PROFILE" : "SIGN IN"}
             </button>
           </nav>
         </div>
@@ -70,6 +78,7 @@ const VirtualTour = () => {
           </div>
         </div>
       </main>
+      <HotelFaqBot />
     </div>
   );
 };

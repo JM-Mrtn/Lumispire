@@ -40,7 +40,9 @@ export const adminLogin = async (req, res) => {
     const okPass = String(password) === HOTEL_ADMIN_PASS;
 
     if (!okUser || !okPass) {
-      return res.status(401).json({ message: "Invalid hotel admin credentials." });
+      return res.status(401).json({
+        message: "Invalid hotel admin credentials.",
+      });
     }
 
     const hotelAdminToken = signHotelAdminToken(
@@ -62,13 +64,20 @@ export const adminLogin = async (req, res) => {
     });
   } catch (err) {
     console.error("adminLogin error:", err);
-    return res.status(500).json({ message: "Server error during admin login." });
+    return res.status(500).json({
+      message: "Server error during admin login.",
+    });
   }
 };
 
 export const getAllHotelUsers = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   try {
     const users = await HotelUser.find()
@@ -85,18 +94,27 @@ export const getAllHotelUsers = async (req, res) => {
     return res.status(200).json(users);
   } catch (err) {
     console.error("getAllHotelUsers error:", err);
-    return res.status(500).json({ message: "Error fetching users." });
+    return res.status(500).json({
+      message: "Error fetching users.",
+    });
   }
 };
 
 export const getHotelUserById = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      message: "Invalid userId",
+    });
   }
 
   try {
@@ -110,23 +128,36 @@ export const getHotelUserById = async (req, res) => {
         "-password -verificationToken -verificationTokenExpiry -usedVerificationTokens -resetPasswordToken -resetPasswordExpiry -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
       );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
 
     return res.status(200).json(user);
   } catch (err) {
     console.error("getHotelUserById error:", err);
-    return res.status(500).json({ message: "Error fetching user." });
+    return res.status(500).json({
+      message: "Error fetching user.",
+    });
   }
 };
 
 export const adminUpdateUser = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      message: "Invalid userId",
+    });
   }
 
   try {
@@ -148,7 +179,9 @@ export const adminUpdateUser = async (req, res) => {
       }).select("_id");
 
       if (exists) {
-        return res.status(409).json({ message: "Username already taken." });
+        return res.status(409).json({
+          message: "Username already taken.",
+        });
       }
     }
 
@@ -159,7 +192,9 @@ export const adminUpdateUser = async (req, res) => {
       }).select("_id");
 
       if (exists) {
-        return res.status(409).json({ message: "Email already exists." });
+        return res.status(409).json({
+          message: "Email already exists.",
+        });
       }
     }
 
@@ -168,11 +203,15 @@ export const adminUpdateUser = async (req, res) => {
 
     if (pw) {
       if (!cpw) {
-        return res.status(400).json({ message: "Confirm password is required." });
+        return res.status(400).json({
+          message: "Confirm password is required.",
+        });
       }
 
       if (pw !== cpw) {
-        return res.status(400).json({ message: "Passwords do not match." });
+        return res.status(400).json({
+          message: "Passwords do not match.",
+        });
       }
 
       update.password = await bcrypt.hash(pw, 10);
@@ -191,7 +230,11 @@ export const adminUpdateUser = async (req, res) => {
       "-password -passwordHash -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
     );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
 
     return res.status(200).json({
       message: "Admin updated user successfully",
@@ -200,22 +243,35 @@ export const adminUpdateUser = async (req, res) => {
   } catch (err) {
     if (err?.code === 11000) {
       const field = Object.keys(err.keyPattern || {})[0] || "field";
-      return res.status(409).json({ message: `${field} already exists.` });
+
+      return res.status(409).json({
+        message: `${field} already exists.`,
+      });
     }
 
     console.error("adminUpdateUser error:", err);
-    return res.status(500).json({ message: "Error updating user." });
+
+    return res.status(500).json({
+      message: "Error updating user.",
+    });
   }
 };
 
 export const deactivateUser = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      message: "Invalid userId",
+    });
   }
 
   try {
@@ -227,23 +283,40 @@ export const deactivateUser = async (req, res) => {
       "-password -passwordHash -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
     );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
 
-    return res.status(200).json({ message: "User deactivated", user });
+    return res.status(200).json({
+      message: "User deactivated",
+      user,
+    });
   } catch (err) {
     console.error("deactivateUser error:", err);
-    return res.status(500).json({ message: "Error deactivating user." });
+
+    return res.status(500).json({
+      message: "Error deactivating user.",
+    });
   }
 };
 
 export const activateUser = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      message: "Invalid userId",
+    });
   }
 
   try {
@@ -255,23 +328,40 @@ export const activateUser = async (req, res) => {
       "-password -passwordHash -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
     );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
 
-    return res.status(200).json({ message: "User activated", user });
+    return res.status(200).json({
+      message: "User activated",
+      user,
+    });
   } catch (err) {
     console.error("activateUser error:", err);
-    return res.status(500).json({ message: "Error activating user." });
+
+    return res.status(500).json({
+      message: "Error activating user.",
+    });
   }
 };
 
 export const deleteDeactivatedUser = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      message: "Invalid userId",
+    });
   }
 
   try {
@@ -279,7 +369,11 @@ export const deleteDeactivatedUser = async (req, res) => {
       "active username email hotelIdVerificationId"
     );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
 
     if (user.active !== false) {
       return res.status(400).json({
@@ -302,23 +396,38 @@ export const deleteDeactivatedUser = async (req, res) => {
     });
   } catch (err) {
     console.error("deleteDeactivatedUser error:", err);
-    return res.status(500).json({ message: "Error deleting account." });
+
+    return res.status(500).json({
+      message: "Error deleting account.",
+    });
   }
 };
 
 export const adminApproveHotelId = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      message: "Invalid userId",
+    });
   }
 
   try {
     const user = await HotelUser.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found." });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
 
     user.idVerificationStatus = "verified";
     user.isIdentityVerified = true;
@@ -345,18 +454,28 @@ export const adminApproveHotelId = async (req, res) => {
     });
   } catch (err) {
     console.error("adminApproveHotelId error:", err);
-    return res.status(500).json({ message: "Error approving user ID." });
+
+    return res.status(500).json({
+      message: "Error approving user ID.",
+    });
   }
 };
 
 export const adminRejectHotelId = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      message: "Invalid userId",
+    });
   }
 
   try {
@@ -364,7 +483,12 @@ export const adminRejectHotelId = async (req, res) => {
       String(req.body.remarks || "").trim() || "Uploaded ID was rejected.";
 
     const user = await HotelUser.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found." });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
 
     user.idVerificationStatus = "rejected";
     user.isIdentityVerified = false;
@@ -389,32 +513,49 @@ export const adminRejectHotelId = async (req, res) => {
     });
   } catch (err) {
     console.error("adminRejectHotelId error:", err);
-    return res.status(500).json({ message: "Error rejecting user ID." });
+
+    return res.status(500).json({
+      message: "Error rejecting user ID.",
+    });
   }
 };
 
-
 export const adminRunHotelIdAiCheck = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      success: false,
+      message: guard.message,
+    });
+  }
 
   const { verificationId } = req.params;
 
   if (!isValidObjectId(verificationId)) {
-    return res.status(400).json({ message: "Invalid verificationId" });
+    return res.status(400).json({
+      success: false,
+      message: "Invalid verificationId",
+    });
   }
 
   try {
     const verification = await HotelIdVerification.findById(verificationId).select(
-      "+idFile.data idFile.mimeType idFile.originalName idFile.size hotelUserId"
+      "+idFile.data idFile.mimeType idFile.originalName idFile.size hotelUserId idType reviewedByAdmin"
     );
 
     if (!verification) {
-      return res.status(404).json({ message: "Verification record not found." });
+      return res.status(404).json({
+        success: false,
+        message: "Verification record not found.",
+      });
     }
 
     if (!verification.idFile?.data) {
-      return res.status(404).json({ message: "No ID file found." });
+      return res.status(404).json({
+        success: false,
+        message: "No ID file found.",
+      });
     }
 
     const analysis = await analyzeUploadedId({
@@ -430,13 +571,16 @@ export const adminRunHotelIdAiCheck = async (req, res) => {
       idType: verification.idType || "uploaded_id",
     });
 
+    const autoRejected = analysis.reviewDecision === "auto_rejected";
+
     verification.screeningStatus = analysis.screeningStatus;
     verification.confidenceScore = analysis.confidenceScore;
     verification.extractedText = analysis.extractedText;
     verification.matchedKeywords = analysis.matchedKeywords;
     verification.checks = analysis.checks;
     verification.reasons = analysis.reasons;
-    verification.reviewDecision = "manual_review";
+    verification.reviewDecision = analysis.reviewDecision || "manual_review";
+
     verification.aiConnected = Boolean(analysis.aiConnected);
     verification.aiConnectionStatus = analysis.aiConnectionStatus || "not_checked";
     verification.aiProvider = analysis.aiProvider || "";
@@ -449,30 +593,51 @@ export const adminRunHotelIdAiCheck = async (req, res) => {
     verification.aiError = analysis.aiError || "";
     verification.aiRawResult = analysis.aiRawResult || null;
 
+    if (autoRejected) {
+      verification.reviewRemarks =
+        "Automatically rejected because AI did not detect a real government ID.";
+    }
+
     await verification.save();
 
     const user = await HotelUser.findById(verification.hotelUserId);
+
     if (user && !verification.reviewedByAdmin && user.idVerificationStatus !== "verified") {
-      user.idVerificationStatus = "pending";
       user.isIdentityVerified = false;
-      user.idVerificationRemarks =
-        analysis.aiConnectionStatus === "connected"
-          ? "AI pre-check completed. Waiting for admin final review."
-          : `AI pre-check could not complete: ${analysis.aiSummary || analysis.aiError || "Unknown AI error."}`;
+      user.idVerifiedAt = null;
+
+      if (autoRejected) {
+        user.idVerificationStatus = "rejected";
+        user.idVerificationRemarks =
+          analysis.aiSummary ||
+          "ID was automatically rejected because AI did not detect a real government ID.";
+      } else {
+        user.idVerificationStatus = "pending";
+        user.idVerificationRemarks =
+          analysis.aiConnectionStatus === "connected"
+            ? "AI pre-check completed. Waiting for admin final review."
+            : `AI pre-check could not complete: ${
+                analysis.aiSummary || analysis.aiError || "Unknown AI error."
+              }`;
+      }
+
       await user.save();
     }
 
     return res.status(200).json({
-      message:
-        analysis.aiConnectionStatus === "connected"
-          ? "AI ID check completed. Please review the result before approving or rejecting."
-          : "AI ID check could not complete. Review the AI status and check your OpenAI key/credits.",
+      success: true,
+      message: autoRejected
+        ? "AI check completed. This upload was automatically rejected because it does not appear to be a real government ID."
+        : analysis.aiConnectionStatus === "connected"
+        ? "AI ID check completed. Please review the result before approving or rejecting."
+        : "AI ID check could not complete. Review the AI status and check your OpenAI key/credits.",
       verification: {
         _id: verification._id,
         screeningStatus: verification.screeningStatus,
         confidenceScore: verification.confidenceScore,
         reviewDecision: verification.reviewDecision,
         reasons: verification.reasons,
+        reviewRemarks: verification.reviewRemarks,
         aiConnected: verification.aiConnected,
         aiConnectionStatus: verification.aiConnectionStatus,
         aiProvider: verification.aiProvider,
@@ -487,18 +652,29 @@ export const adminRunHotelIdAiCheck = async (req, res) => {
     });
   } catch (err) {
     console.error("adminRunHotelIdAiCheck error:", err);
-    return res.status(500).json({ message: "Error running AI ID check." });
+
+    return res.status(500).json({
+      success: false,
+      message: "Error running AI ID check.",
+    });
   }
 };
 
 export const adminGetHotelIdFile = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
-  if (!guard.ok) return res.status(guard.status).json({ message: guard.message });
+
+  if (!guard.ok) {
+    return res.status(guard.status).json({
+      message: guard.message,
+    });
+  }
 
   const { verificationId } = req.params;
 
   if (!isValidObjectId(verificationId)) {
-    return res.status(400).json({ message: "Invalid verificationId" });
+    return res.status(400).json({
+      message: "Invalid verificationId",
+    });
   }
 
   try {
@@ -507,11 +683,15 @@ export const adminGetHotelIdFile = async (req, res) => {
     );
 
     if (!verification) {
-      return res.status(404).json({ message: "Verification record not found." });
+      return res.status(404).json({
+        message: "Verification record not found.",
+      });
     }
 
     if (!verification.idFile?.data) {
-      return res.status(404).json({ message: "No ID file found." });
+      return res.status(404).json({
+        message: "No ID file found.",
+      });
     }
 
     res.setHeader(
@@ -528,6 +708,9 @@ export const adminGetHotelIdFile = async (req, res) => {
     return res.send(verification.idFile.data);
   } catch (err) {
     console.error("adminGetHotelIdFile error:", err);
-    return res.status(500).json({ message: "Error fetching hotel ID file." });
+
+    return res.status(500).json({
+      message: "Error fetching hotel ID file.",
+    });
   }
 };

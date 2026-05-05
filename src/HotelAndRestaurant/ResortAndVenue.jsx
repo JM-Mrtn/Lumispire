@@ -484,7 +484,7 @@ function Header({ navigate, goToProfile, openMenu }) {
     <header className="absolute left-0 right-0 top-0 z-30 w-full bg-white shadow-[0_3px_0_rgba(0,0,0,0.18)]">
       <div className="flex h-[78px] w-full items-center justify-between px-5 sm:px-8 lg:px-12">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/hotel-resort")}
           type="button"
           className="flex items-center gap-4"
           aria-label="Go to home"
@@ -504,7 +504,7 @@ function Header({ navigate, goToProfile, openMenu }) {
         </button>
 
         <nav className="hidden items-center gap-9 md:flex">
-          <NavButton label="Home" onClick={() => navigate("/")} />
+          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
         </nav>
@@ -514,7 +514,7 @@ function Header({ navigate, goToProfile, openMenu }) {
           type="button"
           className="hidden font-['Montserrat',sans-serif] text-[14px] font-bold uppercase tracking-wide text-[#385541] transition hover:text-[#1f3528] md:block"
         >
-          Profile
+          {localStorage.getItem("token") || localStorage.getItem("hotelToken") ? "Profile" : "Sign In"}
         </button>
 
         <button
@@ -649,10 +649,10 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink>Home</FooterLink>
+          <FooterLink onClick={() => { window.location.href = "/hotel-resort"; }}>Home</FooterLink>
           <FooterLink>Course</FooterLink>
           <FooterLink>Requirements</FooterLink>
-          <FooterLink>Profile</FooterLink>
+          <FooterLink onClick={() => { window.location.href = localStorage.getItem("token") || localStorage.getItem("hotelToken") ? "/hotel-profile" : "/hotel-login"; }}>{localStorage.getItem("token") || localStorage.getItem("hotelToken") ? "Profile" : "Sign In"}</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Contact Information">
@@ -695,9 +695,10 @@ function FooterColumn({ title, children }) {
   );
 }
 
-function FooterLink({ children }) {
+function FooterLink({ children, onClick }) {
   return (
     <button
+      onClick={onClick}
       type="button"
       className="block text-left text-[10px] font-bold leading-4 text-white/85 transition hover:text-white"
     >
@@ -736,7 +737,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
             label="HOME"
             onClick={() => {
               onClose();
-              navigate("/");
+              navigate("/hotel-resort");
             }}
           />
 
@@ -757,7 +758,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           />
 
           <MenuItem
-            label="PROFILE"
+            label={localStorage.getItem("token") || localStorage.getItem("hotelToken") ? "PROFILE" : "SIGN IN"}
             onClick={() => {
               onClose();
               goToProfile();

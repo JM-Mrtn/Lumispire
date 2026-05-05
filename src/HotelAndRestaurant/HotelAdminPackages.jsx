@@ -25,27 +25,12 @@ const PACKAGE_TYPES = [
   { value: "event_package", label: "Event Package" },
 ];
 
-function normalizeVenueName(value = "") {
-  return String(value || "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, " ");
-}
-
-function uniqueVenueNames(values = []) {
-  const seen = new Set();
-  const result = [];
-
-  values.forEach((value) => {
-    const normalized = normalizeVenueName(value);
-    if (!normalized || seen.has(normalized)) return;
-
-    seen.add(normalized);
-    result.push(normalized);
-  });
-
-  return result;
-}
+const EVENT_PACKAGE_PRESETS = [
+  { title: "Wedding Package", subtitle: "Wedding celebration package" },
+  { title: "Debut Package", subtitle: "Debut celebration package" },
+  { title: "Birthday Theme Package", subtitle: "Birthday celebration package" },
+  { title: "Corporate Package", subtitle: "Corporate event package" },
+];
 
 const DEFAULT_TIME_SLOTS_BY_LABEL = {
   "8 Hours": [
@@ -118,7 +103,40 @@ function formatPeso(value) {
 }
 
 function sanitizePrice(value) {
-  return String(value || "").replace(/[^\d.]/g, "");
+  const clean = String(value || "").replace(/[^\d.]/g, "");
+  const parts = clean.split(".");
+
+  if (parts.length <= 1) return clean;
+
+  return `${parts[0]}.${parts.slice(1).join("")}`;
+}
+
+function normalizeVenueName(value = "") {
+  const text = String(value || "").trim().toUpperCase().replace(/\s+/g, " ");
+
+  if (text.includes("LORENZO HALL")) return "LORENZO HALL";
+  if (text.includes("LORENZO VERANDA")) return "LORENZO VERANDA";
+  if (text.includes("LORENZO CABANAS") || text.includes("LORENZO CAVANAS")) {
+    return "LORENZO CAVANAS";
+  }
+  if (text.includes("LORENZO CAMPSITE")) return "LORENZO CAMPSITE";
+
+  return text;
+}
+
+function uniqueVenueNames(values = []) {
+  const seen = new Set();
+  const result = [];
+
+  values.forEach((value) => {
+    const normalized = normalizeVenueName(value);
+    if (!normalized || seen.has(normalized)) return;
+
+    seen.add(normalized);
+    result.push(normalized);
+  });
+
+  return result;
 }
 
 function normalizeTimeLabel(value = "") {
@@ -156,6 +174,7 @@ function inferTimeLabelFromSlots(slots = []) {
 
   for (const label of ["8 Hours", "12 Hours", "22 Hours"]) {
     const defaults = getDefaultTimeSlots(label);
+
     if (
       defaults.length === normalized.length &&
       defaults.every((slot) => normalized.includes(slot))
@@ -167,10 +186,6 @@ function inferTimeLabelFromSlots(slots = []) {
   return normalized.length ? "Custom Time" : "8 Hours";
 }
 
-function getTypeLabel(type) {
-  return PACKAGE_TYPES.find((item) => item.value === type)?.label || type;
-}
-
 function isEventPackage(type) {
   return type === "event_package";
 }
@@ -180,7 +195,43 @@ function isTimeBasedPackage(type) {
 }
 
 function hasVariations(type) {
-  return type === "resort_venue" || type === "hotel_condo" || type === "event_package";
+  return (
+    type === "resort_venue" ||
+    type === "hotel_condo" ||
+    type === "event_package"
+  );
+}
+
+function getTypeLabel(type) {
+  return PACKAGE_TYPES.find((item) => item.value === type)?.label || type;
+}
+
+function makeEventLabel(pax, timeLabel) {
+  const safePax = Number(pax || 0);
+  const safeTimeLabel = normalizeTimeLabel(timeLabel || "8 Hours");
+
+  return safePax ? `${safePax} Pax - ${safeTimeLabel}` : "";
+}
+
+function makeEventVariant({
+  pax = "",
+  timeVariationLabel = "8 Hours",
+  price = "",
+  displayOrder = 1,
+  isActive = true,
+} = {}) {
+  const cleanPax = String(pax || "").replace(/[^0-9]/g, "");
+  const cleanTime = normalizeTimeLabel(timeVariationLabel || "8 Hours");
+
+  return {
+    label: makeEventLabel(cleanPax, cleanTime),
+    pax: cleanPax,
+    timeVariationLabel: cleanTime,
+    timeSlots: getDefaultTimeSlots(cleanTime),
+    price,
+    displayOrder,
+    isActive,
+  };
 }
 
 function makeDefaultVariants(type) {
@@ -194,9 +245,24 @@ function makeDefaultVariants(type) {
 
   if (type === "event_package") {
     return [
-      { label: "50 Pax - 8 Hours", pax: "50", timeVariationLabel: "8 Hours", timeSlots: getDefaultTimeSlots("8 Hours"), price: "", displayOrder: 1, isActive: true },
-      { label: "80 Pax - 8 Hours", pax: "80", timeVariationLabel: "8 Hours", timeSlots: getDefaultTimeSlots("8 Hours"), price: "", displayOrder: 2, isActive: true },
-      { label: "100 Pax - 8 Hours", pax: "100", timeVariationLabel: "8 Hours", timeSlots: getDefaultTimeSlots("8 Hours"), price: "", displayOrder: 3, isActive: true },
+      makeEventVariant({
+        pax: "50",
+        timeVariationLabel: "8 Hours",
+        price: "",
+        displayOrder: 1,
+      }),
+      makeEventVariant({
+        pax: "80",
+        timeVariationLabel: "8 Hours",
+        price: "",
+        displayOrder: 2,
+      }),
+      makeEventVariant({
+        pax: "100",
+        timeVariationLabel: "8 Hours",
+        price: "",
+        displayOrder: 3,
+      }),
     ];
   }
 
@@ -204,25 +270,37 @@ function makeDefaultVariants(type) {
 }
 
 function normalizeVariantForForm(variant = {}, index = 0, type = "resort_venue") {
-  const pax = isEventPackage(type)
-    ? Number(variant.pax || parsePaxFromLabel(variant.label) || 0)
-    : 0;
+  if (isEventPackage(type)) {
+    const pax = Number(variant.pax || parsePaxFromLabel(variant.label) || 0);
+    const timeSlots =
+      Array.isArray(variant.timeSlots) && variant.timeSlots.length
+        ? variant.timeSlots
+        : getDefaultTimeSlots(
+            variant.timeVariationLabel ||
+              variant.duration ||
+              variant.label ||
+              "8 Hours"
+          );
 
-  const timeSlots = Array.isArray(variant.timeSlots) && variant.timeSlots.length
-    ? variant.timeSlots
-    : getDefaultTimeSlots(variant.timeVariationLabel || variant.duration || variant.label || "8 Hours");
+    const timeVariationLabel =
+      variant.timeVariationLabel || inferTimeLabelFromSlots(timeSlots);
 
-  const timeVariationLabel = isEventPackage(type)
-    ? inferTimeLabelFromSlots(timeSlots)
-    : normalizeTimeLabel(variant.label);
+    return makeEventVariant({
+      pax: pax ? String(pax) : "",
+      timeVariationLabel,
+      price: variant.price ?? "",
+      displayOrder: Number(variant.displayOrder || index + 1),
+      isActive: variant.isActive === false ? false : true,
+    });
+  }
+
+  const label = normalizeTimeLabel(variant.label || "8 Hours");
 
   return {
-    label: isEventPackage(type)
-      ? `${normalizeCapacityLabel(pax ? `${pax} Pax` : variant.label)} - ${timeVariationLabel}`
-      : normalizeTimeLabel(variant.label),
-    pax: isEventPackage(type) ? String(pax || "") : "",
-    timeVariationLabel: isEventPackage(type) ? timeVariationLabel : "",
-    timeSlots: isEventPackage(type) ? timeSlots : getDefaultTimeSlots(variant.label),
+    label,
+    pax: "",
+    timeVariationLabel: "",
+    timeSlots: getDefaultTimeSlots(label),
     price: variant.price ?? "",
     displayOrder: Number(variant.displayOrder || index + 1),
     isActive: variant.isActive === false ? false : true,
@@ -230,17 +308,21 @@ function normalizeVariantForForm(variant = {}, index = 0, type = "resort_venue")
 }
 
 function normalizeVariantForPayload(variant = {}, index = 0, type = "resort_venue") {
-  const eventPax = isEventPackage(type)
-    ? Number(variant.pax || parsePaxFromLabel(variant.label) || 0)
-    : 0;
-
   if (isEventPackage(type)) {
-    const timeVariationLabel = normalizeTimeLabel(variant.timeVariationLabel || "8 Hours");
-    const timeSlots = Array.isArray(variant.timeSlots) && variant.timeSlots.length
-      ? variant.timeSlots
-      : getDefaultTimeSlots(timeVariationLabel);
+    const eventPax = Number(variant.pax || parsePaxFromLabel(variant.label) || 0);
+    const timeVariationLabel = normalizeTimeLabel(
+      variant.timeVariationLabel || inferTimeLabelFromSlots(variant.timeSlots) || "8 Hours"
+    );
+
+    const timeSlots =
+      Array.isArray(variant.timeSlots) && variant.timeSlots.length
+        ? variant.timeSlots
+        : getDefaultTimeSlots(timeVariationLabel);
+
     const finalTimeLabel = inferTimeLabelFromSlots(timeSlots) || timeVariationLabel;
-    const capacityLabel = normalizeCapacityLabel(eventPax ? `${eventPax} Pax` : variant.label);
+    const capacityLabel = normalizeCapacityLabel(
+      eventPax ? `${eventPax} Pax` : variant.label
+    );
 
     return {
       label: `${capacityLabel} - ${finalTimeLabel}`,
@@ -253,7 +335,7 @@ function normalizeVariantForPayload(variant = {}, index = 0, type = "resort_venu
     };
   }
 
-  const label = normalizeTimeLabel(variant.label);
+  const label = normalizeTimeLabel(variant.label || "8 Hours");
 
   return {
     label,
@@ -265,6 +347,42 @@ function normalizeVariantForPayload(variant = {}, index = 0, type = "resort_venu
   };
 }
 
+function getPackageCounts(packages = []) {
+  return packages.reduce(
+    (acc, item) => {
+      acc.all += 1;
+      if (acc[item.type] !== undefined) acc[item.type] += 1;
+      return acc;
+    },
+    {
+      all: 0,
+      resort_venue: 0,
+      hotel_condo: 0,
+      event_package: 0,
+    }
+  );
+}
+
+function sortVariants(variants = [], type = "") {
+  return [...variants].sort((a, b) => {
+    const orderA = Number(a.displayOrder || 0);
+    const orderB = Number(b.displayOrder || 0);
+
+    if (orderA !== orderB) return orderA - orderB;
+
+    if (isEventPackage(type)) {
+      const paxA = Number(a.pax || parsePaxFromLabel(a.label) || 0);
+      const paxB = Number(b.pax || parsePaxFromLabel(b.label) || 0);
+
+      if (paxA !== paxB) return paxA - paxB;
+
+      return String(a.label || "").localeCompare(String(b.label || ""));
+    }
+
+    return String(a.label || "").localeCompare(String(b.label || ""));
+  });
+}
+
 export default function HotelAdminPackages() {
   const navigate = useNavigate();
 
@@ -274,6 +392,7 @@ export default function HotelAdminPackages() {
     ...EMPTY_FORM,
     variants: makeDefaultVariants("resort_venue"),
   });
+
   const [editingId, setEditingId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -301,9 +420,21 @@ export default function HotelAdminPackages() {
     [token]
   );
 
+  const packageCounts = useMemo(() => getPackageCounts(packages), [packages]);
+
   const filteredPackages = useMemo(() => {
-    if (activeType === "all") return packages;
-    return packages.filter((item) => item.type === activeType);
+    const rows = activeType === "all"
+      ? packages
+      : packages.filter((item) => item.type === activeType);
+
+    return [...rows].sort((a, b) => {
+      const orderA = Number(a.displayOrder || 0);
+      const orderB = Number(b.displayOrder || 0);
+
+      if (orderA !== orderB) return orderA - orderB;
+
+      return String(a.title || "").localeCompare(String(b.title || ""));
+    });
   }, [packages, activeType]);
 
   const resortVenueOptions = useMemo(() => {
@@ -327,6 +458,10 @@ export default function HotelAdminPackages() {
       ...(Array.isArray(form.availableVenues) ? form.availableVenues : []),
     ]);
   }, [resortVenueOptions, form.availableVenues]);
+
+  const sortedFormVariants = useMemo(() => {
+    return sortVariants(form.variants, form.type);
+  }, [form.variants, form.type]);
 
   const goLogin = () => {
     localStorage.removeItem("adminToken");
@@ -380,6 +515,7 @@ export default function HotelAdminPackages() {
       ...EMPTY_FORM,
       variants: makeDefaultVariants("resort_venue"),
     });
+
     setEditingId("");
     setShowForm(false);
   };
@@ -409,7 +545,9 @@ export default function HotelAdminPackages() {
       duration: pkg.duration || "",
       price: pkg.price ?? "",
       capacity: pkg.capacity || "",
-      availableVenues: uniqueVenueNames(Array.isArray(pkg.availableVenues) ? pkg.availableVenues : []),
+      availableVenues: uniqueVenueNames(
+        Array.isArray(pkg.availableVenues) ? pkg.availableVenues : []
+      ),
       inclusions: Array.isArray(pkg.inclusions) ? pkg.inclusions.join("\n") : "",
       imageFile: null,
       imagePreview: pkg.imageUrl || "",
@@ -449,9 +587,7 @@ export default function HotelAdminPackages() {
   const handleImageChange = (event) => {
     const file = event.target.files?.[0] || null;
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
@@ -474,6 +610,7 @@ export default function HotelAdminPackages() {
     }
 
     setStatus({ type: "", message: "" });
+
     setForm((prev) => ({
       ...prev,
       imageFile: file,
@@ -497,25 +634,55 @@ export default function HotelAdminPackages() {
       variants: prev.variants.map((variant, i) => {
         if (i !== index) return variant;
 
-        let nextValue = value;
-
-        if (field === "price") nextValue = sanitizePrice(value);
-        if (field === "pax") nextValue = String(value || "").replace(/[^0-9]/g, "");
-        if (field === "label" && isTimeBasedPackage(prev.type)) {
-          nextValue = normalizeTimeLabel(value);
+        if (field === "price") {
+          return {
+            ...variant,
+            price: sanitizePrice(value),
+          };
         }
 
         if (field === "pax" && isEventPackage(prev.type)) {
+          const cleanPax = String(value || "").replace(/[^0-9]/g, "");
+          const timeLabel = normalizeTimeLabel(
+            variant.timeVariationLabel ||
+              inferTimeLabelFromSlots(variant.timeSlots) ||
+              "8 Hours"
+          );
+
           return {
             ...variant,
-            pax: nextValue,
-            label: nextValue ? `${Number(nextValue)} Pax` : "",
+            pax: cleanPax,
+            label: makeEventLabel(cleanPax, timeLabel),
+          };
+        }
+
+        if (field === "timeVariationLabel" && isEventPackage(prev.type)) {
+          const timeLabel = normalizeTimeLabel(value);
+          const cleanPax = String(
+            variant.pax || parsePaxFromLabel(variant.label) || ""
+          ).replace(/[^0-9]/g, "");
+
+          return {
+            ...variant,
+            timeVariationLabel: timeLabel,
+            timeSlots: getDefaultTimeSlots(timeLabel),
+            label: makeEventLabel(cleanPax, timeLabel),
+          };
+        }
+
+        if (field === "label" && isTimeBasedPackage(prev.type)) {
+          const label = normalizeTimeLabel(value);
+
+          return {
+            ...variant,
+            label,
+            timeSlots: getDefaultTimeSlots(label),
           };
         }
 
         return {
           ...variant,
-          [field]: nextValue,
+          [field]: value,
         };
       }),
     }));
@@ -527,13 +694,12 @@ export default function HotelAdminPackages() {
       variants: [
         ...prev.variants,
         isEventPackage(prev.type)
-          ? {
-              label: "",
+          ? makeEventVariant({
               pax: "",
+              timeVariationLabel: "8 Hours",
               price: "",
               displayOrder: prev.variants.length + 1,
-              isActive: true,
-            }
+            })
           : {
               label: "8 Hours",
               price: "",
@@ -591,12 +757,46 @@ export default function HotelAdminPackages() {
       ...prev,
       type: "event_package",
       capacity: "50 / 80 / 100 pax",
-      availableVenues: Array.isArray(prev.availableVenues) ? prev.availableVenues : [],
+      availableVenues: Array.isArray(prev.availableVenues)
+        ? prev.availableVenues
+        : [],
       variants: [
-        { label: "50 Pax - 8 Hours", pax: "50", timeVariationLabel: "8 Hours", timeSlots: getDefaultTimeSlots("8 Hours"), price: "60000", displayOrder: 1, isActive: true },
-        { label: "80 Pax - 8 Hours", pax: "80", timeVariationLabel: "8 Hours", timeSlots: getDefaultTimeSlots("8 Hours"), price: "75000", displayOrder: 2, isActive: true },
-        { label: "100 Pax - 8 Hours", pax: "100", timeVariationLabel: "8 Hours", timeSlots: getDefaultTimeSlots("8 Hours"), price: "85000", displayOrder: 3, isActive: true },
+        makeEventVariant({
+          pax: "50",
+          timeVariationLabel: "8 Hours",
+          price: "60000",
+          displayOrder: 1,
+        }),
+        makeEventVariant({
+          pax: "80",
+          timeVariationLabel: "8 Hours",
+          price: "75000",
+          displayOrder: 2,
+        }),
+        makeEventVariant({
+          pax: "100",
+          timeVariationLabel: "8 Hours",
+          price: "85000",
+          displayOrder: 3,
+        }),
       ],
+    }));
+  };
+
+  const applyEventPreset = (preset) => {
+    setForm((prev) => ({
+      ...prev,
+      type: "event_package",
+      title: preset.title,
+      subtitle: preset.subtitle,
+      capacity: prev.capacity || "50 / 80 / 100 pax",
+      availableVenues: Array.isArray(prev.availableVenues)
+        ? prev.availableVenues
+        : [],
+      variants:
+        Array.isArray(prev.variants) && prev.variants.length
+          ? prev.variants
+          : makeDefaultVariants("event_package"),
     }));
   };
 
@@ -617,6 +817,20 @@ export default function HotelAdminPackages() {
     });
   };
 
+  const selectAllVenues = () => {
+    setForm((prev) => ({
+      ...prev,
+      availableVenues: uniqueVenueNames(availableVenueOptions),
+    }));
+  };
+
+  const clearAllVenues = () => {
+    setForm((prev) => ({
+      ...prev,
+      availableVenues: [],
+    }));
+  };
+
   const submitForm = async (event) => {
     event.preventDefault();
 
@@ -628,18 +842,24 @@ export default function HotelAdminPackages() {
     if (form.type === "event_package" && !form.availableVenues.length) {
       setStatus({
         type: "error",
-        message: "Please select at least one available venue for this event package.",
+        message:
+          "Please select at least one available venue for this event package.",
       });
       return;
     }
 
     const variants = form.variants
-      .map((variant, index) => normalizeVariantForPayload(variant, index, form.type))
+      .map((variant, index) =>
+        normalizeVariantForPayload(variant, index, form.type)
+      )
       .filter((variant) => variant.label);
 
     if (hasVariations(form.type)) {
       if (!variants.length) {
-        setStatus({ type: "error", message: "At least one variation is required." });
+        setStatus({
+          type: "error",
+          message: "At least one variation is required.",
+        });
         return;
       }
 
@@ -648,7 +868,13 @@ export default function HotelAdminPackages() {
           Number.isNaN(Number(variant.price)) || Number(variant.price) < 0;
 
         if (isEventPackage(form.type)) {
-          return !variant.label || invalidPrice || !parsePaxFromLabel(variant.label) || !variant.timeSlots.length;
+          return (
+            !variant.label ||
+            invalidPrice ||
+            !Number(variant.pax || parsePaxFromLabel(variant.label)) ||
+            !Array.isArray(variant.timeSlots) ||
+            !variant.timeSlots.length
+          );
         }
 
         return !variant.label || invalidPrice || !variant.timeSlots.length;
@@ -658,7 +884,7 @@ export default function HotelAdminPackages() {
         setStatus({
           type: "error",
           message: isEventPackage(form.type)
-            ? "Each event variation must have pax, time variation, and a valid price."
+            ? "Each event rate must have pax, time variation, and a valid price."
             : "Each variation must use 8 Hours, 12 Hours, or 22 Hours with a valid price.",
         });
         return;
@@ -681,7 +907,8 @@ export default function HotelAdminPackages() {
           ? Number(form.price || 0)
           : Number(variants[0]?.price || 0),
       capacity: form.capacity.trim(),
-      availableVenues: form.type === "event_package" ? uniqueVenueNames(form.availableVenues) : [],
+      availableVenues:
+        form.type === "event_package" ? uniqueVenueNames(form.availableVenues) : [],
       inclusions: String(form.inclusions || "")
         .split("\n")
         .map((item) => item.trim())
@@ -692,6 +919,7 @@ export default function HotelAdminPackages() {
     };
 
     const formData = new FormData();
+
     formData.append("type", payload.type);
     formData.append("title", payload.title);
     formData.append("subtitle", payload.subtitle);
@@ -739,7 +967,9 @@ export default function HotelAdminPackages() {
 
       setStatus({
         type: "success",
-        message: editingId ? "Package updated successfully." : "Package added successfully.",
+        message: editingId
+          ? "Package updated successfully."
+          : "Package added successfully.",
       });
 
       resetForm();
@@ -783,7 +1013,9 @@ export default function HotelAdminPackages() {
 
       setStatus({
         type: "success",
-        message: nextStatus ? "Package activated successfully." : "Package deactivated successfully.",
+        message: nextStatus
+          ? "Package activated successfully."
+          : "Package deactivated successfully.",
       });
     } catch (error) {
       setStatus({
@@ -830,89 +1062,91 @@ export default function HotelAdminPackages() {
   return (
     <HotelAdminShell
       title="Package Management"
-      subtitle="Manage resort, hotel, condo, and event package variations using one consistent admin layout."
+      subtitle="Manage resort, hotel, condo, and event package rates in a cleaner layout."
       activePage="packages"
       maxWidth="max-w-7xl"
       actions={
         <button
           type="button"
-          onClick={() => startCreate(activeType === "all" ? "resort_venue" : activeType)}
+          onClick={() =>
+            startCreate(activeType === "all" ? "resort_venue" : activeType)
+          }
           className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90"
         >
           ADD PACKAGE
         </button>
       }
     >
-        {status.message ? (
-          <div
-            className={`mb-5 rounded-2xl border px-4 py-3 text-sm font-bold ${
-              status.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-rose-200 bg-rose-50 text-rose-700"
-            }`}
-          >
-            {status.message}
-          </div>
-        ) : null}
-
-        <div className="mb-5 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveType("all")}
-            className={`rounded-full px-5 py-2 text-xs font-extrabold ${
-              activeType === "all"
-                ? "bg-[#355240] text-white"
-                : "border border-black/10 bg-white text-[#355240]"
-            }`}
-          >
-            ALL
-          </button>
-
-          {PACKAGE_TYPES.map((type) => (
-            <button
-              type="button"
-              key={type.value}
-              onClick={() => setActiveType(type.value)}
-              className={`rounded-full px-5 py-2 text-xs font-extrabold ${
-                activeType === type.value
-                  ? "bg-[#355240] text-white"
-                  : "border border-black/10 bg-white text-[#355240]"
-              }`}
-            >
-              {type.label}
-            </button>
-          ))}
+      {status.message ? (
+        <div
+          className={`mb-5 rounded-2xl border px-4 py-3 text-sm font-bold ${
+            status.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700"
+          }`}
+        >
+          {status.message}
         </div>
+      ) : null}
 
-        {showForm ? (
-          <form
-            onSubmit={submitForm}
-            className="mb-6 rounded-3xl border border-black/10 bg-white p-5 shadow-sm"
-          >
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-extrabold text-[#355240]">
-                  {editingId ? "Edit Package" : "Add Package"}
-                </h2>
-                <p className="text-sm font-semibold text-black/45">
-                  Event Package variations are pax + time based.
-                </p>
-              </div>
+      <div className="mb-5 flex flex-wrap gap-2">
+        <TypeButton
+          active={activeType === "all"}
+          onClick={() => setActiveType("all")}
+          label={`ALL (${packageCounts.all})`}
+        />
 
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-full border border-black/10 px-4 py-2 text-xs font-extrabold text-black/50 hover:bg-black/5"
-              >
-                CANCEL
-              </button>
+        {PACKAGE_TYPES.map((type) => (
+          <TypeButton
+            key={type.value}
+            active={activeType === type.value}
+            onClick={() => setActiveType(type.value)}
+            label={`${type.label} (${packageCounts[type.value] || 0})`}
+          />
+        ))}
+      </div>
+
+      {showForm ? (
+        <form
+          onSubmit={submitForm}
+          className="mb-6 rounded-3xl border border-black/10 bg-white p-5 shadow-sm"
+        >
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-extrabold text-[#355240]">
+                {editingId ? "Edit Package" : "Add Package"}
+              </h2>
+              <p className="text-sm font-semibold text-black/45">
+                {form.type === "event_package"
+                  ? "Event packages are arranged by package details, available venues, and capacity rates."
+                  : "Set your package details and time-based rates."}
+              </p>
             </div>
 
+            <button
+              type="button"
+              onClick={resetForm}
+              className="w-fit rounded-full border border-black/10 px-4 py-2 text-xs font-extrabold text-black/50 hover:bg-black/5"
+            >
+              CANCEL
+            </button>
+          </div>
+
+          <SectionCard
+            title={
+              form.type === "event_package"
+                ? "1. Event Package Details"
+                : "Package Details"
+            }
+            description={
+              form.type === "event_package"
+                ? "Choose the event type, title, basic description, and display order."
+                : "Fill the general package information."
+            }
+          >
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                  Type
-                </span>
+                <InputLabel>Type</InputLabel>
                 <select
                   value={form.type}
                   onChange={(e) => updateForm("type", e.target.value)}
@@ -927,23 +1161,36 @@ export default function HotelAdminPackages() {
               </label>
 
               <label className="block">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                  Default Price
-                </span>
+                <InputLabel>Display Order</InputLabel>
                 <input
                   type="number"
                   min="0"
-                  value={form.price}
-                  onChange={(e) => updateForm("price", e.target.value)}
-                  placeholder="Auto from first variation"
+                  value={form.displayOrder}
+                  onChange={(e) => updateForm("displayOrder", e.target.value)}
                   className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
                 />
               </label>
 
+              {form.type === "event_package" ? (
+                <div className="md:col-span-2">
+                  <InputLabel>Quick Event Type</InputLabel>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {EVENT_PACKAGE_PRESETS.map((preset) => (
+                      <button
+                        key={preset.title}
+                        type="button"
+                        onClick={() => applyEventPreset(preset)}
+                        className="rounded-full border border-[#355240]/20 bg-[#355240]/5 px-4 py-2 text-xs font-extrabold text-[#355240] hover:bg-[#355240]/10"
+                      >
+                        {preset.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <label className="block">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                  Title
-                </span>
+                <InputLabel>Title</InputLabel>
                 <input
                   value={form.title}
                   onChange={(e) => updateForm("title", e.target.value)}
@@ -959,9 +1206,7 @@ export default function HotelAdminPackages() {
               </label>
 
               <label className="block">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                  Subtitle
-                </span>
+                <InputLabel>Subtitle</InputLabel>
                 <input
                   value={form.subtitle}
                   onChange={(e) => updateForm("subtitle", e.target.value)}
@@ -971,9 +1216,11 @@ export default function HotelAdminPackages() {
               </label>
 
               <label className="block">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                  Duration
-                </span>
+                <InputLabel>
+                  {form.type === "event_package"
+                    ? "Summary Duration"
+                    : "Duration"}
+                </InputLabel>
                 <input
                   value={form.duration}
                   onChange={(e) => updateForm("duration", e.target.value)}
@@ -983,9 +1230,11 @@ export default function HotelAdminPackages() {
               </label>
 
               <label className="block">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                  Capacity
-                </span>
+                <InputLabel>
+                  {form.type === "event_package"
+                    ? "Capacity Summary"
+                    : "Capacity"}
+                </InputLabel>
                 <input
                   value={form.capacity}
                   onChange={(e) => updateForm("capacity", e.target.value)}
@@ -998,517 +1247,602 @@ export default function HotelAdminPackages() {
                 />
               </label>
 
-              {form.type === "event_package" ? (
-                <div className="md:col-span-2 rounded-3xl border border-[#355240]/15 bg-[#355240]/5 p-4">
-                  <h3 className="text-sm font-extrabold uppercase tracking-wide text-[#355240]">
-                    Available Venues
-                  </h3>
-
-                  <p className="mt-1 text-sm font-semibold text-black/50">
-                    Select where this event package can be booked. This list comes from your active Resort & Venue packages, so new resort venues you add will appear here automatically.
-                  </p>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {availableVenueOptions.map((venue) => (
-                      <label
-                        key={venue}
-                        className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-bold text-[#355240]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={uniqueVenueNames(form.availableVenues || []).includes(venue)}
-                          onChange={() => toggleAvailableVenue(venue)}
-                        />
-                        <span>{venue}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  {!availableVenueOptions.length ? (
-                    <p className="mt-3 text-xs font-bold text-rose-700">
-                      No active Resort & Venue packages found. Add a Resort & Venue package first, then return here.
-                    </p>
-                  ) : !form.availableVenues.length ? (
-                    <p className="mt-3 text-xs font-bold text-rose-700">
-                      Select at least one venue for this event package.
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {form.type === "hotel_condo" ? (
-                <PresetBox
-                  title="Quick Hotel Room Preset"
-                  description="Quickly fill Nature Room or Simple Room prices."
-                  buttons={[
-                    { label: "NATURE ROOM", onClick: () => quickHotelPreset("Nature Room") },
-                    { label: "SIMPLE ROOM", onClick: () => quickHotelPreset("Simple Room") },
-                  ]}
+              <label className="block">
+                <InputLabel>Default Price</InputLabel>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.price}
+                  onChange={(e) => updateForm("price", e.target.value)}
+                  placeholder="Auto from first rate"
+                  className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
                 />
-              ) : null}
-
-              {form.type === "event_package" ? (
-                <PresetBox
-                  title="Quick Event Capacity Preset"
-                  description="Adds 50 Pax, 80 Pax, and 100 Pax price variations with default 8-hour time slots."
-                  buttons={[{ label: "50 / 80 / 100 PAX", onClick: quickEventPreset }]}
-                />
-              ) : null}
-
-              <div className="md:col-span-2 rounded-3xl border border-[#355240]/15 bg-[#355240]/5 p-4">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                  <div className="h-40 w-full overflow-hidden rounded-2xl border border-black/10 bg-white md:w-64">
-                    {form.imagePreview ? (
-                      <img
-                        src={form.imagePreview}
-                        alt="Package preview"
-                        className="h-full w-full object-cover"
-                        onError={(event) => {
-                          event.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-extrabold uppercase tracking-wide text-black/35">
-                        No image selected
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1">
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                      Package Image Upload
-                    </span>
-
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/jpg,image/png,image/webp"
-                      onChange={handleImageChange}
-                      className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-bold outline-none file:mr-4 file:rounded-full file:border-0 file:bg-[#355240] file:px-4 file:py-2 file:text-xs file:font-extrabold file:text-white focus:border-[#355240]"
-                    />
-
-                    <p className="mt-2 text-xs font-semibold text-black/45">
-                      Upload JPG, PNG, or WEBP only. Maximum file size: 5MB.
-                    </p>
-
-
-                    {form.imagePreview ? (
-                      <button
-                        type="button"
-                        onClick={removeSelectedImage}
-                        className="mt-3 rounded-full bg-rose-100 px-4 py-2 text-xs font-extrabold text-rose-700 hover:bg-rose-200"
-                      >
-                        REMOVE IMAGE
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
+              </label>
 
               <label className="block md:col-span-2">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                  Description
-                </span>
+                <InputLabel>Description</InputLabel>
                 <textarea
                   value={form.description}
                   onChange={(e) => updateForm("description", e.target.value)}
                   rows={4}
-                  placeholder="Write package details..."
-                  className="mt-1 w-full resize-none rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
-                />
-              </label>
-
-              <label className="block md:col-span-2">
-                <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                  Inclusions
-                </span>
-                <textarea
-                  value={form.inclusions}
-                  onChange={(e) => updateForm("inclusions", e.target.value)}
-                  rows={4}
-                  placeholder={"One inclusion per line\nTables and chairs\nEvent coordination"}
+                  placeholder={
+                    form.type === "event_package"
+                      ? "Describe the event package inclusions, setup, service, and package purpose..."
+                      : "Write package details..."
+                  }
                   className="mt-1 w-full resize-none rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
                 />
               </label>
             </div>
+          </SectionCard>
 
-            {hasVariations(form.type) ? (
-              <div className="mt-6 rounded-3xl border border-[#355240]/15 bg-[#355240]/5 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="text-lg font-extrabold text-[#355240]">
-                      {form.type === "event_package"
-                        ? "Event Pax + Time Variations"
-                        : "Time Variations"}
-                    </h3>
-                    <p className="text-sm font-semibold text-black/50">
-                      {form.type === "event_package"
-                        ? "The price changes depending on selected pax and time variation."
-                        : "Time slots are automatic based on duration."}
-                    </p>
-                  </div>
+          {form.type === "event_package" ? (
+            <SectionCard
+              title="2. Available Venues"
+              description="Select the Resort & Venue locations where this event package can be booked."
+            >
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={selectAllVenues}
+                  disabled={!availableVenueOptions.length}
+                  className="rounded-full bg-[#355240] px-4 py-2 text-xs font-extrabold text-white disabled:opacity-50"
+                >
+                  SELECT ALL VENUES
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={addVariant}
-                    className="w-fit rounded-full bg-[#355240] px-5 py-2 text-xs font-extrabold text-white"
-                  >
-                    ADD VARIATION
-                  </button>
+                <button
+                  type="button"
+                  onClick={clearAllVenues}
+                  className="rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-extrabold text-black/55 hover:bg-black/5"
+                >
+                  CLEAR
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {availableVenueOptions.map((venue) => {
+                  const checked = uniqueVenueNames(
+                    form.availableVenues || []
+                  ).includes(venue);
+
+                  return (
+                    <label
+                      key={venue}
+                      className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                        checked
+                          ? "border-[#355240] bg-[#355240] text-white"
+                          : "border-black/10 bg-white text-[#355240] hover:border-[#355240]/40"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleAvailableVenue(venue)}
+                        className="h-4 w-4"
+                      />
+                      <span>{venue}</span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              {!availableVenueOptions.length ? (
+                <p className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">
+                  No active Resort & Venue packages found. Add a Resort & Venue
+                  package first, then return here.
+                </p>
+              ) : !form.availableVenues.length ? (
+                <p className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">
+                  Select at least one venue for this event package.
+                </p>
+              ) : (
+                <p className="mt-3 text-xs font-bold text-[#355240]/70">
+                  Selected venues: {uniqueVenueNames(form.availableVenues).join(", ")}
+                </p>
+              )}
+            </SectionCard>
+          ) : null}
+
+          {form.type === "hotel_condo" ? (
+            <PresetBox
+              title="Quick Hotel Room Preset"
+              description="Quickly fill Nature Room or Simple Room prices."
+              buttons={[
+                {
+                  label: "NATURE ROOM",
+                  onClick: () => quickHotelPreset("Nature Room"),
+                },
+                {
+                  label: "SIMPLE ROOM",
+                  onClick: () => quickHotelPreset("Simple Room"),
+                },
+              ]}
+            />
+          ) : null}
+
+          {form.type === "event_package" ? (
+            <SectionCard
+              title="3. Capacity / Time / Price Rates"
+              description="Each row is one selectable rate in the customer Event Booking form. Keep it simple: Pax + Time + Price."
+              action={
+                <button
+                  type="button"
+                  onClick={quickEventPreset}
+                  className="rounded-full bg-[#355240] px-5 py-2 text-xs font-extrabold text-white"
+                >
+                  USE 50 / 80 / 100 PAX PRESET
+                </button>
+              }
+            >
+              <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+                <div className="grid grid-cols-12 gap-3 border-b border-black/10 bg-[#355240] px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-white">
+                  <div className="col-span-12 sm:col-span-2">Pax</div>
+                  <div className="col-span-12 sm:col-span-3">Time Variation</div>
+                  <div className="col-span-12 sm:col-span-2">Price</div>
+                  <div className="col-span-12 sm:col-span-2">Order</div>
+                  <div className="col-span-12 sm:col-span-1">Active</div>
+                  <div className="col-span-12 sm:col-span-2 text-right">Action</div>
                 </div>
 
-                <div className="mt-4 grid gap-4">
-                  {form.variants.map((variant, index) => (
-                    <div
-                      key={`${index}-${variant.label}`}
-                      className="rounded-3xl border border-black/10 bg-white p-4"
-                    >
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <p className="text-sm font-extrabold text-[#355240]">
-                          Variation #{index + 1}
-                        </p>
+                <div className="divide-y divide-black/10">
+                  {form.variants.map((variant, index) => {
+                    const pax = variant.pax || parsePaxFromLabel(variant.label) || "";
+                    const timeLabel =
+                      variant.timeVariationLabel ||
+                      inferTimeLabelFromSlots(variant.timeSlots) ||
+                      "8 Hours";
+                    const timeSlots =
+                      variant.timeSlots?.length
+                        ? variant.timeSlots
+                        : getDefaultTimeSlots(timeLabel);
 
-                        <button
-                          type="button"
-                          onClick={() => removeVariant(index)}
-                          className="rounded-full bg-rose-100 px-4 py-2 text-xs font-extrabold text-rose-700"
-                        >
-                          REMOVE
-                        </button>
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-3">
-                        <label className="block">
-                          <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                            {form.type === "event_package" ? "Pax Included in Package" : "Duration"}
-                          </span>
-
-                          {form.type === "event_package" ? (
+                    return (
+                      <div key={`${index}-${variant.label}`} className="p-4">
+                        <div className="grid grid-cols-12 gap-3">
+                          <div className="col-span-12 sm:col-span-2">
+                            <InputLabel>Pax</InputLabel>
                             <input
                               type="number"
                               min="1"
-                              value={variant.pax || parsePaxFromLabel(variant.label) || ""}
-                              onChange={(e) => updateVariant(index, "pax", e.target.value)}
-                              placeholder="Example: 50"
+                              value={pax}
+                              onChange={(e) =>
+                                updateVariant(index, "pax", e.target.value)
+                              }
+                              placeholder="50"
                               className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
                             />
-                          ) : (
+                          </div>
+
+                          <div className="col-span-12 sm:col-span-3">
+                            <InputLabel>Time</InputLabel>
                             <select
-                              value={variant.label}
-                              onChange={(e) => updateVariant(index, "label", e.target.value)}
+                              value={timeLabel}
+                              onChange={(e) =>
+                                updateVariant(
+                                  index,
+                                  "timeVariationLabel",
+                                  e.target.value
+                                )
+                              }
                               className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
                             >
                               <option value="8 Hours">8 Hours</option>
                               <option value="12 Hours">12 Hours</option>
                               <option value="22 Hours">22 Hours</option>
                             </select>
-                          )}
-                        </label>
+                          </div>
 
-                        {form.type === "event_package" ? (
-                          <label className="block">
-                            <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                              Time Variation
-                            </span>
-                            <select
-                              value={variant.timeVariationLabel || inferTimeLabelFromSlots(variant.timeSlots) || "8 Hours"}
-                              onChange={(e) => updateVariant(index, "timeVariationLabel", e.target.value)}
+                          <div className="col-span-12 sm:col-span-2">
+                            <InputLabel>Price</InputLabel>
+                            <input
+                              type="number"
+                              min="0"
+                              value={variant.price}
+                              onChange={(e) =>
+                                updateVariant(index, "price", e.target.value)
+                              }
+                              placeholder="85000"
                               className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
+                            />
+                          </div>
+
+                          <div className="col-span-12 sm:col-span-2">
+                            <InputLabel>Order</InputLabel>
+                            <input
+                              type="number"
+                              min="0"
+                              value={variant.displayOrder}
+                              onChange={(e) =>
+                                updateVariant(
+                                  index,
+                                  "displayOrder",
+                                  e.target.value
+                                )
+                              }
+                              className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
+                            />
+                          </div>
+
+                          <div className="col-span-6 flex items-end sm:col-span-1">
+                            <label className="flex h-[46px] items-center gap-2 text-xs font-bold text-black/60">
+                              <input
+                                type="checkbox"
+                                checked={variant.isActive}
+                                onChange={(e) =>
+                                  updateVariant(
+                                    index,
+                                    "isActive",
+                                    e.target.checked
+                                  )
+                                }
+                              />
+                              Yes
+                            </label>
+                          </div>
+
+                          <div className="col-span-6 flex items-end justify-end sm:col-span-2">
+                            <button
+                              type="button"
+                              onClick={() => removeVariant(index)}
+                              className="h-[46px] rounded-2xl bg-rose-100 px-4 text-xs font-extrabold text-rose-700 hover:bg-rose-200"
                             >
-                              <option value="8 Hours">8 Hours</option>
-                              <option value="12 Hours">12 Hours</option>
-                              <option value="22 Hours">22 Hours</option>
-                            </select>
-                          </label>
-                        ) : null}
-
-                        <label className="block">
-                          <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                            Price
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={variant.price}
-                            onChange={(e) => updateVariant(index, "price", e.target.value)}
-                            placeholder="60000"
-                            className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
-                          />
-                        </label>
-
-                        <label className="block">
-                          <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                            Display Order
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={variant.displayOrder}
-                            onChange={(e) =>
-                              updateVariant(index, "displayOrder", e.target.value)
-                            }
-                            className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
-                          />
-                        </label>
-
-                        <label className="flex items-center gap-2 md:col-span-3">
-                          <input
-                            type="checkbox"
-                            checked={variant.isActive}
-                            onChange={(e) =>
-                              updateVariant(index, "isActive", e.target.checked)
-                            }
-                          />
-                          <span className="text-sm font-bold text-black/60">
-                            Variation active
-                          </span>
-                        </label>
-
-                        <div className="md:col-span-3 rounded-2xl border border-[#355240]/15 bg-[#f6f6f1] p-4">
-                          {form.type === "event_package" ? (
-                            <>
-                              <p className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                                Automatic Event Time Slots
-                              </p>
-                              <p className="mt-1 text-sm font-semibold text-black/55">
-                                This pax value and time variation appear in the Event Booking form. The selected variation price includes food for this pax count. Extra pax are charged separately per head.
-                              </p>
-                              <div className="mt-3 grid gap-2 md:grid-cols-2">
-                                {(variant.timeSlots?.length
-                                  ? variant.timeSlots
-                                  : getDefaultTimeSlots(variant.timeVariationLabel || "8 Hours")
-                                ).map((slot) => (
-                                  <div
-                                    key={slot}
-                                    className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-black/60"
-                                  >
-                                    {slot}
-                                  </div>
-                                ))}
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-                                Automatic Time Slots
-                              </p>
-                              <div className="mt-3 grid gap-2 md:grid-cols-2">
-                                {getDefaultTimeSlots(variant.label).map((slot) => (
-                                  <div
-                                    key={slot}
-                                    className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-black/60"
-                                  >
-                                    {slot}
-                                  </div>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={resetForm}
-                disabled={saving}
-                className="rounded-full border border-black/10 bg-white px-7 py-3 text-xs font-extrabold text-black/55 hover:bg-black/5 disabled:opacity-50"
-              >
-                CANCEL
-              </button>
-
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-full bg-[#355240] px-7 py-3 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-50"
-              >
-                {saving ? "SAVING..." : editingId ? "SAVE CHANGES" : "ADD PACKAGE"}
-              </button>
-            </div>
-          </form>
-        ) : null}
-
-        <div className="rounded-3xl border border-black/10 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-extrabold text-[#355240]">
-                Package List
-              </h2>
-              <p className="text-sm font-semibold text-black/45">
-                {filteredPackages.length} item(s)
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => startCreate(activeType === "all" ? "resort_venue" : activeType)}
-              className="w-fit rounded-full bg-[#355240] px-5 py-2 text-xs font-extrabold text-white hover:opacity-90"
-            >
-              ADD PACKAGE
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="p-5 text-sm font-bold text-black/50">
-              Loading packages...
-            </div>
-          ) : filteredPackages.length === 0 ? (
-            <div className="p-8 text-center">
-              <h3 className="text-2xl font-extrabold text-[#355240]">
-                No packages yet
-              </h3>
-              <p className="mt-2 text-sm font-semibold text-black/45">
-                Add your first package.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4 p-5 lg:grid-cols-2">
-              {filteredPackages.map((pkg) => (
-                <div
-                  key={pkg._id}
-                  className={`rounded-3xl border p-5 ${
-                    pkg.isActive
-                      ? "border-black/10 bg-[#fafaf7]"
-                      : "border-rose-100 bg-rose-50/50"
-                  }`}
-                >
-                  {pkg.imageUrl ? (
-                    <div className="mb-4 h-44 overflow-hidden rounded-2xl border border-black/10 bg-white">
-                      <img
-                        src={pkg.imageUrl}
-                        alt={pkg.title || "Package"}
-                        className="h-full w-full object-cover"
-                        onError={(event) => {
-                          event.currentTarget.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  ) : null}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[#355240]/10 px-3 py-1 text-[11px] font-extrabold text-[#355240]">
-                      {getTypeLabel(pkg.type)}
-                    </span>
-
-                    <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${
-                        pkg.isActive
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-rose-100 text-rose-700"
-                      }`}
-                    >
-                      {pkg.isActive ? "ACTIVE" : "INACTIVE"}
-                    </span>
-                  </div>
-
-                  <h3 className="mt-3 text-xl font-extrabold text-[#355240]">
-                    {pkg.title}
-                  </h3>
-
-                  {pkg.subtitle ? (
-                    <p className="mt-1 text-sm font-bold text-black/50">
-                      {pkg.subtitle}
-                    </p>
-                  ) : null}
-
-                  {Array.isArray(pkg.variants) && pkg.variants.length ? (
-                    <div className="mt-4 grid gap-2">
-                      {pkg.variants.map((variant) => (
-                        <div
-                          key={variant._id || variant.label}
-                          className={`rounded-2xl border border-[#355240]/15 bg-white p-4 ${
-                            variant.isActive === false ? "opacity-50" : ""
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-extrabold text-[#355240]">
-                              {variant.label}
-                            </p>
-                            <div className="text-right">
-                              <p className="text-lg font-extrabold text-[#355240]">
-                                {formatPeso(variant.price)}
-                              </p>
-                              {pkg.type === "event_package" ? (
-                                <p className="text-xs font-bold uppercase tracking-wide text-black/45">
-                                  {inferTimeLabelFromSlots(variant.timeSlots)}
-                                </p>
-                              ) : null}
-                            </div>
+                              REMOVE
+                            </button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-4 text-2xl font-extrabold text-[#355240]">
-                      {formatPeso(pkg.price)}
-                    </p>
-                  )}
 
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-extrabold text-black/50">
-                    {pkg.duration ? (
-                      <span className="rounded-full bg-white px-3 py-1">
-                        {pkg.duration}
-                      </span>
-                    ) : null}
+                        <div className="mt-3 rounded-2xl border border-[#355240]/10 bg-[#f6f6f1] p-4">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-sm font-extrabold text-[#355240]">
+                                {makeEventLabel(pax, timeLabel) || "Incomplete Rate"}
+                              </p>
+                              <p className="text-xs font-semibold text-black/50">
+                                Shows in booking form as:{" "}
+                                <span className="font-extrabold">
+                                  {makeEventLabel(pax, timeLabel) || "Set pax first"}
+                                </span>
+                              </p>
+                            </div>
 
-                    {pkg.capacity ? (
-                      <span className="rounded-full bg-white px-3 py-1">
-                        {pkg.capacity}
-                      </span>
-                    ) : null}
+                            <p className="text-lg font-extrabold text-[#355240]">
+                              {formatPeso(variant.price)}
+                            </p>
+                          </div>
 
-                    {pkg.type === "event_package" && Array.isArray(pkg.availableVenues) && pkg.availableVenues.length ? (
-                      <span className="rounded-full bg-white px-3 py-1">
-                        Venues: {pkg.availableVenues.join(", ")}
-                      </span>
-                    ) : null}
-                  </div>
+                          <details className="mt-3">
+                            <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wide text-black/45">
+                              View automatic time slots ({timeSlots.length})
+                            </summary>
 
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(pkg)}
-                      className="rounded-full border border-[#355240]/20 bg-white px-4 py-2 text-xs font-extrabold text-[#355240] hover:bg-[#355240]/5"
-                    >
-                      EDIT
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleStatus(pkg)}
-                      className={`rounded-full px-4 py-2 text-xs font-extrabold ${
-                        pkg.isActive
-                          ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                          : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                      }`}
-                    >
-                      {pkg.isActive ? "DEACTIVATE" : "ACTIVATE"}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => deletePackage(pkg)}
-                      className="rounded-full bg-rose-100 px-4 py-2 text-xs font-extrabold text-rose-700 hover:bg-rose-200"
-                    >
-                      DELETE
-                    </button>
-                  </div>
+                            <div className="mt-3 grid gap-2 md:grid-cols-2">
+                              {timeSlots.map((slot) => (
+                                <div
+                                  key={slot}
+                                  className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-black/60"
+                                >
+                                  {slot}
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addVariant}
+                className="mt-4 rounded-full bg-[#355240] px-5 py-2 text-xs font-extrabold text-white"
+              >
+                ADD ANOTHER RATE
+              </button>
+            </SectionCard>
+          ) : hasVariations(form.type) ? (
+            <SectionCard
+              title="Time Variations"
+              description="Set duration and price. Time slots are generated automatically."
+              action={
+                <button
+                  type="button"
+                  onClick={addVariant}
+                  className="rounded-full bg-[#355240] px-5 py-2 text-xs font-extrabold text-white"
+                >
+                  ADD VARIATION
+                </button>
+              }
+            >
+              <div className="grid gap-4">
+                {form.variants.map((variant, index) => (
+                  <div
+                    key={`${index}-${variant.label}`}
+                    className="rounded-3xl border border-black/10 bg-white p-4"
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <p className="text-sm font-extrabold text-[#355240]">
+                        Variation #{index + 1}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(index)}
+                        className="rounded-full bg-rose-100 px-4 py-2 text-xs font-extrabold text-rose-700"
+                      >
+                        REMOVE
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-4">
+                      <label className="block">
+                        <InputLabel>Duration</InputLabel>
+                        <select
+                          value={variant.label}
+                          onChange={(e) =>
+                            updateVariant(index, "label", e.target.value)
+                          }
+                          className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
+                        >
+                          <option value="8 Hours">8 Hours</option>
+                          <option value="12 Hours">12 Hours</option>
+                          <option value="22 Hours">22 Hours</option>
+                        </select>
+                      </label>
+
+                      <label className="block">
+                        <InputLabel>Price</InputLabel>
+                        <input
+                          type="number"
+                          min="0"
+                          value={variant.price}
+                          onChange={(e) =>
+                            updateVariant(index, "price", e.target.value)
+                          }
+                          placeholder="15000"
+                          className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
+                        />
+                      </label>
+
+                      <label className="block">
+                        <InputLabel>Display Order</InputLabel>
+                        <input
+                          type="number"
+                          min="0"
+                          value={variant.displayOrder}
+                          onChange={(e) =>
+                            updateVariant(index, "displayOrder", e.target.value)
+                          }
+                          className="mt-1 w-full rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
+                        />
+                      </label>
+
+                      <label className="flex items-center gap-2 pt-7">
+                        <input
+                          type="checkbox"
+                          checked={variant.isActive}
+                          onChange={(e) =>
+                            updateVariant(index, "isActive", e.target.checked)
+                          }
+                        />
+                        <span className="text-sm font-bold text-black/60">
+                          Active
+                        </span>
+                      </label>
+                    </div>
+
+                    <details className="mt-4 rounded-2xl border border-[#355240]/15 bg-[#f6f6f1] p-4">
+                      <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wide text-black/45">
+                        View automatic time slots
+                      </summary>
+
+                      <div className="mt-3 grid gap-2 md:grid-cols-2">
+                        {getDefaultTimeSlots(variant.label).map((slot) => (
+                          <div
+                            key={slot}
+                            className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-black/60"
+                          >
+                            {slot}
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          ) : null}
+
+          <SectionCard
+            title={form.type === "event_package" ? "4. Package Image" : "Package Image"}
+            description="Upload one image for this package."
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-start">
+              <div className="h-40 w-full overflow-hidden rounded-2xl border border-black/10 bg-white md:w-64">
+                {form.imagePreview ? (
+                  <img
+                    src={form.imagePreview}
+                    alt="Package preview"
+                    className="h-full w-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-extrabold uppercase tracking-wide text-black/35">
+                    No image selected
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1">
+                <InputLabel>Package Image Upload</InputLabel>
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleImageChange}
+                  className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-bold outline-none file:mr-4 file:rounded-full file:border-0 file:bg-[#355240] file:px-4 file:py-2 file:text-xs file:font-extrabold file:text-white focus:border-[#355240]"
+                />
+
+                <p className="mt-2 text-xs font-semibold text-black/45">
+                  Upload JPG, PNG, or WEBP only. Maximum file size: 5MB.
+                </p>
+
+                {form.imagePreview ? (
+                  <button
+                    type="button"
+                    onClick={removeSelectedImage}
+                    className="mt-3 rounded-full bg-rose-100 px-4 py-2 text-xs font-extrabold text-rose-700 hover:bg-rose-200"
+                  >
+                    REMOVE IMAGE
+                  </button>
+                ) : null}
+              </div>
             </div>
-          )}
+          </SectionCard>
+
+          <SectionCard
+            title={form.type === "event_package" ? "5. Inclusions" : "Inclusions"}
+            description="Put one inclusion per line."
+          >
+            <textarea
+              value={form.inclusions}
+              onChange={(e) => updateForm("inclusions", e.target.value)}
+              rows={5}
+              placeholder={
+                form.type === "event_package"
+                  ? "Event coordination\nBasic sound system\nTables and chairs\nFood package inclusions"
+                  : "One inclusion per line\nTables and chairs\nEvent coordination"
+              }
+              className="w-full resize-none rounded-2xl border border-black/10 bg-[#fafaf7] px-4 py-3 text-sm font-bold outline-none focus:border-[#355240]"
+            />
+          </SectionCard>
+
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={resetForm}
+              disabled={saving}
+              className="rounded-full border border-black/10 bg-white px-7 py-3 text-xs font-extrabold text-black/55 hover:bg-black/5 disabled:opacity-50"
+            >
+              CANCEL
+            </button>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-full bg-[#355240] px-7 py-3 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {saving ? "SAVING..." : editingId ? "SAVE CHANGES" : "ADD PACKAGE"}
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      <div className="rounded-3xl border border-black/10 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-extrabold text-[#355240]">
+              Package List
+            </h2>
+            <p className="text-sm font-semibold text-black/45">
+              {filteredPackages.length} item(s)
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              startCreate(activeType === "all" ? "resort_venue" : activeType)
+            }
+            className="w-fit rounded-full bg-[#355240] px-5 py-2 text-xs font-extrabold text-white hover:opacity-90"
+          >
+            ADD PACKAGE
+          </button>
         </div>
+
+        {loading ? (
+          <div className="p-5 text-sm font-bold text-black/50">
+            Loading packages...
+          </div>
+        ) : filteredPackages.length === 0 ? (
+          <div className="p-8 text-center">
+            <h3 className="text-2xl font-extrabold text-[#355240]">
+              No packages yet
+            </h3>
+            <p className="mt-2 text-sm font-semibold text-black/45">
+              Add your first package.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 p-5 lg:grid-cols-2">
+            {filteredPackages.map((pkg) => (
+              <PackageCard
+                key={pkg._id}
+                pkg={pkg}
+                onEdit={() => startEdit(pkg)}
+                onToggleStatus={() => toggleStatus(pkg)}
+                onDelete={() => deletePackage(pkg)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </HotelAdminShell>
+  );
+}
+
+function TypeButton({ active, onClick, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-5 py-2 text-xs font-extrabold ${
+        active
+          ? "bg-[#355240] text-white"
+          : "border border-black/10 bg-white text-[#355240]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function InputLabel({ children }) {
+  return (
+    <span className="text-xs font-extrabold uppercase tracking-wide text-black/45">
+      {children}
+    </span>
+  );
+}
+
+function SectionCard({ title, description, action, children }) {
+  return (
+    <div className="mt-5 rounded-3xl border border-[#355240]/15 bg-[#355240]/5 p-4">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-lg font-extrabold text-[#355240]">{title}</h3>
+          {description ? (
+            <p className="mt-1 text-sm font-semibold text-black/50">
+              {description}
+            </p>
+          ) : null}
+        </div>
+
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+
+      {children}
+    </div>
   );
 }
 
 function PresetBox({ title, description, buttons }) {
   return (
-    <div className="md:col-span-2 rounded-2xl border border-[#355240]/15 bg-[#355240]/5 p-4">
+    <div className="mt-5 rounded-2xl border border-[#355240]/15 bg-[#355240]/5 p-4">
       <p className="text-sm font-extrabold text-[#355240]">{title}</p>
       <p className="mt-1 text-sm font-semibold text-black/50">{description}</p>
 
@@ -1524,6 +1858,217 @@ function PresetBox({ title, description, buttons }) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function PackageCard({ pkg, onEdit, onToggleStatus, onDelete }) {
+  const variants = Array.isArray(pkg.variants)
+    ? sortVariants(pkg.variants, pkg.type)
+    : [];
+
+  return (
+    <div
+      className={`rounded-3xl border p-5 ${
+        pkg.isActive
+          ? "border-black/10 bg-[#fafaf7]"
+          : "border-rose-100 bg-rose-50/50"
+      }`}
+    >
+      {pkg.imageUrl ? (
+        <div className="mb-4 h-44 overflow-hidden rounded-2xl border border-black/10 bg-white">
+          <img
+            src={pkg.imageUrl}
+            alt={pkg.title || "Package"}
+            className="h-full w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-[#355240]/10 px-3 py-1 text-[11px] font-extrabold text-[#355240]">
+          {getTypeLabel(pkg.type)}
+        </span>
+
+        <span
+          className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${
+            pkg.isActive
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-rose-100 text-rose-700"
+          }`}
+        >
+          {pkg.isActive ? "ACTIVE" : "INACTIVE"}
+        </span>
+      </div>
+
+      <h3 className="mt-3 text-xl font-extrabold text-[#355240]">
+        {pkg.title}
+      </h3>
+
+      {pkg.subtitle ? (
+        <p className="mt-1 text-sm font-bold text-black/50">{pkg.subtitle}</p>
+      ) : null}
+
+      {pkg.type === "event_package" ? (
+        <EventPackageSummary pkg={pkg} variants={variants} />
+      ) : variants.length ? (
+        <TimePackageSummary variants={variants} />
+      ) : (
+        <p className="mt-4 text-2xl font-extrabold text-[#355240]">
+          {formatPeso(pkg.price)}
+        </p>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-2 text-xs font-extrabold text-black/50">
+        {pkg.duration ? (
+          <span className="rounded-full bg-white px-3 py-1">
+            {pkg.duration}
+          </span>
+        ) : null}
+
+        {pkg.capacity ? (
+          <span className="rounded-full bg-white px-3 py-1">
+            {pkg.capacity}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-full border border-[#355240]/20 bg-white px-4 py-2 text-xs font-extrabold text-[#355240] hover:bg-[#355240]/5"
+        >
+          EDIT
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleStatus}
+          className={`rounded-full px-4 py-2 text-xs font-extrabold ${
+            pkg.isActive
+              ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+              : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+          }`}
+        >
+          {pkg.isActive ? "DEACTIVATE" : "ACTIVATE"}
+        </button>
+
+        <button
+          type="button"
+          onClick={onDelete}
+          className="rounded-full bg-rose-100 px-4 py-2 text-xs font-extrabold text-rose-700 hover:bg-rose-200"
+        >
+          DELETE
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EventPackageSummary({ pkg, variants }) {
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="rounded-2xl border border-[#355240]/15 bg-white p-4">
+        <p className="text-xs font-extrabold uppercase tracking-wide text-black/45">
+          Capacity Rates
+        </p>
+
+        <div className="mt-3 overflow-hidden rounded-2xl border border-black/10">
+          <div className="grid grid-cols-4 bg-[#355240] px-3 py-2 text-[11px] font-extrabold uppercase tracking-wide text-white">
+            <div>Pax</div>
+            <div>Time</div>
+            <div>Price</div>
+            <div>Status</div>
+          </div>
+
+          {variants.length ? (
+            variants.map((variant) => {
+              const pax = Number(variant.pax || parsePaxFromLabel(variant.label));
+              const timeLabel =
+                variant.timeVariationLabel ||
+                inferTimeLabelFromSlots(variant.timeSlots);
+
+              return (
+                <div
+                  key={variant._id || variant.label}
+                  className={`grid grid-cols-4 border-t border-black/10 px-3 py-2 text-xs font-bold ${
+                    variant.isActive === false ? "opacity-50" : ""
+                  }`}
+                >
+                  <div className="text-[#355240]">{pax || "—"} Pax</div>
+                  <div className="text-black/60">{timeLabel}</div>
+                  <div className="text-[#355240]">{formatPeso(variant.price)}</div>
+                  <div
+                    className={
+                      variant.isActive === false
+                        ? "text-rose-700"
+                        : "text-emerald-700"
+                    }
+                  >
+                    {variant.isActive === false ? "Inactive" : "Active"}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="px-3 py-3 text-xs font-bold text-black/50">
+              No capacity rates configured.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-[#355240]/15 bg-white p-4">
+        <p className="text-xs font-extrabold uppercase tracking-wide text-black/45">
+          Available Venues
+        </p>
+
+        {Array.isArray(pkg.availableVenues) && pkg.availableVenues.length ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {pkg.availableVenues.map((venue) => (
+              <span
+                key={venue}
+                className="rounded-full bg-[#355240]/10 px-3 py-1 text-xs font-extrabold text-[#355240]"
+              >
+                {venue}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs font-bold text-rose-700">
+            No venues selected.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TimePackageSummary({ variants }) {
+  return (
+    <div className="mt-4 grid gap-2">
+      {variants.map((variant) => (
+        <div
+          key={variant._id || variant.label}
+          className={`rounded-2xl border border-[#355240]/15 bg-white p-4 ${
+            variant.isActive === false ? "opacity-50" : ""
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-extrabold text-[#355240]">
+              {variant.label}
+            </p>
+
+            <p className="text-lg font-extrabold text-[#355240]">
+              {formatPeso(variant.price)}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

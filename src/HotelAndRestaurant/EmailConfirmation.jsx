@@ -1,21 +1,43 @@
-// EmailConfirmation.jsx
+// src/Frontend/HotelAndRestaurant/EmailConfirmation.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-const maskEmail = (email) => {
+function getHotelApiBase() {
+  const raw = (
+    import.meta.env.VITE_HOTEL_API_BASE ||
+    import.meta.env.VITE_API_BASE ||
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
+
+  if (raw.endsWith("/api/hotel")) return raw;
+  if (raw.endsWith("/api")) return `${raw}/hotel`;
+
+  return `${raw}/api/hotel`;
+}
+
+const API_BASE = getHotelApiBase();
+
+function maskEmail(email = "") {
   if (!email || !email.includes("@")) return "your email";
-  const [name, domain] = email.split("@");
-  const maskedName =
-    name.length <= 2 ? `${name[0] || ""}*` : `${name.slice(0, 2)}***${name.slice(-1)}`;
-  return `${maskedName}@${domain}`;
-};
 
-const EmailConfirmation = () => {
-  const { verificationToken } = useParams();
+  const [local, domain] = email.split("@");
+
+  const maskedLocal =
+    local.length <= 2
+      ? `${local.charAt(0)}*`
+      : `${local.slice(0, 2)}***${local.slice(-1)}`;
+
+  return `${maskedLocal}@${domain}`;
+}
+
+export default function EmailConfirmation() {
+  const { verificationToken, token } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Get email automatically (no input)
+  const finalToken = verificationToken || token || "";
+
   const email =
     location.state?.email ||
     sessionStorage.getItem("pendingVerificationEmail") ||
@@ -23,160 +45,195 @@ const EmailConfirmation = () => {
 
   const maskedEmail = useMemo(() => maskEmail(email), [email]);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(finalToken));
   const [resending, setResending] = useState(false);
+
   const [status, setStatus] = useState({
     type: "info",
-    message: "Check your email for the verification link.",
+    message: finalToken
+      ? "Verifying your email..."
+      : "Please check your email and click the verification button.",
   });
 
   useEffect(() => {
-    let timer;
+    let redirectTimer;
 
-    const verify = async () => {
-      if (!verificationToken) return;
+    async function verifyEmail() {
+      if (!finalToken) return;
 
       setLoading(true);
-      setStatus({ type: "info", message: "Verifying your email…" });
+      setStatus({
+        type: "info",
+        message: "Verifying your email...",
+      });
 
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/verify-email/${verificationToken}`,
-          { method: "GET" }
+          `${API_BASE}/verify-email/${encodeURIComponent(finalToken)}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+          }
         );
 
         const data = await response.json().catch(() => ({}));
 
-        if (response.ok) {
-          setStatus({
-            type: "success",
-            message: "Email verified! Redirecting to login…",
-          });
-
-          sessionStorage.removeItem("pendingVerificationEmail");
-          timer = setTimeout(() => navigate("/hotel-login"), 900);
-        } else {
+        if (!response.ok) {
           setStatus({
             type: "error",
-            message: data.message || "Verification failed.",
+            message:
+              data.message ||
+              "Verification failed. The link may be invalid or expired.",
           });
+          return;
         }
-      } catch (err) {
-        console.error(err);
-        setStatus({ type: "error", message: "Network error. Please try again." });
+
+        sessionStorage.removeItem("pendingVerificationEmail");
+
+        setStatus({
+          type: "success",
+          message: "Email verified successfully. Redirecting to login...",
+        });
+
+        redirectTimer = setTimeout(() => {
+          navigate("/hotel-login", { replace: true });
+        }, 1200);
+      } catch (error) {
+        console.error("verifyEmail error:", error);
+
+        setStatus({
+          type: "error",
+          message:
+            "Network error while verifying your email. Please make sure the backend server is running.",
+        });
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    verify();
+    verifyEmail();
 
     return () => {
-      if (timer) clearTimeout(timer);
+      if (redirectTimer) clearTimeout(redirectTimer);
     };
-  }, [verificationToken, navigate]);
+  }, [finalToken, navigate]);
+
+  const handleProceed = () => {
+    navigate("/hotel-login", { replace: true });
+  };
 
   const handleResend = async () => {
     if (!email) {
       setStatus({
         type: "error",
-        message: "No signup email found. Please sign up again.",
+        message: "No email found. Please sign up or log in again.",
       });
       return;
     }
 
     setResending(true);
+    setStatus({
+      type: "info",
+      message: "Resending verification email...",
+    });
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/resend-verification`, {
+      const response = await fetch(`${API_BASE}/resend-verification`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({ email }),
       });
 
       const data = await response.json().catch(() => ({}));
 
-      if (response.ok) {
-        setStatus({
-          type: "success",
-          message: data.message || "Verification email resent!",
-        });
-      } else {
+      if (!response.ok) {
         setStatus({
           type: "error",
-          message: data.message || "Could not resend verification email.",
+          message: data.message || "Failed to resend verification email.",
         });
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setStatus({ type: "error", message: "Network error while resending." });
+
+      setStatus({
+        type: "success",
+        message:
+          data.message || "Verification email has been sent successfully.",
+      });
+    } catch (error) {
+      console.error("resend verification error:", error);
+
+      setStatus({
+        type: "error",
+        message:
+          "Network error while resending verification email. Please make sure the backend server is running.",
+      });
     } finally {
       setResending(false);
     }
   };
 
+  const statusClass =
+    status.type === "success"
+      ? "text-emerald-700"
+      : status.type === "error"
+      ? "text-red-600"
+      : "text-[#2F5E3A]/80";
+
   return (
-    <div className="min-h-screen w-full bg-[#e9e4d7] flex items-center justify-center p-6">
-      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-[0_18px_40px_rgba(0,0,0,0.12)] px-6 py-12 sm:px-14 sm:py-16">
-        <div className="flex flex-col items-center text-center">
-          {/* ✅ Use AccountVerification.jpg */}
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#e9e4d7] px-4 py-10">
+      <div className="w-full max-w-4xl rounded-[32px] bg-white px-6 py-12 text-center shadow-[0_20px_50px_rgba(0,0,0,0.14)] sm:px-12">
+        <div className="mx-auto flex max-w-2xl flex-col items-center">
           <img
             src="/AccountVerification.jpg"
             alt="Account verification"
-            className="w-[200px] sm:w-[240px] h-auto"
+            className="h-auto w-[210px] sm:w-[250px]"
           />
 
-          <h1 className="mt-8 text-3xl sm:text-4xl font-extrabold text-[#2F5E3A]">
+          <h1 className="mt-8 text-3xl font-extrabold text-[#2F5E3A] sm:text-4xl">
             Verify your email address
           </h1>
 
-          <p className="mt-5 max-w-xl text-[#2F5E3A] font-semibold leading-relaxed">
-            An email with your account confirmation link has been <br />
-            sent to your email{" "}
-            <span className="font-extrabold">{maskedEmail}</span>
+          <p className="mt-5 max-w-xl font-semibold leading-relaxed text-[#2F5E3A]">
+            {finalToken
+              ? "Please wait while we verify your account."
+              : "A verification link has been sent to"}{" "}
+            {!finalToken && (
+              <span className="font-extrabold">{maskedEmail}</span>
+            )}
           </p>
 
-          <p className="mt-4 text-[#2F5E3A] font-semibold">
-            Check your email and come back to proceed!
-          </p>
-
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={() => navigate("/hotel-login")}
-              disabled={loading}
-              className="h-11 w-40 rounded-full text-white font-semibold shadow-sm hover:opacity-95 disabled:opacity-60"
-              style={{ backgroundColor: "#2F5E3A" }}
-            >
-              {loading ? "Please wait…" : "Proceed"}
-            </button>
-
-            <button
-              onClick={handleResend}
-              disabled={resending}
-              className="h-11 w-40 rounded-full text-white font-semibold shadow-sm hover:opacity-95 disabled:opacity-60"
-              style={{ backgroundColor: "#2F5E3A" }}
-            >
-              {resending ? "Resending…" : "Resend Email"}
-            </button>
-          </div>
-
-          {/* Optional subtle status line */}
           {status?.message && (
-            <p
-              className={`mt-6 text-sm font-semibold ${
-                status.type === "error"
-                  ? "text-red-600"
-                  : status.type === "success"
-                  ? "text-emerald-700"
-                  : "text-[#2F5E3A]/80"
-              }`}
-            >
+            <p className={`mt-6 text-sm font-semibold ${statusClass}`}>
               {status.message}
             </p>
           )}
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleProceed}
+              disabled={loading}
+              className="h-11 w-44 rounded-full bg-[#2F5E3A] font-semibold text-white shadow-sm transition hover:bg-[#24492d] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "Verifying..." : "Proceed to Login"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={loading || resending}
+              className="h-11 w-44 rounded-full bg-[#2F5E3A] font-semibold text-white shadow-sm transition hover:bg-[#24492d] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {resending ? "Resending..." : "Resend Email"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default EmailConfirmation;
+}

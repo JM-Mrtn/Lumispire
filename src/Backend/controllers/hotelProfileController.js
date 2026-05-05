@@ -6,8 +6,101 @@ import {
   isValidObjectId,
 } from "../utils/hotelAuthHelpers.js";
 
+const ID_REUPLOAD_COOLDOWN_MS = 60 * 1000;
+
 function getUserIdFromDecoded(decoded = {}) {
   return decoded.userId || decoded.id || decoded.hotelUserId || decoded._id || "";
+}
+
+function toDate(value) {
+  if (!value) return null;
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function addMs(date, ms) {
+  return new Date(date.getTime() + ms);
+}
+
+function secondsUntil(date) {
+  const target = toDate(date);
+  if (!target) return 0;
+
+  return Math.max(0, Math.ceil((target.getTime() - Date.now()) / 1000));
+}
+
+function buildIdUploadPolicy(user, verification = null) {
+  const status = String(user?.idVerificationStatus || "not_submitted");
+  const isVerified =
+    user?.isIdentityVerified === true || status === "verified";
+
+  const reviewDecision = String(verification?.reviewDecision || "");
+  const effectiveStatus =
+    reviewDecision === "auto_rejected" && status !== "verified"
+      ? "rejected"
+      : status;
+
+  if (isVerified) {
+    return {
+      canUpload: false,
+      blockType: "verified",
+      message: "Your ID is already approved. Uploading another ID is disabled.",
+      lockedUntil: null,
+      secondsRemaining: 0,
+    };
+  }
+
+  if (effectiveStatus === "pending") {
+    return {
+      canUpload: false,
+      blockType: "manual_review",
+      message:
+        "Your uploaded ID is still under manual review. You can upload again only after the admin rejects it.",
+      lockedUntil: null,
+      secondsRemaining: 0,
+    };
+  }
+
+  if (effectiveStatus === "rejected") {
+    const lastActionDate =
+      toDate(verification?.reviewedAt) ||
+      toDate(verification?.updatedAt) ||
+      toDate(verification?.createdAt) ||
+      toDate(user?.updatedAt) ||
+      new Date();
+
+    const lockedUntil = addMs(lastActionDate, ID_REUPLOAD_COOLDOWN_MS);
+    const remaining = secondsUntil(lockedUntil);
+
+    if (remaining > 0) {
+      return {
+        canUpload: false,
+        blockType: "cooldown",
+        message: `Please wait ${remaining} second${
+          remaining === 1 ? "" : "s"
+        } before uploading another ID.`,
+        lockedUntil: lockedUntil.toISOString(),
+        secondsRemaining: remaining,
+      };
+    }
+
+    return {
+      canUpload: true,
+      blockType: "",
+      message: "You can upload another ID now.",
+      lockedUntil: null,
+      secondsRemaining: 0,
+    };
+  }
+
+  return {
+    canUpload: true,
+    blockType: "",
+    message: "You can upload an ID now.",
+    lockedUntil: null,
+    secondsRemaining: 0,
+  };
 }
 
 const getProfilePictureUrl = (user) => {
@@ -21,7 +114,13 @@ const getProfilePictureUrl = (user) => {
 
 export const getHotelUserProfile = async (req, res) => {
   const auth = requireHotelUserAuth(req);
-  if (!auth.ok) return res.status(auth.status).json({ message: auth.message });
+
+  if (!auth.ok) {
+    return res.status(auth.status).json({
+      success: false,
+      message: auth.message,
+    });
+  }
 
   try {
     const userId = getUserIdFromDecoded(auth.decoded);
@@ -30,21 +129,34 @@ export const getHotelUserProfile = async (req, res) => {
       .populate({
         path: "hotelIdVerificationId",
         select:
-          "screeningStatus confidenceScore reviewDecision reviewRemarks reasons createdAt aiConnected aiConnectionStatus aiProvider aiModel aiCheckedAt aiSummary aiDocumentType aiRiskLevel aiDecision aiError",
+          "screeningStatus confidenceScore reviewDecision reviewRemarks reasons createdAt updatedAt reviewedAt reviewedByAdmin aiConnected aiConnectionStatus aiProvider aiModel aiCheckedAt aiSummary aiDocumentType aiRiskLevel aiDecision aiError",
       })
       .select(
-        "-password -passwordHash -verificationToken -verificationTokenExpiry -usedVerificationTokens -resetPasswordToken -resetPasswordExpiry -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
+        "-password -passwordHash -verificationToken -verificationTokenExpiry -usedVerificationTokens -resetPasswordToken -resetPasswordTokenHash -resetPasswordExpiresAt -resetPasswordExpires -resetPasswordExpiry -changePasswordOtpHash -changePasswordOtpExpiresAt -passwordChangeOtpHash -passwordChangeOtpExpiresAt -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
       );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
 
     const plain = user.toObject();
     plain.profilePicture = getProfilePictureUrl(user);
+    plain.idUploadPolicy = buildIdUploadPolicy(
+      user,
+      plain.hotelIdVerificationId || null
+    );
 
     return res.status(200).json(plain);
   } catch (err) {
     console.error("getHotelUserProfile error:", err);
-    return res.status(500).json({ message: "Error fetching profile." });
+
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching profile.",
+    });
   }
 };
 
@@ -52,7 +164,10 @@ export const getProfilePicture = async (req, res) => {
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      success: false,
+      message: "Invalid userId",
+    });
   }
 
   try {
@@ -60,16 +175,25 @@ export const getProfilePicture = async (req, res) => {
       "+profilePicture.data profilePicture.contentType profilePicture.filename profilePicture.size"
     );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
 
     if (!user.profilePicture?.data) {
-      return res.status(404).json({ message: "No profile picture found." });
+      return res.status(404).json({
+        success: false,
+        message: "No profile picture found.",
+      });
     }
 
     res.setHeader(
       "Content-Type",
       user.profilePicture.contentType || "application/octet-stream"
     );
+
     res.setHeader(
       "Content-Disposition",
       `inline; filename="${encodeURIComponent(
@@ -80,17 +204,30 @@ export const getProfilePicture = async (req, res) => {
     return res.send(user.profilePicture.data);
   } catch (err) {
     console.error("getProfilePicture error:", err);
-    return res.status(500).json({ message: "Error fetching profile picture." });
+
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching profile picture.",
+    });
   }
 };
 
 export const uploadProfilePicture = async (req, res) => {
   const auth = requireHotelUserAuth(req);
-  if (!auth.ok) return res.status(auth.status).json({ message: auth.message });
+
+  if (!auth.ok) {
+    return res.status(auth.status).json({
+      success: false,
+      message: auth.message,
+    });
+  }
 
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No image file uploaded." });
+      return res.status(400).json({
+        success: false,
+        message: "No image file uploaded.",
+      });
     }
 
     const userId = getUserIdFromDecoded(auth.decoded);
@@ -99,7 +236,12 @@ export const uploadProfilePicture = async (req, res) => {
       "+profilePicture.data"
     );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
 
     user.profilePicture = {
       data: req.file.buffer,
@@ -111,6 +253,7 @@ export const uploadProfilePicture = async (req, res) => {
     await user.save();
 
     return res.status(200).json({
+      success: true,
       message: "Profile picture uploaded successfully.",
       profilePicture: `/api/hotel/profile-picture/${user._id}`,
       user: {
@@ -125,31 +268,49 @@ export const uploadProfilePicture = async (req, res) => {
     });
   } catch (err) {
     console.error("uploadProfilePicture error:", err);
-    return res.status(500).json({ message: "Error uploading profile picture." });
+
+    return res.status(500).json({
+      success: false,
+      message: "Error uploading profile picture.",
+    });
   }
 };
 
 export const updateUser = async (req, res) => {
   const auth = requireHotelUserAuth(req);
-  if (!auth.ok) return res.status(auth.status).json({ message: auth.message });
+
+  if (!auth.ok) {
+    return res.status(auth.status).json({
+      success: false,
+      message: auth.message,
+    });
+  }
 
   const { userId } = req.params;
 
   if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: "Invalid userId" });
+    return res.status(400).json({
+      success: false,
+      message: "Invalid userId",
+    });
   }
 
   const tokenUserId = getUserIdFromDecoded(auth.decoded);
 
   if (String(tokenUserId) !== String(userId) && !auth.decoded.isAdmin) {
-    return res.status(403).json({ message: "Forbidden." });
+    return res.status(403).json({
+      success: false,
+      message: "Forbidden.",
+    });
   }
 
   try {
     const update = {};
 
-    ["firstName", "lastName", "phone", "username", "email"].forEach((k) => {
-      if (req.body[k] !== undefined) update[k] = String(req.body[k]).trim();
+    ["firstName", "lastName", "phone", "username", "email"].forEach((key) => {
+      if (req.body[key] !== undefined) {
+        update[key] = String(req.body[key]).trim();
+      }
     });
 
     if (update.email) update.email = update.email.toLowerCase();
@@ -161,7 +322,10 @@ export const updateUser = async (req, res) => {
       }).select("_id");
 
       if (exists) {
-        return res.status(409).json({ message: "Username already taken." });
+        return res.status(409).json({
+          success: false,
+          message: "Username already taken.",
+        });
       }
     }
 
@@ -172,19 +336,25 @@ export const updateUser = async (req, res) => {
       }).select("_id");
 
       if (exists) {
-        return res.status(409).json({ message: "Email already exists." });
+        return res.status(409).json({
+          success: false,
+          message: "Email already exists.",
+        });
       }
     }
 
     if (req.body.password) {
-      const pw = String(req.body.password || "");
-      const cpw = String(req.body.confirmPassword || "");
+      const password = String(req.body.password || "");
+      const confirmPassword = String(req.body.confirmPassword || "");
 
-      if (pw !== cpw) {
-        return res.status(400).json({ message: "Passwords do not match." });
+      if (password !== confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Passwords do not match.",
+        });
       }
 
-      const hashedPassword = await bcrypt.hash(pw, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       update.password = hashedPassword;
       update.passwordHash = hashedPassword;
@@ -202,19 +372,36 @@ export const updateUser = async (req, res) => {
       "-password -passwordHash -changePwOtpHash -changePwOtpExpiry -changePwOtpAttempts -pendingNewPasswordHash -changePwOtpLastSentAt"
     );
 
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
 
     const plain = user.toObject();
     plain.profilePicture = getProfilePictureUrl(user);
 
-    return res.status(200).json({ message: "Updated successfully", user: plain });
+    return res.status(200).json({
+      success: true,
+      message: "Updated successfully",
+      user: plain,
+    });
   } catch (err) {
-    console.error("updateUser error:", err);
-
     if (err?.code === 11000) {
-      return res.status(409).json({ message: "Username or email already exists." });
+      const field = Object.keys(err.keyPattern || {})[0] || "field";
+
+      return res.status(409).json({
+        success: false,
+        message: `${field} already exists.`,
+      });
     }
 
-    return res.status(500).json({ message: "Error updating user." });
+    console.error("updateUser error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Error updating user.",
+    });
   }
 };

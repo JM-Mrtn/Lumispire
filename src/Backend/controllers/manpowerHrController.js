@@ -18,6 +18,7 @@ import {
   findManpowerFileById,
   openManpowerGridFSDownloadStream,
 } from "../utils/manpowerGridfs.js";
+import { analyzeResumeAgainstVacancy } from "../utils/manpowerResumeScreening.js";
 
 function getSecret() {
   return (
@@ -148,6 +149,188 @@ function buildLeavePayload(row) {
   };
 }
 
+
+function getResumeScore(application) {
+  const score = Number(application?.resumeScreening?.score || 0);
+  return Number.isFinite(score) ? score : 0;
+}
+
+function getResumeStatusWeight(application) {
+  const status = String(application?.resumeScreening?.status || "").toLowerCase();
+
+  if (status === "strong_match") return 4;
+  if (status === "possible_match") return 3;
+  if (status === "weak_match") return 2;
+  if (status === "manual_review") return 1;
+
+  return 0;
+}
+
+function getAssessmentPercentage(application) {
+  const percentage = Number(application?.assessment?.percentage || 0);
+  return Number.isFinite(percentage) ? percentage : 0;
+}
+
+function compareByResumeQualification(a, b) {
+  const scoreDiff = getResumeScore(b) - getResumeScore(a);
+  if (scoreDiff !== 0) return scoreDiff;
+
+  const statusDiff = getResumeStatusWeight(b) - getResumeStatusWeight(a);
+  if (statusDiff !== 0) return statusDiff;
+
+  const assessmentDiff = getAssessmentPercentage(b) - getAssessmentPercentage(a);
+  if (assessmentDiff !== 0) return assessmentDiff;
+
+  return new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime();
+}
+
+function addResumeRanks(applications = []) {
+  const vacancyRanks = new Map();
+
+  return applications.map((application, index) => {
+    const vacancy = String(application?.vacancy || "Unassigned").trim() || "Unassigned";
+    const currentRank = Number(vacancyRanks.get(vacancy) || 0) + 1;
+    vacancyRanks.set(vacancy, currentRank);
+
+    return {
+      ...application,
+      resumeRank: currentRank,
+      overallResumeRank: index + 1,
+      resumeScore: getResumeScore(application),
+      resumeQualifiedStatus: application?.resumeScreening?.status || "not_screened",
+    };
+  });
+}
+
+function buildResumeScreeningSummary(applications = []) {
+  const groups = new Map();
+
+  for (const application of applications) {
+    const vacancy = String(application?.vacancy || "Unassigned").trim() || "Unassigned";
+
+    if (!groups.has(vacancy)) {
+      groups.set(vacancy, {
+        vacancy,
+        totalApplicants: 0,
+        screenedApplicants: 0,
+        strongMatches: 0,
+        possibleMatches: 0,
+        weakMatches: 0,
+        manualReview: 0,
+        notScreened: 0,
+        totalScore: 0,
+        topScore: 0,
+        topApplicant: null,
+      });
+    }
+
+    const group = groups.get(vacancy);
+    const score = getResumeScore(application);
+    const status = String(application?.resumeScreening?.status || "not_screened").toLowerCase();
+    const hasScreening = Boolean(application?.resumeScreening?.screenedAt || score || status !== "not_screened");
+
+    group.totalApplicants += 1;
+
+    if (hasScreening) {
+      group.screenedApplicants += 1;
+      group.totalScore += score;
+    } else {
+      group.notScreened += 1;
+    }
+
+    if (status === "strong_match") group.strongMatches += 1;
+    else if (status === "possible_match") group.possibleMatches += 1;
+    else if (status === "weak_match") group.weakMatches += 1;
+    else if (status === "manual_review") group.manualReview += 1;
+    else group.notScreened += hasScreening ? 1 : 0;
+
+    if (!group.topApplicant || compareByResumeQualification(application, group.topApplicant) < 0) {
+      group.topScore = score;
+      group.topApplicant = {
+        _id: application?._id,
+        fullName: [application?.firstName, application?.middleName, application?.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim(),
+        email: application?.email || "",
+        score,
+        status: application?.resumeScreening?.status || "not_screened",
+      };
+    }
+  }
+
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      averageScore: group.screenedApplicants
+        ? Math.round((group.totalScore / group.screenedApplicants + Number.EPSILON) * 100) / 100
+        : 0,
+    }))
+    .sort((a, b) => a.vacancy.localeCompare(b.vacancy));
+}
+
+function streamToBuffer(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+
+    stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    stream.on("error", reject);
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
+  });
+}
+
+async function buildResumeFileFromApplication(application) {
+  const resumeMeta = application?.requirements?.resume;
+  const fileId = resumeMeta?.fileId ? String(resumeMeta.fileId) : "";
+
+  if (!fileId || !isValidObjectId(fileId)) {
+    throw new Error("Resume file is missing for this applicant. New applications will save the resume after applying the schema fix.");
+  }
+
+  const fileDoc = await findManpowerFileById(fileId);
+
+  if (!fileDoc) {
+    throw new Error("Resume file data was not found in storage.");
+  }
+
+  const buffer = await streamToBuffer(openManpowerGridFSDownloadStream(fileId));
+
+  return {
+    buffer,
+    originalname:
+      resumeMeta?.originalName ||
+      fileDoc?.metadata?.originalName ||
+      fileDoc?.filename ||
+      "resume",
+    mimetype:
+      resumeMeta?.mimetype ||
+      fileDoc?.metadata?.mimetype ||
+      fileDoc?.contentType ||
+      "application/octet-stream",
+    size: Number(resumeMeta?.size || fileDoc?.length || buffer.length || 0),
+  };
+}
+
+async function screenAndSaveResumeForApplication(application) {
+  const resumeFile = await buildResumeFileFromApplication(application);
+
+  const resumeScreening = await analyzeResumeAgainstVacancy({
+    file: resumeFile,
+    vacancy: application.vacancy,
+  });
+
+  application.resumeScreening = resumeScreening;
+
+  if (application.status === "PENDING") {
+    application.status = "FOR_REVIEW";
+  }
+
+  await application.save();
+
+  return application;
+}
+
 export async function manpowerHrLogin(req, res) {
   try {
     const username = String(req.body?.username || "").trim();
@@ -192,18 +375,57 @@ export async function listManpowerApplications(req, res) {
   try {
     const status = String(req.query?.status || "").trim().toUpperCase();
     const vacancy = String(req.query?.vacancy || "").trim();
+    const resumeStatus = String(req.query?.resumeStatus || "").trim().toLowerCase();
+    const search = String(req.query?.search || "").trim();
+    const sortBy = String(req.query?.sortBy || "newest").trim().toLowerCase();
+    const minScore = Number(req.query?.minScore || 0);
 
     const query = {};
 
     if (status) query.status = status;
     if (vacancy) query.vacancy = vacancy;
 
-    const applications = await ManpowerApplication.find(query)
-      .sort({ createdAt: -1 })
-      .lean();
+    if (resumeStatus) {
+      query["resumeScreening.status"] = resumeStatus;
+    }
+
+    if (Number.isFinite(minScore) && minScore > 0) {
+      query["resumeScreening.score"] = { $gte: minScore };
+    }
+
+    if (search) {
+      const regex = new RegExp(String(search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      query.$or = [
+        { firstName: regex },
+        { middleName: regex },
+        { lastName: regex },
+        { email: regex },
+        { contactNo: regex },
+        { vacancy: regex },
+      ];
+    }
+
+    let applications = await ManpowerApplication.find(query).lean();
+
+    if (["resume_score", "most_qualified", "qualified"].includes(sortBy)) {
+      applications = applications.sort(compareByResumeQualification);
+    } else if (sortBy === "lowest_score") {
+      applications = applications.sort((a, b) => compareByResumeQualification(b, a));
+    } else if (sortBy === "oldest") {
+      applications = applications.sort(
+        (a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime()
+      );
+    } else {
+      applications = applications.sort(
+        (a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime()
+      );
+    }
+
+    const rankedApplications = addResumeRanks(applications);
 
     return res.json({
-      applications,
+      applications: rankedApplications,
+      resumeScreeningSummary: buildResumeScreeningSummary(applications),
     });
   } catch (error) {
     console.error("listManpowerApplications error:", error);
@@ -516,6 +738,97 @@ export async function hireManpowerApplicant(req, res) {
 
     return res.status(500).json({
       message: error?.message || "Failed to hire applicant.",
+    });
+  }
+}
+
+export async function rescreenManpowerApplicantResume(req, res) {
+  try {
+    const applicationId = String(req.params?.id || "").trim();
+
+    if (!isValidObjectId(applicationId)) {
+      return res.status(400).json({ message: "Invalid application id." });
+    }
+
+    const application = await ManpowerApplication.findById(applicationId);
+
+    if (!application) {
+      return res.status(404).json({ message: "Application not found." });
+    }
+
+    const updatedApplication = await screenAndSaveResumeForApplication(application);
+
+    return res.json({
+      message: "Resume screening updated successfully.",
+      application: updatedApplication.toObject(),
+    });
+  } catch (error) {
+    console.error("rescreenManpowerApplicantResume error:", error);
+    return res.status(500).json({
+      message: error?.message || "Failed to screen applicant resume.",
+    });
+  }
+}
+
+export async function rescreenManpowerApplicantResumes(req, res) {
+  try {
+    const vacancy = String(req.body?.vacancy || req.query?.vacancy || "").trim();
+    const status = String(req.body?.status || req.query?.status || "").trim().toUpperCase();
+    const limit = Math.max(1, Math.min(Number(req.body?.limit || req.query?.limit || 10), 25));
+
+    const query = {};
+    if (vacancy) query.vacancy = vacancy;
+    if (status) query.status = status;
+
+    const applications = await ManpowerApplication.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    const results = [];
+
+    for (const application of applications) {
+      try {
+        const updatedApplication = await screenAndSaveResumeForApplication(application);
+        results.push({
+          _id: updatedApplication._id,
+          vacancy: updatedApplication.vacancy,
+          applicantName: [
+            updatedApplication.firstName,
+            updatedApplication.middleName,
+            updatedApplication.lastName,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim(),
+          score: updatedApplication?.resumeScreening?.score || 0,
+          status: updatedApplication?.resumeScreening?.status || "not_screened",
+          success: true,
+        });
+      } catch (screeningError) {
+        results.push({
+          _id: application._id,
+          vacancy: application.vacancy,
+          applicantName: [application.firstName, application.middleName, application.lastName]
+            .filter(Boolean)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim(),
+          success: false,
+          message: screeningError?.message || "Failed to screen resume.",
+        });
+      }
+    }
+
+    return res.json({
+      message: "Resume screening batch completed.",
+      processed: results.length,
+      results,
+    });
+  } catch (error) {
+    console.error("rescreenManpowerApplicantResumes error:", error);
+    return res.status(500).json({
+      message: error?.message || "Failed to screen applicant resumes.",
     });
   }
 }

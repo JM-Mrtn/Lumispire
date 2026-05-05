@@ -12,10 +12,12 @@ const BOOKING_GAP_MINUTES = 60;
 const BOOKING_GAP_MS = BOOKING_GAP_MINUTES * 60 * 1000;
 const BLOCKING_STATUSES = ["PENDING", "CONFIRMED"];
 
-
 const SEASONAL_MARKUP_PERCENT = 10;
 const WEEKEND_MARKUP_PERCENT = 5;
 const MONTHLY_BOOKING_MARKUP_PERCENT = 1;
+
+const MAX_ADDITIONAL_PAX = 20;
+const ADDITIONAL_PAX_RATE = 250;
 
 function getDatePartsFromISO(dateString = "") {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ""))) return null;
@@ -55,7 +57,11 @@ function getMonthRange(dateString = "") {
   };
 }
 
-function calculateDynamicPrice({ basePrice = 0, date = "", monthlyBookingCount = 0 }) {
+function calculateDynamicPrice({
+  basePrice = 0,
+  date = "",
+  monthlyBookingCount = 0,
+}) {
   const safeBasePrice = Number(basePrice || 0);
   const safeMonthlyCount = Math.max(0, Number(monthlyBookingCount || 0));
 
@@ -65,9 +71,13 @@ function calculateDynamicPrice({ basePrice = 0, date = "", monthlyBookingCount =
   const weekendIncreasePercent = isWeekendDate(date)
     ? WEEKEND_MARKUP_PERCENT
     : 0;
-  const monthlyBookingIncreasePercent = safeMonthlyCount * MONTHLY_BOOKING_MARKUP_PERCENT;
+  const monthlyBookingIncreasePercent =
+    safeMonthlyCount * MONTHLY_BOOKING_MARKUP_PERCENT;
+
   const totalIncreasePercent =
-    seasonalIncreasePercent + weekendIncreasePercent + monthlyBookingIncreasePercent;
+    seasonalIncreasePercent +
+    weekendIncreasePercent +
+    monthlyBookingIncreasePercent;
 
   return {
     basePrice: safeBasePrice,
@@ -81,7 +91,6 @@ function calculateDynamicPrice({ basePrice = 0, date = "", monthlyBookingCount =
     totalIncreasePercent,
   };
 }
-
 
 const DEFAULT_ROOM_RATES = {
   "8 Hours": {
@@ -305,7 +314,11 @@ function normalizeBookingInterval(booking) {
   return buildBookingInterval(booking.date, booking.time);
 }
 
-async function countMonthlyConfirmedHotelBookings({ roomType, date, excludeBookingId = "" }) {
+async function countMonthlyConfirmedHotelBookings({
+  roomType,
+  date,
+  excludeBookingId = "",
+}) {
   const range = getMonthRange(date);
   if (!range) return 0;
 
@@ -322,7 +335,6 @@ async function countMonthlyConfirmedHotelBookings({ roomType, date, excludeBooki
 
   return HotelRoomBooking.countDocuments(query);
 }
-
 
 async function findPackageByIdOrTitle({ packageId = "", packageTitle = "" }) {
   if (packageId && isValidObjectId(packageId)) {
@@ -345,8 +357,7 @@ async function findPackageByIdOrTitle({ packageId = "", packageTitle = "" }) {
 
   return (
     packages.find(
-      (item) =>
-        cleanText(item.title).toLowerCase() === cleanTitle.toLowerCase()
+      (item) => cleanText(item.title).toLowerCase() === cleanTitle.toLowerCase()
     ) || null
   );
 }
@@ -640,10 +651,13 @@ export const createHotelRoomBooking = async (req, res) => {
       });
     }
 
-    if (pax > resolved.maxPax) {
+    const baseMaxPax = resolved.maxPax;
+    const maxBookablePax = baseMaxPax + MAX_ADDITIONAL_PAX;
+
+    if (pax > maxBookablePax) {
       return res.status(400).json({
         success: false,
-        message: `${resolved.roomType} room allows maximum ${resolved.maxPax} pax only.`,
+        message: `${resolved.roomType} room allows maximum ${maxBookablePax} pax (${baseMaxPax} base + ${MAX_ADDITIONAL_PAX} additional).`,
       });
     }
 
@@ -655,6 +669,7 @@ export const createHotelRoomBooking = async (req, res) => {
     }
 
     const interval = buildBookingInterval(date, time);
+
     if (!interval) {
       return res.status(400).json({
         success: false,
@@ -687,6 +702,11 @@ export const createHotelRoomBooking = async (req, res) => {
       monthlyBookingCount: monthlyConfirmedBookings,
     });
 
+    const baseAmount = dynamicPricing.finalPrice;
+    const additionalPax = Math.max(0, pax - baseMaxPax);
+    const additionalPaxCharge = additionalPax * ADDITIONAL_PAX_RATE;
+    const finalPrice = baseAmount + additionalPaxCharge;
+
     const booking = await HotelRoomBooking.create({
       userId: user._id,
       firstName: user.firstName || "",
@@ -706,9 +726,15 @@ export const createHotelRoomBooking = async (req, res) => {
       endDateTime: interval.endDateTime,
 
       pax,
-      maxPax: resolved.maxPax,
-      price: dynamicPricing.finalPrice,
+      baseMaxPax,
+      maxPax: maxBookablePax,
+      maxAdditionalPax: MAX_ADDITIONAL_PAX,
+      additionalPax,
+      additionalPaxRate: ADDITIONAL_PAX_RATE,
+      additionalPaxCharge,
+      price: finalPrice,
       basePrice: dynamicPricing.basePrice,
+      baseAmount,
       seasonalIncreasePercent: dynamicPricing.seasonalIncreasePercent,
       weekendIncreasePercent: dynamicPricing.weekendIncreasePercent,
       monthlyBookingIncreasePercent: dynamicPricing.monthlyBookingIncreasePercent,
@@ -799,6 +825,7 @@ export const checkHotelRoomAvailability = async (req, res) => {
     }
 
     const interval = buildBookingInterval(date, time);
+
     if (!interval) {
       return res.status(400).json({
         success: false,
@@ -816,8 +843,10 @@ export const checkHotelRoomAvailability = async (req, res) => {
       roomType,
       date,
     });
+
     const fallback = DEFAULT_ROOM_RATES?.[duration]?.[roomType] || null;
     const basePrice = Number(fallback?.price || 0);
+
     const dynamicPricing = calculateDynamicPrice({
       basePrice,
       date,
@@ -829,6 +858,8 @@ export const checkHotelRoomAvailability = async (req, res) => {
       available: !conflict,
       basePrice,
       price: dynamicPricing.finalPrice,
+      maxAdditionalPax: MAX_ADDITIONAL_PAX,
+      additionalPaxRate: ADDITIONAL_PAX_RATE,
       dynamicPricing,
       startDateTime: interval.startDateTime,
       endDateTime: interval.endDateTime,
@@ -888,17 +919,26 @@ export const adminGetAllHotelRoomBookings = async (req, res) => {
   }
 
   try {
-    const rows = await HotelRoomBooking.find()
+    const bookings = await HotelRoomBooking.find()
+      .populate(
+        "userId",
+        "firstName lastName fullName name email phone contactNumber"
+      )
       .select("-proof.data")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    return res.status(200).json(rows);
+    return res.status(200).json({
+      success: true,
+      bookings,
+    });
   } catch (err) {
     console.error("adminGetAllHotelRoomBookings error:", err);
 
     return res.status(500).json({
       success: false,
       message: "Error fetching hotel bookings.",
+      bookings: [],
     });
   }
 };
@@ -924,7 +964,9 @@ export const adminGetHotelRoomBookingProof = async (req, res) => {
   }
 
   try {
-    const booking = await HotelRoomBooking.findById(bookingId).select("+proof.data");
+    const booking = await HotelRoomBooking.findById(bookingId).select(
+      "+proof.data"
+    );
 
     if (!booking) {
       return res.status(404).json({
@@ -1002,6 +1044,7 @@ export const adminUpdateHotelRoomBookingStatus = async (req, res) => {
     }
 
     const interval = buildBookingInterval(booking.date, booking.time);
+
     if (!interval) {
       return res.status(400).json({
         success: false,
@@ -1180,8 +1223,6 @@ export const adminRescheduleHotelRoomBooking = async (req, res) => {
   }
 };
 
-
-
 function getAdminRescheduleRange(query = {}) {
   const from = cleanText(query.from || todayLocalISO());
   const days = Math.min(365, Math.max(1, Number(query.days || 180)));
@@ -1210,7 +1251,11 @@ function listIsoDatesBetween(from, to, maxDays = 370) {
   return dates;
 }
 
-function getBlockedHotelRoomTimeSlotsForDate(bookings = [], date, candidateSlots = []) {
+function getBlockedHotelRoomTimeSlotsForDate(
+  bookings = [],
+  date,
+  candidateSlots = []
+) {
   return candidateSlots.filter((slot) => {
     const candidate = buildBookingInterval(date, slot);
     if (!candidate) return true;
@@ -1250,6 +1295,7 @@ export const adminGetHotelRoomRescheduleOptions = async (req, res) => {
   }
 
   const range = getAdminRescheduleRange(req.query);
+
   if (!range.ok) {
     return res.status(400).json({
       success: false,
@@ -1288,7 +1334,9 @@ export const adminGetHotelRoomRescheduleOptions = async (req, res) => {
         $lte: addDaysToISO(range.to, 1),
       },
     })
-      .select("_id roomType duration date time status isActive startDateTime endDateTime")
+      .select(
+        "_id roomType duration date time status isActive startDateTime endDateTime"
+      )
       .lean();
 
     const blockedTimeSlotsByDate = {};
@@ -1332,6 +1380,7 @@ export const adminGetHotelRoomRescheduleOptions = async (req, res) => {
     });
   } catch (err) {
     console.error("adminGetHotelRoomRescheduleOptions error:", err);
+
     return res.status(500).json({
       success: false,
       message: "Error loading Hotel & Condo reschedule blocked dates.",

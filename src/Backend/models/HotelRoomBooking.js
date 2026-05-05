@@ -85,6 +85,36 @@ const hotelRoomBookingSchema = new mongoose.Schema(
       min: 1,
     },
 
+    baseMaxPax: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    maxAdditionalPax: {
+      type: Number,
+      default: 20,
+      min: 0,
+    },
+
+    additionalPax: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    additionalPaxRate: {
+      type: Number,
+      default: 250,
+      min: 0,
+    },
+
+    additionalPaxCharge: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     price: {
       type: Number,
       required: true,
@@ -92,6 +122,7 @@ const hotelRoomBookingSchema = new mongoose.Schema(
     },
 
     basePrice: { type: Number, default: 0, min: 0 },
+    baseAmount: { type: Number, default: 0, min: 0 },
     seasonalIncreasePercent: { type: Number, default: 0, min: 0 },
     weekendIncreasePercent: { type: Number, default: 0, min: 0 },
     monthlyBookingIncreasePercent: { type: Number, default: 0, min: 0 },

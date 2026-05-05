@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import HotelFaqBot from "./HotelFaqBot";
 
 const BOOKING_GAP_MINUTES = 60;
 const BOOKING_GAP_MS = BOOKING_GAP_MINUTES * 60 * 1000;
@@ -145,6 +146,9 @@ const LEGACY_RESORT_PACKAGES = [
 const SEASONAL_MARKUP_PERCENT = 10;
 const WEEKEND_MARKUP_PERCENT = 5;
 const MONTHLY_BOOKING_MARKUP_PERCENT = 1;
+
+const MAX_ADDITIONAL_PAX = 20;
+const ADDITIONAL_PAX_RATE = 250;
 
 function getApiBase() {
   const raw = (
@@ -555,6 +559,12 @@ export default function ResortForm() {
     [selectedPackage]
   );
 
+  const baseCapacity = Number(capacityLimit || 0);
+
+  const maxBookablePax = useMemo(() => {
+    return baseCapacity ? baseCapacity + MAX_ADDITIONAL_PAX : null;
+  }, [baseCapacity]);
+
   const venueOptions = useMemo(() => {
     return displayPackages.map((item) => ({
       value: normalizeText(item.title),
@@ -622,7 +632,13 @@ export default function ResortForm() {
     });
   }, [basePrice, form.date, monthlyConfirmedBookingCount]);
 
-  const price = dynamicPricing.finalPrice || null;
+  const baseAmount = dynamicPricing.finalPrice || null;
+  const selectedPax = Number(form.pax || 0);
+  const additionalPax = baseCapacity
+    ? Math.max(0, selectedPax - baseCapacity)
+    : 0;
+  const additionalPaxCharge = additionalPax * ADDITIONAL_PAX_RATE;
+  const price = baseAmount ? baseAmount + additionalPaxCharge : null;
 
   const selectedDateObj = useMemo(() => isoToLocalDateObj(form.date), [form.date]);
   const minDateObj = useMemo(() => isoToLocalDateObj(todayLocalISO), [todayLocalISO]);
@@ -643,8 +659,8 @@ export default function ResortForm() {
 
     const numericValue = Number(clean);
 
-    if (capacityLimit && numericValue > capacityLimit) {
-      setField("pax", String(capacityLimit));
+    if (maxBookablePax && numericValue > maxBookablePax) {
+      setField("pax", String(maxBookablePax));
       return;
     }
 
@@ -1006,8 +1022,8 @@ export default function ResortForm() {
       next.pax = "Pax is required.";
     } else if (!/^\d+$/.test(form.pax) || Number(form.pax) <= 0) {
       next.pax = "Pax must be at least 1.";
-    } else if (capacityLimit && Number(form.pax) > capacityLimit) {
-      next.pax = `Maximum capacity is ${capacityLimit} pax.`;
+    } else if (maxBookablePax && Number(form.pax) > maxBookablePax) {
+      next.pax = `Maximum bookable pax is ${maxBookablePax} pax (${baseCapacity} base + ${MAX_ADDITIONAL_PAX} additional).`;
     }
 
     if (!price) next.price = "Price cannot be computed.";
@@ -1081,6 +1097,12 @@ export default function ResortForm() {
       selectedPackageTitle: selectedPackage?.title || form.venue,
       selectedCapacity: selectedPackage?.capacity || "",
       selectedCapacityLimit: capacityLimit || "",
+      baseCapacity,
+      maxBookablePax,
+      maxAdditionalPax: MAX_ADDITIONAL_PAX,
+      additionalPax,
+      additionalPaxRate: ADDITIONAL_PAX_RATE,
+      additionalPaxCharge,
       selectedInclusions: selectedPackage?.inclusions || [],
       selectedVariantLabel:
         selectedVariant?.label || normalizeVariationLabel(form.category),
@@ -1089,6 +1111,7 @@ export default function ResortForm() {
       pax: Number(form.pax),
       totalGuests: Number(form.pax),
       basePrice,
+      baseAmount,
       price,
       totalAmount: price,
       dynamicPricing,
@@ -1279,19 +1302,33 @@ export default function ResortForm() {
 
                 <Field
                   label="Number of Pax"
-                  placeholder={capacityLimit ? `Max ${capacityLimit} pax` : "Enter number of pax"}
+                  placeholder={maxBookablePax ? `Max ${maxBookablePax} pax` : "Enter number of pax"}
                   value={form.pax}
                   error={errors.pax}
                   inputMode="numeric"
-                  max={capacityLimit || undefined}
+                  max={maxBookablePax || undefined}
                   onChange={setPaxValue}
                 />
               </div>
 
               {capacityLimit ? (
-                <p className="mt-3 text-xs font-semibold text-white/80">
-                  Maximum capacity: {capacityLimit} pax
-                </p>
+                <div className="mt-3 rounded-xl bg-white/15 px-4 py-3 text-xs font-semibold text-white/90">
+                  <p>Base capacity: {baseCapacity} pax</p>
+                  <p>
+                    Additional pax allowed: up to {MAX_ADDITIONAL_PAX} pax at{" "}
+                    {formatPeso(ADDITIONAL_PAX_RATE)} per person
+                  </p>
+                  <p className="font-extrabold">
+                    Maximum bookable pax: {maxBookablePax} pax
+                  </p>
+                  {additionalPax > 0 ? (
+                    <p className="mt-1 text-amber-100">
+                      Additional charge: {additionalPax} pax ×{" "}
+                      {formatPeso(ADDITIONAL_PAX_RATE)} ={" "}
+                      {formatPeso(additionalPaxCharge)}
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
 
               {errors.price ? (
@@ -1300,14 +1337,22 @@ export default function ResortForm() {
                 </p>
               ) : null}
 
-              <div className="mt-9 flex items-center justify-between rounded-md bg-[#f7f7f2] px-4 py-3 text-[#52675b]">
-                <p className="font-['Montserrat',sans-serif] text-[20px] font-extrabold sm:text-[25px]">
-                  Total Amount:
-                </p>
+              <div className="mt-9 rounded-md bg-[#f7f7f2] px-4 py-4 text-[#52675b]">
+                <div className="flex items-center justify-between">
+                  <p className="font-['Montserrat',sans-serif] text-[20px] font-extrabold sm:text-[25px]">
+                    Total Amount:
+                  </p>
 
-                <p className="font-['Montserrat',sans-serif] text-[20px] font-extrabold sm:text-[25px]">
-                  {formatPeso(price)}
-                </p>
+                  <p className="font-['Montserrat',sans-serif] text-[20px] font-extrabold sm:text-[25px]">
+                    {formatPeso(price)}
+                  </p>
+                </div>
+
+                <div className="mt-3 grid gap-2 text-xs font-bold text-[#52675b]/80 sm:grid-cols-3">
+                  <p>Base price: {formatPeso(baseAmount)}</p>
+                  <p>Additional pax: {additionalPax}</p>
+                  <p>Additional charge: {formatPeso(additionalPaxCharge)}</p>
+                </div>
               </div>
 
               <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -1343,6 +1388,7 @@ export default function ResortForm() {
           goToProfile={goToProfile}
         />
       )}
+      <HotelFaqBot />
     </div>
   );
 }
@@ -1375,6 +1421,8 @@ function Header({ navigate, goToProfile, openMenu }) {
           <NavButton label="Home" onClick={() => navigate("/")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
+          <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
+          <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
         </nav>
 
         <button
@@ -1674,6 +1722,14 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
             onClick={() => {
               onClose();
               navigate("/hotel-contact-us");
+            }}
+          />
+
+          <MenuItem
+            label="FAQS"
+            onClick={() => {
+              onClose();
+              navigate("/hotel-faqs");
             }}
           />
 
