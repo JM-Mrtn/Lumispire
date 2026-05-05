@@ -5,16 +5,41 @@ import HotelAdminShell from "./HotelAdminShell";
 const AUTO_APPROVE_MIN_SCORE = 90;
 
 function getHotelAdminApiBase() {
-  const raw = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(
-    /\/+$/,
-    ""
-  );
+  const raw = (
+    import.meta.env.VITE_HOTEL_API_BASE ||
+    import.meta.env.VITE_API_BASE ||
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_SERVER_URL ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
 
-  if (raw.endsWith("/api/hotel-admin")) return raw;
-  if (raw.endsWith("/api")) return `${raw}/hotel-admin`;
-  if (raw.includes("/api/hotel-admin")) return raw;
+  // Already correct admin route
+  if (raw.endsWith("/api/hotel-admin")) {
+    return raw;
+  }
 
-  return `${raw}/api/hotel-admin`;
+  // Already correct hotel route
+  if (raw.endsWith("/api/hotel")) {
+    return raw;
+  }
+
+  // Example: https://lumispire-api.onrender.com/api
+  if (raw.endsWith("/api")) {
+    return `${raw}/hotel`;
+  }
+
+  // Example wrong value: https://lumispire-api.onrender.com/api/hotel/api/hotel-admin
+  if (raw.includes("/api/hotel/api/hotel-admin")) {
+    return raw.replace(/\/api\/hotel\/api\/hotel-admin.*$/i, "/api/hotel");
+  }
+
+  // Example: https://lumispire-api.onrender.com/api/something
+  if (raw.includes("/api/")) {
+    return raw.replace(/\/api\/.*$/i, "/api/hotel");
+  }
+
+  // Example: https://lumispire-api.onrender.com
+  return `${raw}/api/hotel`;
 }
 
 function getAdminToken() {
