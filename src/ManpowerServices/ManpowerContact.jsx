@@ -1,20 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const HERO_IMAGE = "/images/manpower-hero.jpg";
-const MANPOWER_HOME_ROUTE = "/manpower-services";
+const LOGO_IMAGE = "/ManpowerLogo.png";
+const HERO_IMAGE = "/ManpowerBanner.png";
 
-function BrandSeal({ small = false }) {
-  return (
-    <div
-      className={`flex shrink-0 items-center justify-center rounded-full border-[3px] border-[#315b42] bg-white text-center font-black leading-none text-[#315b42] ${
-        small ? "h-9 w-9 text-[9px]" : "h-12 w-12 text-[10px]"
-      }`}
-    >
-      LTC
-    </div>
-  );
-}
+const MANPOWER_HOME_ROUTE = "/manpower-services";
 
 function HeaderNavLink({ to, children, active = false }) {
   return (
@@ -153,7 +143,12 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
       message: form.message.trim(),
     };
 
-    if (!payload.name || !payload.email || !payload.subject || !payload.message) {
+    if (
+      !payload.name ||
+      !payload.email ||
+      !payload.subject ||
+      !payload.message
+    ) {
       setStatus({
         loading: false,
         success: "",
@@ -199,16 +194,19 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
       <header className="sticky top-0 z-50 border-b border-[#d5ddd2] bg-[#f7f9f5]/95 backdrop-blur">
         <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to={MANPOWER_HOME_ROUTE} className="flex items-center gap-3">
-            <BrandSeal />
+            <img
+              src={LOGO_IMAGE}
+              alt="Manpower Logo"
+              className="h-12 w-12 shrink-0 rounded-full object-contain"
+            />
+
             <span className="text-[24px] font-black tracking-wide text-[#315b42] sm:text-[28px]">
               MANPOWER
             </span>
           </Link>
 
           <nav className="hidden items-center gap-9 text-[12px] font-black uppercase tracking-wide lg:flex">
-            <HeaderNavLink to={MANPOWER_HOME_ROUTE}>
-              Home
-            </HeaderNavLink>
+            <HeaderNavLink to={MANPOWER_HOME_ROUTE}>Home</HeaderNavLink>
 
             <HeaderNavLink to="/manpower-positions">
               Job Offer
@@ -222,9 +220,7 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
               Contact
             </HeaderNavLink>
 
-            <HeaderNavLink to="/manpower-faqs">
-              FAQs
-            </HeaderNavLink>
+            <HeaderNavLink to="/manpower-faqs">FAQs</HeaderNavLink>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -302,27 +298,29 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
 
       <main>
         <section
-          className="relative h-[165px] bg-[#526b5a] bg-cover bg-center sm:h-[190px] md:h-[230px]"
+          className="relative flex min-h-[300px] items-center justify-center bg-[#526b5a] bg-cover bg-center px-4 text-center sm:min-h-[360px] md:min-h-[430px] lg:min-h-[500px]"
           style={{
             backgroundImage: `url(${HERO_IMAGE})`,
           }}
         >
-          <div className="absolute inset-0 bg-black/10" />
-        </section>
+          <div className="absolute inset-0 bg-black/40" />
 
-        <section className="relative overflow-hidden bg-[#0f3a1e]">
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#9ab987] to-transparent opacity-80" />
-
-          <div className="relative z-10 mx-auto max-w-7xl px-4 py-7 text-center sm:px-6 lg:px-8">
-            <h1 className="text-[25px] font-black leading-tight text-white drop-shadow sm:text-[31px] md:text-[34px]">
+          <div className="relative z-10 mx-auto max-w-5xl">
+            <h1 className="text-[32px] font-black leading-tight text-white drop-shadow-lg sm:text-[42px] md:text-[54px]">
               Contact Us
             </h1>
-            <div className="mx-auto mt-3 h-[3px] w-[280px] max-w-[75%] bg-white/45" />
+
+            <div className="mx-auto mt-5 h-[3px] w-[280px] max-w-[75%] bg-white/60" />
+
+            <p className="mx-auto mt-5 max-w-3xl text-[14px] font-semibold leading-relaxed text-white/95 sm:text-[16px] md:text-[18px]">
+              Reach out to LTC Manpower Services for inquiries, applications,
+              requirements, and other employment concerns.
+            </p>
           </div>
         </section>
 
         <section className="bg-[#294f35]">
-          <div className="mx-auto grid max-w-7xl gap-10 px-6 py-6 md:grid-cols-2 md:px-16 md:py-8 lg:px-28">
+          <div className="mx-auto grid max-w-7xl gap-10 px-6 py-10 md:grid-cols-2 md:px-16 md:py-12 lg:px-28">
             <div className="text-white">
               <h2 className="text-center text-[26px] font-black leading-tight sm:text-[30px]">
                 Get in touch
@@ -464,14 +462,20 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
           <div className="grid gap-4 md:grid-cols-[1.2fr_0.75fr_1.35fr_1.05fr_0.85fr] md:items-start">
             <div>
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full text-[#c7a23a]">
-                  <span className="text-[28px] leading-none">♛</span>
-                </div>
+              <Link
+                to={MANPOWER_HOME_ROUTE}
+                className="flex items-center gap-2.5"
+              >
+                <img
+                  src={LOGO_IMAGE}
+                  alt="Manpower Logo"
+                  className="h-12 w-12 shrink-0 rounded-full object-contain"
+                />
+
                 <h3 className="text-[24px] font-black tracking-wide text-[#315b42]">
-                  LUMISPIRE
+                  MANPOWER
                 </h3>
-              </div>
+              </Link>
             </div>
 
             <FooterColumn title="Menu">
@@ -486,7 +490,7 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                 className="block hover:text-[#315b42]"
                 to="/manpower-positions"
               >
-                Course
+                Job Offer
               </Link>
 
               <Link

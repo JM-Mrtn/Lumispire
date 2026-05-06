@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+const LOGO_IMAGE = "/ManpowerLogo.png";
+
 export const EMPLOYEE_ROUTES = {
   home: "/manpower-employee-home",
   payroll: "/manpower-employee-payroll",
@@ -12,14 +14,6 @@ export const EMPLOYEE_ROUTES = {
 function clearEmployeeSession() {
   localStorage.removeItem("manpowerEmployeeToken");
   localStorage.removeItem("manpowerEmployeeUser");
-}
-
-function BrandSeal() {
-  return (
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-[3px] border-[#315b42] bg-white text-center text-[10px] font-black leading-none text-[#315b42]">
-      LTC
-    </div>
-  );
 }
 
 function NavItem({ label, active = false, onClick }) {
@@ -69,7 +63,12 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
       <header className="sticky top-0 z-50 border-b border-[#d5ddd2] bg-[#f7f9f5]/95 backdrop-blur">
         <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to={EMPLOYEE_ROUTES.home} className="flex items-center gap-3">
-            <BrandSeal />
+            <img
+              src={LOGO_IMAGE}
+              alt="Manpower Logo"
+              className="h-12 w-12 shrink-0 rounded-full object-contain"
+            />
+
             <span className="text-[24px] font-black tracking-wide text-[#315b42] sm:text-[28px]">
               MANPOWER
             </span>
@@ -81,16 +80,19 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
               active={active === "home"}
               onClick={() => goTo(EMPLOYEE_ROUTES.home)}
             />
+
             <NavItem
               label="Payroll"
               active={active === "payroll"}
               onClick={() => goTo(EMPLOYEE_ROUTES.payroll)}
             />
+
             <NavItem
               label="Leave"
               active={active === "leave"}
               onClick={() => goTo(EMPLOYEE_ROUTES.leave)}
             />
+
             <NavItem
               label="Profile"
               active={active === "profile"}
@@ -124,38 +126,50 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
                 type="button"
                 onClick={() => goTo(EMPLOYEE_ROUTES.home)}
                 className={`py-2 text-left ${
-                  active === "home" ? "text-[#315b42] underline underline-offset-4" : ""
+                  active === "home"
+                    ? "text-[#315b42] underline underline-offset-4"
+                    : ""
                 }`}
               >
                 Home
               </button>
+
               <button
                 type="button"
                 onClick={() => goTo(EMPLOYEE_ROUTES.payroll)}
                 className={`py-2 text-left ${
-                  active === "payroll" ? "text-[#315b42] underline underline-offset-4" : ""
+                  active === "payroll"
+                    ? "text-[#315b42] underline underline-offset-4"
+                    : ""
                 }`}
               >
                 Payroll
               </button>
+
               <button
                 type="button"
                 onClick={() => goTo(EMPLOYEE_ROUTES.leave)}
                 className={`py-2 text-left ${
-                  active === "leave" ? "text-[#315b42] underline underline-offset-4" : ""
+                  active === "leave"
+                    ? "text-[#315b42] underline underline-offset-4"
+                    : ""
                 }`}
               >
                 Leave
               </button>
+
               <button
                 type="button"
                 onClick={() => goTo(EMPLOYEE_ROUTES.profile)}
                 className={`py-2 text-left ${
-                  active === "profile" ? "text-[#315b42] underline underline-offset-4" : ""
+                  active === "profile"
+                    ? "text-[#315b42] underline underline-offset-4"
+                    : ""
                 }`}
               >
                 Profile
               </button>
+
               <button
                 type="button"
                 onClick={logout}
@@ -174,14 +188,21 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
           <div className="grid gap-4 md:grid-cols-[1.2fr_0.75fr_1.35fr_1.05fr_0.85fr] md:items-start">
             <div>
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full text-[#c7a23a]">
-                  <span className="text-[28px] leading-none">♛</span>
-                </div>
+              <button
+                type="button"
+                onClick={() => goTo(EMPLOYEE_ROUTES.home)}
+                className="flex items-center gap-2.5 text-left"
+              >
+                <img
+                  src={LOGO_IMAGE}
+                  alt="Manpower Logo"
+                  className="h-12 w-12 shrink-0 rounded-full object-contain"
+                />
+
                 <h3 className="text-[24px] font-black tracking-wide text-[#315b42]">
-                  LUMISPIRE
+                  MANPOWER
                 </h3>
-              </div>
+              </button>
             </div>
 
             <FooterColumn title="Menu">
@@ -192,6 +213,7 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
               >
                 Home
               </button>
+
               <button
                 type="button"
                 onClick={() => goTo(EMPLOYEE_ROUTES.payroll)}
@@ -199,6 +221,7 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
               >
                 Payroll
               </button>
+
               <button
                 type="button"
                 onClick={() => goTo(EMPLOYEE_ROUTES.leave)}
@@ -206,6 +229,7 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
               >
                 Leave
               </button>
+
               <button
                 type="button"
                 onClick={() => goTo(EMPLOYEE_ROUTES.profile)}
