@@ -1,7 +1,11 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 export function hotelAppBaseUrl() {
-  return (process.env.CORS_ORIGIN || "http://localhost:5173").replace(/\/+$/, "");
+  return (
+    process.env.FRONTEND_URL ||
+    process.env.CORS_ORIGIN ||
+    "http://localhost:5173"
+  ).replace(/\/+$/, "");
 }
 
 export function hotelApiBaseUrl() {
@@ -23,10 +27,6 @@ function normalizeText(value = "") {
   return String(value || "").trim();
 }
 
-function normalizePass(value = "") {
-  return String(value || "").replace(/\s/g, "");
-}
-
 function escapeHtml(value = "") {
   return String(value ?? "").replace(/[&<>"']/g, (char) => {
     switch (char) {
@@ -46,50 +46,77 @@ function escapeHtml(value = "") {
   });
 }
 
-export function buildHotelTransporter() {
-  const user = normalizeText(process.env.EMAIL_USER || "");
-  const pass = normalizePass(process.env.EMAIL_PASS || "");
-  const port = Number(process.env.SMTP_PORT || 587);
+function getResendClient() {
+  const apiKey = normalizeText(process.env.RESEND_API_KEY || "");
 
-  if (!user || !pass) {
-    throw new Error("EMAIL_USER or EMAIL_PASS is missing in .env");
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is missing in environment variables.");
   }
 
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port,
-    secure: port === 465,
-    requireTLS: port !== 465,
-    auth: {
-      user,
-      pass,
-    },
-  });
+  return new Resend(apiKey);
 }
 
 function getHotelFromAddress() {
-  const user = normalizeText(process.env.EMAIL_USER || "");
-  const fromName = normalizeText(
-    process.env.HOTEL_EMAIL_FROM_NAME || "LTC Hotel Services"
-  ).replace(/"/g, "");
-
-  return `"${fromName}" <${user}>`;
+  return normalizeText(
+    process.env.RESEND_FROM_EMAIL ||
+      process.env.HOTEL_EMAIL_FROM ||
+      "Lumispire <onboarding@resend.dev>"
+  );
 }
 
-async function sendHotelEmail({ to, subject, html, text }) {
-  const transporter = buildHotelTransporter();
+async function sendViaResend({ from, to, subject, html, text }) {
   const recipient = normalizeText(to);
 
   if (!recipient) {
     throw new Error("Recipient email is required.");
   }
 
-  return transporter.sendMail({
-    from: getHotelFromAddress(),
+  const resend = getResendClient();
+
+  const result = await resend.emails.send({
+    from: normalizeText(from) || getHotelFromAddress(),
     to: recipient,
     subject: normalizeText(subject),
     html,
     text: normalizeText(text),
+  });
+
+  if (result?.error) {
+    throw new Error(result.error.message || "Resend failed to send email.");
+  }
+
+  return result;
+}
+
+/*
+  Compatibility function.
+
+  Your old controllers may still call:
+  buildHotelTransporter().sendMail(...)
+
+  This keeps that old code working, but sends through Resend instead of SMTP.
+*/
+export function buildHotelTransporter() {
+  return {
+    sendMail: async ({ from, to, subject, html, text }) => {
+      return sendViaResend({
+        from: from || getHotelFromAddress(),
+        to,
+        subject,
+        html,
+        text,
+      });
+    },
+  };
+}
+
+async function sendHotelEmail({ to, subject, html, text }) {
+  return sendViaResend({
+    from: getHotelFromAddress(),
+    to,
+    subject,
+    html,
+    text,
   });
 }
 
@@ -97,14 +124,11 @@ export async function sendHotelVerificationEmail(toEmail, token) {
   const safeToken = encodeURIComponent(String(token || ""));
 
   /*
-    IMPORTANT:
-    This link now goes to the BACKEND first.
+    Email verification flow:
 
-    Flow:
-    Gmail Verify Email button
-    -> http://localhost:5000/api/hotel/verify-email/:token?redirect=1
-    -> backend verifies the token
-    -> backend redirects browser to http://localhost:5173/hotel-login
+    Email button
+    -> backend verifies token
+    -> backend redirects user to frontend login page
   */
   const verifyLink = `${hotelApiBaseUrl()}/verify-email/${safeToken}?redirect=1`;
 
@@ -136,7 +160,7 @@ After verification, you will be redirected to the login page.
 
   return sendHotelEmail({
     to: toEmail,
-    subject: "Verify your email",
+    subject: "Verify your Lumispire email",
     html,
     text,
   });
@@ -176,7 +200,7 @@ This link will expire in 1 hour.
 
   return sendHotelEmail({
     to: toEmail,
-    subject: "Reset your password",
+    subject: "Reset your Lumispire password",
     html,
     text,
   });
@@ -205,7 +229,7 @@ This OTP will expire in 10 minutes.
 
   return sendHotelEmail({
     to: toEmail,
-    subject: "Password Change OTP",
+    subject: "Lumispire password change OTP",
     html,
     text,
   });
