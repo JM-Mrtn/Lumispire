@@ -1,27 +1,11 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-function getSmtpConfig() {
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-
-  if (!user || !pass) {
-    throw new Error("Missing SMTP credentials in .env");
-  }
-
-  return {
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: String(process.env.SMTP_SECURE || "false") === "true",
-    auth: { user, pass },
-  };
-}
-
-function getTransporter() {
-  return nodemailer.createTransport(getSmtpConfig());
+function normalizeText(value = "") {
+  return String(value || "").trim();
 }
 
 function escapeHtml(value = "") {
-  return String(value)
+  return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -29,32 +13,68 @@ function escapeHtml(value = "") {
     .replace(/'/g, "&#39;");
 }
 
+function getResendClient() {
+  const apiKey = normalizeText(process.env.RESEND_API_KEY || "");
+
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is missing in environment variables.");
+  }
+
+  return new Resend(apiKey);
+}
+
+function getTrainingFromAddress() {
+  return normalizeText(
+    process.env.TRAINING_FROM_EMAIL ||
+      process.env.RESEND_FROM_EMAIL ||
+      process.env.MAIL_FROM ||
+      "Lumispire <onboarding@resend.dev>"
+  );
+}
+
+async function sendTrainingEmail({ to, subject, text, html }) {
+  const recipient = normalizeText(to);
+
+  if (!recipient) {
+    throw new Error("Recipient email is missing.");
+  }
+
+  const resend = getResendClient();
+
+  const result = await resend.emails.send({
+    from: getTrainingFromAddress(),
+    to: recipient,
+    subject: normalizeText(subject),
+    text: normalizeText(text),
+    html,
+  });
+
+  if (result?.error) {
+    throw new Error(result.error.message || "Resend failed to send email.");
+  }
+
+  return result;
+}
+
 export async function sendEnrollmentReceivedEmail({
   to,
   firstName = "",
   course = "",
 }) {
-  const recipient = String(to || "").trim();
-  if (!recipient) {
-    throw new Error("Recipient email is missing.");
-  }
+  const cleanFirstName = normalizeText(firstName) || "Applicant";
+  const cleanCourse = normalizeText(course) || "-";
 
-  const transporter = getTransporter();
-  const from =
-    process.env.MAIL_FROM || process.env.SMTP_USER || process.env.EMAIL_USER;
+  const safeFirstName = escapeHtml(cleanFirstName);
+  const safeCourse = escapeHtml(cleanCourse);
 
-  const safeFirstName = escapeHtml(firstName || "Applicant");
-  const safeCourse = escapeHtml(course || "-");
-
-  return transporter.sendMail({
-    from,
-    to: recipient,
+  return sendTrainingEmail({
+    to,
     subject: "TAMSI Enrollment Application Received",
     text: [
-      `Hello ${firstName || "Applicant"},`,
+      `Hello ${cleanFirstName},`,
       "",
       "We have received your TAMSI enrollment application.",
-      `Course: ${course || "-"}`,
+      `Course: ${cleanCourse}`,
       "",
       "Your application is now under review.",
       "We will contact you again once your enrollment has been processed.",
@@ -63,7 +83,7 @@ export async function sendEnrollmentReceivedEmail({
       "TAMSI Training Team",
     ].join("\n"),
     html: `
-      <div style="font-family: Arial, sans-serif; color: #243b2e; line-height: 1.6;">
+      <div style="font-family: Arial, sans-serif; color: #243b2e; line-height: 1.6; background: #f7f8f3; padding: 24px;">
         <div style="max-width: 640px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; background: #ffffff;">
           <div style="background: linear-gradient(135deg, #395345, #6f7d49); padding: 28px 24px; color: white;">
             <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.95;">
@@ -84,6 +104,7 @@ export async function sendEnrollmentReceivedEmail({
             </div>
 
             <p>Your application is now under review. We will contact you again once your enrollment has been processed.</p>
+
             <p style="margin-top: 18px;">Thank you.</p>
             <p style="margin-top: 12px; font-weight: 700;">TAMSI Training Team</p>
           </div>
