@@ -485,9 +485,13 @@ export default function TraineeAttendance() {
             aria-label="TAMSI Home"
           >
             <img
-              src="/TAMSILogoTransparent.png"
+              src="/TamsiLogo.png"
               alt="TAMSI Logo"
               className="h-12 w-12 object-contain"
+              onError={(e) => {
+                e.currentTarget.src =
+                  "https://placehold.co/80x80/d7ddd4/45674b?text=T";
+              }}
             />
 
             <span className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b] sm:text-[28px]">
@@ -673,17 +677,25 @@ export default function TraineeAttendance() {
       </header>
 
       <main>
-        {/* BANNER IMAGE */}
-        <section className="h-[180px] overflow-hidden bg-[#cad1c5] sm:h-[230px] md:h-[290px]">
+        {/* TRAINING BANNER */}
+        <section className="relative flex h-[260px] items-center justify-center overflow-hidden bg-[#d7ded3] px-5 text-center sm:h-[310px] md:h-[360px] lg:h-[390px]">
           <img
-            src="/tamsi-building.jpg"
-            alt="TAMSI Building"
-            className="h-full w-full object-cover"
+            src="/TrainingBanner.png"
+            alt="TAMSI Training Banner"
+            className="absolute inset-0 h-full w-full object-cover"
             onError={(e) => {
               e.currentTarget.src =
                 "https://placehold.co/1600x420/d7ddd4/45674b?text=TAMSI+Training+And+Assessment";
             }}
           />
+
+          <div className="absolute inset-0 bg-[#d7ded3]/55" />
+
+          <div className="relative z-10 mx-auto max-w-[1280px]">
+            <h1 className="font-['Montserrat',sans-serif] text-4xl font-extrabold leading-tight tracking-wide text-[#45674b] drop-shadow-sm sm:text-5xl md:text-6xl lg:text-7xl">
+              TAMSI Training And Assessment
+            </h1>
+          </div>
         </section>
 
         {/* TRAINEE + FILTER BAR */}
@@ -845,17 +857,17 @@ export default function TraineeAttendance() {
             <div className="border-[#d6ded2] md:border-r md:pr-5">
               <div className="flex items-center gap-3">
                 <img
-                  src="/LTCLogo.png"
-                  alt="Lumispire Logo"
+                  src="/TamsiLogo.png"
+                  alt="TAMSI Logo"
                   className="h-10 w-10 object-contain"
                   onError={(e) => {
                     e.currentTarget.src =
-                      "https://placehold.co/80x80/ffffff/4d6f55?text=L";
+                      "https://placehold.co/80x80/ffffff/4d6f55?text=T";
                   }}
                 />
 
                 <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
-                  LUMISPIRE
+                  TAMSI
                 </h2>
               </div>
             </div>
@@ -922,7 +934,7 @@ export default function TraineeAttendance() {
               <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
                 <p>ltc.tamsi@gmail.com</p>
                 <p>lorengladis@ltcmultiservices.com</p>
-                <p>0995906805 / 09516281271</p>
+                <p>09959808051 / 09516281271</p>
               </div>
             </div>
 
@@ -930,7 +942,7 @@ export default function TraineeAttendance() {
               <h3 className="text-xs font-extrabold text-[#45674b]">Address</h3>
 
               <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>2/F 5441 Currie Street,</p>
+                <p>2/F 5441 Curie Street,</p>
                 <p>Palanan, Makati City</p>
               </div>
             </div>

@@ -52,8 +52,13 @@ export function TrainingPublicShell({
 
       <main>
         {showHero ? <TrainingHero /> : null}
-        {showTitle ? <TrainingPageTitle title={title} subtitle={subtitle} /> : null}
+
+        {showTitle ? (
+          <TrainingPageTitle title={title} subtitle={subtitle} />
+        ) : null}
+
         {typeof children === "function" ? children({ goTo }) : children}
+
         <div className="h-[55px] bg-[#123a20]" />
       </main>
 
@@ -62,9 +67,16 @@ export function TrainingPublicShell({
   );
 }
 
-export function TrainingPublicHeader({ active, mobileOpen, setMobileOpen, goTo }) {
+export function TrainingPublicHeader({
+  active,
+  mobileOpen,
+  setMobileOpen,
+  goTo,
+}) {
   const profilePath = getProfilePath();
-  const profileLabel = localStorage.getItem("trainingToken") ? "Profile" : "Sign In";
+  const profileLabel = localStorage.getItem("trainingToken")
+    ? "Profile"
+    : "Sign In";
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#d7ddcf] bg-white/95 shadow-sm backdrop-blur">
@@ -76,7 +88,7 @@ export function TrainingPublicHeader({ active, mobileOpen, setMobileOpen, goTo }
           aria-label="TAMSI Home"
         >
           <img
-            src="/TAMSILogoTransparent.png"
+            src="/TamsiLogo.png"
             alt="TAMSI Logo"
             className="h-12 w-12 object-contain"
             onError={(e) => {
@@ -145,16 +157,24 @@ export function TrainingPublicHeader({ active, mobileOpen, setMobileOpen, goTo }
 
 export function TrainingHero() {
   return (
-    <section className="h-[180px] overflow-hidden bg-[#cad1c5] sm:h-[230px] md:h-[290px]">
+    <section className="relative flex h-[260px] items-center justify-center overflow-hidden bg-[#d7ded3] px-5 text-center sm:h-[310px] md:h-[360px] lg:h-[390px]">
       <img
-        src="/tamsi-building.jpg"
-        alt="TAMSI Building"
-        className="h-full w-full object-cover"
+        src="/TrainingBanner.png"
+        alt="TAMSI Training Banner"
+        className="absolute inset-0 h-full w-full object-cover"
         onError={(e) => {
           e.currentTarget.src =
             "https://placehold.co/1600x420/d7ddd4/45674b?text=TAMSI+Training+And+Assessment";
         }}
       />
+
+      <div className="absolute inset-0 bg-[#d7ded3]/55" />
+
+      <div className="relative z-10 mx-auto max-w-[1280px]">
+        <h1 className="font-['Montserrat',sans-serif] text-4xl font-extrabold leading-tight tracking-wide text-[#45674b] drop-shadow-sm sm:text-5xl md:text-6xl lg:text-7xl">
+          TAMSI Training And Assessment
+        </h1>
+      </div>
     </section>
   );
 }
@@ -165,10 +185,10 @@ export function TrainingPageTitle({ title, subtitle = "" }) {
       <DecorativeCircles position="left" />
       <DecorativeCircles position="right" />
 
-      <div className="relative mx-auto max-w-[1280px] text-center">
-        <h1 className="font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl md:text-5xl">
+      <div className="relative z-20 mx-auto max-w-[1280px] text-center">
+        <h2 className="font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl md:text-5xl">
           {title}
-        </h1>
+        </h2>
 
         <div className="mx-auto mt-4 h-[3px] max-w-[520px] rounded-full bg-white/45" />
 
@@ -190,17 +210,17 @@ export function TrainingPublicFooter({ goTo }) {
           <div className="border-[#d6ded2] md:border-r md:pr-5">
             <div className="flex items-center gap-3">
               <img
-                src="/LTCLogo.png"
-                alt="Lumispire Logo"
+                src="/TamsiLogo.png"
+                alt="TAMSI Logo"
                 className="h-10 w-10 object-contain"
                 onError={(e) => {
                   e.currentTarget.src =
-                    "https://placehold.co/80x80/ffffff/4d6f55?text=L";
+                    "https://placehold.co/80x80/ffffff/4d6f55?text=T";
                 }}
               />
 
               <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
-                LUMISPIRE
+                TAMSI
               </h2>
             </div>
           </div>
@@ -210,20 +230,31 @@ export function TrainingPublicFooter({ goTo }) {
 
             <div className="mt-1 grid grid-cols-2 gap-x-5 gap-y-0.5 text-[11px] font-semibold text-[#6b776d]">
               <FooterButton label="Home" onClick={() => goTo("/training")} />
+
               <FooterButton
                 label="Course"
                 onClick={() => goTo("/training-course")}
               />
+
               <FooterButton
                 label="Requirements"
                 onClick={() => goTo("/training-requirements")}
               />
+
               <FooterButton
                 label="Contact"
                 onClick={() => goTo("/training-contact-us")}
               />
-              <FooterButton label="FAQs" onClick={() => goTo("/training-faqs")} />
-              <FooterButton label="Profile" onClick={() => goTo(getProfilePath())} />
+
+              <FooterButton
+                label="FAQs"
+                onClick={() => goTo("/training-faqs")}
+              />
+
+              <FooterButton
+                label="Profile"
+                onClick={() => goTo(getProfilePath())}
+              />
             </div>
           </div>
 
@@ -276,12 +307,14 @@ export function PaperIcon({ className = "h-14 w-14" }) {
         strokeWidth="3"
         strokeLinejoin="round"
       />
+
       <path
         d="M58 18V29H68"
         stroke="currentColor"
         strokeWidth="3"
         strokeLinejoin="round"
       />
+
       <path
         d="M19 25H53L61 33V75"
         stroke="currentColor"
@@ -289,9 +322,28 @@ export function PaperIcon({ className = "h-14 w-14" }) {
         strokeLinejoin="round"
         opacity="0.75"
       />
-      <path d="M34 36H55" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M34 46H55" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M34 56H50" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+
+      <path
+        d="M34 36H55"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M34 46H55"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M34 56H50"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
       <path
         d="M29 36L31 38L34 34"
         stroke="currentColor"
@@ -299,6 +351,7 @@ export function PaperIcon({ className = "h-14 w-14" }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
       <path
         d="M29 46L31 48L34 44"
         stroke="currentColor"
@@ -306,6 +359,7 @@ export function PaperIcon({ className = "h-14 w-14" }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
       <path
         d="M29 56L31 58L34 54"
         stroke="currentColor"
@@ -369,7 +423,7 @@ function DecorativeCircles({ position }) {
   return (
     <div
       className={[
-        "pointer-events-none absolute top-6 opacity-35",
+        "pointer-events-none absolute top-6 z-10 opacity-35",
         isLeft ? "left-8" : "right-20",
       ].join(" ")}
     >

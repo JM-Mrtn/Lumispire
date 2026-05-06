@@ -1,27 +1,16 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const HERO_IMAGE = "/images/manpower-hero.jpg";
+const LOGO_IMAGE = "/ManpowerLogo.png";
+const HERO_IMAGE = "/ManpowerBanner.png";
 
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 
 const highlights = [
-  "/images/manpower-highlight-1.jpg",
-  "/images/manpower-highlight-2.jpg",
-  "/images/manpower-highlight-3.jpg",
+  "/manpower-highlight-1.jpg",
+  "/manpower-highlight-2.jpg",
+  "/manpower-highlight-3.jpg",
 ];
-
-function BrandSeal({ small = false }) {
-  return (
-    <div
-      className={`flex shrink-0 items-center justify-center rounded-full border-[3px] border-[#315b42] bg-white text-center font-black leading-none text-[#315b42] ${
-        small ? "h-9 w-9 text-[9px]" : "h-12 w-12 text-[10px]"
-      }`}
-    >
-      LTC
-    </div>
-  );
-}
 
 function DocumentPenIcon(props) {
   return (
@@ -109,7 +98,12 @@ export default function ManpowerServicesPage() {
       <header className="sticky top-0 z-50 border-b border-[#d5ddd2] bg-[#f7f9f5]/95 backdrop-blur">
         <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to={MANPOWER_HOME_ROUTE} className="flex items-center gap-3">
-            <BrandSeal />
+            <img
+              src={LOGO_IMAGE}
+              alt="Manpower Logo"
+              className="h-12 w-12 shrink-0 rounded-full object-contain"
+            />
+
             <span className="text-[24px] font-black tracking-wide text-[#315b42] sm:text-[28px]">
               MANPOWER
             </span>
@@ -132,9 +126,7 @@ export default function ManpowerServicesPage() {
               Contact
             </HeaderNavLink>
 
-            <HeaderNavLink to="/manpower-faqs">
-              FAQs
-            </HeaderNavLink>
+            <HeaderNavLink to="/manpower-faqs">FAQs</HeaderNavLink>
           </nav>
 
           <Link
@@ -148,12 +140,25 @@ export default function ManpowerServicesPage() {
 
       <main>
         <section
-          className="relative h-[190px] bg-[#526b5a] bg-cover bg-center sm:h-[230px] md:h-[275px]"
+          className="relative flex h-[300px] items-center justify-center bg-[#526b5a] bg-cover bg-center px-4 text-center sm:h-[360px] md:h-[430px] lg:h-[500px]"
           style={{
             backgroundImage: `url(${HERO_IMAGE})`,
           }}
         >
-          <div className="absolute inset-0 bg-black/5" />
+          <div className="absolute inset-0 bg-black/35" />
+
+          <div className="relative z-10 mx-auto max-w-5xl">
+            <h1 className="text-[30px] font-black leading-tight text-white drop-shadow-lg sm:text-[42px] md:text-[54px]">
+              Begin your journey with Manpower Services today
+            </h1>
+
+            <div className="mx-auto mt-5 h-[3px] max-w-[760px] bg-white/60" />
+
+            <p className="mx-auto mt-5 max-w-2xl text-[14px] font-semibold leading-relaxed text-white/95 sm:text-[16px] md:text-[18px]">
+              Explore job opportunities, submit your requirements, and start
+              your application with LTC Manpower Services.
+            </p>
+          </div>
         </section>
 
         <section className="relative overflow-hidden bg-[#0f3a1e]">
@@ -167,15 +172,8 @@ export default function ManpowerServicesPage() {
           <div className="pointer-events-none absolute right-3 top-16 h-9 w-9 rounded-full bg-white/20" />
           <div className="pointer-events-none absolute right-11 top-11 h-12 w-12 rounded-full bg-white/20" />
 
-          <div className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-5xl text-center">
-              <h1 className="text-[25px] font-black leading-tight text-white drop-shadow sm:text-[32px] md:text-[37px]">
-                Begin your journey with Manpower Services today
-              </h1>
-              <div className="mx-auto mt-3 h-[3px] max-w-[980px] bg-white/45" />
-            </div>
-
-            <div className="mx-auto mt-9 grid max-w-6xl gap-6 md:grid-cols-3 md:gap-16">
+          <div className="relative z-10 mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+            <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3 md:gap-16">
               <ShortcutCard
                 title="Apply Now"
                 description="Start your journey here at manpower"
@@ -276,14 +274,20 @@ export default function ManpowerServicesPage() {
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
           <div className="grid gap-4 md:grid-cols-[1.2fr_0.75fr_1.35fr_1.05fr_0.85fr] md:items-start">
             <div>
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full text-[#c7a23a]">
-                  <span className="text-[28px] leading-none">♛</span>
-                </div>
+              <Link
+                to={MANPOWER_HOME_ROUTE}
+                className="flex items-center gap-2.5"
+              >
+                <img
+                  src={LOGO_IMAGE}
+                  alt="Manpower Logo"
+                  className="h-12 w-12 shrink-0 rounded-full object-contain"
+                />
+
                 <h3 className="text-[24px] font-black tracking-wide text-[#315b42]">
-                  LUMISPIRE
+                  MANPOWER
                 </h3>
-              </div>
+              </Link>
             </div>
 
             <FooterColumn title="Menu">
@@ -298,7 +302,7 @@ export default function ManpowerServicesPage() {
                 className="block hover:text-[#315b42]"
                 to="/manpower-positions"
               >
-                Course
+                Job Offer
               </Link>
 
               <Link

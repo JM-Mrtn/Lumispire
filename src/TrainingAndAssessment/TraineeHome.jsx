@@ -27,6 +27,23 @@ const API_BASE = normalizeApiBase(
 
 const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
 
+const TRAINING_CONTACT_INFO = {
+  email1: "ltc.tamsi@gmail.com",
+  email2: "lorengladis@ltcmultiservices.com",
+  phone: "09959808051 / 09516281271",
+  addressLine1: "2/F 5441 Curie Street,",
+  addressLine2: "Palanan, Makati City",
+};
+
+const TRAINEE_NAV_ITEMS = [
+  { key: "home", label: "Home", path: "/trainee-home" },
+  { key: "roadmap", label: "Roadmap", path: "/trainee-roadmap" },
+  { key: "attendance", label: "Attendance", path: "/trainee-attendance" },
+  { key: "modules", label: "Modules", path: "/trainee-modules" },
+  { key: "assignment", label: "Assignment", path: "/trainee-assignment" },
+  { key: "progress", label: "Progress", path: "/trainee-progress" },
+];
+
 function getToken() {
   return localStorage.getItem("trainingToken") || "";
 }
@@ -218,12 +235,16 @@ const TraineeHome = () => {
             type="button"
             onClick={() => goTo("/trainee-home")}
             className="flex items-center gap-3"
-            aria-label="TAMSI Home"
+            aria-label="TAMSI Trainee Home"
           >
             <img
-              src="/TAMSILogoTransparent.png"
+              src="/TamsiLogo.png"
               alt="TAMSI Logo"
               className="h-12 w-12 object-contain"
+              onError={(e) => {
+                e.currentTarget.src =
+                  "https://placehold.co/80x80/d7ddd4/45674b?text=T";
+              }}
             />
 
             <span className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b] sm:text-[28px]">
@@ -232,53 +253,14 @@ const TraineeHome = () => {
           </button>
 
           <nav className="hidden items-center gap-5 lg:flex xl:gap-7">
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-home")}
-              className="border-b-2 border-[#45674b] pb-1 text-[11px] font-bold uppercase tracking-wide text-[#173d25] xl:text-[12px]"
-            >
-              Home
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-roadmap")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Roadmap
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-attendance")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Attendance
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-modules")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Modules
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-assignment")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Assignment
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-progress")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Progress
-            </button>
+            {TRAINEE_NAV_ITEMS.map((item) => (
+              <HeaderNavButton
+                key={item.key}
+                label={item.label}
+                active={item.key === "home"}
+                onClick={() => goTo(item.path)}
+              />
+            ))}
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
@@ -296,23 +278,7 @@ const TraineeHome = () => {
               className="h-10 w-10 overflow-hidden rounded-full bg-[#d8d8d8] ring-2 ring-[#45674b]/20"
               aria-label="Profile"
             >
-              {profilePhotoUrl ? (
-                <img
-                  src={profilePhotoUrl}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/80x80/d7ddd4/45674b?text=P";
-                  }}
-                />
-              ) : (
-                <img
-                  src="https://placehold.co/80x80/d7ddd4/45674b?text=P"
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                />
-              )}
+              <ProfileImage profilePhotoUrl={profilePhotoUrl} />
             </button>
           </div>
 
@@ -325,56 +291,17 @@ const TraineeHome = () => {
           </button>
         </div>
 
-        {mobileOpen && (
+        {mobileOpen ? (
           <div className="border-t border-[#d7ddcf] bg-white px-5 py-3 lg:hidden">
             <div className="space-y-1 rounded-xl bg-[#f4f7ef] p-2">
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-home")}
-                className="block w-full rounded-lg bg-white px-4 py-3 text-left text-sm font-bold text-[#173d25]"
-              >
-                Home
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-roadmap")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Roadmap
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-attendance")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Attendance
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-modules")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Modules
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-assignment")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Assignment
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-progress")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Progress
-              </button>
+              {TRAINEE_NAV_ITEMS.map((item) => (
+                <MobileHeaderButton
+                  key={item.key}
+                  label={item.label}
+                  active={item.key === "home"}
+                  onClick={() => goTo(item.path)}
+                />
+              ))}
 
               <button
                 type="button"
@@ -384,62 +311,45 @@ const TraineeHome = () => {
                 <span>Profile</span>
 
                 <span className="h-8 w-8 overflow-hidden rounded-full bg-[#d8d8d8]">
-                  {profilePhotoUrl ? (
-                    <img
-                      src={profilePhotoUrl}
-                      alt="Profile"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://placehold.co/80x80/d7ddd4/45674b?text=P";
-                      }}
-                    />
-                  ) : (
-                    <img
-                      src="https://placehold.co/80x80/d7ddd4/45674b?text=P"
-                      alt="Profile"
-                      className="h-full w-full object-cover"
-                    />
-                  )}
+                  <ProfileImage profilePhotoUrl={profilePhotoUrl} />
                 </span>
               </button>
             </div>
           </div>
-        )}
+        ) : null}
       </header>
 
       <main>
-        {/* BANNER IMAGE */}
-        <section className="h-[180px] overflow-hidden bg-[#cad1c5] sm:h-[230px] md:h-[290px]">
+        {/* TRAINING BANNER */}
+        <section className="relative flex h-[260px] items-center justify-center overflow-hidden bg-[#d7ded3] px-5 text-center sm:h-[310px] md:h-[360px] lg:h-[390px]">
           <img
-            src="/tamsi-building.jpg"
-            alt="TAMSI Building"
-            className="h-full w-full object-cover"
+            src="/TrainingBanner.png"
+            alt="TAMSI Training Banner"
+            className="absolute inset-0 h-full w-full object-cover"
             onError={(e) => {
               e.currentTarget.src =
                 "https://placehold.co/1600x420/d7ddd4/45674b?text=TAMSI+Training+And+Assessment";
             }}
           />
+
+          <div className="absolute inset-0 bg-[#d7ded3]/55" />
+
+          <div className="relative z-10 mx-auto max-w-[1280px]">
+            <h1 className="font-['Montserrat',sans-serif] text-4xl font-extrabold leading-tight tracking-wide text-[#45674b] drop-shadow-sm sm:text-5xl md:text-6xl lg:text-7xl">
+              TAMSI Training And Assessment
+            </h1>
+          </div>
         </section>
 
         {/* TITLE SECTION */}
         <section className="relative overflow-hidden bg-gradient-to-b from-[#486b4b] via-[#123a20] to-[#123a20] px-5 py-10 text-white sm:px-8 lg:px-12">
-          <div className="pointer-events-none absolute left-8 top-7 opacity-35">
-            <span className="absolute left-0 top-0 h-11 w-11 rounded-full bg-[#a8c39f]" />
-            <span className="absolute left-7 top-3 h-12 w-12 rounded-full bg-[#a8c39f]" />
-            <span className="absolute left-0 top-16 h-9 w-9 rounded-full bg-[#a8c39f]" />
-          </div>
+          <DecorativeCircles position="left" />
+          <DecorativeCircles position="right" />
 
-          <div className="pointer-events-none absolute right-20 top-7 opacity-35">
-            <span className="absolute left-0 top-0 h-12 w-12 rounded-full bg-[#a8c39f]" />
-            <span className="absolute left-7 top-9 h-14 w-14 rounded-full bg-[#a8c39f]" />
-            <span className="absolute left-20 top-20 h-8 w-8 rounded-full bg-[#a8c39f]" />
-          </div>
-
-          <div className="relative mx-auto max-w-[1280px]">
-            <h1 className="text-center font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl md:text-5xl">
+          <div className="relative z-20 mx-auto max-w-[1280px]">
+            <h2 className="text-center font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl md:text-5xl">
               Welcome to Training &amp; Assessment
-            </h1>
+            </h2>
 
             <div className="mx-auto mt-4 h-[3px] max-w-[760px] rounded-full bg-white/45" />
           </div>
@@ -457,9 +367,9 @@ const TraineeHome = () => {
               >
                 <PaperIcon />
 
-                <h2 className="mt-3 font-['Montserrat',sans-serif] text-[19px] font-extrabold text-[#45674b]">
+                <h3 className="mt-3 font-['Montserrat',sans-serif] text-[19px] font-extrabold text-[#45674b]">
                   {item.title}
-                </h2>
+                </h3>
 
                 <span className="mt-6 flex h-[32px] w-full max-w-[150px] items-center justify-center rounded-full border-[3px] border-[#45674b] bg-white font-['Montserrat',sans-serif] text-[12px] font-extrabold uppercase text-[#45674b] transition group-hover:bg-[#45674b] group-hover:text-white">
                   {item.action}
@@ -470,24 +380,24 @@ const TraineeHome = () => {
         </section>
       </main>
 
-      {/* SMALLER FOOTER */}
+      {/* FOOTER */}
       <footer className="bg-white text-[#4d6f55]">
         <div className="mx-auto max-w-[1440px] px-5 py-3 sm:px-8 lg:px-12">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.05fr_1.05fr_1.3fr_1fr_0.65fr]">
             <div className="border-[#d6ded2] md:border-r md:pr-5">
               <div className="flex items-center gap-3">
                 <img
-                  src="/LTCLogo.png"
-                  alt="Lumispire Logo"
+                  src="/TamsiLogo.png"
+                  alt="TAMSI Logo"
                   className="h-10 w-10 object-contain"
                   onError={(e) => {
                     e.currentTarget.src =
-                      "https://placehold.co/80x80/ffffff/4d6f55?text=L";
+                      "https://placehold.co/80x80/ffffff/4d6f55?text=T";
                   }}
                 />
 
                 <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
-                  LUMISPIRE
+                  TAMSI
                 </h2>
               </div>
             </div>
@@ -496,53 +406,13 @@ const TraineeHome = () => {
               <h3 className="text-xs font-extrabold text-[#45674b]">Menu</h3>
 
               <div className="mt-1 grid grid-cols-2 gap-x-5 gap-y-0.5 text-[11px] font-semibold text-[#6b776d]">
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-home")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Home
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-roadmap")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Roadmap
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-attendance")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Attendance
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-modules")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Modules
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-assignment")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Assignment
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-progress")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Progress
-                </button>
+                {TRAINEE_NAV_ITEMS.map((item) => (
+                  <FooterButton
+                    key={item.key}
+                    label={item.label}
+                    onClick={() => goTo(item.path)}
+                  />
+                ))}
               </div>
             </div>
 
@@ -552,9 +422,9 @@ const TraineeHome = () => {
               </h3>
 
               <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>ltc.tamsi@gmail.com</p>
-                <p>lorengladis@ltcmultiservices.com</p>
-                <p>0995906805 / 09516281271</p>
+                <p>{TRAINING_CONTACT_INFO.email1}</p>
+                <p>{TRAINING_CONTACT_INFO.email2}</p>
+                <p>{TRAINING_CONTACT_INFO.phone}</p>
               </div>
             </div>
 
@@ -562,8 +432,8 @@ const TraineeHome = () => {
               <h3 className="text-xs font-extrabold text-[#45674b]">Address</h3>
 
               <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>2/F 5441 Currie Street,</p>
-                <p>Palanan, Makati City</p>
+                <p>{TRAINING_CONTACT_INFO.addressLine1}</p>
+                <p>{TRAINING_CONTACT_INFO.addressLine2}</p>
               </div>
             </div>
 
@@ -583,6 +453,93 @@ const TraineeHome = () => {
     </div>
   );
 };
+
+function ProfileImage({ profilePhotoUrl }) {
+  if (profilePhotoUrl) {
+    return (
+      <img
+        src={profilePhotoUrl}
+        alt="Profile"
+        className="h-full w-full object-cover"
+        onError={(e) => {
+          e.currentTarget.src =
+            "https://placehold.co/80x80/d7ddd4/45674b?text=P";
+        }}
+      />
+    );
+  }
+
+  return (
+    <img
+      src="https://placehold.co/80x80/d7ddd4/45674b?text=P"
+      alt="Profile"
+      className="h-full w-full object-cover"
+    />
+  );
+}
+
+function HeaderNavButton({ label, active = false, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "text-[11px] font-bold uppercase tracking-wide transition xl:text-[12px]",
+        active
+          ? "border-b-2 border-[#45674b] pb-1 text-[#173d25]"
+          : "text-[#58705d] hover:text-[#173d25]",
+      ].join(" ")}
+    >
+      {label}
+    </button>
+  );
+}
+
+function MobileHeaderButton({ label, active = false, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "block w-full rounded-lg px-4 py-3 text-left text-sm",
+        active
+          ? "bg-white font-bold text-[#173d25]"
+          : "font-semibold text-[#45674b] hover:bg-white",
+      ].join(" ")}
+    >
+      {label}
+    </button>
+  );
+}
+
+function FooterButton({ label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-left hover:text-[#173d25]"
+    >
+      {label}
+    </button>
+  );
+}
+
+function DecorativeCircles({ position }) {
+  const isLeft = position === "left";
+
+  return (
+    <div
+      className={[
+        "pointer-events-none absolute top-7 z-10 opacity-35",
+        isLeft ? "left-8" : "right-20",
+      ].join(" ")}
+    >
+      <span className="absolute left-0 top-0 h-11 w-11 rounded-full bg-[#a8c39f]" />
+      <span className="absolute left-7 top-3 h-12 w-12 rounded-full bg-[#a8c39f]" />
+      <span className="absolute left-0 top-16 h-9 w-9 rounded-full bg-[#a8c39f]" />
+    </div>
+  );
+}
 
 function PaperIcon() {
   return (

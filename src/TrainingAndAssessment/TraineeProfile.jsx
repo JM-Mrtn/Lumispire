@@ -32,6 +32,23 @@ const API_BASE = normalizeApiBase(
 
 const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
 
+const TRAINING_CONTACT_INFO = {
+  email1: "ltc.tamsi@gmail.com",
+  email2: "lorengladis@ltcmultiservices.com",
+  phone: "09959808051 / 09516281271",
+  addressLine1: "2/F 5441 Curie Street,",
+  addressLine2: "Palanan, Makati City",
+};
+
+const TRAINEE_NAV_ITEMS = [
+  { key: "home", label: "Home", path: "/trainee-home" },
+  { key: "roadmap", label: "Roadmap", path: "/trainee-roadmap" },
+  { key: "attendance", label: "Attendance", path: "/trainee-attendance" },
+  { key: "modules", label: "Modules", path: "/trainee-modules" },
+  { key: "assignment", label: "Assignment", path: "/trainee-assignment" },
+  { key: "progress", label: "Progress", path: "/trainee-progress" },
+];
+
 function getToken() {
   return localStorage.getItem("trainingToken") || "";
 }
@@ -158,6 +175,7 @@ export default function TraineeProfile() {
       return null;
     }
   });
+
   const [enrollment, setEnrollment] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -214,6 +232,7 @@ export default function TraineeProfile() {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const goTo = (path) => {
@@ -314,10 +333,10 @@ export default function TraineeProfile() {
             type="button"
             onClick={() => goTo("/trainee-home")}
             className="flex items-center gap-3"
-            aria-label="TAMSI Home"
+            aria-label="TAMSI Trainee Home"
           >
             <img
-              src="/TAMSILogoTransparent.png"
+              src="/TamsiLogo.png"
               alt="TAMSI Logo"
               className="h-12 w-12 object-contain"
               onError={(e) => {
@@ -332,27 +351,13 @@ export default function TraineeProfile() {
           </button>
 
           <nav className="hidden items-center gap-5 lg:flex xl:gap-7">
-            <NavButton label="Home" onClick={() => goTo("/trainee-home")} />
-            <NavButton
-              label="Roadmap"
-              onClick={() => goTo("/trainee-roadmap")}
-            />
-            <NavButton
-              label="Attendance"
-              onClick={() => goTo("/trainee-attendance")}
-            />
-            <NavButton
-              label="Modules"
-              onClick={() => goTo("/trainee-modules")}
-            />
-            <NavButton
-              label="Assignment"
-              onClick={() => goTo("/trainee-assignment")}
-            />
-            <NavButton
-              label="Progress"
-              onClick={() => goTo("/trainee-progress")}
-            />
+            {TRAINEE_NAV_ITEMS.map((item) => (
+              <NavButton
+                key={item.key}
+                label={item.label}
+                onClick={() => goTo(item.path)}
+              />
+            ))}
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
@@ -370,23 +375,7 @@ export default function TraineeProfile() {
               className="h-10 w-10 overflow-hidden rounded-full bg-[#d8d8d8] ring-2 ring-[#45674b]/20"
               aria-label="Profile"
             >
-              {profilePhotoUrl ? (
-                <img
-                  src={profilePhotoUrl}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/80x80/d7ddd4/45674b?text=P";
-                  }}
-                />
-              ) : (
-                <img
-                  src="https://placehold.co/80x80/d7ddd4/45674b?text=P"
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                />
-              )}
+              <ProfileAvatar profilePhotoUrl={profilePhotoUrl} />
             </button>
           </div>
 
@@ -399,33 +388,17 @@ export default function TraineeProfile() {
           </button>
         </div>
 
-        {mobileOpen && (
+        {mobileOpen ? (
           <div className="border-t border-[#d7ddcf] bg-white px-5 py-3 lg:hidden">
             <div className="space-y-1 rounded-xl bg-[#f4f7ef] p-2">
-              <MobileNavButton
-                label="Home"
-                onClick={() => goTo("/trainee-home")}
-              />
-              <MobileNavButton
-                label="Roadmap"
-                onClick={() => goTo("/trainee-roadmap")}
-              />
-              <MobileNavButton
-                label="Attendance"
-                onClick={() => goTo("/trainee-attendance")}
-              />
-              <MobileNavButton
-                label="Modules"
-                onClick={() => goTo("/trainee-modules")}
-              />
-              <MobileNavButton
-                label="Assignment"
-                onClick={() => goTo("/trainee-assignment")}
-              />
-              <MobileNavButton
-                label="Progress"
-                onClick={() => goTo("/trainee-progress")}
-              />
+              {TRAINEE_NAV_ITEMS.map((item) => (
+                <MobileNavButton
+                  key={item.key}
+                  label={item.label}
+                  onClick={() => goTo(item.path)}
+                />
+              ))}
+
               <MobileNavButton
                 label="Profile"
                 active
@@ -433,21 +406,29 @@ export default function TraineeProfile() {
               />
             </div>
           </div>
-        )}
+        ) : null}
       </header>
 
       <main>
-        {/* BANNER IMAGE */}
-        <section className="h-[180px] overflow-hidden bg-[#cad1c5] sm:h-[230px] md:h-[290px]">
+        {/* TRAINING BANNER */}
+        <section className="relative flex h-[260px] items-center justify-center overflow-hidden bg-[#d7ded3] px-5 text-center sm:h-[310px] md:h-[360px] lg:h-[390px]">
           <img
-            src="/tamsi-building.jpg"
-            alt="TAMSI Building"
-            className="h-full w-full object-cover"
+            src="/TrainingBanner.png"
+            alt="TAMSI Training Banner"
+            className="absolute inset-0 h-full w-full object-cover"
             onError={(e) => {
               e.currentTarget.src =
                 "https://placehold.co/1600x420/d7ddd4/45674b?text=TAMSI+Training+And+Assessment";
             }}
           />
+
+          <div className="absolute inset-0 bg-[#d7ded3]/55" />
+
+          <div className="relative z-10 mx-auto max-w-[1280px]">
+            <h1 className="font-['Montserrat',sans-serif] text-4xl font-extrabold leading-tight tracking-wide text-[#45674b] drop-shadow-sm sm:text-5xl md:text-6xl lg:text-7xl">
+              TAMSI Training And Assessment
+            </h1>
+          </div>
         </section>
 
         {/* PAGE TITLE */}
@@ -455,10 +436,10 @@ export default function TraineeProfile() {
           <DecorativeCircles position="left" />
           <DecorativeCircles position="right" />
 
-          <div className="relative mx-auto max-w-[1280px] text-center">
-            <h1 className="font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl">
+          <div className="relative z-20 mx-auto max-w-[1280px] text-center">
+            <h2 className="font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl">
               My Profile
-            </h1>
+            </h2>
 
             <div className="mx-auto mt-3 h-[3px] max-w-[360px] rounded-full bg-white/45" />
           </div>
@@ -484,27 +465,11 @@ export default function TraineeProfile() {
 
         {/* PROFILE BODY */}
         <section className="bg-[#2e5038] px-5 py-10 text-white sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[1280px] overflow-hidden rounded-none bg-[#2e5038] shadow-xl ring-1 ring-white/10 lg:grid lg:grid-cols-[0.85fr_1.35fr]">
+          <div className="mx-auto max-w-[1280px] overflow-hidden bg-[#2e5038] shadow-xl ring-1 ring-white/10 lg:grid lg:grid-cols-[0.85fr_1.35fr]">
             {/* LEFT PANEL */}
             <div className="flex flex-col items-center justify-center bg-[#3c7648] px-6 py-10 text-center">
               <div className="h-[150px] w-[150px] overflow-hidden rounded-full bg-white ring-4 ring-white/20 sm:h-[170px] sm:w-[170px]">
-                {profilePhotoUrl ? (
-                  <img
-                    src={profilePhotoUrl}
-                    alt="Profile"
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        "https://placehold.co/240x240/ffffff/45674b?text=P";
-                    }}
-                  />
-                ) : (
-                  <img
-                    src="https://placehold.co/240x240/ffffff/45674b?text=P"
-                    alt="Profile placeholder"
-                    className="h-full w-full object-cover"
-                  />
-                )}
+                <ProfileAvatar profilePhotoUrl={profilePhotoUrl} large />
               </div>
 
               <input
@@ -617,24 +582,24 @@ export default function TraineeProfile() {
         <div className="h-[55px] bg-[#123a20]" />
       </main>
 
-      {/* SMALL FOOTER */}
+      {/* FOOTER */}
       <footer className="bg-white text-[#4d6f55]">
         <div className="mx-auto max-w-[1440px] px-5 py-3 sm:px-8 lg:px-12">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.05fr_1.05fr_1.3fr_1fr_0.65fr]">
             <div className="border-[#d6ded2] md:border-r md:pr-5">
               <div className="flex items-center gap-3">
                 <img
-                  src="/LTCLogo.png"
-                  alt="Lumispire Logo"
+                  src="/TamsiLogo.png"
+                  alt="TAMSI Logo"
                   className="h-10 w-10 object-contain"
                   onError={(e) => {
                     e.currentTarget.src =
-                      "https://placehold.co/80x80/ffffff/4d6f55?text=L";
+                      "https://placehold.co/80x80/ffffff/4d6f55?text=T";
                   }}
                 />
 
                 <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
-                  LUMISPIRE
+                  TAMSI
                 </h2>
               </div>
             </div>
@@ -643,27 +608,13 @@ export default function TraineeProfile() {
               <h3 className="text-xs font-extrabold text-[#45674b]">Menu</h3>
 
               <div className="mt-1 grid grid-cols-2 gap-x-5 gap-y-0.5 text-[11px] font-semibold text-[#6b776d]">
-                <FooterButton label="Home" onClick={() => goTo("/trainee-home")} />
-                <FooterButton
-                  label="Roadmap"
-                  onClick={() => goTo("/trainee-roadmap")}
-                />
-                <FooterButton
-                  label="Attendance"
-                  onClick={() => goTo("/trainee-attendance")}
-                />
-                <FooterButton
-                  label="Modules"
-                  onClick={() => goTo("/trainee-modules")}
-                />
-                <FooterButton
-                  label="Assignment"
-                  onClick={() => goTo("/trainee-assignment")}
-                />
-                <FooterButton
-                  label="Progress"
-                  onClick={() => goTo("/trainee-progress")}
-                />
+                {TRAINEE_NAV_ITEMS.map((item) => (
+                  <FooterButton
+                    key={item.key}
+                    label={item.label}
+                    onClick={() => goTo(item.path)}
+                  />
+                ))}
               </div>
             </div>
 
@@ -673,9 +624,9 @@ export default function TraineeProfile() {
               </h3>
 
               <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>ltc.tamsi@gmail.com</p>
-                <p>lorengladis@ltcmultiservices.com</p>
-                <p>0995906805 / 09516281271</p>
+                <p>{TRAINING_CONTACT_INFO.email1}</p>
+                <p>{TRAINING_CONTACT_INFO.email2}</p>
+                <p>{TRAINING_CONTACT_INFO.phone}</p>
               </div>
             </div>
 
@@ -683,8 +634,8 @@ export default function TraineeProfile() {
               <h3 className="text-xs font-extrabold text-[#45674b]">Address</h3>
 
               <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>2/F 5441 Curie Street,</p>
-                <p>Palanan, Makati City</p>
+                <p>{TRAINING_CONTACT_INFO.addressLine1}</p>
+                <p>{TRAINING_CONTACT_INFO.addressLine2}</p>
               </div>
             </div>
 
@@ -702,6 +653,23 @@ export default function TraineeProfile() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function ProfileAvatar({ profilePhotoUrl, large = false }) {
+  const fallback = large
+    ? "https://placehold.co/240x240/ffffff/45674b?text=P"
+    : "https://placehold.co/80x80/d7ddd4/45674b?text=P";
+
+  return (
+    <img
+      src={profilePhotoUrl || fallback}
+      alt="Profile"
+      className="h-full w-full object-cover"
+      onError={(e) => {
+        e.currentTarget.src = fallback;
+      }}
+    />
   );
 }
 
@@ -772,7 +740,7 @@ function DecorativeCircles({ position }) {
   return (
     <div
       className={[
-        "pointer-events-none absolute top-6 opacity-35",
+        "pointer-events-none absolute top-6 z-10 opacity-35",
         isLeft ? "left-8" : "right-20",
       ].join(" ")}
     >
