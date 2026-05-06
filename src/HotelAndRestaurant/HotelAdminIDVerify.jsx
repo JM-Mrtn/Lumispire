@@ -13,26 +13,32 @@ function getHotelAdminApiBase() {
     "http://localhost:5000"
   ).replace(/\/+$/, "");
 
+  // Already correct admin route
   if (raw.endsWith("/api/hotel-admin")) {
     return raw;
   }
 
+  // Already correct hotel route
   if (raw.endsWith("/api/hotel")) {
     return raw;
   }
 
+  // Example: https://lumispire-api.onrender.com/api
   if (raw.endsWith("/api")) {
     return `${raw}/hotel`;
   }
 
+  // Example wrong value: https://lumispire-api.onrender.com/api/hotel/api/hotel-admin
   if (raw.includes("/api/hotel/api/hotel-admin")) {
     return raw.replace(/\/api\/hotel\/api\/hotel-admin.*$/i, "/api/hotel");
   }
 
+  // Example: https://lumispire-api.onrender.com/api/something
   if (raw.includes("/api/")) {
     return raw.replace(/\/api\/.*$/i, "/api/hotel");
   }
 
+  // Example: https://lumispire-api.onrender.com
   return `${raw}/api/hotel`;
 }
 
@@ -761,7 +767,8 @@ export default function HotelAdminIDVerify() {
                   const aiApproved = isAiAutoApproved(verification);
                   const aiRejected = isRejectedByAi(verification);
 
-                  const status = user?.idVerificationStatus || "not_submitted";
+                  const status =
+                    user?.idVerificationStatus || "not_submitted";
 
                   const fullName =
                     `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
@@ -942,18 +949,20 @@ export default function HotelAdminIDVerify() {
                             <span className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
                               Verified
                             </span>
+                          ) : aiApproved && !aiRejected ? (
+                            <span className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+                              {autoApproving
+                                ? "Auto Approving..."
+                                : "AI Approved"}
+                            </span>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleApprove(user)}
-                              disabled={isBusy}
+                              disabled={isBusy || !hasFile || aiRejected}
                               className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              {isBusy
-                                ? "Processing..."
-                                : autoApproving
-                                ? "Auto Approving..."
-                                : "Approve"}
+                              {isBusy ? "Processing..." : "Approve"}
                             </button>
                           )}
 
@@ -961,7 +970,7 @@ export default function HotelAdminIDVerify() {
                             <button
                               type="button"
                               onClick={() => openRejectModal(user._id)}
-                              disabled={isBusy}
+                              disabled={isBusy || !hasFile}
                               className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Reject
