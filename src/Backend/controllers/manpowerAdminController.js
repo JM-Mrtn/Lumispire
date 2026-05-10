@@ -4,6 +4,10 @@ import jwt from "jsonwebtoken";
 import ManpowerApplication from "../models/ManpowerApplication.js";
 import ManpowerEmployee from "../models/ManpowerEmployee.js";
 import ManpowerJob from "../models/ManpowerJob.js";
+import {
+  uploadBufferToManpowerGridFS,
+  deleteFileFromManpowerGridFS,
+} from "../utils/manpowerGridfs.js";
 
 function getSecret() {
   return (
@@ -56,17 +60,83 @@ function makeTempPassword(length = 10) {
   return out;
 }
 
+function normalizeQualifications(value) {
+  if (Array.isArray(value)) return value.map(cleanText).filter(Boolean);
+
+  return String(value || "")
+    .split(/\r?\n|,/)
+    .map(cleanText)
+    .filter(Boolean);
+}
+
+function parseBoolean(value, fallback = true) {
+  if (typeof value === "boolean") return value;
+
+  const text = String(value ?? "").trim().toLowerCase();
+
+  if (["true", "1", "yes", "active", "on"].includes(text)) return true;
+  if (["false", "0", "no", "inactive", "off"].includes(text)) return false;
+
+  return fallback;
+}
+
+function buildJobImageUrl(image = {}) {
+  const fileId = image?.fileId ? String(image.fileId) : "";
+  return fileId ? `/manpower/files/${fileId}` : "";
+}
+
 function buildJobPayload(job) {
   if (!job) return null;
 
   return {
     _id: job._id,
     title: job.title || "",
+    description: job.description || "",
+    qualifications: Array.isArray(job.qualifications) ? job.qualifications : [],
+    image: job.image || null,
+    imageUrl: buildJobImageUrl(job.image),
     active: job.active !== false,
     createdBy: job.createdBy || "",
     createdAt: job.createdAt || null,
     updatedAt: job.updatedAt || null,
   };
+}
+
+async function uploadJobImage(file) {
+  if (!file?.buffer) return null;
+
+  const mimetype = String(file.mimetype || "").toLowerCase();
+  const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+  if (!allowed.includes(mimetype)) {
+    const error = new Error("Job photo must be JPG, JPEG, PNG, or WEBP.");
+    error.status = 400;
+    throw error;
+  }
+
+  const originalName = file.originalname || "job-photo";
+
+  return uploadBufferToManpowerGridFS({
+    buffer: file.buffer,
+    filename: `manpower-job-${Date.now()}-${originalName}`,
+    originalName,
+    contentType: mimetype,
+    mimetype,
+    size: Number(file.size || 0),
+    folder: "manpower-jobs",
+  });
+}
+
+async function safeDeleteJobImage(image = {}) {
+  const fileId = image?.fileId ? String(image.fileId) : "";
+
+  if (!fileId) return;
+
+  try {
+    await deleteFileFromManpowerGridFS(fileId);
+  } catch (error) {
+    console.error("Failed to delete old job image:", error);
+  }
 }
 
 function buildEmployeeAccountPayload(employee) {
@@ -247,7 +317,7 @@ export async function listManpowerJobs(req, res) {
 
     if (search) {
       const regex = new RegExp(escapeRegex(search), "i");
-      query.$or = [{ title: regex }];
+      query.$or = [{ title: regex }, { description: regex }];
     }
 
     const jobs = await ManpowerJob.find(query).sort({ title: 1 }).lean();
@@ -267,6 +337,9 @@ export async function listManpowerJobs(req, res) {
 export async function createManpowerJob(req, res) {
   try {
     const title = cleanText(req.body?.title);
+    const description = cleanText(req.body?.description);
+    const qualifications = normalizeQualifications(req.body?.qualifications);
+    const active = parseBoolean(req.body?.active, true);
 
     if (!title || title.length < 2) {
       return res.status(400).json({
@@ -284,11 +357,14 @@ export async function createManpowerJob(req, res) {
       });
     }
 
+    const uploadedImage = await uploadJobImage(req.file);
+
     const job = await ManpowerJob.create({
       title,
-      description: "",
-      qualifications: [],
-      active: req.body?.active === false ? false : true,
+      description,
+      qualifications,
+      image: uploadedImage || {},
+      active,
       createdBy: req.manpowerAdmin?.username || "admin",
     });
 
@@ -305,8 +381,8 @@ export async function createManpowerJob(req, res) {
       });
     }
 
-    return res.status(500).json({
-      message: "Failed to create job vacancy.",
+    return res.status(error?.status || 500).json({
+      message: error?.message || "Failed to create job vacancy.",
     });
   }
 }
@@ -315,8 +391,9 @@ export async function updateManpowerJob(req, res) {
   try {
     const jobId = cleanText(req.params?.jobId);
     const title = cleanText(req.body?.title);
-    const active =
-      typeof req.body?.active === "boolean" ? req.body.active : true;
+    const description = cleanText(req.body?.description);
+    const qualifications = normalizeQualifications(req.body?.qualifications);
+    const active = parseBoolean(req.body?.active, true);
 
     if (!title || title.length < 2) {
       return res.status(400).json({
@@ -335,26 +412,32 @@ export async function updateManpowerJob(req, res) {
       });
     }
 
-    const job = await ManpowerJob.findByIdAndUpdate(
-      jobId,
-      {
-        $set: {
-          title,
-          description: "",
-          qualifications: [],
-          active,
-        },
-        $unset: {
-          dailyRate: "",
-        },
-      },
-      { new: true, runValidators: true }
-    ).lean();
+    const job = await ManpowerJob.findById(jobId);
 
     if (!job) {
       return res.status(404).json({
         message: "Job vacancy not found.",
       });
+    }
+
+    const previousImage = job.image?.fileId
+      ? job.image.toObject?.() || job.image
+      : null;
+
+    job.title = title;
+    job.description = description;
+    job.qualifications = qualifications;
+    job.active = active;
+
+    if (req.file?.buffer) {
+      const uploadedImage = await uploadJobImage(req.file);
+      job.image = uploadedImage || {};
+    }
+
+    await job.save();
+
+    if (req.file?.buffer && previousImage?.fileId) {
+      await safeDeleteJobImage(previousImage);
     }
 
     return res.json({
@@ -364,8 +447,8 @@ export async function updateManpowerJob(req, res) {
   } catch (error) {
     console.error("updateManpowerJob error:", error);
 
-    return res.status(500).json({
-      message: "Failed to update job vacancy.",
+    return res.status(error?.status || 500).json({
+      message: error?.message || "Failed to update job vacancy.",
     });
   }
 }
@@ -434,6 +517,10 @@ export async function deleteManpowerJob(req, res) {
     }
 
     await ManpowerJob.findByIdAndDelete(jobId);
+
+    if (job?.image?.fileId) {
+      await safeDeleteJobImage(job.image);
+    }
 
     return res.json({
       message: "Job vacancy deleted successfully.",

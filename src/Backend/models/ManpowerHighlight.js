@@ -26,23 +26,19 @@ const fileRefSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const manpowerJobSchema = new mongoose.Schema(
+const manpowerHighlightSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
-      unique: true,
-      index: true,
+      maxlength: 120,
     },
-    description: {
+    subtitle: {
       type: String,
       default: "",
       trim: true,
-    },
-    qualifications: {
-      type: [String],
-      default: [],
+      maxlength: 240,
     },
     image: {
       type: fileRefSchema,
@@ -53,13 +49,25 @@ const manpowerJobSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    sortOrder: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
     createdBy: {
       type: String,
       default: "admin",
+      trim: true,
+    },
+    updatedBy: {
+      type: String,
+      default: "",
       trim: true,
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("ManpowerJob", manpowerJobSchema);
+manpowerHighlightSchema.index({ active: 1, sortOrder: 1, createdAt: -1 });
+
+export default mongoose.model("ManpowerHighlight", manpowerHighlightSchema);

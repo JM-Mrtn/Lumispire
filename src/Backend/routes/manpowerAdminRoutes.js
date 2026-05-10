@@ -1,5 +1,6 @@
 import express from "express";
 import verifyManpowerAdmin from "../middleware/verifyManpowerAdmin.js";
+import { manpowerProfilePhotoUpload } from "../middleware/manpowerUpload.js";
 import {
   manpowerAdminLogin,
   getManpowerAdminDashboard,
@@ -33,8 +34,19 @@ router.post("/deductions/reset", resetManpowerDeductionConfig);
 router.get("/dashboard", getManpowerAdminDashboard);
 
 router.get("/jobs", listManpowerJobs);
-router.post("/jobs", createManpowerJob);
-router.put("/jobs/:jobId", updateManpowerJob);
+
+router.post(
+  "/jobs",
+  manpowerProfilePhotoUpload.single("image"),
+  createManpowerJob
+);
+
+router.put(
+  "/jobs/:jobId",
+  manpowerProfilePhotoUpload.single("image"),
+  updateManpowerJob
+);
+
 router.patch("/jobs/:jobId/status", updateManpowerJobStatus);
 router.delete("/jobs/:jobId", deleteManpowerJob);
 

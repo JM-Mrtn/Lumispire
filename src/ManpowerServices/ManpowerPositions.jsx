@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const LOGO_IMAGE = "/ManpowerLogo.png";
@@ -40,6 +40,36 @@ function normalizeApiBase(raw) {
 }
 
 const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
+const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
+
+function resolveImageSource(value = "") {
+  const raw = String(value || "").trim();
+
+  if (!raw) return "";
+
+  if (
+    raw.startsWith("http://") ||
+    raw.startsWith("https://") ||
+    raw.startsWith("data:") ||
+    raw.startsWith("blob:")
+  ) {
+    return raw;
+  }
+
+  if (raw.startsWith("/api/")) {
+    return `${API_ORIGIN}${raw}`;
+  }
+
+  if (raw.startsWith("/manpower/files/")) {
+    return `${API_BASE}${raw}`;
+  }
+
+  return raw;
+}
+
+function getFallbackDescription(title = "this position") {
+  return `This position is currently open under LTC Manpower Services. Click Apply Now to submit your application and complete the required screening process for ${title}.`;
+}
 
 function HeaderNavLink({ to, children, active = false }) {
   return (
@@ -67,7 +97,7 @@ function FooterColumn({ title, children }) {
   );
 }
 
-function VacancyCard({ title, index, onApply }) {
+function VacancyCard({ job, index, onOpen }) {
   const backgrounds = [
     "linear-gradient(135deg, #eaf2e6 0%, #b9ceb5 100%)",
     "linear-gradient(135deg, #f2eee6 0%, #d0c2ab 100%)",
@@ -77,11 +107,13 @@ function VacancyCard({ title, index, onApply }) {
     "linear-gradient(135deg, #f0eedf 0%, #d2c9ad 100%)",
   ];
 
+  const imageSrc = resolveImageSource(job?.imageUrl);
+
   return (
     <button
       type="button"
-      onClick={onApply}
-      title={`Apply for ${title}`}
+      onClick={() => onOpen(job)}
+      title={`View ${job.title}`}
       className="group w-full text-left"
     >
       <div className="overflow-hidden rounded-[16px] border border-white/20 bg-white shadow-[0_8px_18px_rgba(0,0,0,0.22)] transition duration-200 group-hover:-translate-y-1 group-hover:shadow-[0_12px_24px_rgba(0,0,0,0.28)]">
@@ -89,10 +121,18 @@ function VacancyCard({ title, index, onApply }) {
           className="relative h-[145px] w-full overflow-hidden sm:h-[160px]"
           style={{ background: backgrounds[index % backgrounds.length] }}
         >
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(0,0,0,0.12))]" />
+          {imageSrc ? (
+            <img
+              src={imageSrc}
+              alt={job.title}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.2),rgba(0,0,0,0.12))]" />
+          )}
 
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="rounded-full bg-white/80 px-5 py-2 text-center text-[12px] font-black uppercase tracking-wide text-[#315b42] backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10 p-4">
+            <div className="rounded-full bg-white/85 px-5 py-2 text-center text-[12px] font-black uppercase tracking-wide text-[#315b42] backdrop-blur-sm">
               Available Position
             </div>
           </div>
@@ -100,14 +140,117 @@ function VacancyCard({ title, index, onApply }) {
 
         <div className="px-4 py-4 text-center">
           <h3 className="text-[18px] font-black leading-snug text-[#315b42]">
-            {title}
+            {job.title}
           </h3>
+
           <p className="mt-1 text-[12px] font-semibold text-[#52695a]">
-            Click to apply
+            Click to view details
           </p>
         </div>
       </div>
     </button>
+  );
+}
+
+function JobModal({ job, onClose, onApply }) {
+  if (!job) return null;
+
+  const imageSrc = resolveImageSource(job.imageUrl);
+
+  const qualifications = Array.isArray(job.qualifications)
+    ? job.qualifications.filter(Boolean)
+    : [];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-6">
+      <div className="relative max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-3 py-1.5 text-sm font-black text-[#315b42] shadow hover:bg-white"
+          aria-label="Close job details"
+        >
+          ✕
+        </button>
+
+        <div className="max-h-[92vh] overflow-y-auto">
+          <div className="relative h-[230px] bg-[#dfe8dc] sm:h-[300px]">
+            {imageSrc ? (
+              <img
+                src={imageSrc}
+                alt={job.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#eaf2e6] to-[#b9ceb5] px-5 text-center">
+                <span className="rounded-full bg-white/85 px-6 py-3 text-sm font-black uppercase tracking-wide text-[#315b42]">
+                  Available Position
+                </span>
+              </div>
+            )}
+
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-6 pb-6 pt-20">
+              <h2 className="text-3xl font-black text-white drop-shadow">
+                {job.title}
+              </h2>
+            </div>
+          </div>
+
+          <div className="space-y-5 px-6 py-6">
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wide text-[#315b42]">
+                Job Description
+              </h3>
+
+              <p className="mt-2 text-sm font-semibold leading-7 text-[#52695a]">
+                {job.description || getFallbackDescription(job.title)}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wide text-[#315b42]">
+                Qualifications
+              </h3>
+
+              {qualifications.length ? (
+                <ul className="mt-3 grid gap-2 text-sm font-semibold text-[#52695a] sm:grid-cols-2">
+                  {qualifications.map((qualification, index) => (
+                    <li
+                      key={`${qualification}-${index}`}
+                      className="rounded-xl border border-[#d8ded5] bg-[#f7f9f5] px-4 py-3"
+                    >
+                      {qualification}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm font-semibold leading-7 text-[#52695a]">
+                  Qualifications will be discussed during application screening.
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-[#d8ded5] pt-5 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl border border-[#cbd5c7] px-5 py-3 text-sm font-black text-[#405549] transition hover:bg-[#f7f9f5]"
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onApply(job)}
+                className="rounded-xl bg-[#315b42] px-6 py-3 text-sm font-black text-white shadow-lg transition hover:bg-[#244735]"
+              >
+                Apply Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -117,6 +260,8 @@ export default function ManpowerPositions() {
   const [jobs, setJobs] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loadingJobs, setLoadingJobs] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selectedJob, setSelectedJob] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -161,11 +306,39 @@ export default function ManpowerPositions() {
       : DEFAULT_VACANCIES.map((title) => ({
           _id: title,
           title,
+          description: "",
+          qualifications: [],
+          imageUrl: "",
+          active: true,
         }));
+
+  const filteredJobs = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) return displayJobs;
+
+    return displayJobs.filter((job) => {
+      const title = String(job?.title || "").toLowerCase();
+      const description = String(job?.description || "").toLowerCase();
+      const qualifications = Array.isArray(job?.qualifications)
+        ? job.qualifications.join(" ").toLowerCase()
+        : "";
+
+      return (
+        title.includes(query) ||
+        description.includes(query) ||
+        qualifications.includes(query)
+      );
+    });
+  }, [displayJobs, search]);
 
   function goTo(path) {
     setMobileOpen(false);
     navigate(path);
+  }
+
+  function applyForJob(job) {
+    navigate(`/manpower-apply?vacancy=${encodeURIComponent(job.title)}`);
   }
 
   return (
@@ -290,8 +463,8 @@ export default function ManpowerPositions() {
             <div className="mx-auto mt-5 h-[3px] w-[310px] max-w-[80%] bg-white/60" />
 
             <p className="mx-auto mt-5 max-w-3xl text-[14px] font-semibold leading-relaxed text-white/95 sm:text-[16px] md:text-[18px]">
-              Here are the jobs available for Manpower Services. Apply now and
-              be one of the Manpower Services employees.
+              Browse available positions, view job details, and apply for the
+              role that fits your qualifications.
             </p>
 
             {loadingJobs && (
@@ -306,22 +479,46 @@ export default function ManpowerPositions() {
           <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#9ab987] to-transparent opacity-80" />
 
           <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 md:py-16">
-            <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {displayJobs.map((job, index) => (
-                <VacancyCard
-                  key={job._id || job.title}
-                  title={job.title}
-                  index={index}
-                  onApply={() =>
-                    navigate(
-                      `/manpower-apply?vacancy=${encodeURIComponent(
-                        job.title
-                      )}`
-                    )
-                  }
-                />
-              ))}
+            <div className="mb-8 rounded-3xl border border-white/15 bg-white/95 p-4 shadow-xl md:p-5">
+              <label className="text-xs font-black uppercase tracking-wide text-[#315b42]">
+                Search Job
+              </label>
+
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-[#cfd9ca] bg-white px-4 py-3 text-sm font-semibold text-[#24372d] outline-none transition focus:border-[#315b42] focus:ring-2 focus:ring-[#315b42]/20"
+                placeholder="Search by title, description, or qualification..."
+              />
+
+              <p className="mt-3 text-xs font-semibold text-[#52695a]">
+                Showing {filteredJobs.length} of {displayJobs.length} job
+                offer{displayJobs.length === 1 ? "" : "s"}.
+              </p>
             </div>
+
+            {filteredJobs.length ? (
+              <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredJobs.map((job, index) => (
+                  <VacancyCard
+                    key={job._id || job.title}
+                    job={job}
+                    index={index}
+                    onOpen={setSelectedJob}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-white/15 bg-white/95 px-6 py-12 text-center shadow-xl">
+                <h3 className="text-xl font-black text-[#315b42]">
+                  No jobs found
+                </h3>
+
+                <p className="mt-2 text-sm font-semibold text-[#52695a]">
+                  Try a different search keyword.
+                </p>
+              </div>
+            )}
           </div>
         </section>
       </main>
@@ -400,6 +597,12 @@ export default function ManpowerPositions() {
           </div>
         </div>
       </footer>
+
+      <JobModal
+        job={selectedJob}
+        onClose={() => setSelectedJob(null)}
+        onApply={applyForJob}
+      />
     </div>
   );
 }

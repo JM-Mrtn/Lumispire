@@ -47,23 +47,7 @@ function clearEmployeeSession() {
   localStorage.removeItem("manpowerEmployeeUser");
 }
 
-function HeaderNavLink({ to, children, active = false, onClick }) {
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={`relative pb-1 transition hover:text-[#6f8a66] ${
-          active
-            ? "text-[#315b42] after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-full after:rounded-full after:bg-[#315b42]"
-            : "text-[#405549]"
-        }`}
-      >
-        {children}
-      </button>
-    );
-  }
-
+function HeaderNavLink({ to, children, active = false }) {
   return (
     <Link
       to={to}
@@ -80,9 +64,10 @@ function HeaderNavLink({ to, children, active = false, onClick }) {
 
 function FooterColumn({ title, children }) {
   return (
-    <div className="border-[#d8ded5] md:border-l md:pl-5">
-      <h4 className="text-[14px] font-black text-[#315b42]">{title}</h4>
-      <div className="mt-2 space-y-1 text-[11px] font-semibold leading-snug text-[#496252]">
+    <div className="border-[#d8ded5] md:border-l md:pl-4">
+      <h4 className="text-[12px] font-black text-[#315b42]">{title}</h4>
+
+      <div className="mt-1 space-y-0.5 text-[10px] font-semibold leading-snug text-[#496252]">
         {children}
       </div>
     </div>
@@ -112,7 +97,6 @@ export default function ManpowerEmployeeProfile() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   const [photoUrl, setPhotoUrl] = useState("");
   const [photoState, setPhotoState] = useState({
@@ -151,11 +135,6 @@ export default function ManpowerEmployeeProfile() {
     .charAt(0)
     .toUpperCase();
 
-  function goTo(path) {
-    setMobileOpen(false);
-    navigate(path);
-  }
-
   function logout() {
     clearEmployeeSession();
     setToken("");
@@ -168,7 +147,7 @@ export default function ManpowerEmployeeProfile() {
       try {
         URL.revokeObjectURL(photoObjectUrlRef.current);
       } catch {
-        // ignore cleanup error
+        // Ignore cleanup error.
       }
 
       photoObjectUrlRef.current = "";
@@ -322,7 +301,7 @@ export default function ManpowerEmployeeProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f3a1e] font-sans text-[#24372d]">
+    <div className="min-h-screen bg-[#eef2ea] font-sans text-[#24372d]">
       <header className="sticky top-0 z-50 border-b border-[#d5ddd2] bg-[#f7f9f5]/95 backdrop-blur">
         <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to={EMPLOYEE_HOME_ROUTE} className="flex items-center gap-3">
@@ -345,81 +324,31 @@ export default function ManpowerEmployeeProfile() {
             </HeaderNavLink>
 
             <HeaderNavLink to={EMPLOYEE_LEAVE_ROUTE}>Leave</HeaderNavLink>
+          </nav>
 
+          <div className="text-[12px] font-black uppercase tracking-wide">
             <HeaderNavLink to={EMPLOYEE_PROFILE_ROUTE} active>
               Profile
             </HeaderNavLink>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={logout}
-              className="hidden rounded-full bg-[#315b42] px-5 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-[#254934] lg:inline-flex"
-            >
-              Logout
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMobileOpen((prev) => !prev)}
-              className="rounded-md border border-[#cfd6ca] px-3 py-2 text-xs font-black uppercase tracking-wide text-[#405549] lg:hidden"
-            >
-              Menu
-            </button>
           </div>
         </div>
 
-        {mobileOpen && (
-          <div className="border-t border-[#dde2db] bg-[#f7f9f5] lg:hidden">
-            <div className="mx-auto flex max-w-7xl flex-col px-4 py-3 text-sm font-bold text-[#405549] sm:px-6">
-              <button
-                type="button"
-                onClick={() => goTo(EMPLOYEE_HOME_ROUTE)}
-                className="py-2 text-left"
-              >
-                Home
-              </button>
+        <div className="border-t border-[#e1e7de] bg-[#f7f9f5] px-4 py-3 lg:hidden">
+          <nav className="mx-auto flex max-w-7xl items-center justify-center gap-7 text-[11px] font-black uppercase tracking-wide">
+            <HeaderNavLink to={EMPLOYEE_HOME_ROUTE}>Home</HeaderNavLink>
 
-              <button
-                type="button"
-                onClick={() => goTo(EMPLOYEE_PAYROLL_ROUTE)}
-                className="py-2 text-left"
-              >
-                Payroll
-              </button>
+            <HeaderNavLink to={EMPLOYEE_PAYROLL_ROUTE}>
+              Payroll
+            </HeaderNavLink>
 
-              <button
-                type="button"
-                onClick={() => goTo(EMPLOYEE_LEAVE_ROUTE)}
-                className="py-2 text-left"
-              >
-                Leave
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo(EMPLOYEE_PROFILE_ROUTE)}
-                className="py-2 text-left text-[#315b42] underline underline-offset-4"
-              >
-                Profile
-              </button>
-
-              <button
-                type="button"
-                onClick={logout}
-                className="py-2 text-left text-red-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        )}
+            <HeaderNavLink to={EMPLOYEE_LEAVE_ROUTE}>Leave</HeaderNavLink>
+          </nav>
+        </div>
       </header>
 
       <main>
         <section
-          className="relative flex min-h-[300px] items-center justify-center bg-[#526b5a] bg-cover bg-center px-4 text-center sm:min-h-[360px] md:min-h-[430px] lg:min-h-[500px]"
+          className="relative flex min-h-[250px] items-center justify-center bg-[#526b5a] bg-cover bg-center px-4 text-center sm:min-h-[290px] lg:min-h-[330px]"
           style={{
             backgroundImage: `url(${HERO_IMAGE})`,
           }}
@@ -427,13 +356,13 @@ export default function ManpowerEmployeeProfile() {
           <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative z-10 mx-auto max-w-5xl">
-            <h1 className="text-[32px] font-black leading-tight text-white drop-shadow-lg sm:text-[42px] md:text-[54px]">
+            <h1 className="text-[28px] font-black leading-tight text-white drop-shadow-lg sm:text-[36px] md:text-[44px]">
               My Profile
             </h1>
 
-            <div className="mx-auto mt-5 h-[3px] w-[280px] max-w-[80%] bg-white/60" />
+            <div className="mx-auto mt-4 h-[3px] w-[240px] max-w-[75%] bg-white/60" />
 
-            <p className="mx-auto mt-5 max-w-3xl text-[14px] font-semibold leading-relaxed text-white/95 sm:text-[16px] md:text-[18px]">
+            <p className="mx-auto mt-4 max-w-3xl text-[14px] font-semibold leading-relaxed text-white/95 sm:text-[16px]">
               View your employee information, upload your profile photo, and
               manage your account settings.
             </p>
@@ -566,20 +495,20 @@ export default function ManpowerEmployeeProfile() {
       </main>
 
       <footer className="border-t border-[#d8ded5] bg-[#f7f9f5]">
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-          <div className="grid gap-4 md:grid-cols-[1.2fr_0.75fr_1.35fr_1.05fr_0.85fr] md:items-start">
+        <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
+          <div className="grid gap-2 md:grid-cols-[1fr_0.7fr_1.2fr_0.9fr_0.75fr] md:items-start">
             <div>
               <Link
                 to={EMPLOYEE_HOME_ROUTE}
-                className="flex items-center gap-2.5"
+                className="flex items-center gap-2"
               >
                 <img
                   src={LOGO_IMAGE}
                   alt="Manpower Logo"
-                  className="h-12 w-12 shrink-0 rounded-full object-contain"
+                  className="h-9 w-9 shrink-0 rounded-full object-contain"
                 />
 
-                <h3 className="text-[24px] font-black tracking-wide text-[#315b42]">
+                <h3 className="text-[18px] font-black tracking-wide text-[#315b42]">
                   MANPOWER
                 </h3>
               </Link>
@@ -633,7 +562,7 @@ export default function ManpowerEmployeeProfile() {
             </FooterColumn>
           </div>
 
-          <div className="mt-2 flex flex-col gap-1 border-t border-[#d8ded5] pt-1.5 text-[10px] font-semibold text-[#4c6556] sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-1 flex flex-col gap-0.5 border-t border-[#d8ded5] pt-1 text-[9px] font-semibold text-[#4c6556] sm:flex-row sm:items-center sm:justify-between">
             <p>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
             <p>Developed by CRMS Tech Alliance</p>
           </div>

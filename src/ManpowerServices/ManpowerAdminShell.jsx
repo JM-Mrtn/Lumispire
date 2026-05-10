@@ -5,6 +5,7 @@ const adminNavItems = [
   { key: "dashboard", label: "Dashboard", path: "/manpower-admin" },
   { key: "accounts", label: "Accounts", path: "/manpower-admin-accounts" },
   { key: "jobs", label: "Jobs", path: "/manpower-admin-jobs" },
+  { key: "highlights", label: "Highlights", path: "/manpower-admin-highlights" },
   { key: "deductions", label: "Deductions", path: "/manpower-admin-deductions" },
 ];
 

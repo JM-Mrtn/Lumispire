@@ -10,26 +10,15 @@ import {
   compactInputClassName,
   inputClassName,
 } from "./ManpowerAdminShell";
+import { API_BASE, manpowerUrl } from "./manpowerApi";
 
-function normalizeApiBase(raw) {
-  const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
-
-  if (clean.endsWith("/api")) return clean;
-
-  if (clean.includes("/api/")) {
-    return clean.replace(/\/api\/.*$/i, "/api");
-  }
-
-  return `${clean}/api`;
-}
-
-const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
+const HIGHLIGHTS_API = `${API_BASE}/manpower/highlights`;
 
 const emptyForm = {
   title: "",
-  description: "",
-  qualifications: "",
+  subtitle: "",
+  sortOrder: 0,
   active: true,
 };
 
@@ -51,15 +40,6 @@ function adminHeaders(extra = {}) {
   };
 }
 
-function formatDateTime(value) {
-  if (!value) return "-";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return date.toLocaleString();
-}
-
 function resolveImageSource(value = "") {
   const raw = String(value || "").trim();
 
@@ -79,24 +59,34 @@ function resolveImageSource(value = "") {
   }
 
   if (raw.startsWith("/manpower/files/")) {
-    return `${API_BASE}${raw}`;
+    return manpowerUrl(raw);
   }
 
   return raw;
 }
 
-export default function ManpowerAdminJobs() {
+function formatDateTime(value) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleString();
+}
+
+export default function ManpowerAdminHighlights() {
   const navigate = useNavigate();
   const previewObjectUrlRef = useRef("");
 
   const [token, setToken] = useState(getAdminToken());
-  const [jobs, setJobs] = useState([]);
+  const [highlights, setHighlights] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(emptyForm);
-  const [editingJob, setEditingJob] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const [form, setForm] = useState(emptyForm);
+  const [editingHighlight, setEditingHighlight] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imageInputKey, setImageInputKey] = useState(0);
   const [previewUrl, setPreviewUrl] = useState("");
@@ -112,11 +102,20 @@ export default function ManpowerAdminJobs() {
       try {
         URL.revokeObjectURL(previewObjectUrlRef.current);
       } catch {
-        // ignore cleanup error
+        // Ignore cleanup error.
       }
 
       previewObjectUrlRef.current = "";
     }
+  }
+
+  function resetForm() {
+    revokePreviewUrl();
+    setEditingHighlight(null);
+    setForm(emptyForm);
+    setImageFile(null);
+    setPreviewUrl("");
+    setImageInputKey((current) => current + 1);
   }
 
   useEffect(() => {
@@ -131,11 +130,11 @@ export default function ManpowerAdminJobs() {
       return;
     }
 
-    loadJobs();
+    loadHighlights();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, search, status, navigate]);
 
-  async function loadJobs() {
+  async function loadHighlights() {
     try {
       setLoading(true);
 
@@ -145,8 +144,8 @@ export default function ManpowerAdminJobs() {
       if (status) query.set("status", status);
 
       const url = query.toString()
-        ? `${API_BASE}/manpower/admin/jobs?${query.toString()}`
-        : `${API_BASE}/manpower/admin/jobs`;
+        ? `${HIGHLIGHTS_API}?${query.toString()}`
+        : HIGHLIGHTS_API;
 
       const res = await fetch(url, {
         headers: adminHeaders(),
@@ -160,44 +159,39 @@ export default function ManpowerAdminJobs() {
       }
 
       if (!res.ok) {
-        throw new Error(data?.message || "Failed to load job vacancies.");
+        throw new Error(data?.message || "Failed to load highlights.");
       }
 
-      setJobs(Array.isArray(data?.jobs) ? data.jobs : []);
+      setHighlights(Array.isArray(data?.highlights) ? data.highlights : []);
     } catch (error) {
-      alert(error?.message || "Failed to load job vacancies.");
+      alert(error?.message || "Failed to load highlights.");
     } finally {
       setLoading(false);
     }
   }
 
-  function resetForm() {
+  function startEdit(highlight) {
     revokePreviewUrl();
-    setEditingJob(null);
-    setForm(emptyForm);
-    setImageFile(null);
-    setPreviewUrl("");
-    setImageInputKey((current) => current + 1);
-  }
 
-  function startEdit(job) {
-    revokePreviewUrl();
-    setEditingJob(job);
-
+    setEditingHighlight(highlight);
     setForm({
-      title: job.title || "",
-      description: job.description || "",
-      qualifications: Array.isArray(job.qualifications)
-        ? job.qualifications.join("\n")
-        : "",
-      active: job.active !== false,
+      title: highlight?.title || "",
+      subtitle: highlight?.subtitle || "",
+      sortOrder: Number(highlight?.sortOrder || 0),
+      active: highlight?.active !== false,
     });
-
     setImageFile(null);
-    setPreviewUrl(resolveImageSource(job.imageUrl));
+    setPreviewUrl(resolveImageSource(highlight?.imageUrl));
     setImageInputKey((current) => current + 1);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function updateFormField(key, value) {
+    setForm((prev) => ({
+      ...prev,
+      [key]: key === "sortOrder" ? Number(value) : value,
+    }));
   }
 
   function handleImageChange(event) {
@@ -207,7 +201,9 @@ export default function ManpowerAdminJobs() {
 
     if (!file) {
       setImageFile(null);
-      setPreviewUrl(editingJob ? resolveImageSource(editingJob.imageUrl) : "");
+      setPreviewUrl(
+        editingHighlight ? resolveImageSource(editingHighlight.imageUrl) : ""
+      );
       return;
     }
 
@@ -216,7 +212,9 @@ export default function ManpowerAdminJobs() {
     if (!allowed.includes(String(file.type || "").toLowerCase())) {
       alert("Please upload JPG, JPEG, PNG, or WEBP only.");
       setImageFile(null);
-      setPreviewUrl(editingJob ? resolveImageSource(editingJob.imageUrl) : "");
+      setPreviewUrl(
+        editingHighlight ? resolveImageSource(editingHighlight.imageUrl) : ""
+      );
       setImageInputKey((current) => current + 1);
       return;
     }
@@ -228,28 +226,33 @@ export default function ManpowerAdminJobs() {
     setPreviewUrl(objectUrl);
   }
 
-  async function submitJob(event) {
+  async function submitHighlight(event) {
     event.preventDefault();
+
+    if (!editingHighlight && !imageFile) {
+      alert("Please upload a highlight image.");
+      return;
+    }
 
     try {
       setSaving(true);
 
       const payload = new FormData();
       payload.append("title", form.title.trim());
-      payload.append("description", form.description.trim());
-      payload.append("qualifications", form.qualifications.trim());
+      payload.append("subtitle", form.subtitle.trim());
+      payload.append("sortOrder", String(Number(form.sortOrder || 0)));
       payload.append("active", String(Boolean(form.active)));
 
       if (imageFile) {
         payload.append("image", imageFile);
       }
 
-      const url = editingJob
-        ? `${API_BASE}/manpower/admin/jobs/${editingJob._id}`
-        : `${API_BASE}/manpower/admin/jobs`;
+      const url = editingHighlight
+        ? `${HIGHLIGHTS_API}/${editingHighlight._id}`
+        : HIGHLIGHTS_API;
 
       const res = await fetch(url, {
-        method: editingJob ? "PUT" : "POST",
+        method: editingHighlight ? "PUT" : "POST",
         headers: adminHeaders(),
         body: payload,
       });
@@ -262,38 +265,37 @@ export default function ManpowerAdminJobs() {
       }
 
       if (!res.ok) {
-        throw new Error(data?.message || "Failed to save job vacancy.");
+        throw new Error(data?.message || "Failed to save highlight.");
       }
 
-      alert(data?.message || "Job vacancy saved successfully.");
+      alert(data?.message || "Highlight saved successfully.");
       resetForm();
-      await loadJobs();
+      await loadHighlights();
     } catch (error) {
-      alert(error?.message || "Failed to save job vacancy.");
+      alert(error?.message || "Failed to save highlight.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function updateJobStatus(job, active) {
+  async function updateHighlightStatus(highlight, active) {
     const confirmed = window.confirm(
-      active ? `Activate ${job.title}?` : `Deactivate ${job.title}?`
+      active
+        ? `Activate "${highlight.title || "this highlight"}"?`
+        : `Deactivate "${highlight.title || "this highlight"}"?`
     );
 
     if (!confirmed) return;
 
     try {
-      const res = await fetch(
-        `${API_BASE}/manpower/admin/jobs/${job._id}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            ...adminHeaders(),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ active }),
-        }
-      );
+      const res = await fetch(`${HIGHLIGHTS_API}/${highlight._id}/status`, {
+        method: "PATCH",
+        headers: {
+          ...adminHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ active }),
+      });
 
       const data = await res.json().catch(() => ({}));
 
@@ -303,24 +305,26 @@ export default function ManpowerAdminJobs() {
       }
 
       if (!res.ok) {
-        throw new Error(data?.message || "Failed to update job status.");
+        throw new Error(data?.message || "Failed to update highlight status.");
       }
 
-      await loadJobs();
+      await loadHighlights();
     } catch (error) {
-      alert(error?.message || "Failed to update job status.");
+      alert(error?.message || "Failed to update highlight status.");
     }
   }
 
-  async function deleteJob(job) {
+  async function deleteHighlight(highlight) {
     const confirmed = window.confirm(
-      `Delete ${job.title}?\n\nIf this job already has applicants, it will be deactivated instead.`
+      `Delete "${
+        highlight.title || "this highlight"
+      }"?\n\nThis will also remove the uploaded image from storage.`
     );
 
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`${API_BASE}/manpower/admin/jobs/${job._id}`, {
+      const res = await fetch(`${HIGHLIGHTS_API}/${highlight._id}`, {
         method: "DELETE",
         headers: adminHeaders(),
       });
@@ -333,107 +337,100 @@ export default function ManpowerAdminJobs() {
       }
 
       if (!res.ok) {
-        throw new Error(data?.message || "Failed to delete job vacancy.");
+        throw new Error(data?.message || "Failed to delete highlight.");
       }
 
-      alert(data?.message || "Job vacancy deleted successfully.");
+      alert(data?.message || "Highlight deleted successfully.");
 
-      if (editingJob?._id === job._id) {
+      if (editingHighlight?._id === highlight._id) {
         resetForm();
       }
 
-      await loadJobs();
+      await loadHighlights();
     } catch (error) {
-      alert(error?.message || "Failed to delete job vacancy.");
+      alert(error?.message || "Failed to delete highlight.");
     }
   }
 
   const summary = useMemo(() => {
     return {
-      total: jobs.length,
-      active: jobs.filter((job) => job.active !== false).length,
-      inactive: jobs.filter((job) => job.active === false).length,
+      total: highlights.length,
+      active: highlights.filter((item) => item.active !== false).length,
+      inactive: highlights.filter((item) => item.active === false).length,
     };
-  }, [jobs]);
+  }, [highlights]);
 
   return (
     <AdminShell
-      current="jobs"
-      title="Job Vacancy Management"
-      subtitle="Add, edit, deactivate, or delete manpower job offers shown to applicants."
+      current="highlights"
+      title="Manpower Highlight Management"
+      subtitle="Add, edit, activate, deactivate, or delete homepage highlight images shown on the public Manpower Services page."
       onLogout={logout}
     >
       <div className="space-y-6">
         <section className="grid gap-5 md:grid-cols-3">
           <StatCard
-            title="Total Jobs"
+            title="Total Highlights"
             value={summary.total}
-            subtitle="All stored vacancies"
+            subtitle="All uploaded highlight records"
           />
+
           <StatCard
-            title="Active Jobs"
+            title="Active Highlights"
             value={summary.active}
-            subtitle="Visible to applicants"
+            subtitle="Visible on public services page"
             tone="success"
           />
+
           <StatCard
-            title="Inactive Jobs"
+            title="Inactive Highlights"
             value={summary.inactive}
-            subtitle="Hidden or disabled vacancies"
+            subtitle="Hidden from public services page"
             tone="danger"
           />
         </section>
 
         <SectionCard
-          title={editingJob ? "Edit Job Vacancy" : "Add New Job Vacancy"}
-          subtitle="Add title, description, qualifications, and a photo for each job."
+          title={editingHighlight ? "Edit Highlight" : "Add New Highlight"}
+          subtitle="Upload image highlights that will appear under Our Highlights."
         >
-          <form onSubmit={submitJob} className="grid gap-5">
-            <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <form onSubmit={submitHighlight} className="grid gap-5">
+            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-4">
                 <label className="block">
-                  <FieldLabel>Job Title</FieldLabel>
+                  <FieldLabel>Title</FieldLabel>
                   <input
                     value={form.title}
                     onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        title: event.target.value,
-                      }))
+                      updateFormField("title", event.target.value)
                     }
                     className={`mt-2 ${inputClassName}`}
-                    placeholder="Example: Security Guard"
-                    required
+                    placeholder="Example: Successful deployment"
                   />
                 </label>
 
                 <label className="block">
-                  <FieldLabel>Description</FieldLabel>
+                  <FieldLabel>Subtitle</FieldLabel>
                   <textarea
-                    value={form.description}
+                    value={form.subtitle}
                     onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        description: event.target.value,
-                      }))
+                      updateFormField("subtitle", event.target.value)
                     }
-                    className={`mt-2 min-h-[130px] ${inputClassName}`}
-                    placeholder="Describe the job responsibilities and work details."
+                    className={`mt-2 min-h-[96px] ${inputClassName}`}
+                    placeholder="Optional short description"
                   />
                 </label>
 
                 <label className="block">
-                  <FieldLabel>Qualifications</FieldLabel>
-                  <textarea
-                    value={form.qualifications}
+                  <FieldLabel>Sort Order</FieldLabel>
+                  <input
+                    type="number"
+                    value={form.sortOrder}
                     onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        qualifications: event.target.value,
-                      }))
+                      updateFormField("sortOrder", event.target.value)
                     }
-                    className={`mt-2 min-h-[110px] ${inputClassName}`}
-                    placeholder={`One qualification per line\nExample:\nAt least high school graduate\nWith related experience\nWilling to work shifting schedules`}
+                    className={`mt-2 ${inputClassName}`}
+                    placeholder="0"
                   />
                 </label>
 
@@ -449,26 +446,25 @@ export default function ManpowerAdminJobs() {
                     }
                     className="h-4 w-4 accent-[#395345]"
                   />
-                  Active job vacancy
+                  Active highlight
                 </label>
               </div>
 
               <div>
                 <FieldLabel>
-                  Job Photo {editingJob ? "(optional change)" : ""}
+                  Highlight Image {editingHighlight ? "(optional change)" : ""}
                 </FieldLabel>
 
                 <div className="mt-2 overflow-hidden rounded-2xl border border-[#d7decf] bg-[#f7faf5]">
                   {previewUrl ? (
                     <img
                       src={previewUrl}
-                      alt="Job preview"
-                      className="h-[265px] w-full object-cover"
+                      alt="Highlight preview"
+                      className="h-[230px] w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-[265px] items-center justify-center px-5 text-center text-sm font-semibold text-[#6b7a6d]">
-                      Upload a job photo to show it on the public Job Offer
-                      page.
+                    <div className="flex h-[230px] items-center justify-center px-5 text-center text-sm font-semibold text-[#6b7a6d]">
+                      Upload an image to preview it here.
                     </div>
                   )}
                 </div>
@@ -482,35 +478,40 @@ export default function ManpowerAdminJobs() {
                 />
 
                 <p className="mt-2 text-xs leading-5 text-[#6b7a6d]">
-                  Accepted files: JPG, JPEG, PNG, WEBP.
+                  Accepted files: JPG, JPEG, PNG, WEBP. Recommended ratio:
+                  landscape image.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap justify-end gap-2">
-              {editingJob ? (
+              {editingHighlight ? (
                 <ActionButton type="button" variant="ghost" onClick={resetForm}>
                   Cancel Edit
                 </ActionButton>
               ) : null}
 
               <ActionButton type="submit" disabled={saving}>
-                {saving ? "Saving..." : editingJob ? "Update Job" : "Add Job"}
+                {saving
+                  ? "Saving..."
+                  : editingHighlight
+                  ? "Update Highlight"
+                  : "Add Highlight"}
               </ActionButton>
             </div>
           </form>
         </SectionCard>
 
         <SectionCard
-          title="Job Vacancy List"
-          subtitle="Manage all database-stored job offers."
+          title="Highlight List"
+          subtitle="Manage all homepage highlight images."
           action={
             <div className="grid gap-2 sm:grid-cols-2">
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className={compactInputClassName}
-                placeholder="Search job..."
+                placeholder="Search highlight..."
               />
 
               <select
@@ -529,31 +530,32 @@ export default function ManpowerAdminJobs() {
             <table className="min-w-full text-left text-sm">
               <thead className="bg-[#f0f4ec] text-[#395345]">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Photo</th>
-                  <th className="px-4 py-3 font-semibold">Job Details</th>
+                  <th className="px-4 py-3 font-semibold">Preview</th>
+                  <th className="px-4 py-3 font-semibold">Details</th>
+                  <th className="px-4 py-3 font-semibold">Order</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Created</th>
+                  <th className="px-4 py-3 font-semibold">Updated</th>
                   <th className="px-4 py-3 font-semibold">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {jobs.map((job) => (
+                {highlights.map((highlight) => (
                   <tr
-                    key={job._id}
+                    key={highlight._id}
                     className="border-t border-[#eef2ea] align-top hover:bg-[#fbfcf8]"
                   >
                     <td className="px-4 py-3">
-                      <div className="h-20 w-28 overflow-hidden rounded-xl bg-[#eef3ea]">
-                        {job.imageUrl ? (
+                      <div className="h-20 w-32 overflow-hidden rounded-xl bg-[#eef3ea]">
+                        {highlight.imageUrl ? (
                           <img
-                            src={resolveImageSource(job.imageUrl)}
-                            alt={job.title}
+                            src={resolveImageSource(highlight.imageUrl)}
+                            alt={highlight.title || "Highlight"}
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center px-2 text-center text-xs font-semibold text-[#6b7a6d]">
-                            No photo
+                          <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-[#6b7a6d]">
+                            No image
                           </div>
                         )}
                       </div>
@@ -561,34 +563,34 @@ export default function ManpowerAdminJobs() {
 
                     <td className="px-4 py-3">
                       <div className="font-bold text-[#24352c]">
-                        {job.title}
+                        {highlight.title || "Untitled highlight"}
                       </div>
 
-                      <p className="mt-1 line-clamp-2 max-w-md text-xs leading-5 text-[#5f6f61]">
-                        {job.description || "No description added."}
-                      </p>
-
-                      {Array.isArray(job.qualifications) &&
-                      job.qualifications.length ? (
-                        <p className="mt-1 text-xs font-semibold text-[#395345]">
-                          {job.qualifications.length} qualification
-                          {job.qualifications.length > 1 ? "s" : ""}
+                      {highlight.subtitle ? (
+                        <p className="mt-1 max-w-xs text-xs leading-5 text-[#5f6f61]">
+                          {highlight.subtitle}
                         </p>
                       ) : (
                         <p className="mt-1 text-xs text-[#9aa79b]">
-                          No qualifications added.
+                          No subtitle
                         </p>
                       )}
                     </td>
 
+                    <td className="px-4 py-3 font-semibold text-[#5f6f61]">
+                      {Number(highlight.sortOrder || 0)}
+                    </td>
+
                     <td className="px-4 py-3">
-                      <StatusPill tone={job.active ? "success" : "danger"}>
-                        {job.active ? "Active" : "Inactive"}
+                      <StatusPill
+                        tone={highlight.active ? "success" : "danger"}
+                      >
+                        {highlight.active ? "Active" : "Inactive"}
                       </StatusPill>
                     </td>
 
                     <td className="px-4 py-3 text-[#5f6f61]">
-                      {formatDateTime(job.createdAt)}
+                      {formatDateTime(highlight.updatedAt)}
                     </td>
 
                     <td className="px-4 py-3">
@@ -596,16 +598,18 @@ export default function ManpowerAdminJobs() {
                         <ActionButton
                           size="sm"
                           variant="soft"
-                          onClick={() => startEdit(job)}
+                          onClick={() => startEdit(highlight)}
                         >
                           Edit
                         </ActionButton>
 
-                        {job.active ? (
+                        {highlight.active ? (
                           <ActionButton
                             size="sm"
                             variant="warning"
-                            onClick={() => updateJobStatus(job, false)}
+                            onClick={() =>
+                              updateHighlightStatus(highlight, false)
+                            }
                           >
                             Deactivate
                           </ActionButton>
@@ -613,7 +617,9 @@ export default function ManpowerAdminJobs() {
                           <ActionButton
                             size="sm"
                             variant="success"
-                            onClick={() => updateJobStatus(job, true)}
+                            onClick={() =>
+                              updateHighlightStatus(highlight, true)
+                            }
                           >
                             Activate
                           </ActionButton>
@@ -622,7 +628,7 @@ export default function ManpowerAdminJobs() {
                         <ActionButton
                           size="sm"
                           variant="danger"
-                          onClick={() => deleteJob(job)}
+                          onClick={() => deleteHighlight(highlight)}
                         >
                           Delete
                         </ActionButton>
@@ -631,13 +637,13 @@ export default function ManpowerAdminJobs() {
                   </tr>
                 ))}
 
-                {!jobs.length ? (
+                {!highlights.length ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-4 py-10 text-center text-[#6b7a6d]"
                     >
-                      {loading ? "Loading jobs..." : "No job vacancies found."}
+                      {loading ? "Loading highlights..." : "No highlights found."}
                     </td>
                   </tr>
                 ) : null}

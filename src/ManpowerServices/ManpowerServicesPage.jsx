@@ -1,16 +1,58 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE, manpowerUrl } from "./manpowerApi";
 
 const LOGO_IMAGE = "/ManpowerLogo.png";
 const HERO_IMAGE = "/ManpowerBanner.png";
 
 const MANPOWER_HOME_ROUTE = "/manpower-services";
+const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
 
-const highlights = [
-  "/manpower-highlight-1.jpg",
-  "/manpower-highlight-2.jpg",
-  "/manpower-highlight-3.jpg",
+const FALLBACK_HIGHLIGHTS = [
+  {
+    _id: "fallback-1",
+    title: "Manpower Highlight 1",
+    subtitle: "",
+    imageUrl: "/manpower-highlight-1.jpg",
+  },
+  {
+    _id: "fallback-2",
+    title: "Manpower Highlight 2",
+    subtitle: "",
+    imageUrl: "/manpower-highlight-2.jpg",
+  },
+  {
+    _id: "fallback-3",
+    title: "Manpower Highlight 3",
+    subtitle: "",
+    imageUrl: "/manpower-highlight-3.jpg",
+  },
 ];
+
+function resolveImageSource(value = "") {
+  const raw = String(value || "").trim();
+
+  if (!raw) return "";
+
+  if (
+    raw.startsWith("http://") ||
+    raw.startsWith("https://") ||
+    raw.startsWith("data:") ||
+    raw.startsWith("blob:")
+  ) {
+    return raw;
+  }
+
+  if (raw.startsWith("/api/")) {
+    return `${API_ORIGIN}${raw}`;
+  }
+
+  if (raw.startsWith("/manpower/files/")) {
+    return manpowerUrl(raw);
+  }
+
+  return raw;
+}
 
 function DocumentPenIcon(props) {
   return (
@@ -92,7 +134,99 @@ function FooterColumn({ title, children }) {
   );
 }
 
+function HighlightCard({ highlight, index }) {
+  const imageSrc = resolveImageSource(highlight?.imageUrl);
+
+  return (
+    <div className="group relative h-[135px] overflow-hidden rounded-md bg-[#d8e0d5] shadow-[0_4px_12px_rgba(0,0,0,0.28)] sm:h-[150px]">
+      {imageSrc ? (
+        <img
+          src={imageSrc}
+          alt={highlight?.title || `Manpower highlight ${index + 1}`}
+          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-[#d8e0d5] text-sm font-bold text-[#315b42]">
+          No image
+        </div>
+      )}
+
+      {(highlight?.title || highlight?.subtitle) && (
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-10 text-left">
+          {highlight?.title ? (
+            <h3 className="text-sm font-black text-white">{highlight.title}</h3>
+          ) : null}
+
+          {highlight?.subtitle ? (
+            <p className="mt-1 line-clamp-1 text-xs font-semibold text-white/85">
+              {highlight.subtitle}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ManpowerServicesPage() {
+  const [highlights, setHighlights] = useState([]);
+  const [highlightIndex, setHighlightIndex] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadHighlights() {
+      try {
+        const res = await fetch(manpowerUrl("manpower/highlights"));
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(data?.message || "Failed to load highlights.");
+        }
+
+        if (!ignore) {
+          const list = Array.isArray(data?.highlights) ? data.highlights : [];
+          setHighlights(list.filter((item) => item?.imageUrl));
+        }
+      } catch {
+        if (!ignore) {
+          setHighlights([]);
+        }
+      }
+    }
+
+    loadHighlights();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const displayHighlights = highlights.length ? highlights : FALLBACK_HIGHLIGHTS;
+
+  const visibleHighlights = useMemo(() => {
+    if (displayHighlights.length <= 3) return displayHighlights;
+
+    return [0, 1, 2].map((offset) => {
+      const nextIndex = (highlightIndex + offset) % displayHighlights.length;
+      return displayHighlights[nextIndex];
+    });
+  }, [displayHighlights, highlightIndex]);
+
+  function goPreviousHighlight() {
+    setHighlightIndex((current) => {
+      if (!displayHighlights.length) return 0;
+      return (current - 1 + displayHighlights.length) % displayHighlights.length;
+    });
+  }
+
+  function goNextHighlight() {
+    setHighlightIndex((current) => {
+      if (!displayHighlights.length) return 0;
+      return (current + 1) % displayHighlights.length;
+    });
+  }
+
   return (
     <div className="min-h-screen bg-[#eef2ea] font-sans text-[#24372d]">
       <header className="sticky top-0 z-50 border-b border-[#d5ddd2] bg-[#f7f9f5]/95 backdrop-blur">
@@ -114,17 +248,13 @@ export default function ManpowerServicesPage() {
               Home
             </HeaderNavLink>
 
-            <HeaderNavLink to="/manpower-positions">
-              Job Offer
-            </HeaderNavLink>
+            <HeaderNavLink to="/manpower-positions">Job Offer</HeaderNavLink>
 
             <HeaderNavLink to="/manpower-requirements">
               Requirements
             </HeaderNavLink>
 
-            <HeaderNavLink to="/manpower-contact">
-              Contact
-            </HeaderNavLink>
+            <HeaderNavLink to="/manpower-contact">Contact</HeaderNavLink>
 
             <HeaderNavLink to="/manpower-faqs">FAQs</HeaderNavLink>
           </nav>
@@ -212,7 +342,9 @@ export default function ManpowerServicesPage() {
               <button
                 type="button"
                 aria-label="Previous highlight"
-                className="hidden text-white/90 transition hover:scale-110 hover:text-white sm:block"
+                onClick={goPreviousHighlight}
+                disabled={displayHighlights.length <= 3}
+                className="hidden text-white/90 transition hover:scale-110 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 sm:block"
               >
                 <svg
                   className="h-12 w-12"
@@ -231,24 +363,21 @@ export default function ManpowerServicesPage() {
               </button>
 
               <div className="grid w-full max-w-5xl gap-7 md:grid-cols-3">
-                {highlights.map((image, index) => (
-                  <div
-                    key={image}
-                    className="h-[135px] overflow-hidden rounded-md bg-[#d8e0d5] shadow-[0_4px_12px_rgba(0,0,0,0.28)] sm:h-[150px]"
-                  >
-                    <img
-                      src={image}
-                      alt={`Manpower highlight ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
+                {visibleHighlights.map((highlight, index) => (
+                  <HighlightCard
+                    key={highlight?._id || `${highlight?.imageUrl}-${index}`}
+                    highlight={highlight}
+                    index={index}
+                  />
                 ))}
               </div>
 
               <button
                 type="button"
                 aria-label="Next highlight"
-                className="hidden text-white/90 transition hover:scale-110 hover:text-white sm:block"
+                onClick={goNextHighlight}
+                disabled={displayHighlights.length <= 3}
+                className="hidden text-white/90 transition hover:scale-110 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 sm:block"
               >
                 <svg
                   className="h-12 w-12"

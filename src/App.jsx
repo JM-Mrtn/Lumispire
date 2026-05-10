@@ -37,7 +37,6 @@ import HotelAdminChat from "./HotelAndRestaurant/HotelAdminChat";
 import HotelFaqs from "./HotelAndRestaurant/HotelFaqs";
 import HotelChatButton from "./HotelAndRestaurant/HotelChatButton";
 
-
 /* ===================== HOTEL AUTH ===================== */
 import HotelLogIn from "./HotelAndRestaurant/HotelLogIn";
 import HotelSignUp from "./HotelAndRestaurant/HotelSignUp";
@@ -117,6 +116,7 @@ import ManpowerAdminLogin from "./ManpowerServices/ManpowerAdminLogin";
 import ManpowerAdminDashboard from "./ManpowerServices/ManpowerAdminDashboard";
 import ManpowerAdminAccounts from "./ManpowerServices/ManpowerAdminAccounts";
 import ManpowerAdminJobs from "./ManpowerServices/ManpowerAdminJobs";
+import ManpowerAdminHighlights from "./ManpowerServices/ManpowerAdminHighlights";
 import ManpowerEmployeeLogin from "./ManpowerServices/ManpowerEmployeeLogin";
 import ManpowerEmployeeHome from "./ManpowerServices/ManpowerEmployeeHome";
 import ManpowerEmployeePayroll from "./ManpowerServices/ManpowerEmployeePayroll";
@@ -266,7 +266,6 @@ createRoot(document.getElementById("root")).render(
         <Route path="/event-package" element={<EventPackage />} />
         <Route path="/virtual-tour" element={<VirtualTour />} />
         <Route path="/hotel-faqs" element={<HotelFaqs />} />
-        
 
         <Route
           path="/event-form"
@@ -360,7 +359,6 @@ createRoot(document.getElementById("root")).render(
             </HotelProtectedRoute>
           }
         />
-
 
         <Route
           path="/hotel-guest-reviews"
@@ -487,7 +485,6 @@ createRoot(document.getElementById("root")).render(
           element={<Navigate to="/training-faqs" replace />}
         />
 
-
         {/* ===================== TRAINEE ROUTES ===================== */}
         <Route path="/trainee-login" element={<TraineeLogIn />} />
 
@@ -591,8 +588,6 @@ createRoot(document.getElementById("root")).render(
             </TrainingAdminProtectedRoute>
           }
         />
-
-
 
         <Route
           path="/training-admin-courses"
@@ -779,6 +774,15 @@ createRoot(document.getElementById("root")).render(
           element={
             <ManpowerAdminProtectedRoute>
               <ManpowerAdminJobs />
+            </ManpowerAdminProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/manpower-admin-highlights"
+          element={
+            <ManpowerAdminProtectedRoute>
+              <ManpowerAdminHighlights />
             </ManpowerAdminProtectedRoute>
           }
         />

@@ -128,6 +128,11 @@ function buildApplicationIdVerificationState(screening) {
   };
 }
 
+function buildPublicJobImageUrl(image = {}) {
+  const fileId = image?.fileId ? String(image.fileId) : "";
+  return fileId ? `/manpower/files/${fileId}` : "";
+}
+
 export async function listManpowerVacancies(_req, res) {
   try {
     const jobs = await getActiveManpowerJobs();
@@ -141,6 +146,8 @@ export async function listManpowerVacancies(_req, res) {
         qualifications: Array.isArray(job.qualifications)
           ? job.qualifications
           : [],
+        image: job.image || null,
+        imageUrl: buildPublicJobImageUrl(job.image),
         dailyRate: Number(job.dailyRate || 0),
         active: job.active !== false,
       })),

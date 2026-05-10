@@ -63,6 +63,7 @@ import ManpowerPayroll from "./models/ManpowerPayroll.js";
 import ManpowerJob from "./models/ManpowerJob.js";
 import ManpowerDeductionConfig from "./models/ManpowerDeductionConfig.js";
 import ManpowerLeave from "./models/ManpowerLeave.js";
+import ManpowerHighlight from "./models/ManpowerHighlight.js";
 
 import LtcContent from "./models/LtcContent.js";
 
@@ -222,6 +223,7 @@ const connectDB = async () => {
       ManpowerJob.syncIndexes(),
       ManpowerDeductionConfig.syncIndexes(),
       ManpowerLeave.syncIndexes(),
+      ManpowerHighlight.syncIndexes(),
 
       LtcContent.syncIndexes(),
 

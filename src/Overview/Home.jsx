@@ -594,77 +594,81 @@ const Home = () => {
         </section>
 
         <footer className="bg-[#355E3B] text-white">
-          <div className="mx-auto max-w-[1600px] px-4 py-1.5 md:px-6 md:py-2">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.2fr_0.9fr_1fr_1fr] md:gap-0">
-              <div className="flex items-center gap-2 pr-0 md:pr-4">
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-5 lg:px-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.15fr_0.75fr_1.15fr_1.45fr] lg:gap-6">
+              <div className="flex items-start gap-2">
                 <img
                   src={logoSrc}
                   alt="LTC Logo"
-                  className="h-7 w-7 shrink-0 rounded-full bg-white object-cover md:h-[32px] md:w-[32px]"
+                  className="h-8 w-8 shrink-0 rounded-full bg-white object-contain p-0.5 shadow-sm"
                 />
 
-                <div className="min-w-0">
+                <div className="min-w-0 pt-0.5">
                   <h2
-                    className="text-[13px] font-black uppercase leading-tight md:text-[15px]"
+                    className="text-[13px] font-black uppercase leading-tight tracking-wide md:text-[14px]"
                     style={fontMontserrat}
                   >
                     LTC GROUP OF COMPANIES
                   </h2>
+
+                  <p className="mt-0.5 max-w-[220px] text-[9.5px] leading-snug text-white/80" style={fontPontano}>
+                    Providing quality services and training solutions.
+                  </p>
                 </div>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-4">
+              <div className="md:border-l md:border-white/25 md:pl-5">
                 <h3
-                  className="text-[9.5px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-[0.1em]"
                   style={fontMontserrat}
                 >
                   MENU
                 </h3>
 
-                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+                <div className="mt-1 h-[1px] w-12 bg-white/35" />
 
                 <ul
                   className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
                   style={fontPontano}
                 >
                   <li>
-                    <button onClick={() => goTo("/")} className="hover:text-white">
+                    <button onClick={() => goTo("/")} className="transition hover:text-white hover:underline">
                       Home
                     </button>
                   </li>
 
                   <li>
-                    <button onClick={() => goTo("/about-us")} className="hover:text-white">
+                    <button onClick={() => goTo("/about-us")} className="transition hover:text-white hover:underline">
                       About Us
                     </button>
                   </li>
 
                   <li>
-                    <button onClick={() => goTo("/team")} className="hover:text-white">
+                    <button onClick={() => goTo("/team")} className="transition hover:text-white hover:underline">
                       Team
                     </button>
                   </li>
 
                   <li>
-                    <button onClick={() => goTo(CONTACT_ROUTE)} className="hover:text-white">
+                    <button onClick={() => goTo("/contact")} className="transition hover:text-white hover:underline">
                       Contact Us
                     </button>
                   </li>
                 </ul>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-4">
+              <div className="md:border-l md:border-white/25 md:pl-5">
                 <h3
-                  className="text-[9.5px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-[0.1em]"
                   style={fontMontserrat}
                 >
                   CONTACT
                 </h3>
 
-                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+                <div className="mt-1 h-[1px] w-12 bg-white/35" />
 
                 <ul
-                  className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
+                  className="mt-1.5 space-y-0.5 break-words text-[10.5px] leading-snug text-white/90"
                   style={fontPontano}
                 >
                   <li>lornacastigador@ltcmultiservices.com</li>
@@ -673,18 +677,18 @@ const Home = () => {
                 </ul>
               </div>
 
-              <div className="md:border-l md:border-white/35 md:px-4">
+              <div className="md:border-l md:border-white/25 md:pl-5">
                 <h3
-                  className="text-[9.5px] font-bold uppercase tracking-wide"
+                  className="text-[9.5px] font-bold uppercase tracking-[0.1em]"
                   style={fontMontserrat}
                 >
                   ADDRESS
                 </h3>
 
-                <div className="mt-1 h-[1px] w-[80px] bg-white/35" />
+                <div className="mt-1 h-[1px] w-12 bg-white/35" />
 
                 <ul
-                  className="mt-1.5 space-y-0.5 text-[10.5px] leading-snug text-white/90"
+                  className="mt-1.5 space-y-1 text-[10.5px] leading-snug text-white/90"
                   style={fontPontano}
                 >
                   <li>
@@ -697,7 +701,7 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="mt-2 flex flex-col gap-1 border-t border-white/15 pt-1.5 text-[9.5px] leading-snug text-white/90 md:flex-row md:items-center md:justify-between">
+            <div className="mt-3 flex flex-col gap-1 border-t border-white/20 pt-2 text-[9.5px] leading-snug text-white/80 md:flex-row md:items-center md:justify-between">
               <p style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
 
               <p className="text-left md:text-right" style={fontPontano}>
