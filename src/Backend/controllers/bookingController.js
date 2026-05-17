@@ -16,7 +16,7 @@ const WEEKEND_MARKUP_PERCENT = 5;
 const MONTHLY_BOOKING_MARKUP_PERCENT = 1;
 
 const MAX_ADDITIONAL_PAX = 20;
-const ADDITIONAL_PAX_RATE = 250;
+const ADDITIONAL_PAX_RATE = 500;
 
 function getDatePartsFromISO(dateString = "") {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ""))) return null;

@@ -33,9 +33,9 @@ const AdminAccounts = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const GREEN_DARK = "#2A4F33";
-  const ROW_BG = "#EDEADF";
-  const CARD_BG = "#EDEADF";
+  const GREEN_DARK = "#071f14";
+  const ROW_BG = "rgba(255,255,255,.88)";
+  const CARD_BG = "rgba(246,250,247,.88)";
 
   const API_BASE = useMemo(() => {
     const raw = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
@@ -470,7 +470,7 @@ const AdminAccounts = () => {
   };
 
   const TableHeader = () => (
-    <div className="mt-4 grid grid-cols-12 gap-3 px-3 text-xs font-bold text-black/60">
+    <div className="ltc-admin-table-head">
       <div className="col-span-4">Username</div>
       <div className="col-span-4">Email</div>
       <div className="col-span-2">Phone Number</div>
@@ -479,8 +479,8 @@ const AdminAccounts = () => {
   );
 
   const Pagination = ({ page, setPage, totalPages, start, end, total }) => (
-    <div className="mt-3 flex items-center justify-between">
-      <div className="text-xs font-semibold text-black/70">
+    <div className="ltc-admin-pagination">
+      <div className="ltc-admin-page-count">
         {loading ? "Loading..." : `${start}-${end} of ${total}`}
       </div>
 
@@ -489,18 +489,18 @@ const AdminAccounts = () => {
           type="button"
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page <= 1}
-          className="h-8 rounded-full border border-black/10 bg-white px-3 text-xs font-bold hover:bg-black/5 disabled:opacity-50"
+          className="ltc-admin-page-btn"
         >
           Prev
         </button>
-        <div className="text-xs font-semibold text-black/60">
+        <div className="ltc-admin-page-count">
           Page {page} / {totalPages}
         </div>
         <button
           type="button"
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page >= totalPages}
-          className="h-8 rounded-full border border-black/10 bg-white px-3 text-xs font-bold hover:bg-black/5 disabled:opacity-50"
+          className="ltc-admin-page-btn"
         >
           Next
         </button>
@@ -526,18 +526,396 @@ const AdminAccounts = () => {
           type="button"
           onClick={fetchAccounts}
           disabled={loading}
-          className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+          className="ltc-admin-refresh"
         >
           {loading ? "REFRESHING..." : "REFRESH"}
         </button>
       }
     >
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex w-full items-center gap-3 md:w-auto">
+      <div className="ltc-admin-accounts">
+        <style>{`
+          @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+          .ltc-admin-accounts {
+            --green-950: #071f14;
+            --green-900: #0e3321;
+            --green-800: #174a30;
+            --green-700: #235f3e;
+            --green-600: #2f754c;
+            --gold: #d7a84d;
+            --gold-soft: #f4d484;
+            --dark: #101828;
+            --muted: #667085;
+            --glass: rgba(255,255,255,.78);
+            --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+            --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+            --radius: 24px;
+            --ease: cubic-bezier(.22,1,.36,1);
+            min-height: calc(100vh - 120px);
+            margin: -8px;
+            padding: clamp(18px, 2.2vw, 28px);
+            border-radius: 30px;
+            color: var(--dark);
+            background:
+              radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+              radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+              linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+            line-height: 1.65;
+            letter-spacing: -.01em;
+            overflow: hidden;
+            font-family: "Inter", Arial, sans-serif;
+          }
+
+          .ltc-admin-accounts * { box-sizing: border-box; }
+
+          .ltc-admin-refresh,
+          .ltc-admin-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            border-radius: 999px;
+            border: 0;
+            color: #102418;
+            background: linear-gradient(135deg,#f4d484,#d7a84d);
+            box-shadow: 0 16px 35px rgba(215,168,77,.24);
+            padding: 0 22px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: .28s var(--ease);
+          }
+
+          .ltc-admin-refresh:hover,
+          .ltc-admin-btn:hover { transform: translateY(-3px); }
+          .ltc-admin-refresh:disabled { cursor: not-allowed; opacity: .6; transform: none; }
+
+          .ltc-admin-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
+          }
+
+          .ltc-admin-stat-card,
+          .ltc-admin-panel,
+          .ltc-admin-account-row,
+          .ltc-admin-empty {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius);
+            background: var(--glass);
+            border: 1px solid rgba(255,255,255,.76);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(18px);
+            animation: ltcAppleReveal .7s var(--ease) both;
+          }
+
+          .ltc-admin-stat-card {
+            padding: 24px;
+            transition: .38s var(--ease);
+          }
+
+          .ltc-admin-stat-card::before,
+          .ltc-admin-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 6px;
+            background: linear-gradient(90deg,var(--green-700),var(--gold));
+          }
+
+          .ltc-admin-stat-card::after {
+            content: "";
+            position: absolute;
+            width: 170px;
+            height: 170px;
+            right: -80px;
+            bottom: -80px;
+            border-radius: 50%;
+            background:
+              radial-gradient(circle, rgba(215,168,77,.22), transparent 58%),
+              radial-gradient(circle, rgba(47,117,76,.18), transparent 66%);
+            opacity: .85;
+            transition: transform .45s var(--ease), opacity .45s var(--ease);
+          }
+
+          .ltc-admin-stat-card:hover {
+            transform: translateY(-10px) scale(1.01);
+            box-shadow: 0 34px 85px rgba(8,39,25,.20);
+            border-color: rgba(215,168,77,.54);
+            background: rgba(255,255,255,.92);
+          }
+
+          .ltc-admin-stat-card:hover::after { transform: translate(-18px, -16px) scale(1.18); }
+
+          .ltc-admin-stat-title {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            color: rgba(16,24,40,.46);
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .18em;
+          }
+
+          .ltc-admin-stat-value {
+            position: relative;
+            z-index: 1;
+            margin: 12px 0 0;
+            color: var(--green-800);
+            font-size: 40px;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -.055em;
+          }
+
+          .ltc-admin-stat-note {
+            position: relative;
+            z-index: 1;
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+          }
+
+          .ltc-admin-panel {
+            padding: 24px;
+          }
+
+          .ltc-admin-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+          }
+
+          .ltc-admin-search-group,
+          .ltc-admin-sort-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+
+          .ltc-admin-search-box { position: relative; width: min(100%, 340px); }
+
+          .ltc-admin-icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 16px;
+            border: 1px solid rgba(35,95,62,.14);
+            background: rgba(255,255,255,.88);
+            box-shadow: 0 10px 22px rgba(8,39,25,.08);
+            transition: .25s var(--ease);
+          }
+
+          .ltc-admin-icon-btn:hover { transform: translateY(-2px); background: white; }
+
+          .ltc-admin-input,
+          .ltc-admin-select {
+            min-height: 42px;
+            border-radius: 999px;
+            border: 1px solid rgba(35,95,62,.14);
+            background: rgba(255,255,255,.88);
+            color: var(--green-950);
+            padding: 0 16px;
+            font-size: 13px;
+            font-weight: 800;
+            outline: none;
+            transition: .25s var(--ease);
+          }
+
+          .ltc-admin-input { width: 100%; min-width: 260px; }
+          .ltc-admin-select { min-width: 130px; }
+
+          .ltc-admin-input:focus,
+          .ltc-admin-select:focus {
+            border-color: rgba(215,168,77,.58);
+            box-shadow: 0 0 0 4px rgba(215,168,77,.16);
+            background: white;
+          }
+
+          .ltc-admin-section-heading {
+            margin: 24px 0 0;
+            color: var(--green-950) !important;
+            font-size: clamp(24px, 3vw, 32px);
+            line-height: 1.1;
+            font-weight: 900;
+            letter-spacing: -.045em;
+          }
+
+          .ltc-admin-section-heading-spaced { margin-top: 34px; }
+
+          .ltc-admin-table-head {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 12px;
+            padding: 0 18px;
+            color: rgba(16,24,40,.48);
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+          }
+
+          .ltc-admin-account-list {
+            margin-top: 10px;
+            display: grid;
+            gap: 12px;
+          }
+
+          .ltc-admin-account-row {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: rgba(255,255,255,.88) !important;
+            border: 1px solid rgba(35,95,62,.08) !important;
+            box-shadow: 0 12px 26px rgba(8,39,25,.06) !important;
+            transition: .25s var(--ease);
+          }
+
+          .ltc-admin-account-row:hover {
+            transform: translateY(-3px);
+            border-color: rgba(215,168,77,.42) !important;
+            background: rgba(255,255,255,.96) !important;
+          }
+
+          .ltc-admin-account-name {
+            color: var(--green-800) !important;
+            font-size: 14px;
+            font-weight: 900;
+          }
+
+          .ltc-admin-account-sub,
+          .ltc-admin-account-info {
+            color: rgba(16,24,40,.55);
+            font-size: 12px;
+            font-weight: 800;
+          }
+
+          .ltc-admin-actions-cell { flex-wrap: wrap; }
+
+          .ltc-admin-action-btn,
+          .ltc-admin-page-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            padding: 0 14px;
+            font-size: 11px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: .25s var(--ease);
+          }
+
+          .ltc-admin-action-btn:hover,
+          .ltc-admin-page-btn:hover { transform: translateY(-2px); }
+
+          .ltc-admin-action-edit { background: rgba(244,212,132,.78); color: var(--green-900); }
+          .ltc-admin-action-success { background: var(--green-800); color: white; }
+          .ltc-admin-action-danger { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+
+          .ltc-admin-pagination {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+          }
+
+          .ltc-admin-page-count {
+            color: rgba(16,24,40,.56);
+            font-size: 12px;
+            font-weight: 800;
+          }
+
+          .ltc-admin-page-btn {
+            background: rgba(255,255,255,.9);
+            border-color: rgba(35,95,62,.12);
+            color: var(--green-800);
+          }
+
+          .ltc-admin-page-btn:disabled { opacity: .48; cursor: not-allowed; transform: none; }
+
+          .ltc-admin-empty {
+            padding: 20px;
+            text-align: center;
+            border-style: dashed;
+            color: var(--muted) !important;
+            font-size: 13px;
+            font-weight: 800;
+          }
+
+          @keyframes ltcAppleReveal {
+            from { opacity: 0; transform: translateY(34px) scale(.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+
+          @media (max-width: 1120px) {
+            .ltc-admin-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          }
+
+          @media (max-width: 760px) {
+            .ltc-admin-accounts { margin: -12px; padding: 14px; border-radius: 20px; }
+            .ltc-admin-stats-grid { grid-template-columns: 1fr; }
+            .ltc-admin-toolbar,
+            .ltc-admin-search-group,
+            .ltc-admin-sort-wrap { align-items: stretch; flex-direction: column; width: 100%; }
+            .ltc-admin-search-box,
+            .ltc-admin-input,
+            .ltc-admin-select { width: 100%; min-width: 0; }
+            .ltc-admin-table-head { display: none; }
+            .ltc-admin-account-row { grid-template-columns: 1fr; gap: 8px; }
+            .ltc-admin-account-row > div { grid-column: auto !important; }
+            .ltc-admin-actions-cell { justify-content: flex-start !important; }
+          }
+        `}</style>
+
+        <div className="ltc-admin-stats-grid">
+          <div className="ltc-admin-stat-card">
+            <p className="ltc-admin-stat-title">Total Accounts</p>
+            <p className="ltc-admin-stat-value">{accounts.length}</p>
+            <p className="ltc-admin-stat-note">Registered hotel users</p>
+          </div>
+
+          <div className="ltc-admin-stat-card">
+            <p className="ltc-admin-stat-title">Active</p>
+            <p className="ltc-admin-stat-value">{activeAccounts.length}</p>
+            <p className="ltc-admin-stat-note">Currently enabled accounts</p>
+          </div>
+
+          <div className="ltc-admin-stat-card">
+            <p className="ltc-admin-stat-title">Deactivated</p>
+            <p className="ltc-admin-stat-value">{deactivatedAccounts.length}</p>
+            <p className="ltc-admin-stat-note">Disabled guest accounts</p>
+          </div>
+
+          <div className="ltc-admin-stat-card">
+            <p className="ltc-admin-stat-title">Search Results</p>
+            <p className="ltc-admin-stat-value">{filtered.length}</p>
+            <p className="ltc-admin-stat-note">Matching current filters</p>
+          </div>
+        </div>
+
+        <section className="ltc-admin-panel">
+      <div className="ltc-admin-toolbar">
+        <div className="ltc-admin-search-group">
           <button
             type="button"
             onClick={fetchAccounts}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-black/10 bg-white hover:bg-black/5"
+            className="ltc-admin-icon-btn"
             title="Refresh"
             aria-label="Refresh"
           >
@@ -565,22 +943,22 @@ const AdminAccounts = () => {
             </svg>
           </button>
 
-          <div className="relative w-full md:w-[320px]">
+          <div className="ltc-admin-search-box">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search username here"
-              className="h-9 w-full rounded-full border border-black/10 bg-white pl-4 pr-10 text-sm focus:outline-none focus:ring-2"
+              className="ltc-admin-input"
               style={{ color: GREEN_DARK }}
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 md:justify-end">
+        <div className="ltc-admin-sort-wrap">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="h-9 rounded-full border border-black/10 bg-white px-4 text-sm font-semibold focus:outline-none"
+            className="ltc-admin-select"
             style={{ color: GREEN_DARK }}
           >
             <option>Recent</option>
@@ -590,48 +968,48 @@ const AdminAccounts = () => {
         </div>
       </div>
 
-      <h2 className="mt-6 text-lg font-extrabold" style={{ color: GREEN_DARK }}>
+      <h2 className="ltc-admin-section-heading" style={{ color: GREEN_DARK }}>
         Active Accounts
       </h2>
 
       <TableHeader />
 
-      <div className="mt-2 space-y-3">
+      <div className="ltc-admin-account-list">
         {activePg.rows.length === 0 && !loading && (
-          <div className="mt-4 text-sm text-black/60">No active accounts found.</div>
+          <div className="ltc-admin-empty">No active accounts found.</div>
         )}
 
         {activePg.rows.map((u) => (
           <div
             key={u._id}
-            className="grid grid-cols-12 items-center gap-3 rounded-xl border border-black/5 px-4 py-3 shadow-sm"
+            className="ltc-admin-account-row"
             style={{ backgroundColor: ROW_BG }}
           >
             <div className="col-span-4">
-              <div className="text-sm font-semibold" style={{ color: GREEN_DARK }}>
+              <div className="ltc-admin-account-name" style={{ color: GREEN_DARK }}>
                 {u.username || "-"}
               </div>
               {(u.firstName || u.lastName) && (
-                <div className="text-[11px] font-semibold text-black/45">
+                <div className="ltc-admin-account-sub">
                   {`${u.firstName || ""} ${u.lastName || ""}`.trim()}
                 </div>
               )}
             </div>
-            <div className="col-span-4 truncate text-sm text-black/70">{u.email || "-"}</div>
-            <div className="col-span-2 text-sm text-black/70">{u.phone || "-"}</div>
+            <div className="col-span-4 truncate ltc-admin-account-info">{u.email || "-"}</div>
+            <div className="col-span-2 ltc-admin-account-info">{u.phone || "-"}</div>
 
-            <div className="col-span-2 flex justify-end gap-2">
+            <div className="col-span-2 flex justify-end gap-2 ltc-admin-actions-cell">
               <button
                 type="button"
                 onClick={() => openEditModal(u)}
-                className="rounded-full bg-[#E6D889] px-4 py-1 text-xs font-bold text-[#2F5E3A] hover:opacity-90"
+                className="ltc-admin-action-btn ltc-admin-action-edit"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => handleDeactivate(u._id)}
-                className="rounded-full bg-[#D79A8E] px-4 py-1 text-xs font-bold text-white hover:opacity-90"
+                className="ltc-admin-action-btn ltc-admin-action-danger"
               >
                 Deactivate
               </button>
@@ -649,52 +1027,52 @@ const AdminAccounts = () => {
         total={activePg.total}
       />
 
-      <h2 className="mt-10 text-lg font-extrabold" style={{ color: GREEN_DARK }}>
+      <h2 className="ltc-admin-section-heading ltc-admin-section-heading-spaced" style={{ color: GREEN_DARK }}>
         Deactivated Accounts
       </h2>
 
       <TableHeader />
 
-      <div className="mt-2 space-y-3">
+      <div className="ltc-admin-account-list">
         {deactPg.rows.length === 0 && !loading && (
-          <div className="mt-4 text-sm text-black/60">No deactivated accounts found.</div>
+          <div className="ltc-admin-empty">No deactivated accounts found.</div>
         )}
 
         {deactPg.rows.map((u) => (
           <div
             key={u._id}
-            className="grid grid-cols-12 items-center gap-3 rounded-xl border border-black/5 px-4 py-3 shadow-sm"
+            className="ltc-admin-account-row"
             style={{ backgroundColor: ROW_BG }}
           >
             <div className="col-span-4">
-              <div className="text-sm font-semibold" style={{ color: GREEN_DARK }}>
+              <div className="ltc-admin-account-name" style={{ color: GREEN_DARK }}>
                 {u.username || "-"}
               </div>
               <div className="text-[11px] font-semibold text-rose-700">Deactivated</div>
             </div>
 
-            <div className="col-span-4 truncate text-sm text-black/70">{u.email || "-"}</div>
-            <div className="col-span-2 text-sm text-black/70">{u.phone || "-"}</div>
+            <div className="col-span-4 truncate ltc-admin-account-info">{u.email || "-"}</div>
+            <div className="col-span-2 ltc-admin-account-info">{u.phone || "-"}</div>
 
-            <div className="col-span-2 flex justify-end gap-2">
+            <div className="col-span-2 flex justify-end gap-2 ltc-admin-actions-cell">
               <button
                 type="button"
                 onClick={() => openEditModal(u)}
-                className="rounded-full bg-[#E6D889] px-4 py-1 text-xs font-bold text-[#2F5E3A] hover:opacity-90"
+                className="ltc-admin-action-btn ltc-admin-action-edit"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => handleActivate(u._id)}
-                className="rounded-full bg-[#2F5E3A] px-4 py-1 text-xs font-bold text-white hover:opacity-90"
+                className="ltc-admin-action-btn ltc-admin-action-success"
               >
                 Activate
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteDeactivated(u._id)}
-                className="rounded-full bg-[#B42318] px-4 py-1 text-xs font-bold text-white hover:opacity-90"
+                className="ltc-admin-action-btn ltc-admin-action-danger"
               >
                 Delete
               </button>
@@ -711,6 +1089,8 @@ const AdminAccounts = () => {
         end={deactPg.end}
         total={deactPg.total}
       />
+
+        </section>
 
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6">
@@ -838,6 +1218,7 @@ const AdminAccounts = () => {
           </div>
         </div>
       )}
+      </div>
     </HotelAdminShell>
   );
 };

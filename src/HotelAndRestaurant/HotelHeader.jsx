@@ -36,11 +36,11 @@ export default function HotelHeader({ variant = "light", fixed = false }) {
           aria-label="Go to Hotel and Resort home"
         >
           <img
-            src="/HotelLumispireLogo.png"
-            alt="Lumispire Logo"
+            src="/HotelLogo.png"
+            alt="Hotel Logo"
             className="h-[52px] w-[52px] rounded-full object-cover"
             onError={(event) => {
-              event.currentTarget.src = "/Logo.jpg";
+              event.currentTarget.src = "/HotelLumispireLogo.png";
             }}
           />
           <span className={`font-['Montserrat',sans-serif] text-[20px] font-extrabold uppercase tracking-wide sm:text-[24px] ${isDark ? "text-white" : "text-[#385541]"}`}>

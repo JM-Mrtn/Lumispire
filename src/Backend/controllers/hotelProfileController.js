@@ -12,6 +12,15 @@ function getUserIdFromDecoded(decoded = {}) {
   return decoded.userId || decoded.id || decoded.hotelUserId || decoded._id || "";
 }
 
+function buildFullName({ firstName = "", middleName = "", lastName = "" } = {}) {
+  return [firstName, middleName, lastName]
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function toDate(value) {
   if (!value) return null;
 
@@ -259,7 +268,9 @@ export const uploadProfilePicture = async (req, res) => {
       user: {
         _id: user._id,
         firstName: user.firstName,
+        middleName: user.middleName || "",
         lastName: user.lastName,
+        fullName: user.fullName || buildFullName(user),
         username: user.username,
         email: user.email,
         phone: user.phone,
@@ -307,13 +318,33 @@ export const updateUser = async (req, res) => {
   try {
     const update = {};
 
-    ["firstName", "lastName", "phone", "username", "email"].forEach((key) => {
+    ["firstName", "middleName", "lastName", "phone", "username", "email"].forEach((key) => {
       if (req.body[key] !== undefined) {
         update[key] = String(req.body[key]).trim();
       }
     });
 
     if (update.email) update.email = update.email.toLowerCase();
+    if (update.phone) update.phoneNumber = update.phone;
+
+    if (
+      update.firstName !== undefined ||
+      update.middleName !== undefined ||
+      update.lastName !== undefined
+    ) {
+      const currentUser = await HotelUser.findById(userId).select(
+        "firstName middleName lastName"
+      );
+
+      update.fullName = buildFullName({
+        firstName:
+          update.firstName !== undefined ? update.firstName : currentUser?.firstName,
+        middleName:
+          update.middleName !== undefined ? update.middleName : currentUser?.middleName,
+        lastName:
+          update.lastName !== undefined ? update.lastName : currentUser?.lastName,
+      });
+    }
 
     if (update.username) {
       const exists = await HotelUser.findOne({

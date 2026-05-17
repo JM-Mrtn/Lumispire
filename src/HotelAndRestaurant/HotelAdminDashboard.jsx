@@ -380,12 +380,10 @@ function getCalendarDays(monthDate) {
 
 function StatCard({ title, value, note }) {
   return (
-    <div className="rounded-3xl border border-black/5 bg-[#E9F1D9] p-6 shadow-sm">
-      <p className="text-sm font-extrabold text-[#2F5E3A]/75">{title}</p>
-      <p className="mt-3 text-4xl font-extrabold leading-none text-[#2F5E3A]">
-        {value}
-      </p>
-      <p className="mt-3 text-xs font-semibold text-[#2F5E3A]/55">{note}</p>
+    <div className="ltc-admin-stat-card">
+      <p className="ltc-admin-stat-title">{title}</p>
+      <p className="ltc-admin-stat-value">{value}</p>
+      <p className="ltc-admin-stat-note">{note}</p>
     </div>
   );
 }
@@ -395,11 +393,7 @@ function FilterButton({ active, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-4 py-2 text-xs font-extrabold transition ${
-        active
-          ? "border-[#2A4F33] bg-[#2A4F33] text-white"
-          : "border-black/10 bg-white text-black/55 hover:border-[#2A4F33]/40 hover:text-[#2A4F33]"
-      }`}
+      className={`ltc-admin-filter ${active ? "active" : ""}`}
     >
       {children}
     </button>
@@ -725,472 +719,1055 @@ export default function HotelAdminDashboard() {
           type="button"
           onClick={loadDashboard}
           disabled={loading}
-          className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+          className="ltc-admin-refresh"
         >
           {loading ? "REFRESHING..." : "REFRESH"}
         </button>
       }
     >
-      {statusMessage ? (
-        <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-          {statusMessage}
-        </div>
-      ) : null}
+      <div className="ltc-admin-dashboard">
+        <style>{`
+          @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <StatCard
-          title="Total Users"
-          value={users.length}
-          note="Registered hotel and restaurant guests"
-        />
-        <StatCard
-          title="Total Bookings"
-          value={counts.total}
-          note="Resort, event, and hotel room reservations"
-        />
-        <StatCard
-          title="Confirmed"
-          value={counts.confirmed}
-          note="Approved reservations"
-        />
-        <StatCard
-          title="Pending"
-          value={counts.pending}
-          note="Waiting for admin review"
-        />
-      </div>
+          .ltc-admin-dashboard {
+            --green-950: #071f14;
+            --green-900: #0e3321;
+            --green-800: #174a30;
+            --green-700: #235f3e;
+            --green-600: #2f754c;
+            --footer-green: #082719;
+            --gold: #d7a84d;
+            --gold-soft: #f4d484;
+            --white: #ffffff;
+            --dark: #101828;
+            --muted: #667085;
+            --glass: rgba(255,255,255,.78);
+            --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+            --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+            --radius: 24px;
+            --ease: cubic-bezier(.22,1,.36,1);
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <button
-          type="button"
-          onClick={() => navigate("/hotel-admin-bookings")}
-          className="rounded-3xl border border-black/5 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-        >
-          <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">
-            Booking Queue
-          </p>
-          <h2
-            className="mt-3 text-2xl font-extrabold"
-            style={{ color: GREEN_DARK }}
-          >
-            Manage Bookings
-          </h2>
-          <p className="mt-2 text-sm font-semibold text-black/45">
-            Review pending resort, event, hotel, and condo reservations.
-          </p>
-        </button>
+            min-height: calc(100vh - 120px);
+            margin: -8px;
+            padding: clamp(18px, 2.2vw, 28px);
+            border-radius: 30px;
+            color: var(--dark);
+            background:
+              radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+              radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+              linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+            line-height: 1.65;
+            letter-spacing: -.01em;
+            overflow: hidden;
+            font-family: "Inter", Arial, sans-serif;
+          }
 
-        <button
-          type="button"
-          onClick={() => navigate("/hotel-admin-id-verify")}
-          className="rounded-3xl border border-black/5 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-        >
-          <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">
-            Verification
-          </p>
-          <h2
-            className="mt-3 text-2xl font-extrabold"
-            style={{ color: GREEN_DARK }}
-          >
-            ID Requests
-          </h2>
-          <p className="mt-2 text-sm font-semibold text-black/45">
-            Approve or reject guest identity verification submissions.
-          </p>
-        </button>
+          .ltc-admin-dashboard * {
+            box-sizing: border-box;
+          }
 
-        <button
-          type="button"
-          onClick={() => navigate("/hotel-admin-chat")}
-          className="rounded-3xl border border-black/5 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-        >
-          <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">
-            Support
-          </p>
-          <h2
-            className="mt-3 text-2xl font-extrabold"
-            style={{ color: GREEN_DARK }}
-          >
-            Guest Chat
-          </h2>
-          <p className="mt-2 text-sm font-semibold text-black/45">
-            Respond to guest concerns, reschedules, cancellations, and questions.
-          </p>
-        </button>
-      </div>
+          .ltc-admin-hero {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1.4fr .8fr;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 22px;
+            padding: clamp(28px, 4vw, 44px);
+            border-radius: 32px;
+            color: white;
+            isolation: isolate;
+            background:
+              linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%),
+              radial-gradient(circle at 86% 18%, rgba(244,212,132,.18), transparent 30%);
+            box-shadow: var(--shadow-lg);
+            animation: ltcAppleReveal .8s var(--ease) both;
+          }
 
-      <section className="mt-6 rounded-3xl border border-black/5 bg-white p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-black/40">
-              Booking Calendar
-            </p>
-            <h2
-              className="mt-2 text-3xl font-extrabold"
-              style={{ color: GREEN_DARK }}
-            >
-              All Booked Dates
-            </h2>
-            <p className="mt-1 text-sm font-semibold text-black/45">
-              Dates with pending or confirmed bookings are marked on the calendar.
-            </p>
+          .ltc-admin-hero::before {
+            content: "";
+            position: absolute;
+            inset: -20% -12%;
+            z-index: -1;
+            background:
+              radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
+              radial-gradient(circle at 70% 16%, rgba(244,212,132,.16), transparent 28%),
+              radial-gradient(circle at 90% 84%, rgba(22,108,66,.32), transparent 26%);
+            filter: blur(24px);
+          }
+
+          .ltc-admin-eyebrow,
+          .ltc-admin-card-eyebrow {
+            color: var(--gold-soft);
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .2em;
+            margin: 0;
+          }
+
+          .ltc-admin-hero h2 {
+            margin: 10px 0 0;
+            max-width: 860px;
+            font-size: clamp(34px, 4.8vw, 62px);
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -.06em;
+            text-shadow: 0 8px 26px rgba(0,0,0,.22);
+          }
+
+          .ltc-admin-hero h2 span {
+            color: var(--gold-soft);
+          }
+
+          .ltc-admin-hero p:last-child {
+            max-width: 720px;
+            margin: 16px 0 0;
+            color: rgba(255,255,255,.80);
+            font-size: 15px;
+          }
+
+          .ltc-admin-hero-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+          }
+
+          .ltc-admin-hero-metric {
+            min-height: 118px;
+            padding: 20px;
+            border-radius: 22px;
+            background: rgba(255,255,255,.10);
+            border: 1px solid rgba(255,255,255,.16);
+            backdrop-filter: blur(8px);
+          }
+
+          .ltc-admin-hero-metric strong {
+            display: block;
+            color: var(--gold-soft);
+            font-size: 32px;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -.05em;
+          }
+
+          .ltc-admin-hero-metric span {
+            display: block;
+            margin-top: 8px;
+            color: rgba(255,255,255,.76);
+            font-size: 12px;
+            font-weight: 800;
+          }
+
+          .ltc-admin-refresh,
+          .ltc-admin-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            border-radius: 999px;
+            border: 0;
+            color: #102418;
+            background: linear-gradient(135deg,#f4d484,#d7a84d);
+            box-shadow: 0 16px 35px rgba(215,168,77,.24);
+            padding: 0 22px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: .28s var(--ease);
+          }
+
+          .ltc-admin-refresh:hover,
+          .ltc-admin-btn:hover {
+            transform: translateY(-3px);
+          }
+
+          .ltc-admin-refresh:disabled {
+            cursor: not-allowed;
+            opacity: .6;
+            transform: none;
+          }
+
+          .ltc-admin-alert {
+            margin-bottom: 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(215,168,77,.32);
+            background: rgba(244,212,132,.18);
+            color: var(--green-900);
+            padding: 14px 18px;
+            font-size: 14px;
+            font-weight: 800;
+          }
+
+          .ltc-admin-stats-grid,
+          .ltc-admin-shortcut-grid,
+          .ltc-admin-summary-grid {
+            display: grid;
+            gap: 18px;
+          }
+
+          .ltc-admin-stats-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+          }
+
+          .ltc-admin-shortcut-grid,
+          .ltc-admin-summary-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            margin-top: 22px;
+          }
+
+          .ltc-admin-summary-grid {
+            align-items: start;
+          }
+
+          .ltc-admin-stat-card,
+          .ltc-admin-card,
+          .ltc-admin-panel,
+          .ltc-admin-day,
+          .ltc-admin-side-card,
+          .ltc-admin-list-card,
+          .ltc-admin-empty {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius);
+            background: var(--glass);
+            border: 1px solid rgba(255,255,255,.76);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(18px);
+          }
+
+          .ltc-admin-stat-card,
+          .ltc-admin-card,
+          .ltc-admin-panel {
+            animation: ltcAppleReveal .7s var(--ease) both;
+          }
+
+          .ltc-admin-stat-card,
+          .ltc-admin-card {
+            padding: 26px;
+          }
+
+          .ltc-admin-summary-card {
+            padding: 18px 20px;
+            height: 245px;
+            max-height: 245px;
+            display: flex;
+            flex-direction: column;
+          }
+
+          .ltc-admin-stat-card::before,
+          .ltc-admin-card::before,
+          .ltc-admin-panel::before,
+          .ltc-admin-summary-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 6px;
+            background: linear-gradient(90deg,var(--green-700),var(--gold));
+          }
+
+          .ltc-admin-stat-card::after,
+          .ltc-admin-card::after,
+          .ltc-admin-summary-card::after {
+            content: "";
+            position: absolute;
+            width: 170px;
+            height: 170px;
+            right: -80px;
+            bottom: -80px;
+            border-radius: 50%;
+            background:
+              radial-gradient(circle, rgba(215,168,77,.22), transparent 58%),
+              radial-gradient(circle, rgba(47,117,76,.18), transparent 66%);
+            opacity: .85;
+            transition: transform .45s var(--ease), opacity .45s var(--ease);
+          }
+
+          .ltc-admin-card {
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: transform .38s var(--ease), box-shadow .38s var(--ease), border-color .38s var(--ease), background .38s var(--ease);
+          }
+
+          .ltc-admin-card:hover,
+          .ltc-admin-card:focus-visible,
+          .ltc-admin-stat-card:hover,
+          .ltc-admin-summary-card:hover {
+            transform: translateY(-10px) scale(1.01);
+            box-shadow: 0 34px 85px rgba(8,39,25,.20);
+            border-color: rgba(215,168,77,.54);
+            background: rgba(255,255,255,.92);
+            outline: none;
+          }
+
+          .ltc-admin-card:hover::after,
+          .ltc-admin-stat-card:hover::after,
+          .ltc-admin-summary-card:hover::after {
+            transform: translate(-18px, -16px) scale(1.18);
+          }
+
+          .ltc-admin-stat-title,
+          .ltc-admin-card-kicker,
+          .ltc-admin-panel-kicker {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            color: rgba(16,24,40,.46);
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .18em;
+          }
+
+          .ltc-admin-stat-value {
+            position: relative;
+            z-index: 1;
+            margin: 12px 0 0;
+            color: var(--green-800);
+            font-size: 42px;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -.055em;
+          }
+
+          .ltc-admin-stat-note,
+          .ltc-admin-card-text,
+          .ltc-admin-muted {
+            position: relative;
+            z-index: 1;
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+          }
+
+          .ltc-admin-card-title,
+          .ltc-admin-panel-title {
+            position: relative;
+            z-index: 1;
+            margin: 10px 0 0;
+            color: var(--green-950);
+            font-size: 26px;
+            line-height: 1.1;
+            font-weight: 900;
+            letter-spacing: -.045em;
+            transition: color .3s var(--ease);
+          }
+
+          .ltc-admin-card:hover .ltc-admin-card-title {
+            color: var(--green-700);
+          }
+
+          .ltc-admin-panel {
+            margin-top: 22px;
+            padding: 24px;
+          }
+
+          .ltc-admin-panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            margin-bottom: 18px;
+          }
+
+          .ltc-admin-filter-row,
+          .ltc-admin-calendar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+          }
+
+          .ltc-admin-filter,
+          .ltc-admin-calendar-action {
+            min-height: 38px;
+            border-radius: 999px;
+            border: 1px solid rgba(35,95,62,.14);
+            background: rgba(255,255,255,.8);
+            color: rgba(16,24,40,.58);
+            padding: 0 15px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: .25s var(--ease);
+          }
+
+          .ltc-admin-filter:hover,
+          .ltc-admin-calendar-action:hover,
+          .ltc-admin-filter.active {
+            color: #102418;
+            border-color: rgba(215,168,77,.54);
+            background: linear-gradient(135deg,#f4d484,#d7a84d);
+            transform: translateY(-2px);
+          }
+
+          .ltc-admin-calendar-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(320px, .9fr);
+            gap: 18px;
+          }
+
+          .ltc-admin-calendar-box,
+          .ltc-admin-side-panel {
+            border-radius: 26px;
+            border: 1px solid rgba(35,95,62,.08);
+            background:
+              radial-gradient(circle at 100% 0%, rgba(215,168,77,.12), transparent 26%),
+              rgba(246,250,247,.88);
+            padding: 20px;
+          }
+
+          .ltc-admin-month-head,
+          .ltc-admin-side-head,
+          .ltc-admin-next-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+          }
+
+          .ltc-admin-month-title,
+          .ltc-admin-side-title,
+          .ltc-admin-next-title {
+            margin: 0;
+            color: var(--green-950);
+            font-size: 25px;
+            line-height: 1.1;
+            font-weight: 900;
+            letter-spacing: -.04em;
+          }
+
+          .ltc-admin-calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 9px;
+          }
+
+          .ltc-admin-weekday {
+            padding: 8px 4px;
+            text-align: center;
+            color: rgba(16,24,40,.46);
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+          }
+
+          .ltc-admin-day {
+            min-height: 118px;
+            padding: 10px;
+            text-align: left;
+            cursor: pointer;
+            transition: .28s var(--ease);
+          }
+
+          .ltc-admin-day:hover,
+          .ltc-admin-day.selected {
+            transform: translateY(-4px);
+            border-color: rgba(215,168,77,.54);
+            box-shadow: 0 18px 45px rgba(8,39,25,.15);
+            background: rgba(255,255,255,.96);
+          }
+
+          .ltc-admin-day.muted {
+            opacity: .45;
+          }
+
+          .ltc-admin-day-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+          }
+
+          .ltc-admin-day-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            background: #eef8f2;
+            color: var(--green-800);
+            font-size: 12px;
+            font-weight: 900;
+          }
+
+          .ltc-admin-day-number.today {
+            background: var(--green-800);
+            color: white;
+          }
+
+          .ltc-admin-count-badge,
+          .ltc-admin-pill-light {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(244,212,132,.42);
+            color: var(--green-800);
+            padding: 5px 9px;
+            font-size: 10px;
+            font-weight: 900;
+          }
+
+          .ltc-admin-day-items,
+          .ltc-admin-side-list,
+          .ltc-admin-summary-list {
+            margin-top: 12px;
+            display: grid;
+            gap: 8px;
+          }
+
+          .ltc-admin-day-chip {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            border-radius: 10px;
+            border: 1px solid rgba(35,95,62,.08);
+            background: rgba(246,246,241,.88);
+            padding: 5px 8px;
+            color: rgba(16,24,40,.66);
+            font-size: 10px;
+            font-weight: 800;
+          }
+
+          .ltc-status-dot,
+          .ltc-service-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-right: 5px;
+            border-radius: 999px;
+            vertical-align: middle;
+          }
+
+          .ltc-service-dot {
+            width: 10px;
+            height: 10px;
+            margin-right: 0;
+          }
+
+          .bg-violet-500 { background: #8b5cf6; }
+          .bg-sky-500 { background: #0ea5e9; }
+          .bg-emerald-500 { background: #10b981; }
+          .bg-amber-500 { background: #f59e0b; }
+          .bg-rose-500 { background: #f43f5e; }
+          .bg-slate-400 { background: #94a3b8; }
+
+          .ltc-admin-more {
+            margin: 2px 0 0;
+            padding: 0 5px;
+            color: var(--green-800);
+            font-size: 10px;
+            font-weight: 900;
+          }
+
+          .ltc-admin-booking-card,
+          .ltc-admin-empty,
+          .ltc-admin-upcoming-card,
+          .ltc-admin-row {
+            border-radius: 20px;
+            border: 1px solid rgba(35,95,62,.08);
+            background: rgba(255,255,255,.88);
+            box-shadow: 0 12px 26px rgba(8,39,25,.06);
+          }
+
+          .ltc-admin-booking-card,
+          .ltc-admin-empty {
+            padding: 18px;
+          }
+
+          .ltc-admin-empty {
+            border-style: dashed;
+            text-align: center;
+          }
+
+          .ltc-admin-empty-title {
+            margin: 0;
+            color: var(--green-800);
+            font-size: 14px;
+            font-weight: 900;
+          }
+
+          .ltc-admin-booking-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+
+          .ltc-admin-service-pill,
+          .ltc-admin-status-pill {
+            border-radius: 999px;
+            border: 1px solid rgba(35,95,62,.12);
+            background: rgba(238,248,242,.86);
+            color: var(--green-800);
+            padding: 5px 10px;
+            font-size: 10px;
+            font-weight: 900;
+          }
+
+          .ltc-admin-status-pill.pending { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+          .ltc-admin-status-pill.confirmed { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+          .ltc-admin-status-pill.cancelled { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+
+          .ltc-admin-booking-title {
+            margin: 12px 0 0;
+            color: var(--green-800);
+            font-size: 14px;
+            font-weight: 900;
+          }
+
+          .ltc-admin-booking-sub {
+            margin: 4px 0 0;
+            color: rgba(16,24,40,.55);
+            font-size: 12px;
+            font-weight: 800;
+          }
+
+          .ltc-admin-details {
+            margin-top: 12px;
+            display: grid;
+            gap: 4px;
+            color: rgba(16,24,40,.56);
+            font-size: 12px;
+            font-weight: 700;
+          }
+
+          .ltc-admin-details strong {
+            color: rgba(16,24,40,.70);
+            font-weight: 900;
+          }
+
+          .ltc-admin-summary-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius);
+            background: var(--glass);
+            border: 1px solid rgba(255,255,255,.76);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(18px);
+          }
+
+          .ltc-admin-row,
+          .ltc-admin-upcoming-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            padding: 10px 13px;
+            text-align: left;
+          }
+
+          .ltc-admin-upcoming-card {
+            border: 0;
+            cursor: pointer;
+            transition: .25s var(--ease);
+            flex: 0 0 auto;
+          }
+
+          .ltc-admin-upcoming-card:hover {
+            transform: translateY(-3px);
+            background: rgba(244,212,132,.22);
+          }
+
+          .ltc-admin-row span:first-child,
+          .ltc-admin-upcoming-title {
+            color: rgba(16,24,40,.62);
+            font-size: 12px;
+            font-weight: 800;
+          }
+
+          .ltc-admin-row strong {
+            color: var(--green-800);
+            font-weight: 900;
+          }
+
+          .ltc-admin-upcoming-title {
+            margin: 0;
+            color: var(--green-800);
+            font-weight: 900;
+          }
+
+          .ltc-admin-upcoming-meta {
+            margin: 3px 0 0;
+            color: rgba(16,24,40,.52);
+            font-size: 10px;
+            line-height: 1.35;
+            font-weight: 700;
+          }
+
+          .ltc-admin-next-head + .ltc-admin-summary-list {
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            min-height: 0;
+            padding-right: 6px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(35,95,62,.35) rgba(35,95,62,.08);
+          }
+
+          .ltc-admin-next-head + .ltc-admin-summary-list::-webkit-scrollbar {
+            width: 6px;
+          }
+
+          .ltc-admin-next-head + .ltc-admin-summary-list::-webkit-scrollbar-track {
+            border-radius: 999px;
+            background: rgba(35,95,62,.08);
+          }
+
+          .ltc-admin-next-head + .ltc-admin-summary-list::-webkit-scrollbar-thumb {
+            border-radius: 999px;
+            background: rgba(35,95,62,.35);
+          }
+
+          @keyframes ltcAppleReveal {
+            from { opacity: 0; transform: translateY(34px) scale(.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+
+          @media (max-width: 1120px) {
+            .ltc-admin-hero,
+            .ltc-admin-calendar-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .ltc-admin-stats-grid,
+            .ltc-admin-summary-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+          }
+
+          @media (max-width: 900px) {
+            .ltc-admin-shortcut-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .ltc-admin-panel-head {
+              flex-direction: column;
+            }
+          }
+
+          @media (max-width: 680px) {
+            .ltc-admin-dashboard {
+              margin: -12px;
+              padding: 14px;
+              border-radius: 20px;
+            }
+
+            .ltc-admin-hero,
+            .ltc-admin-panel,
+            .ltc-admin-calendar-box,
+            .ltc-admin-side-panel,
+            .ltc-admin-stat-card,
+            .ltc-admin-card,
+            .ltc-admin-summary-card {
+              border-radius: 20px;
+            }
+
+            .ltc-admin-stats-grid,
+            .ltc-admin-summary-grid,
+            .ltc-admin-hero-metrics {
+              grid-template-columns: 1fr;
+            }
+
+            .ltc-admin-calendar-days {
+              gap: 6px;
+            }
+
+            .ltc-admin-day {
+              min-height: 96px;
+              padding: 8px;
+            }
+
+            .ltc-admin-weekday {
+              font-size: 10px;
+            }
+          }
+        `}</style>
+
+        {statusMessage ? (
+          <div className="ltc-admin-alert">
+            {statusMessage}
           </div>
+        ) : null}
 
-          <div className="flex flex-wrap gap-2">
-            {STATUS_FILTERS.map((item) => (
-              <FilterButton
-                key={item.value}
-                active={statusFilter === item.value}
-                onClick={() => setStatusFilter(item.value)}
-              >
-                {item.label}
-              </FilterButton>
-            ))}
-          </div>
+        <div className="ltc-admin-stats-grid">
+          <StatCard
+            title="Total Users"
+            value={users.length}
+            note="Registered hotel and restaurant guests"
+          />
+          <StatCard
+            title="Total Bookings"
+            value={counts.total}
+            note="Resort, event, and hotel room reservations"
+          />
+          <StatCard
+            title="Confirmed"
+            value={counts.confirmed}
+            note="Approved reservations"
+          />
+          <StatCard
+            title="Pending"
+            value={counts.pending}
+            note="Waiting for admin review"
+          />
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_0.9fr]">
-          <div className="rounded-3xl border border-black/5 bg-[#F6F6F1] p-4 md:p-5">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h3
-                  className="text-2xl font-extrabold"
-                  style={{ color: GREEN_DARK }}
-                >
-                  {monthTitle}
-                </h3>
-                <p className="mt-1 text-xs font-bold text-black/45">
-                  {counts.bookedDatesThisMonth} booked date
-                  {counts.bookedDatesThisMonth === 1 ? "" : "s"} this month
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={goPreviousMonth}
-                  className="rounded-xl border border-black/10 bg-white px-4 py-2 text-xs font-extrabold text-[#2A4F33] hover:bg-[#2A4F33]/5"
-                >
-                  Prev
-                </button>
-
-                <button
-                  type="button"
-                  onClick={goToday}
-                  className="rounded-xl border border-[#2A4F33]/20 bg-white px-4 py-2 text-xs font-extrabold text-[#2A4F33] hover:bg-[#2A4F33]/5"
-                >
-                  Today
-                </button>
-
-                <button
-                  type="button"
-                  onClick={goNextMonth}
-                  className="rounded-xl border border-black/10 bg-white px-4 py-2 text-xs font-extrabold text-[#2A4F33] hover:bg-[#2A4F33]/5"
-                >
-                  Next
-                </button>
-              </div>
+        <section className="ltc-admin-panel">
+          <div className="ltc-admin-panel-head">
+            <div>
+              <p className="ltc-admin-panel-kicker">Booking Calendar</p>
+              <h2 className="ltc-admin-panel-title">All Booked Dates</h2>
+              <p className="ltc-admin-muted">
+                Dates with pending or confirmed bookings are marked on the calendar.
+              </p>
             </div>
 
-            <div className="grid grid-cols-7 gap-2">
-              {WEEK_DAYS.map((day) => (
-                <div
-                  key={day}
-                  className="px-2 py-2 text-center text-xs font-extrabold uppercase tracking-wide text-black/45"
+            <div className="ltc-admin-filter-row">
+              {STATUS_FILTERS.map((item) => (
+                <FilterButton
+                  key={item.value}
+                  active={statusFilter === item.value}
+                  onClick={() => setStatusFilter(item.value)}
                 >
-                  {day}
-                </div>
+                  {item.label}
+                </FilterButton>
               ))}
-
-              {calendarDays.map((day) => {
-                const dayBookings = bookingsByDate.get(day.iso) || [];
-                const isSelected = selectedDate === day.iso;
-                const isToday = day.iso === todayLocalISO();
-
-                return (
-                  <button
-                    key={day.iso}
-                    type="button"
-                    onClick={() => setSelectedDate(day.iso)}
-                    className={`min-h-[120px] rounded-2xl border p-2 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
-                      isSelected
-                        ? "border-[#2A4F33] bg-white shadow-md"
-                        : "border-black/5 bg-white"
-                    } ${!day.isCurrentMonth ? "opacity-45" : ""}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${
-                          isToday
-                            ? "bg-[#2A4F33] text-white"
-                            : "bg-[#F6F6F1] text-[#2A4F33]"
-                        }`}
-                      >
-                        {day.day}
-                      </span>
-
-                      {dayBookings.length ? (
-                        <span className="rounded-full bg-[#E9F1D9] px-2 py-1 text-[10px] font-extrabold text-[#2F5E3A]">
-                          {dayBookings.length}
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-2 space-y-1">
-                      {dayBookings.slice(0, 3).map((booking) => (
-                        <div
-                          key={`${booking.bookingType}-${booking._id}`}
-                          className="truncate rounded-lg border border-black/5 bg-[#F6F6F1] px-2 py-1 text-[10px] font-bold text-black/60"
-                          title={`${booking.serviceLabel} - ${booking.customerName}`}
-                        >
-                          <span
-                            className={`mr-1 inline-block h-2 w-2 rounded-full ${getStatusDotClass(
-                              booking.status
-                            )}`}
-                          />
-                          {getServiceShortLabel(booking.bookingType)}
-                        </div>
-                      ))}
-
-                      {dayBookings.length > 3 ? (
-                        <p className="px-1 text-[10px] font-extrabold text-[#2A4F33]">
-                          +{dayBookings.length - 3} more
-                        </p>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
             </div>
           </div>
 
-          <aside className="rounded-3xl border border-black/5 bg-[#F6F6F1] p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">
-                  Selected Date
-                </p>
-                <h3
-                  className="mt-2 text-2xl font-extrabold"
-                  style={{ color: GREEN_DARK }}
-                >
-                  {formatDate(selectedDate)}
-                </h3>
-              </div>
-
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-[#2A4F33]">
-                {selectedDateBookings.length} booking
-                {selectedDateBookings.length === 1 ? "" : "s"}
-              </span>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {selectedDateBookings.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-[#2A4F33]/20 bg-white p-5 text-center">
-                  <p className="text-sm font-extrabold text-[#2A4F33]">
-                    No bookings on this date
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-black/45">
-                    Choose another highlighted date from the calendar.
+          <div className="ltc-admin-calendar-grid">
+            <div className="ltc-admin-calendar-box">
+              <div className="ltc-admin-month-head">
+                <div>
+                  <h3 className="ltc-admin-month-title">{monthTitle}</h3>
+                  <p className="ltc-admin-muted">
+                    {counts.bookedDatesThisMonth} booked date
+                    {counts.bookedDatesThisMonth === 1 ? "" : "s"} this month
                   </p>
                 </div>
-              ) : (
-                selectedDateBookings.map((booking) => (
-                  <div
-                    key={`${booking.bookingType}-${booking._id}`}
-                    className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm"
-                  >
-                    <div className="flex flex-wrap gap-2">
-                      <span
-                        className={`rounded-full border px-3 py-1 text-[10px] font-extrabold ${getServicePillClass(
-                          booking.bookingType
-                        )}`}
-                      >
-                        {booking.serviceLabel}
-                      </span>
 
-                      <span
-                        className={`rounded-full border px-3 py-1 text-[10px] font-extrabold ${getStatusPillClass(
-                          booking.status
-                        )}`}
-                      >
-                        {booking.status}
-                      </span>
-                    </div>
+                <div className="ltc-admin-calendar-actions">
+                  <button type="button" onClick={goPreviousMonth} className="ltc-admin-calendar-action">
+                    Prev
+                  </button>
+                  <button type="button" onClick={goToday} className="ltc-admin-calendar-action">
+                    Today
+                  </button>
+                  <button type="button" onClick={goNextMonth} className="ltc-admin-calendar-action">
+                    Next
+                  </button>
+                </div>
+              </div>
 
-                    <h4 className="mt-3 text-sm font-extrabold text-[#2A4F33]">
-                      {booking.title}
-                    </h4>
+              <div className="ltc-admin-calendar-days">
+                {WEEK_DAYS.map((day) => (
+                  <div key={day} className="ltc-admin-weekday">
+                    {day}
+                  </div>
+                ))}
 
-                    <p className="mt-1 text-xs font-semibold text-black/50">
-                      {booking.category || booking.location || "—"}
+                {calendarDays.map((day) => {
+                  const dayBookings = bookingsByDate.get(day.iso) || [];
+                  const isSelected = selectedDate === day.iso;
+                  const isToday = day.iso === todayLocalISO();
+
+                  return (
+                    <button
+                      key={day.iso}
+                      type="button"
+                      onClick={() => setSelectedDate(day.iso)}
+                      className={`ltc-admin-day ${isSelected ? "selected" : ""} ${!day.isCurrentMonth ? "muted" : ""}`}
+                    >
+                      <div className="ltc-admin-day-top">
+                        <span className={`ltc-admin-day-number ${isToday ? "today" : ""}`}>
+                          {day.day}
+                        </span>
+
+                        {dayBookings.length ? (
+                          <span className="ltc-admin-count-badge">{dayBookings.length}</span>
+                        ) : null}
+                      </div>
+
+                      <div className="ltc-admin-day-items">
+                        {dayBookings.slice(0, 3).map((booking) => (
+                          <div
+                            key={`${booking.bookingType}-${booking._id}`}
+                            className="ltc-admin-day-chip"
+                            title={`${booking.serviceLabel} - ${booking.customerName}`}
+                          >
+                            <span className={`ltc-status-dot ${getStatusDotClass(booking.status)}`} />
+                            {getServiceShortLabel(booking.bookingType)}
+                          </div>
+                        ))}
+
+                        {dayBookings.length > 3 ? (
+                          <p className="ltc-admin-more">+{dayBookings.length - 3} more</p>
+                        ) : null}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <aside className="ltc-admin-side-panel">
+              <div className="ltc-admin-side-head">
+                <div>
+                  <p className="ltc-admin-panel-kicker">Selected Date</p>
+                  <h3 className="ltc-admin-side-title">{formatDate(selectedDate)}</h3>
+                </div>
+
+                <span className="ltc-admin-pill-light">
+                  {selectedDateBookings.length} booking
+                  {selectedDateBookings.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              <div className="ltc-admin-side-list">
+                {selectedDateBookings.length === 0 ? (
+                  <div className="ltc-admin-empty">
+                    <p className="ltc-admin-empty-title">No bookings on this date</p>
+                    <p className="ltc-admin-muted">
+                      Choose another highlighted date from the calendar.
                     </p>
+                  </div>
+                ) : (
+                  selectedDateBookings.map((booking) => (
+                    <div
+                      key={`${booking.bookingType}-${booking._id}`}
+                      className="ltc-admin-booking-card"
+                    >
+                      <div className="ltc-admin-booking-pills">
+                        <span className="ltc-admin-service-pill">
+                          {booking.serviceLabel}
+                        </span>
 
-                    <div className="mt-3 space-y-1 text-xs font-semibold text-black/55">
-                      <p>
-                        <span className="font-extrabold text-black/65">
-                          Guest:
-                        </span>{" "}
+                        <span className={`ltc-admin-status-pill ${String(booking.status || "").toLowerCase()}`}>
+                          {booking.status}
+                        </span>
+                      </div>
+
+                      <h4 className="ltc-admin-booking-title">{booking.title}</h4>
+
+                      <p className="ltc-admin-booking-sub">
+                        {booking.category || booking.location || "—"}
+                      </p>
+
+                      <div className="ltc-admin-details">
+                        <p><strong>Guest:</strong> {booking.customerName}</p>
+                        <p><strong>Time:</strong> {booking.time || "—"}</p>
+                        <p><strong>Pax:</strong> {booking.pax || "—"}</p>
+                        <p><strong>Total:</strong> {formatPeso(booking.totalAmount)}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section className="ltc-admin-summary-grid">
+          <div className="ltc-admin-summary-card">
+            <p className="ltc-admin-card-kicker">Booking Summary</p>
+
+            <div className="ltc-admin-summary-list">
+              <div className="ltc-admin-row">
+                <span>Resort & Venue</span>
+                <strong>{counts.resort}</strong>
+              </div>
+
+              <div className="ltc-admin-row">
+                <span>Event Package</span>
+                <strong>{counts.event}</strong>
+              </div>
+
+              <div className="ltc-admin-row">
+                <span>Hotel & Condo</span>
+                <strong>{counts.hotel_room}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="ltc-admin-summary-card">
+            <p className="ltc-admin-card-kicker">Status Overview</p>
+
+            <div className="ltc-admin-summary-list">
+              <div className="ltc-admin-row">
+                <span>Pending</span>
+                <strong>{counts.pending}</strong>
+              </div>
+
+              <div className="ltc-admin-row">
+                <span>Confirmed</span>
+                <strong>{counts.confirmed}</strong>
+              </div>
+
+              <div className="ltc-admin-row">
+                <span>Cancelled</span>
+                <strong>{counts.cancelled}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="ltc-admin-summary-card">
+            <div className="ltc-admin-next-head">
+              <div>
+                <p className="ltc-admin-card-kicker">Upcoming</p>
+                <h3 className="ltc-admin-next-title">Next Bookings</h3>
+              </div>
+
+              <span className="ltc-admin-pill-light">{counts.upcoming}</span>
+            </div>
+
+            <div className="ltc-admin-summary-list">
+              {upcomingBookings.length === 0 ? (
+                <p className="ltc-admin-empty">
+                  No upcoming booked dates.
+                </p>
+              ) : (
+                upcomingBookings.map((booking) => (
+                  <button
+                    key={`${booking.bookingType}-${booking._id}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(booking.date);
+                      const parsed = parseISODate(booking.date);
+                      if (parsed) {
+                        setMonthDate(
+                          new Date(parsed.getFullYear(), parsed.getMonth(), 1)
+                        );
+                      }
+                    }}
+                    className="ltc-admin-upcoming-card"
+                  >
+                    <div>
+                      <p className="ltc-admin-upcoming-title">{booking.title}</p>
+
+                      <p className="ltc-admin-upcoming-meta">
+                        {formatDate(booking.date)} • {booking.time || "No time"}
+                      </p>
+
+                      <p className="ltc-admin-upcoming-meta">
                         {booking.customerName}
                       </p>
-                      <p>
-                        <span className="font-extrabold text-black/65">
-                          Time:
-                        </span>{" "}
-                        {booking.time || "—"}
-                      </p>
-                      <p>
-                        <span className="font-extrabold text-black/65">
-                          Pax:
-                        </span>{" "}
-                        {booking.pax || "—"}
-                      </p>
-                      <p>
-                        <span className="font-extrabold text-black/65">
-                          Total:
-                        </span>{" "}
-                        {formatPeso(booking.totalAmount)}
-                      </p>
                     </div>
-                  </div>
+
+                    <span className={`ltc-service-dot ${getServiceDotClass(booking.bookingType)}`} />
+                  </button>
                 ))
               )}
             </div>
-          </aside>
-        </div>
-      </section>
-
-      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
-          <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">
-            Booking Summary
-          </p>
-
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between rounded-2xl bg-[#F6F6F1] px-4 py-3">
-              <span className="text-sm font-bold text-black/55">
-                Resort & Venue
-              </span>
-              <span className="font-extrabold text-[#2A4F33]">
-                {counts.resort}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl bg-[#F6F6F1] px-4 py-3">
-              <span className="text-sm font-bold text-black/55">
-                Event Package
-              </span>
-              <span className="font-extrabold text-[#2A4F33]">
-                {counts.event}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl bg-[#F6F6F1] px-4 py-3">
-              <span className="text-sm font-bold text-black/55">
-                Hotel & Condo
-              </span>
-              <span className="font-extrabold text-[#2A4F33]">
-                {counts.hotel_room}
-              </span>
-            </div>
           </div>
-        </div>
-
-        <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
-          <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">
-            Status Overview
-          </p>
-
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between rounded-2xl bg-amber-50 px-4 py-3">
-              <span className="text-sm font-bold text-amber-700">Pending</span>
-              <span className="font-extrabold text-amber-700">
-                {counts.pending}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl bg-emerald-50 px-4 py-3">
-              <span className="text-sm font-bold text-emerald-700">
-                Confirmed
-              </span>
-              <span className="font-extrabold text-emerald-700">
-                {counts.confirmed}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl bg-rose-50 px-4 py-3">
-              <span className="text-sm font-bold text-rose-700">
-                Cancelled
-              </span>
-              <span className="font-extrabold text-rose-700">
-                {counts.cancelled}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-black/40">
-                Upcoming
-              </p>
-              <h3 className="mt-2 text-2xl font-extrabold text-[#2A4F33]">
-                Next Bookings
-              </h3>
-            </div>
-
-            <span className="rounded-full bg-[#E9F1D9] px-3 py-1 text-xs font-extrabold text-[#2F5E3A]">
-              {counts.upcoming}
-            </span>
-          </div>
-
-          <div className="mt-4 space-y-3">
-            {upcomingBookings.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-[#2A4F33]/20 bg-[#F6F6F1] p-4 text-sm font-semibold text-black/45">
-                No upcoming booked dates.
-              </p>
-            ) : (
-              upcomingBookings.map((booking) => (
-                <button
-                  key={`${booking.bookingType}-${booking._id}`}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(booking.date);
-                    const parsed = parseISODate(booking.date);
-                    if (parsed) {
-                      setMonthDate(
-                        new Date(parsed.getFullYear(), parsed.getMonth(), 1)
-                      );
-                    }
-                  }}
-                  className="w-full rounded-2xl bg-[#F6F6F1] p-4 text-left transition hover:bg-[#E9F1D9]"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-extrabold text-[#2A4F33]">
-                      {booking.title}
-                    </p>
-
-                    <span
-                      className={`h-2.5 w-2.5 rounded-full ${getServiceDotClass(
-                        booking.bookingType
-                      )}`}
-                    />
-                  </div>
-
-                  <p className="mt-1 text-xs font-semibold text-black/50">
-                    {formatDate(booking.date)} • {booking.time || "No time"}
-                  </p>
-
-                  <p className="mt-1 text-xs font-semibold text-black/45">
-                    {booking.customerName}
-                  </p>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </HotelAdminShell>
   );
 }

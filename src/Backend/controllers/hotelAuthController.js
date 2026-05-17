@@ -27,6 +27,10 @@ function isPasswordStrongEnough(password = "") {
   return String(password || "").length >= 8;
 }
 
+function isValidPhilippinePhone(phone = "") {
+  return /^09\d{9}$/.test(cleanText(phone));
+}
+
 function getUserIdFromDecoded(decoded = {}) {
   return (
     decoded.id ||
@@ -237,10 +241,18 @@ export async function hotelSignUp(req, res) {
     const phone = cleanText(req.body?.phone || req.body?.phoneNumber);
     const address = cleanText(req.body?.address);
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !username || !email || !phone || !password) {
       return res.status(400).json({
         success: false,
-        message: "First name, last name, email, and password are required.",
+        message:
+          "First name, last name, username, email, phone number, and password are required.",
+      });
+    }
+
+    if (!isValidPhilippinePhone(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number must start with 09 and be exactly 11 digits.",
       });
     }
 

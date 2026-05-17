@@ -4,6 +4,14 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import HotelFaqBot from "./HotelFaqBot";
 
+const HOTEL_LOGO = "/HotelLogo.png";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
+const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
 const BOOKING_GAP_MINUTES = 60;
 const BOOKING_GAP_MS = BOOKING_GAP_MINUTES * 60 * 1000;
 
@@ -146,9 +154,855 @@ const LEGACY_RESORT_PACKAGES = [
 const SEASONAL_MARKUP_PERCENT = 10;
 const WEEKEND_MARKUP_PERCENT = 5;
 const MONTHLY_BOOKING_MARKUP_PERCENT = 1;
-
 const MAX_ADDITIONAL_PAX = 20;
-const ADDITIONAL_PAX_RATE = 250;
+const ADDITIONAL_PAX_RATE = 500;
+
+const pageStyles = `
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+  .ltc-resort-form-page {
+    --green-950: #071f14;
+    --green-900: #0e3321;
+    --green-800: #174a30;
+    --green-700: #235f3e;
+    --footer-green: #082719;
+    --gold: #d7a84d;
+    --gold-soft: #f4d484;
+    --dark: #101828;
+    --muted: #667085;
+    --glass: rgba(255,255,255,.82);
+    --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+    --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+    --radius: 24px;
+    --ease: cubic-bezier(.22,1,.36,1);
+
+    min-height: 100vh;
+    color: var(--dark);
+    background:
+      radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+      radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+    line-height: 1.65;
+    letter-spacing: -.01em;
+    overflow-x: hidden;
+    font-family: "Inter", Arial, sans-serif;
+  }
+
+  .ltc-resort-form-page * {
+    box-sizing: border-box;
+  }
+
+  .ltc-resort-form-page .react-datepicker-wrapper,
+  .ltc-resort-form-page .react-datepicker__input-container {
+    width: 100%;
+  }
+
+  .ltc-resort-form-page .react-datepicker-popper {
+    z-index: 9999 !important;
+  }
+
+  .ltc-container {
+    width: min(1180px, 92%);
+    margin: auto;
+  }
+
+  .ltc-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    background: var(--footer-green);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 10px 34px rgba(7,31,20,.14);
+    margin: 0;
+  }
+
+  .ltc-header .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-nav {
+    min-height: 76px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .ltc-logo {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: white;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+  }
+
+  .ltc-logo-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: white;
+    object-fit: cover;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+  }
+
+  .ltc-logo h1 {
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -.04em;
+    margin: 0;
+  }
+
+  .ltc-logo p {
+    font-size: 11px;
+    color: rgba(255,255,255,.72);
+    margin: 3px 0 0;
+  }
+
+  .ltc-desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ltc-nav-link {
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-radius: 999px;
+    transition: .25s var(--ease);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .ltc-nav-link:hover,
+  .ltc-nav-link.active {
+    color: white;
+    background: rgba(255,255,255,.13);
+    transform: translateY(-1px);
+  }
+
+  .ltc-profile-button {
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 14px 28px rgba(215,168,77,.18);
+  }
+
+  .ltc-menu-button {
+    display: none;
+    color: white;
+    border: 0;
+    background: rgba(255,255,255,.1);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  .ltc-menu-button svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .ltc-hero {
+    position: relative;
+    overflow: hidden;
+    color: white;
+    isolation: isolate;
+    background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+    padding: 82px 0 78px;
+  }
+
+  .ltc-hero-slide {
+    position: absolute;
+    inset: 0;
+    z-index: -4;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .35;
+  }
+
+  .ltc-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    background:
+      linear-gradient(
+        120deg,
+        rgba(2, 18, 11, 0.96) 0%,
+        rgba(5, 37, 23, 0.88) 42%,
+        rgba(12, 64, 39, 0.76) 100%
+      );
+  }
+
+  .ltc-hero::after {
+    content: "";
+    position: absolute;
+    inset: -16% -10% -24% -10%;
+    z-index: -2;
+    background:
+      radial-gradient(circle at 16% 82%, rgba(19, 120, 72, 0.36), transparent 24%),
+      radial-gradient(circle at 36% 92%, rgba(7, 76, 47, 0.46), transparent 30%),
+      radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
+      radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
+      radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
+    filter: blur(30px);
+    pointer-events: none;
+  }
+
+  .ltc-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 920px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .ltc-eyebrow {
+    display: inline-flex;
+    color: var(--gold-soft);
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+  }
+
+  .ltc-hero-title {
+    margin: 18px 0 0;
+    color: white;
+    font-size: clamp(36px, 5vw, 62px);
+    line-height: 1.05;
+    font-weight: 900;
+    letter-spacing: -.055em;
+    text-shadow: 0 8px 26px rgba(0,0,0,.22);
+  }
+
+  .ltc-hero-title span {
+    color: var(--gold-soft);
+  }
+
+  .ltc-hero-text {
+    max-width: 760px;
+    margin: 18px auto 0;
+    color: rgba(255,255,255,.80);
+    font-size: 17px;
+    line-height: 1.8;
+  }
+
+  .ltc-section {
+    padding: 84px 0;
+  }
+
+  .ltc-form-shell {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid rgba(255,255,255,.76);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(18px);
+    padding: 34px;
+  }
+
+  .ltc-form-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+    z-index: 3;
+  }
+
+  .ltc-form-shell:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(215,168,77,.45);
+  }
+
+  .ltc-status {
+    margin-bottom: 22px;
+    border-radius: 16px;
+    border: 1px solid transparent;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    font-weight: 800;
+  }
+
+  .ltc-status-success {
+    color: #047857;
+    background: rgba(16,185,129,.10);
+    border-color: rgba(16,185,129,.25);
+  }
+
+  .ltc-status-error {
+    color: #b42318;
+    background: rgba(239,68,68,.10);
+    border-color: rgba(239,68,68,.22);
+  }
+
+  .ltc-status-info {
+    color: #475467;
+    background: rgba(102,112,133,.09);
+    border-color: rgba(102,112,133,.14);
+  }
+
+  .ltc-form-section + .ltc-booking-section {
+    margin-top: 34px;
+  }
+
+  .ltc-section-heading {
+    margin: 0;
+    color: var(--green-950);
+    font-size: clamp(24px,3vw,34px);
+    line-height: 1.08;
+    letter-spacing: -.05em;
+    font-weight: 900;
+  }
+
+  .ltc-section-line {
+    margin-top: 10px;
+    width: 180px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+  }
+
+  .ltc-fields-grid {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 18px 22px;
+  }
+
+  .ltc-booking-header {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .ltc-service-pill {
+    min-height: 44px;
+    min-width: 220px;
+    border-radius: 999px;
+    border: 1px solid rgba(35,95,62,.14);
+    background: rgba(255,255,255,.84);
+    color: var(--green-800);
+    padding: 0 18px;
+    font-size: 13px;
+    font-weight: 900;
+    outline: none;
+  }
+
+  .ltc-field label {
+    display: block;
+    margin: 0 0 8px;
+    color: var(--green-950);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .ltc-input,
+  .ltc-select,
+  .ltc-date-input {
+    width: 100%;
+    min-height: 50px;
+    border-radius: 999px;
+    border: 1px solid rgba(35,95,62,.16);
+    background: rgba(255,255,255,.88);
+    color: var(--dark);
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 700;
+    padding: 0 18px;
+    transition: .25s var(--ease);
+    box-shadow: 0 10px 24px rgba(8,39,25,.05);
+  }
+
+  .ltc-input::placeholder,
+  .ltc-date-input::placeholder {
+    color: rgba(102,112,133,.68);
+  }
+
+  .ltc-input:focus,
+  .ltc-select:focus,
+  .ltc-date-input:focus {
+    border-color: var(--green-700);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(35,95,62,.10);
+  }
+
+  .ltc-input:disabled,
+  .ltc-select:disabled,
+  .ltc-date-input:disabled {
+    opacity: .68;
+    cursor: not-allowed;
+  }
+
+  .ltc-error-text {
+    margin: 7px 0 0;
+    color: #b42318;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .ltc-info-box {
+    margin-top: 18px;
+    border-radius: 18px;
+    background: rgba(35,95,62,.08);
+    border: 1px solid rgba(35,95,62,.10);
+    color: var(--green-800);
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.65;
+    font-weight: 700;
+  }
+
+  .ltc-info-box p {
+    margin: 0;
+  }
+
+  .ltc-info-box p + p {
+    margin-top: 3px;
+  }
+
+  .ltc-price-card {
+    margin-top: 32px;
+    border-radius: 20px;
+    background: white;
+    border: 1px solid rgba(35,95,62,.10);
+    padding: 22px;
+    box-shadow: 0 16px 34px rgba(8,39,25,.08);
+  }
+
+  .ltc-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .ltc-price-label,
+  .ltc-price-value {
+    margin: 0;
+    color: var(--green-950);
+    font-size: clamp(22px,3vw,30px);
+    font-weight: 900;
+    letter-spacing: -.04em;
+  }
+
+  .ltc-price-breakdown {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .ltc-validation-box {
+    margin-top: 22px;
+    border-radius: 18px;
+    border: 1px solid rgba(239,68,68,.22);
+    background: rgba(239,68,68,.10);
+    padding: 14px 18px;
+    color: #b42318;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .ltc-validation-box p {
+    margin: 0;
+    color: #b42318;
+    font-weight: 900;
+  }
+
+  .ltc-validation-box ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+  }
+
+  .ltc-actions {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .ltc-primary-button,
+  .ltc-secondary-button {
+    min-height: 52px;
+    min-width: 210px;
+    border-radius: 999px;
+    padding: 0 28px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 900;
+    transition: all .28s var(--ease);
+  }
+
+  .ltc-primary-button {
+    border: 0;
+    color: #102418;
+    background: linear-gradient(135deg, #f4d484, #d7a84d);
+    box-shadow: 0 16px 35px rgba(215,168,77,.22);
+  }
+
+  .ltc-primary-button:hover {
+    transform: translateY(-4px);
+    background: linear-gradient(135deg, #f7dc93, #c99634);
+    box-shadow: 0 22px 45px rgba(215,168,77,.32);
+  }
+
+  .ltc-primary-button:active {
+    transform: translateY(-1px) scale(.98);
+    box-shadow: 0 10px 24px rgba(215,168,77,.22);
+  }
+
+  .ltc-secondary-button {
+    border: 1px solid rgba(35,95,62,.18);
+    color: var(--green-800);
+    background: white;
+    box-shadow: 0 12px 28px rgba(8,39,25,.06);
+  }
+
+  .ltc-secondary-button:hover {
+    transform: translateY(-4px);
+    color: white;
+    background: var(--green-800);
+    border-color: var(--green-800);
+    box-shadow: 0 18px 38px rgba(8,39,25,.18);
+  }
+
+  .ltc-secondary-button:active,
+  .ltc-secondary-button.clicked {
+    transform: translateY(-1px) scale(.98);
+    color: white;
+    background: var(--footer-green);
+    border-color: var(--footer-green);
+    box-shadow: 0 10px 24px rgba(8,39,25,.22);
+  }
+
+  .ltc-cancel-button {
+    color: var(--green-800);
+    background: #ffffff;
+    border: 1px solid rgba(35,95,62,.2);
+  }
+
+  .ltc-cancel-button:hover {
+    color: white;
+    background: #235f3e;
+    border-color: #235f3e;
+  }
+
+  .ltc-cancel-button:active,
+  .ltc-cancel-button:focus {
+    color: white;
+    background: #082719;
+    border-color: #082719;
+  }
+
+  .ltc-primary-button:disabled,
+  .ltc-secondary-button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .ltc-footer {
+    width: 100%;
+    background: var(--footer-green);
+    color: white;
+    padding: 30px 0 12px;
+    margin: 0;
+  }
+
+  .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-footer-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+    gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .ltc-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-footer-brand img {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+  }
+
+  .ltc-footer h4 {
+    color: white;
+    font-weight: 900;
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .ltc-footer h5 {
+    color: #f4d484;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin: 0 0 10px;
+  }
+
+  .ltc-footer p,
+  .ltc-footer-link {
+    display: block;
+    color: rgba(255,255,255,.68);
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 5px 0;
+  }
+
+  .ltc-footer-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .ltc-footer-link:hover {
+    color: white;
+    text-decoration: underline;
+  }
+
+  .ltc-socials {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ltc-socials span {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.13);
+  }
+
+  .ltc-copyright {
+    width: 100%;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .ltc-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0,0,0,.42);
+  }
+
+  .ltc-sidebar-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: min(310px, 86vw);
+    background: white;
+    box-shadow: -20px 0 60px rgba(0,0,0,.25);
+    padding: 20px;
+  }
+
+  .ltc-sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(16,24,40,.1);
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .ltc-sidebar-title {
+    color: var(--green-950);
+    font-weight: 900;
+    letter-spacing: .14em;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .ltc-sidebar-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 0;
+    background: #f2f4f7;
+    color: #101828;
+    cursor: pointer;
+  }
+
+  .ltc-sidebar-link {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #101828;
+    text-align: left;
+    border-radius: 14px;
+    padding: 13px 14px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+
+  .ltc-sidebar-link:hover,
+  .ltc-sidebar-link.active {
+    background: var(--green-800);
+    color: white;
+  }
+
+  @media (max-width: 1100px) {
+    .ltc-fields-grid,
+    .ltc-price-breakdown,
+    .ltc-footer-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-header .ltc-container {
+      padding-left: 22px;
+      padding-right: 22px;
+    }
+
+    .ltc-nav {
+      min-height: auto;
+      padding: 18px 0;
+    }
+
+    .ltc-desktop-nav {
+      display: none;
+    }
+
+    .ltc-menu-button {
+      display: grid;
+      place-items: center;
+    }
+
+    .ltc-hero {
+      padding: 76px 0 74px;
+    }
+
+    .ltc-section {
+      padding: 64px 0;
+    }
+
+    .ltc-form-shell {
+      padding: 28px 22px;
+    }
+
+    .ltc-booking-header,
+    .ltc-price-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .ltc-footer {
+      padding: 28px 0 12px;
+    }
+
+    .ltc-footer-grid {
+      gap: 18px;
+      padding-bottom: 22px;
+    }
+
+    .ltc-footer .ltc-container {
+      padding-left: 22px;
+      padding-right: 22px;
+    }
+
+    .ltc-copyright {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-header .ltc-container,
+    .ltc-footer .ltc-container {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .ltc-logo h1 {
+      font-size: 14px;
+    }
+
+    .ltc-logo p {
+      font-size: 10px;
+    }
+
+    .ltc-hero-title {
+      font-size: clamp(34px, 11vw, 46px);
+      letter-spacing: -.045em;
+    }
+
+    .ltc-hero-text {
+      font-size: 15px;
+    }
+
+    .ltc-form-shell {
+      padding: 26px 18px;
+    }
+
+    .ltc-primary-button,
+    .ltc-secondary-button {
+      width: 100%;
+    }
+  }
+`;
 
 function getApiBase() {
   const raw = (
@@ -507,9 +1361,10 @@ export default function ResortForm() {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const presetPackageId = location.state?.selectedPackageId || "";
-  const presetPackage =
-    location.state?.selectedPackage || location.state?.selectedVenue || "";
+  // Keep the form default blank. Users must choose a venue first.
+  // This prevents a venue from being pre-selected when coming from another page.
+  const presetPackageId = "";
+  const presetPackage = "";
 
   const [packages, setPackages] = useState(LEGACY_RESORT_PACKAGES);
   const [loadingPackages, setLoadingPackages] = useState(true);
@@ -526,12 +1381,12 @@ export default function ResortForm() {
     email: "",
     phone: "",
     serviceType: "Resort & Venue",
-    packageId: presetPackageId,
-    venue: normalizeText(presetPackage),
+    packageId: "",
+    venue: "",
     date: "",
     category: "",
     time: "",
-    pax: "",
+    additionalPax: "",
   });
 
   const todayLocalISO = useMemo(() => toLocalISO(new Date()), []);
@@ -633,10 +1488,8 @@ export default function ResortForm() {
   }, [basePrice, form.date, monthlyConfirmedBookingCount]);
 
   const baseAmount = dynamicPricing.finalPrice || null;
-  const selectedPax = Number(form.pax || 0);
-  const additionalPax = baseCapacity
-    ? Math.max(0, selectedPax - baseCapacity)
-    : 0;
+  const additionalPax = Math.max(0, Math.min(MAX_ADDITIONAL_PAX, Number(form.additionalPax || 0)));
+  const selectedPax = baseCapacity ? baseCapacity + additionalPax : 0;
   const additionalPaxCharge = additionalPax * ADDITIONAL_PAX_RATE;
   const price = baseAmount ? baseAmount + additionalPaxCharge : null;
 
@@ -649,23 +1502,28 @@ export default function ResortForm() {
     setStatus({ type: "", message: "" });
   };
 
-  const setPaxValue = (rawValue) => {
-    const clean = String(rawValue || "").replace(/\D/g, "").slice(0, 4);
-
-    if (!clean) {
-      setField("pax", "");
-      return;
-    }
-
-    const numericValue = Number(clean);
-
-    if (maxBookablePax && numericValue > maxBookablePax) {
-      setField("pax", String(maxBookablePax));
-      return;
-    }
-
-    setField("pax", clean);
+  const setAdditionalPaxValue = (value) => {
+    const numericValue = Math.max(0, Math.min(MAX_ADDITIONAL_PAX, Number(value || 0)));
+    setField("additionalPax", String(numericValue));
   };
+
+  const additionalPaxOptions = useMemo(
+    () => Array.from({ length: MAX_ADDITIONAL_PAX + 1 }, (_, index) => String(index)),
+    []
+  );
+
+  const additionalPaxLabelMap = useMemo(
+    () =>
+      Object.fromEntries(
+        additionalPaxOptions.map((value) => [
+          value,
+          value === "0"
+            ? "No additional pax"
+            : `+${value} pax (${formatPeso(Number(value) * ADDITIONAL_PAX_RATE)})`,
+        ])
+      ),
+    [additionalPaxOptions]
+  );
 
   const isTimeOptionBlocked = (date, time) => {
     if (!date || !time) return false;
@@ -758,15 +1616,14 @@ export default function ResortForm() {
         ? data.packages.filter((item) => item?.isActive !== false)
         : [];
 
-      setPackages(list.length ? list : LEGACY_RESORT_PACKAGES);
+      setPackages(list);
     } catch (error) {
       console.error("fetch resort packages error:", error);
 
-      setPackages(LEGACY_RESORT_PACKAGES);
+      setPackages([]);
       setStatus({
         type: "error",
-        message:
-          "Could not load updated resort packages. Showing default venues for now.",
+        message: "Could not load resort packages. Please try again later.",
       });
     } finally {
       setLoadingPackages(false);
@@ -867,26 +1724,9 @@ export default function ResortForm() {
   }, []);
 
   useEffect(() => {
-    if (presetAppliedRef.current || !displayPackages.length) return;
-
-    const matched =
-      displayPackages.find((item) => String(item._id) === String(presetPackageId)) ||
-      displayPackages.find(
-        (item) => normalizeText(item.title) === normalizeText(presetPackage)
-      );
-
-    if (matched) {
-      setForm((prev) => ({
-        ...prev,
-        packageId: matched._id,
-        venue: normalizeText(matched.title),
-        category: "",
-        time: "",
-      }));
-    }
-
+    // Keep the venue empty by default. Users must explicitly choose a venue.
     presetAppliedRef.current = true;
-  }, [displayPackages, presetPackage, presetPackageId]);
+  }, []);
 
   useEffect(() => {
     if (!form.venue) {
@@ -903,18 +1743,13 @@ export default function ResortForm() {
       const options = parseDurationOptions(matched);
       const validCategory = options.includes(currentCategory) ? currentCategory : "";
 
-      const currentPax = Number(prev.pax || 0);
-      const nextCapacity = getPackageCapacityLimit(matched);
-      const nextPax =
-        nextCapacity && currentPax > nextCapacity ? String(nextCapacity) : prev.pax;
-
       return {
         ...prev,
         packageId: matched?._id || prev.packageId,
         category: validCategory,
         date: "",
         time: "",
-        pax: nextPax,
+        additionalPax: "",
       };
     });
 
@@ -923,7 +1758,7 @@ export default function ResortForm() {
   }, [form.venue, displayPackages]);
 
   useEffect(() => {
-    setForm((prev) => ({ ...prev, time: "" }));
+    setForm((prev) => ({ ...prev, time: "", additionalPax: "" }));
   }, [form.category, form.date]);
 
   useEffect(() => {
@@ -939,6 +1774,7 @@ export default function ResortForm() {
       ...prev,
       category: "",
       time: "",
+      additionalPax: "",
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.date, selectedVariants, confirmedBookings]);
@@ -995,18 +1831,18 @@ export default function ResortForm() {
 
     if (!form.venue) next.venue = "Choose a venue.";
 
-    if (!form.category) {
-      next.category = "Choose a variation.";
-    } else if (selectedVariationFullyBlocked) {
-      next.category = "This variation is fully booked for the selected date.";
-    }
-
     if (!form.date) {
       next.date = "Choose a date.";
     } else if (form.date < todayLocalISO) {
       next.date = "Date cannot be in the past.";
     } else if (isDateFullyBlocked(form.date)) {
       next.date = "All variations are already booked for this date.";
+    }
+
+    if (!form.category) {
+      next.category = "Choose a variation.";
+    } else if (selectedVariationFullyBlocked) {
+      next.category = "This variation is fully booked for the selected date.";
     }
 
     if (!form.time) {
@@ -1018,12 +1854,12 @@ export default function ResortForm() {
         "This time is blocked by a pending or approved booking. Please choose another slot.";
     }
 
-    if (!form.pax) {
-      next.pax = "Pax is required.";
-    } else if (!/^\d+$/.test(form.pax) || Number(form.pax) <= 0) {
-      next.pax = "Pax must be at least 1.";
-    } else if (maxBookablePax && Number(form.pax) > maxBookablePax) {
-      next.pax = `Maximum bookable pax is ${maxBookablePax} pax (${baseCapacity} base + ${MAX_ADDITIONAL_PAX} additional).`;
+    if (!baseCapacity) {
+      next.pax = "This venue has no base capacity configured.";
+    } else if (!/^\d+$/.test(String(form.additionalPax || "0"))) {
+      next.pax = "Choose a valid additional pax value.";
+    } else if (additionalPax > MAX_ADDITIONAL_PAX) {
+      next.pax = `Additional pax can only be up to ${MAX_ADDITIONAL_PAX}.`;
     }
 
     if (!price) next.price = "Price cannot be computed.";
@@ -1039,10 +1875,6 @@ export default function ResortForm() {
     setErrors(validation);
 
     if (Object.keys(validation).length) {
-      setStatus({
-        type: "error",
-        message: "Please complete the required fields.",
-      });
       setSubmitting(false);
       return;
     }
@@ -1108,8 +1940,8 @@ export default function ResortForm() {
         selectedVariant?.label || normalizeVariationLabel(form.category),
       selectedVariantPrice: basePrice,
       selectedVariantTimeSlots: selectedVariant?.timeSlots || [],
-      pax: Number(form.pax),
-      totalGuests: Number(form.pax),
+      pax: selectedPax,
+      totalGuests: selectedPax,
       basePrice,
       baseAmount,
       price,
@@ -1128,12 +1960,28 @@ export default function ResortForm() {
     setSubmitting(false);
   };
 
-  const statusStyles =
+  const statusClass =
     status.type === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      ? "ltc-status-success"
       : status.type === "error"
-      ? "border-rose-200 bg-rose-50 text-rose-700"
-      : "border-slate-200 bg-slate-50 text-slate-700";
+      ? "ltc-status-error"
+      : "ltc-status-info";
+
+  const bottomValidationMessages = useMemo(() => {
+    const messages = Object.values(errors)
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+
+    if (status.type === "error" && status.message) {
+      const cleanStatus = String(status.message).trim();
+
+      if (cleanStatus && !messages.includes(cleanStatus)) {
+        messages.unshift(cleanStatus);
+      }
+    }
+
+    return [...new Set(messages)];
+  }, [errors, status]);
 
   const goToProfile = () => {
     const token = localStorage.getItem("token") || localStorage.getItem("hotelToken");
@@ -1141,253 +1989,327 @@ export default function ResortForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#2f523d] font-['Inter',sans-serif]">
+    <div className="ltc-resort-form-page" style={fontPontano}>
+      <style>{pageStyles}</style>
+
       <Header
         navigate={navigate}
         goToProfile={goToProfile}
         openMenu={() => setIsOpen(true)}
       />
 
-      <main className="bg-[#2f523d] px-4 pb-7 pt-5 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-[1180px]">
-          <div className="mb-5 text-center">
-            <h1 className="font-['Montserrat',sans-serif] text-[34px] font-extrabold leading-tight text-white sm:text-[42px]">
-              Booking Form
+      <main>
+        <section className="ltc-hero">
+          <img
+            src={HERO_IMAGES[0]}
+            alt="Resort booking background"
+            className="ltc-hero-slide"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+
+          <div className="ltc-container ltc-hero-content">
+            <span className="ltc-eyebrow" style={fontMontserrat}>
+              Resort & Venue Booking
+            </span>
+
+            <h1 className="ltc-hero-title" style={fontMontserrat}>
+              Booking <span>Form</span>
             </h1>
-            <div className="mx-auto mt-2 h-[2px] w-[270px] bg-white/80" />
+
+            <p className="ltc-hero-text" style={fontPontano}>
+              Complete your resort and venue booking details, check availability,
+              and review your final amount before proceeding.
+            </p>
           </div>
+        </section>
 
-          <div className="rounded-md bg-white/15 px-5 py-8 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-[1px] sm:px-7 lg:px-8">
-            {status.message ? (
-              <div className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${statusStyles}`}>
-                {status.message}
-              </div>
-            ) : null}
-
-            <FormSection title="Personal Information">
-              <Field
-                label="First Name"
-                placeholder="Enter first name"
-                value={form.firstName}
-                disabled={loadingProfile}
-                error={errors.firstName}
-                onChange={(v) =>
-                  setField("firstName", v.replace(/[^A-Za-z\s]/g, "").slice(0, 30))
-                }
-              />
-
-              <Field
-                label="Last Name"
-                placeholder="Enter last name"
-                value={form.lastName}
-                disabled={loadingProfile}
-                error={errors.lastName}
-                onChange={(v) =>
-                  setField("lastName", v.replace(/[^A-Za-z\s]/g, "").slice(0, 30))
-                }
-              />
-
-              <Field
-                label="Email"
-                placeholder="Enter email address"
-                type="email"
-                value={form.email}
-                disabled={loadingProfile}
-                error={errors.email}
-                onChange={(v) => setField("email", v.replace(/\s/g, "").slice(0, 60))}
-              />
-
-              <Field
-                label="Phone Number"
-                placeholder="09XXXXXXXXX"
-                value={form.phone}
-                disabled={loadingProfile}
-                error={errors.phone}
-                inputMode="numeric"
-                onChange={(v) =>
-                  setField("phone", v.replace(/\D/g, "").slice(0, 11))
-                }
-              />
-            </FormSection>
-
-            <div className="mt-9">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div>
-                  <h2 className="font-['Montserrat',sans-serif] text-[25px] font-semibold text-white sm:text-[30px]">
-                    Booking Details
-                  </h2>
-                  <div className="mt-1 h-[2px] w-[210px] bg-white/60" />
+        <section className="ltc-section">
+          <div className="ltc-container">
+            <div className="ltc-form-shell">
+              {status.message ? (
+                <div className={`ltc-status ${statusClass}`} style={fontPoppins}>
+                  {status.message}
                 </div>
+              ) : null}
 
-                <input
-                  value="Resort & Venue"
-                  disabled
-                  readOnly
-                  className="h-8 w-full rounded-md border-0 bg-white px-3 text-[12px] font-semibold text-[#3f5b44] outline-none sm:w-[250px]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-3">
-                <SelectField
-                  label="Choose Venue"
-                  value={form.venue}
-                  error={errors.venue}
-                  disabled={loadingPackages}
-                  placeholder={loadingPackages ? "Loading venues..." : "Select venue"}
-                  options={venueOptions.map((item) => item.value)}
-                  optionLabelMap={Object.fromEntries(
-                    venueOptions.map((item) => [item.value, item.label])
-                  )}
-                  onChange={(value) => setField("venue", value)}
-                />
-
-                <DateField
-                  label="Choose Date"
-                  placeholder="Select date"
-                  selectedDateObj={selectedDateObj}
-                  minDateObj={minDateObj}
-                  disabled={!form.venue || loadingCalendar}
-                  error={errors.date}
-                  filterDate={(d) => !isDateFullyBlocked(toLocalISO(d))}
-                  onChange={(d) => setField("date", d ? toLocalISO(d) : "")}
-                />
-
-                <SelectField
-                  label="Variation"
-                  value={form.category}
-                  error={errors.category}
-                  disabled={!form.venue}
-                  placeholder="Select variation"
-                  options={categoryOptions}
-                  optionLabelMap={categoryOptionLabelMap}
-                  disabledOptions={disabledCategoryOptions}
-                  onChange={(value) =>
-                    setField("category", normalizeVariationLabel(value))
+              <FormSection title="Personal Information">
+                <Field
+                  label="First Name"
+                  placeholder="Enter first name"
+                  value={form.firstName}
+                  disabled={loadingProfile}
+                  error={errors.firstName}
+                  onChange={(v) =>
+                    setField("firstName", v.replace(/[^A-Za-z\s]/g, "").slice(0, 30))
                   }
-                />
-
-                <SelectField
-                  label="Time"
-                  value={form.time}
-                  error={errors.time}
-                  disabled={
-                    !form.venue ||
-                    !form.category ||
-                    !form.date ||
-                    selectedVariationFullyBlocked
-                  }
-                  placeholder={
-                    !form.venue
-                      ? "Select venue first"
-                      : !form.category
-                      ? "Select variation first"
-                      : !form.date
-                      ? "Select date first"
-                      : selectedVariationFullyBlocked
-                      ? "Fully booked"
-                      : `Select ${getCategoryLabel(form.category)} time`
-                  }
-                  options={availableTimeOptions.map((item) => item.value)}
-                  optionLabelMap={Object.fromEntries(
-                    availableTimeOptions.map((item) => [
-                      item.value,
-                      `${item.label}${item.disabled ? " — BOOKED" : ""}`,
-                    ])
-                  )}
-                  disabledOptions={availableTimeOptions
-                    .filter((item) => item.disabled)
-                    .map((item) => item.value)}
-                  onChange={(value) => setField("time", value)}
                 />
 
                 <Field
-                  label="Number of Pax"
-                  placeholder={maxBookablePax ? `Max ${maxBookablePax} pax` : "Enter number of pax"}
-                  value={form.pax}
-                  error={errors.pax}
-                  inputMode="numeric"
-                  max={maxBookablePax || undefined}
-                  onChange={setPaxValue}
+                  label="Last Name"
+                  placeholder="Enter last name"
+                  value={form.lastName}
+                  disabled={loadingProfile}
+                  error={errors.lastName}
+                  onChange={(v) =>
+                    setField("lastName", v.replace(/[^A-Za-z\s]/g, "").slice(0, 30))
+                  }
                 />
-              </div>
 
-              {capacityLimit ? (
-                <div className="mt-3 rounded-xl bg-white/15 px-4 py-3 text-xs font-semibold text-white/90">
-                  <p>Base capacity: {baseCapacity} pax</p>
-                  <p>
-                    Additional pax allowed: up to {MAX_ADDITIONAL_PAX} pax at{" "}
-                    {formatPeso(ADDITIONAL_PAX_RATE)} per person
-                  </p>
-                  <p className="font-extrabold">
-                    Maximum bookable pax: {maxBookablePax} pax
-                  </p>
-                  {additionalPax > 0 ? (
-                    <p className="mt-1 text-amber-100">
-                      Additional charge: {additionalPax} pax ×{" "}
-                      {formatPeso(ADDITIONAL_PAX_RATE)} ={" "}
-                      {formatPeso(additionalPaxCharge)}
+                <Field
+                  label="Email"
+                  placeholder="Enter email address"
+                  type="email"
+                  value={form.email}
+                  disabled={loadingProfile}
+                  error={errors.email}
+                  onChange={(v) => setField("email", v.replace(/\s/g, "").slice(0, 60))}
+                />
+
+                <Field
+                  label="Phone Number"
+                  placeholder="09XXXXXXXXX"
+                  value={form.phone}
+                  disabled={loadingProfile}
+                  error={errors.phone}
+                  inputMode="numeric"
+                  onChange={(v) =>
+                    setField("phone", v.replace(/\D/g, "").slice(0, 11))
+                  }
+                />
+              </FormSection>
+
+              <div className="ltc-booking-section">
+                <div className="ltc-booking-header">
+                  <div>
+                    <h2 className="ltc-section-heading" style={fontMontserrat}>
+                      Booking Details
+                    </h2>
+                    <div className="ltc-section-line" />
+                  </div>
+
+                  <input
+                    value="Resort & Venue"
+                    disabled
+                    readOnly
+                    className="ltc-service-pill"
+                    style={fontPoppins}
+                  />
+                </div>
+
+                <div className="ltc-fields-grid">
+                  <SelectField
+                    label="Choose Venue"
+                    value={form.venue}
+                    error={errors.venue}
+                    disabled={loadingPackages}
+                    placeholder={loadingPackages ? "Loading venues..." : "Select venue"}
+                    options={venueOptions.map((item) => item.value)}
+                    optionLabelMap={Object.fromEntries(
+                      venueOptions.map((item) => [item.value, item.label])
+                    )}
+                    onChange={(value) => setField("venue", value)}
+                  />
+
+                  <DateField
+                    label="Choose Date"
+                    placeholder="Select date"
+                    selectedDateObj={selectedDateObj}
+                    minDateObj={minDateObj}
+                    disabled={!form.venue || loadingCalendar}
+                    error={errors.date}
+                    filterDate={(d) => !isDateFullyBlocked(toLocalISO(d))}
+                    onChange={(d) => {
+                      setField("date", d ? toLocalISO(d) : "");
+                      setForm((prev) => ({
+                        ...prev,
+                        date: d ? toLocalISO(d) : "",
+                        category: "",
+                        time: "",
+                        additionalPax: "",
+                      }));
+                    }}
+                  />
+
+                  <SelectField
+                    label="Variation"
+                    value={form.category}
+                    error={errors.category}
+                    disabled={!form.venue || !form.date}
+                    placeholder={
+                      !form.venue
+                        ? "Select venue first"
+                        : !form.date
+                        ? "Select date first"
+                        : "Select variation"
+                    }
+                    options={categoryOptions}
+                    optionLabelMap={categoryOptionLabelMap}
+                    disabledOptions={disabledCategoryOptions}
+                    onChange={(value) => {
+                      setField("category", normalizeVariationLabel(value));
+                      setForm((prev) => ({
+                        ...prev,
+                        category: normalizeVariationLabel(value),
+                        time: "",
+                        additionalPax: "",
+                      }));
+                    }}
+                  />
+
+                  <SelectField
+                    label="Time"
+                    value={form.time}
+                    error={errors.time}
+                    disabled={
+                      !form.venue ||
+                      !form.category ||
+                      !form.date ||
+                      selectedVariationFullyBlocked
+                    }
+                    placeholder={
+                      !form.venue
+                        ? "Select venue first"
+                        : !form.date
+                        ? "Select date first"
+                        : !form.category
+                        ? "Select variation first"
+                        : selectedVariationFullyBlocked
+                        ? "Fully booked"
+                        : `Select ${getCategoryLabel(form.category)} time`
+                    }
+                    options={availableTimeOptions.map((item) => item.value)}
+                    optionLabelMap={Object.fromEntries(
+                      availableTimeOptions.map((item) => [
+                        item.value,
+                        `${item.label}${item.disabled ? " — BOOKED" : ""}`,
+                      ])
+                    )}
+                    disabledOptions={availableTimeOptions
+                      .filter((item) => item.disabled)
+                      .map((item) => item.value)}
+                    onChange={(value) => {
+                      setField("time", value);
+                      setForm((prev) => ({ ...prev, time: value, additionalPax: "0" }));
+                    }}
+                  />
+
+                  <SelectField
+                    label="Additional Pax"
+                    value={form.additionalPax}
+                    error={errors.pax}
+                    disabled={!form.venue || !form.date || !form.category || !form.time}
+                    placeholder={
+                      !form.venue
+                        ? "Select venue first"
+                        : !form.date
+                        ? "Select date first"
+                        : !form.category
+                        ? "Select variation first"
+                        : !form.time
+                        ? "Select time first"
+                        : "Select additional pax"
+                    }
+                    options={additionalPaxOptions}
+                    optionLabelMap={additionalPaxLabelMap}
+                    onChange={setAdditionalPaxValue}
+                  />
+                </div>
+
+                {capacityLimit ? (
+                  <div className="ltc-info-box" style={fontPoppins}>
+                    <p>Original pax / base capacity: {baseCapacity} pax</p>
+                    <p>
+                      Additional pax is optional and limited to {MAX_ADDITIONAL_PAX} pax at{" "}
+                      {formatPeso(ADDITIONAL_PAX_RATE)} per person.
                     </p>
-                  ) : null}
-                </div>
-              ) : null}
+                    <p>
+                      <strong>Total pax: {selectedPax || baseCapacity} pax</strong>
+                    </p>
+                    {additionalPax > 0 ? (
+                      <p>
+                        Additional charge: {additionalPax} pax ×{" "}
+                        {formatPeso(ADDITIONAL_PAX_RATE)} ={" "}
+                        {formatPeso(additionalPaxCharge)}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
 
-              {errors.price ? (
-                <p className="mt-3 text-xs font-semibold text-rose-100">
-                  {errors.price}
-                </p>
-              ) : null}
-
-              <div className="mt-9 rounded-md bg-[#f7f7f2] px-4 py-4 text-[#52675b]">
-                <div className="flex items-center justify-between">
-                  <p className="font-['Montserrat',sans-serif] text-[20px] font-extrabold sm:text-[25px]">
-                    Total Amount:
+                {errors.price ? (
+                  <p className="ltc-error-text" style={fontPoppins}>
+                    {errors.price}
                   </p>
+                ) : null}
 
-                  <p className="font-['Montserrat',sans-serif] text-[20px] font-extrabold sm:text-[25px]">
-                    {formatPeso(price)}
-                  </p>
+                <div className="ltc-price-card">
+                  <div className="ltc-price-row">
+                    <p className="ltc-price-label" style={fontMontserrat}>
+                      Total Amount:
+                    </p>
+
+                    <p className="ltc-price-value" style={fontMontserrat}>
+                      {formatPeso(price)}
+                    </p>
+                  </div>
+
+                  <div className="ltc-price-breakdown" style={fontPoppins}>
+                    <p>Base price: {formatPeso(baseAmount)}</p>
+                    <p>Total pax: {selectedPax || 0}</p>
+                    <p>Additional pax: {additionalPax}</p>
+                    <p>Additional charge: {formatPeso(additionalPaxCharge)}</p>
+                  </div>
                 </div>
 
-                <div className="mt-3 grid gap-2 text-xs font-bold text-[#52675b]/80 sm:grid-cols-3">
-                  <p>Base price: {formatPeso(baseAmount)}</p>
-                  <p>Additional pax: {additionalPax}</p>
-                  <p>Additional charge: {formatPeso(additionalPaxCharge)}</p>
+                {bottomValidationMessages.length ? (
+                  <div className="ltc-validation-box" style={fontPoppins}>
+                    <p style={fontMontserrat}>Please fix the following before proceeding:</p>
+                    <ul>
+                      {bottomValidationMessages.map((message) => (
+                        <li key={message}>{message}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="ltc-actions">
+                  <button
+                    onClick={handleProceed}
+                    disabled={submitting || loadingProfile}
+                    type="button"
+                    className="ltc-primary-button"
+                    style={fontMontserrat}
+                  >
+                    {submitting ? "Processing..." : "Proceed"}
+                  </button>
+
+                  <button
+                    onClick={() => navigate("/resort-venue")}
+                    disabled={submitting}
+                    type="button"
+                    className="ltc-secondary-button ltc-cancel-button"
+                    style={fontMontserrat}
+                  >
+                    Cancel
+                  </button>
                 </div>
-              </div>
-
-              <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <button
-                  onClick={handleProceed}
-                  disabled={submitting || loadingProfile}
-                  type="button"
-                  className="h-8 w-full rounded-full bg-white px-12 font-['Montserrat',sans-serif] text-[10px] font-extrabold uppercase text-[#3f5b44] shadow-sm transition hover:bg-[#fffde9] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[220px]"
-                >
-                  {submitting ? "Processing..." : "Proceed"}
-                </button>
-
-                <button
-                  onClick={() => navigate("/resort-venue")}
-                  disabled={submitting}
-                  type="button"
-                  className="h-8 w-full rounded-full bg-white px-12 font-['Montserrat',sans-serif] text-[10px] font-extrabold uppercase text-[#3f5b44] shadow-sm transition hover:bg-[#fffde9] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[220px]"
-                >
-                  Cancel
-                </button>
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </main>
 
       <Footer />
 
-      {isOpen && (
+      {isOpen ? (
         <MobileMenu
           onClose={() => setIsOpen(false)}
           navigate={navigate}
           goToProfile={goToProfile}
         />
-      )}
+      ) : null}
+
       <HotelFaqBot />
     </div>
   );
@@ -1395,53 +2317,53 @@ export default function ResortForm() {
 
 function Header({ navigate, goToProfile, openMenu }) {
   return (
-    <header className="relative z-30 w-full bg-white shadow-[0_3px_0_rgba(0,0,0,0.18)]">
-      <div className="flex h-[78px] w-full items-center justify-between px-5 sm:px-8 lg:px-12">
+    <header className="ltc-header">
+      <div className="ltc-container ltc-nav">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/hotel-resort")}
           type="button"
-          className="flex items-center gap-4"
+          className="ltc-logo"
           aria-label="Go to home"
         >
           <img
-            src="/Logo.jpg"
+            src={HOTEL_LOGO}
             alt="Hotel logo"
-            className="h-[52px] w-[52px] rounded-full object-cover"
+            className="ltc-logo-icon"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
           />
 
-          <span className="font-['Montserrat',sans-serif] text-[20px] font-extrabold uppercase tracking-wide text-[#385541] sm:text-[24px]">
-            Hotel &amp; Resort
-          </span>
+          <div>
+            <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+            <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
+          </div>
         </button>
 
-        <nav className="hidden items-center gap-9 md:flex">
-          <NavButton label="Home" onClick={() => navigate("/")} />
+        <nav className="ltc-desktop-nav" style={fontPoppins}>
+          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
-          <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
+          <NavButton
+            label={
+              localStorage.getItem("token") || localStorage.getItem("hotelToken")
+                ? "Profile"
+                : "Sign In"
+            }
+            onClick={goToProfile}
+            className="ltc-profile-button"
+          />
         </nav>
-
-        <button
-          onClick={goToProfile}
-          type="button"
-          className="hidden font-['Montserrat',sans-serif] text-[14px] font-bold uppercase tracking-wide text-[#385541] transition hover:text-[#1f3528] md:block"
-        >
-          Profile
-        </button>
 
         <button
           onClick={openMenu}
           type="button"
           aria-label="Open menu"
-          className="rounded-md p-2 text-[#385541] md:hidden"
+          className="ltc-menu-button"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-7 w-7"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -1455,12 +2377,12 @@ function Header({ navigate, goToProfile, openMenu }) {
   );
 }
 
-function NavButton({ label, onClick }) {
+function NavButton({ label, onClick, active = false, className = "" }) {
   return (
     <button
       onClick={onClick}
       type="button"
-      className="font-['Montserrat',sans-serif] text-[14px] font-bold uppercase tracking-wide text-[#385541] transition hover:text-[#1f3528]"
+      className={`ltc-nav-link ${active ? "active" : ""} ${className}`}
     >
       {label}
     </button>
@@ -1469,15 +2391,13 @@ function NavButton({ label, onClick }) {
 
 function FormSection({ title, children }) {
   return (
-    <section>
-      <h2 className="font-['Montserrat',sans-serif] text-[25px] font-semibold text-white sm:text-[30px]">
+    <section className="ltc-form-section">
+      <h2 className="ltc-section-heading" style={fontMontserrat}>
         {title}
       </h2>
-      <div className="mt-1 h-[2px] w-[260px] bg-white/60" />
+      <div className="ltc-section-line" />
 
-      <div className="mt-7 grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-3">
-        {children}
-      </div>
+      <div className="ltc-fields-grid">{children}</div>
     </section>
   );
 }
@@ -1494,10 +2414,8 @@ function Field({
   max,
 }) {
   return (
-    <div>
-      <label className="mb-2 block text-[13px] font-extrabold text-white">
-        {label}
-      </label>
+    <div className="ltc-field">
+      <label style={fontMontserrat}>{label}</label>
 
       <input
         type={type}
@@ -1507,11 +2425,14 @@ function Field({
         max={max}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 w-full rounded-md border border-black/10 bg-white px-3 text-sm font-semibold text-[#3f5b44] outline-none transition placeholder:text-[#3f5b44]/45 focus:ring-2 focus:ring-white/70 disabled:opacity-70"
+        className="ltc-input"
+        style={fontPoppins}
       />
 
       {error ? (
-        <p className="mt-1 text-xs font-semibold text-rose-100">{error}</p>
+        <p className="ltc-error-text" style={fontPoppins}>
+          {error}
+        </p>
       ) : null}
     </div>
   );
@@ -1529,27 +2450,23 @@ function SelectField({
   disabledOptions = [],
 }) {
   return (
-    <div>
-      <label className="mb-2 block text-[13px] font-extrabold text-white">
-        {label}
-      </label>
+    <div className="ltc-field">
+      <label style={fontMontserrat}>{label}</label>
 
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className={`h-9 w-full rounded-md border border-black/10 bg-white px-3 text-sm font-semibold outline-none transition focus:ring-2 focus:ring-white/70 disabled:opacity-70 ${
-          value ? "text-[#3f5b44]" : "text-[#3f5b44]/45"
-        }`}
+        className="ltc-select"
+        style={fontPoppins}
       >
-        <option value="">{placeholder}</option>
+        <option value="" disabled>{placeholder}</option>
 
         {options.map((option, index) => (
           <option
             key={`${option}-${index}`}
             value={option}
             disabled={disabledOptions.includes(option)}
-            className="text-[#3f5b44]"
           >
             {optionLabelMap?.[option] ?? option}
           </option>
@@ -1557,7 +2474,9 @@ function SelectField({
       </select>
 
       {error ? (
-        <p className="mt-1 text-xs font-semibold text-rose-100">{error}</p>
+        <p className="ltc-error-text" style={fontPoppins}>
+          {error}
+        </p>
       ) : null}
     </div>
   );
@@ -1574,10 +2493,8 @@ function DateField({
   onChange,
 }) {
   return (
-    <div>
-      <label className="mb-2 block text-[13px] font-extrabold text-white">
-        {label}
-      </label>
+    <div className="ltc-field">
+      <label style={fontMontserrat}>{label}</label>
 
       <DatePicker
         selected={selectedDateObj}
@@ -1587,12 +2504,20 @@ function DateField({
         disabled={disabled}
         placeholderText={placeholder}
         dateFormat="MM/dd/yyyy"
+        autoComplete="off"
+        onChangeRaw={(event) => event.preventDefault()}
+        onKeyDown={(event) => event.preventDefault()}
+        shouldCloseOnSelect
+        showPopperArrow={false}
+        popperPlacement="bottom-start"
         wrapperClassName="w-full"
-        className="h-9 w-full rounded-md border border-black/10 bg-white px-3 text-sm font-semibold text-[#3f5b44] outline-none transition placeholder:text-[#3f5b44]/45 focus:ring-2 focus:ring-white/70 disabled:opacity-70"
+        className="ltc-date-input"
       />
 
       {error ? (
-        <p className="mt-1 text-xs font-semibold text-rose-100">{error}</p>
+        <p className="ltc-error-text" style={fontPoppins}>
+          {error}
+        </p>
       ) : null}
     </div>
   );
@@ -1600,28 +2525,47 @@ function DateField({
 
 function Footer() {
   return (
-    <footer className="bg-[#f7f7f2] text-[#2f523d]">
-      <div className="mx-auto grid max-w-[1280px] gap-5 px-5 py-4 sm:px-8 md:grid-cols-2 lg:grid-cols-[1.25fr_0.6fr_1.2fr_1fr_0.85fr] lg:gap-6 lg:px-10">
-        <div className="flex items-center gap-3">
-          <img
-            src="/Logo.jpg"
-            alt="Lumispire logo"
-            className="h-[42px] w-[42px] rounded-full object-cover"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
+    <footer className="ltc-footer">
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <div className="ltc-footer-brand">
+            <img
+              src={LUMISPIRE_LOGO}
+              alt="Lumispire logo"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
 
-          <h2 className="font-['Montserrat',sans-serif] text-[25px] font-extrabold uppercase tracking-wide sm:text-[29px]">
-            Lumispire
-          </h2>
+            <h4 style={fontMontserrat}>Lumispire</h4>
+          </div>
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink>Home</FooterLink>
-          <FooterLink>Course</FooterLink>
-          <FooterLink>Requirements</FooterLink>
-          <FooterLink>Profile</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>
+            Home
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
+            Virtual Tour
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-contact-us")}>
+            Contact
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-faqs")}>
+            FAQs
+          </FooterLink>
+          <FooterLink
+            onClick={() => {
+              window.location.href =
+                localStorage.getItem("token") || localStorage.getItem("hotelToken")
+                  ? "/hotel-profile"
+                  : "/hotel-login";
+            }}
+          >
+            {localStorage.getItem("token") || localStorage.getItem("hotelToken")
+              ? "Profile"
+              : "Sign In"}
+          </FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Contact Information">
@@ -1636,17 +2580,17 @@ function Footer() {
         </FooterColumn>
 
         <FooterColumn title="Follow Us">
-          <div className="mt-2 flex gap-2">
-            <span className="h-6 w-6 rounded-full bg-[#2f523d]/15" />
-            <span className="h-6 w-6 rounded-full bg-[#2f523d]/15" />
-            <span className="h-6 w-6 rounded-full bg-[#2f523d]/15" />
+          <div className="ltc-socials">
+            <span />
+            <span />
+            <span />
           </div>
         </FooterColumn>
       </div>
 
-      <div className="mx-auto flex max-w-[1280px] flex-col gap-1 px-5 pb-2 text-[9px] font-bold tracking-wide text-[#2f523d]/80 sm:px-8 md:flex-row md:justify-between lg:px-10">
-        <p>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
-        <p>Developed by CRMS Tech Alliance</p>
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
   );
@@ -1654,45 +2598,39 @@ function Footer() {
 
 function FooterColumn({ title, children }) {
   return (
-    <div className="border-[#2f523d]/20 lg:border-l lg:pl-5">
-      <h3 className="font-['Montserrat',sans-serif] text-[14px] font-extrabold leading-tight">
-        {title}
-      </h3>
-
-      <div className="mt-2 space-y-1">{children}</div>
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
     </div>
   );
 }
 
-function FooterLink({ children }) {
+function FooterLink({ children, onClick }) {
   return (
-    <button
-      type="button"
-      className="block text-left text-[10px] font-bold leading-4 text-[#2f523d]/85 transition hover:text-[#2f523d]"
-    >
+    <button onClick={onClick} type="button" className="ltc-footer-link" style={fontPontano}>
       {children}
     </button>
   );
 }
 
 function FooterText({ children }) {
-  return <p className="text-[10px] font-bold leading-4 text-[#2f523d]/85">{children}</p>;
+  return <p style={fontPontano}>{children}</p>;
 }
 
 function MobileMenu({ onClose, navigate, goToProfile }) {
   return (
-    <div className="fixed inset-0 z-50 md:hidden">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+    <div className="ltc-sidebar-overlay">
+      <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
 
-      <div className="absolute right-0 top-0 h-full w-[300px] bg-white p-5 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="font-['Montserrat',sans-serif] text-lg font-bold text-[#385541]">
+      <div className="ltc-sidebar-panel">
+        <div className="ltc-sidebar-top">
+          <p className="ltc-sidebar-title" style={fontPoppins}>
             MENU
-          </div>
+          </p>
 
           <button
             onClick={onClose}
-            className="rounded-md p-2 hover:bg-black/5"
+            className="ltc-sidebar-close"
             aria-label="Close menu"
             type="button"
           >
@@ -1700,58 +2638,57 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           </button>
         </div>
 
-        <div className="space-y-3">
-          <MenuItem
-            label="HOME"
-            onClick={() => {
-              onClose();
-              navigate("/");
-            }}
-          />
+        <MenuItem
+          label="HOME"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-resort");
+          }}
+        />
 
-          <MenuItem
-            label="VIRTUAL TOUR"
-            onClick={() => {
-              onClose();
-              navigate("/virtual-tour");
-            }}
-          />
+        <MenuItem
+          label="VIRTUAL TOUR"
+          onClick={() => {
+            onClose();
+            navigate("/virtual-tour");
+          }}
+        />
 
-          <MenuItem
-            label="CONTACT"
-            onClick={() => {
-              onClose();
-              navigate("/hotel-contact-us");
-            }}
-          />
+        <MenuItem
+          label="CONTACT"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-contact-us");
+          }}
+        />
 
-          <MenuItem
-            label="FAQS"
-            onClick={() => {
-              onClose();
-              navigate("/hotel-faqs");
-            }}
-          />
+        <MenuItem
+          label="FAQS"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-faqs");
+          }}
+        />
 
-          <MenuItem
-            label="PROFILE"
-            onClick={() => {
-              onClose();
-              goToProfile();
-            }}
-          />
-        </div>
+        <MenuItem
+          label="PROFILE"
+          onClick={() => {
+            onClose();
+            goToProfile();
+          }}
+        />
       </div>
     </div>
   );
 }
 
-function MenuItem({ label, onClick }) {
+function MenuItem({ label, onClick, active = false }) {
   return (
     <button
       onClick={onClick}
       type="button"
-      className="w-full rounded-xl bg-[#385541]/10 py-4 font-['Montserrat',sans-serif] text-sm font-semibold tracking-wide text-[#385541] transition hover:bg-[#385541]/20"
+      className={`ltc-sidebar-link ${active ? "active" : ""}`}
+      style={fontPoppins}
     >
       {label}
     </button>

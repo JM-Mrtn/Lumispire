@@ -8,6 +8,15 @@ import {
 } from "../utils/hotelAuthHelpers.js";
 import { analyzeUploadedId } from "../utils/hotelIdScreening.js";
 
+function buildFullName({ firstName = "", middleName = "", lastName = "" } = {}) {
+  return [firstName, middleName, lastName]
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const adminLogin = async (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -163,7 +172,7 @@ export const adminUpdateUser = async (req, res) => {
   try {
     const update = {};
 
-    ["firstName", "lastName", "username", "email", "phone"].forEach((k) => {
+    ["firstName", "middleName", "lastName", "username", "email", "phone"].forEach((k) => {
       if (req.body[k] !== undefined) {
         const val = String(req.body[k]).trim();
         if (val !== "") update[k] = val;
@@ -171,6 +180,26 @@ export const adminUpdateUser = async (req, res) => {
     });
 
     if (update.email) update.email = update.email.toLowerCase();
+    if (update.phone) update.phoneNumber = update.phone;
+
+    if (
+      update.firstName !== undefined ||
+      update.middleName !== undefined ||
+      update.lastName !== undefined
+    ) {
+      const currentUser = await HotelUser.findById(userId).select(
+        "firstName middleName lastName"
+      );
+
+      update.fullName = buildFullName({
+        firstName:
+          update.firstName !== undefined ? update.firstName : currentUser?.firstName,
+        middleName:
+          update.middleName !== undefined ? update.middleName : currentUser?.middleName,
+        lastName:
+          update.lastName !== undefined ? update.lastName : currentUser?.lastName,
+      });
+    }
 
     if (update.username) {
       const exists = await HotelUser.findOne({

@@ -1,5 +1,15 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+const BACKGROUND_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const USERNAME_MIN_LENGTH = 5;
+const USERNAME_MAX_LENGTH = 20;
+const PASSWORD_MIN_LENGTH = 6;
+const PASSWORD_MAX_LENGTH = 20;
+
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 
 const HotelLogIn = () => {
   const navigate = useNavigate();
@@ -8,6 +18,50 @@ const HotelLogIn = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [touched, setTouched] = useState({});
+  const [errors, setErrors] = useState({});
+  const [bgIndex, setBgIndex] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+  const verificationStatus = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("verified") || "";
+  }, []);
+
+  const verificationNotice = useMemo(() => {
+    if (!verificationStatus) return null;
+
+    const notices = {
+      success: {
+        type: "success",
+        title: "Email verified successfully.",
+        message: "You can now sign in to your Lumispire Hotel & Resort account.",
+      },
+      "invalid-or-expired": {
+        type: "error",
+        title: "Verification link is invalid or already used.",
+        message: "Please sign in if your email is already verified, or request a new verification email from sign up/login.",
+      },
+      expired: {
+        type: "error",
+        title: "Verification link expired.",
+        message: "Please request a new verification email to continue.",
+      },
+      "missing-token": {
+        type: "error",
+        title: "Verification token is missing.",
+        message: "Please open the latest verification email and try again.",
+      },
+      "server-error": {
+        type: "error",
+        title: "Verification could not be completed.",
+        message: "Please try again in a moment.",
+      },
+    };
+
+    return notices[verificationStatus] || null;
+  }, [verificationStatus]);
 
   const API_BASE = useMemo(() => {
     const raw = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
@@ -16,19 +70,101 @@ const HotelLogIn = () => {
     return `${raw}/api/hotel`;
   }, []);
 
-  const handleLogin = async () => {
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const validateUsername = (value) => {
+    const clean = String(value || "").trim();
+
+    if (!clean) return "Username is required.";
+    if (clean.length < USERNAME_MIN_LENGTH) {
+      return `Username must be at least ${USERNAME_MIN_LENGTH} characters.`;
+    }
+    if (clean.length > USERNAME_MAX_LENGTH) {
+      return `Username must be max ${USERNAME_MAX_LENGTH} characters.`;
+    }
+    if (!/^[A-Za-z0-9]+$/.test(clean)) {
+      return "Username must contain letters and numbers only.";
+    }
+
+    return "";
+  };
+
+  const validatePassword = (value) => {
+    const clean = String(value || "");
+
+    if (!clean) return "Password is required.";
+    if (clean.length < PASSWORD_MIN_LENGTH) {
+      return `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
+    }
+    if (clean.length > PASSWORD_MAX_LENGTH) {
+      return `Password must be max ${PASSWORD_MAX_LENGTH} characters.`;
+    }
+
+    return "";
+  };
+
+  const runValidation = () => {
+    const next = {
+      username: validateUsername(username),
+      password: validatePassword(password),
+    };
+
+    setErrors(next);
+    return next;
+  };
+
+  const fieldError = (key) => (touched[key] ? errors[key] : "");
+
+  const setUsernameField = (value) => {
+    const clean = value.replace(/[^A-Za-z0-9]/g, "").slice(0, USERNAME_MAX_LENGTH);
+
+    setUsername(clean);
+    setTouched((prev) => ({ ...prev, username: true }));
+    setErrorMessage("");
+  };
+
+  const setPasswordField = (value) => {
+    setPassword(value.slice(0, PASSWORD_MAX_LENGTH));
     setErrorMessage("");
 
-    if (!username || !password) {
-      setErrorMessage("Please enter your username and password.");
-      return;
-    }
+    setErrors((prev) => ({
+      ...prev,
+      password: "",
+    }));
+  };
+
+  useEffect(() => {
+    if (!touched.username) return;
+
+    setErrors((prev) => ({
+      ...prev,
+      username: validateUsername(username),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, touched.username]);
+
+  const handleLogin = async () => {
+    setErrorMessage("");
+    setTouched({ username: true, password: true });
+
+    const validation = runValidation();
+    const hasValidationError = Object.values(validation).some(Boolean);
+
+    if (hasValidationError || isSubmitting) return;
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch(`${API_BASE}/hotel-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: username.trim(), password }),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -47,30 +183,32 @@ const HotelLogIn = () => {
     } catch (err) {
       console.error("Login error:", err);
       setErrorMessage("Unable to connect to the server.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const goToSignUp = () => navigate("/hotel-signup");
-  const goToHome = () => navigate("/");
-  const goToContact = () => navigate("/contact-us");
+  const goToHome = () => navigate("/hotel-resort");
+  const goToContact = () => navigate("/hotel-contact-us");
   const goToForgotPassword = () => navigate("/hotel-forgot-password");
 
   const UserIcon = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M20 21a8 8 0 0 0-16 0" />
       <circle cx="12" cy="8" r="4" />
     </svg>
   );
 
   const LockIcon = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="5" y="11" width="14" height="10" rx="2" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V8a4 4 0 0 1 8 0v3" />
     </svg>
   );
 
   const EyeIcon = ({ open }) => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -82,198 +220,1051 @@ const HotelLogIn = () => {
   );
 
   const PinIcon = () => (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-location-icon" fill="none" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s7-5.686 7-11a7 7 0 1 0-14 0c0 5.314 7 11 7 11Z" />
       <circle cx="12" cy="10" r="2.5" />
     </svg>
   );
 
   const CrownLogo = () => (
-    <div className="flex items-center gap-3">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#F0D47A]/80 bg-black/20 backdrop-blur-sm">
-        <svg viewBox="0 0 64 64" className="h-9 w-9 text-[#F0D47A]" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M14 44l4-18 14 10 14-10 4 18H14Z" />
-          <path d="M18 44c3 5 9 8 14 8s11-3 14-8" />
-          <circle cx="18" cy="22" r="3" />
-          <circle cx="32" cy="14" r="3" />
-          <circle cx="46" cy="22" r="3" />
-        </svg>
-      </div>
+    <button type="button" onClick={() => navigate("/home")} className="ltc-logo" aria-label="Go to hotel home">
+      <img
+        src="/HotelLogo.png"
+        alt="Hotel logo"
+        className="ltc-logo-icon"
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
+        }}
+      />
 
-      <div className="leading-tight text-white">
-        <p
-          className="text-[11px] font-semibold uppercase tracking-[0.28em]"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
-        >
-          Lumispire
-        </p>
+      <div>
+        <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+        <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
       </div>
-    </div>
+    </button>
   );
 
   return (
-    <div
-      className="relative min-h-screen overflow-hidden text-white"
-      style={{ fontFamily: "'Inter', sans-serif" }}
-    >
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: "url('https://placehold.co/10x10')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          transform: "scale(1.08)",
-        }}
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,26,38,0.25),rgba(12,16,24,0.35))]" />
-      <div className="absolute inset-0 bg-black/15" />
+    <div className="ltc-hotel-login-page" style={fontPontano}>
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-      <header className="absolute inset-x-0 top-0 z-20 flex items-start justify-between px-6 pt-5 sm:px-10 sm:pt-7">
-        <CrownLogo />
+        .ltc-hotel-login-page {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --footer-green: #082719;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --dark: #101828;
+          --muted: #667085;
+          --glass: rgba(255,255,255,.78);
+          --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+          --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+          --radius: 24px;
+          --ease: cubic-bezier(.22,1,.36,1);
 
-        <nav
-          className="flex items-center gap-6 text-sm font-semibold tracking-wide text-white sm:gap-8 sm:text-[26px]"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
-        >
-          <button onClick={goToHome} className="transition hover:opacity-80">
-            HOME
-          </button>
-          <button onClick={goToContact} className="transition hover:opacity-80">
-            CONTACT
-          </button>
-        </nav>
-      </header>
+          min-height: 100vh;
+          color: var(--dark);
+          background:
+            radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+            radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+            linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+          line-height: 1.65;
+          letter-spacing: -.01em;
+          overflow-x: hidden;
+          font-family: "Inter", Arial, sans-serif;
+        }
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-24 sm:px-6">
-        <div className="w-full max-w-[760px]">
+        .ltc-hotel-login-page * {
+          box-sizing: border-box;
+        }
+
+        .ltc-login-shell {
+          position: relative;
+          min-height: 100vh;
+          overflow: hidden;
+          isolation: isolate;
+          color: white;
+          background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+        }
+
+        .ltc-login-bg {
+          position: absolute;
+          inset: 0;
+          z-index: -4;
+          width: 100%;
+          height: 100%;
+          background-size: cover;
+          background-position: center;
+          opacity: 0;
+          transform: scale(1.04);
+          transition: opacity 1000ms ease;
+        }
+
+        .ltc-login-bg.active {
+          opacity: 1;
+        }
+
+        .ltc-login-shell::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -3;
+          background:
+            linear-gradient(
+              120deg,
+              rgba(2, 18, 11, 0.96) 0%,
+              rgba(5, 37, 23, 0.88) 42%,
+              rgba(12, 64, 39, 0.76) 100%
+            );
+          opacity: .98;
+        }
+
+        .ltc-login-shell::after {
+          content: "";
+          position: absolute;
+          inset: -16% -10% -24% -10%;
+          z-index: -2;
+          background:
+            radial-gradient(circle at 16% 82%, rgba(19, 120, 72, 0.36), transparent 24%),
+            radial-gradient(circle at 36% 92%, rgba(7, 76, 47, 0.46), transparent 30%),
+            radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
+            radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
+            radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
+          filter: blur(30px);
+          pointer-events: none;
+        }
+
+        .ltc-container {
+          width: min(1180px, 92%);
+          margin: auto;
+        }
+
+        .ltc-header {
+          position: relative;
+          z-index: 20;
+          width: 100%;
+          background: var(--footer-green);
+          border-bottom: 1px solid rgba(255,255,255,.1);
+          box-shadow: 0 10px 34px rgba(7,31,20,.14);
+          margin: 0;
+        }
+
+        .ltc-header .ltc-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .ltc-nav {
+          min-height: 76px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .ltc-logo {
+          display: flex;
+          align-items: center;
+          gap: 13px;
+          color: white;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          text-align: left;
+          padding: 0;
+        }
+
+        .ltc-logo-icon {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          background: white;
+          object-fit: cover;
+          box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+        }
+
+        .ltc-logo h1 {
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: -.04em;
+          margin: 0;
+        }
+
+        .ltc-logo p {
+          font-size: 11px;
+          color: rgba(255,255,255,.72);
+          margin: 3px 0 0;
+        }
+
+        .ltc-desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .ltc-nav-link {
+          color: rgba(255,255,255,.78);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          padding: 10px 14px;
+          border-radius: 999px;
+          transition: .25s var(--ease);
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+        }
+
+        .ltc-nav-link:hover,
+        .ltc-nav-link.active {
+          color: white;
+          background: rgba(255,255,255,.13);
+          transform: translateY(-1px);
+        }
+
+        .ltc-login-main {
+          position: relative;
+          z-index: 5;
+          min-height: calc(100vh - 76px);
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 470px;
+          align-items: center;
+          gap: 48px;
+          padding: 76px 0;
+        }
+
+        .ltc-login-copy {
+          max-width: 690px;
+        }
+
+        .ltc-login-copy .eyebrow {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 54px;
+          padding: 0 28px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,.24);
+          background: rgba(255,255,255,.12);
+          color: var(--gold-soft);
+          font-size: 18px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .22em;
+          line-height: 1;
+          backdrop-filter: blur(8px);
+        }
+
+        .ltc-login-copy h2 {
+          margin: 22px 0 0;
+          color: white;
+          font-size: clamp(42px, 6vw, 72px);
+          line-height: 1.02;
+          font-weight: 900;
+          letter-spacing: -.06em;
+          text-shadow: 0 8px 26px rgba(0,0,0,.22);
+        }
+
+        .ltc-login-copy h2 span {
+          color: var(--gold-soft);
+        }
+
+        .ltc-login-copy p {
+          max-width: 650px;
+          margin: 18px 0 0;
+          color: rgba(255,255,255,.80);
+          font-size: 17px;
+          line-height: 1.8;
+        }
+
+        .ltc-location-box {
+          margin-top: 30px;
+          display: inline-flex;
+          align-items: center;
+          gap: 14px;
+          padding: 16px 20px;
+          border-radius: 22px;
+          border: 1px solid rgba(255,255,255,.14);
+          background: rgba(255,255,255,.10);
+          backdrop-filter: blur(10px);
+          box-shadow: 0 20px 45px rgba(0,0,0,.14);
+        }
+
+        .ltc-location-icon {
+          width: 28px;
+          height: 28px;
+          color: var(--gold-soft);
+          flex: 0 0 auto;
+        }
+
+        .ltc-location-box h3 {
+          margin: 0;
+          color: white;
+          font-size: 20px;
+          line-height: 1.15;
+          font-weight: 900;
+          letter-spacing: -.035em;
+        }
+
+        .ltc-location-box p {
+          margin: 3px 0 0;
+          color: rgba(255,255,255,.72);
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        .ltc-login-card {
+          position: relative;
+          overflow: hidden;
+          width: 100%;
+          border-radius: var(--radius);
+          background: var(--glass);
+          border: 1px solid rgba(255,255,255,.76);
+          box-shadow: var(--shadow-lg);
+          backdrop-filter: blur(18px);
+          padding: 34px;
+          transition: .38s var(--ease);
+        }
+
+        .ltc-login-card::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 6px;
+          background: linear-gradient(90deg,var(--green-700),var(--gold));
+          z-index: 3;
+        }
+
+        .ltc-login-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 36px 90px rgba(8,39,25,.26);
+          border-color: rgba(215,168,77,.45);
+        }
+
+        .ltc-card-title {
+          text-align: center;
+        }
+
+        .ltc-card-title p {
+          margin: 0;
+          color: var(--green-700);
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .18em;
+        }
+
+        .ltc-card-title h1 {
+          margin: 8px 0 0;
+          color: var(--green-950);
+          font-size: clamp(32px, 4vw, 44px);
+          line-height: 1.05;
+          font-weight: 900;
+          letter-spacing: -.055em;
+        }
+
+        .ltc-card-title h1 span {
+          color: var(--gold);
+        }
+
+        .ltc-error-alert {
+          margin-top: 20px;
+          border-radius: 18px;
+          border: 1px solid rgba(239,68,68,.22);
+          background: rgba(239,68,68,.10);
+          color: #b42318;
+          padding: 13px 16px;
+          text-align: center;
+          font-size: 13px;
+          line-height: 1.45;
+          font-weight: 700;
+        }
+
+        .ltc-status-alert {
+          margin-top: 20px;
+          border-radius: 18px;
+          padding: 14px 16px;
+          text-align: left;
+          font-size: 13px;
+          line-height: 1.45;
+          font-weight: 700;
+        }
+
+        .ltc-status-alert strong {
+          display: block;
+          margin-bottom: 4px;
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        .ltc-status-alert span {
+          display: block;
+          font-size: 12px;
+          font-weight: 600;
+          line-height: 1.5;
+        }
+
+        .ltc-status-alert.success {
+          border: 1px solid rgba(35,95,62,.22);
+          background: rgba(35,95,62,.10);
+          color: #174a30;
+        }
+
+        .ltc-status-alert.error {
+          border: 1px solid rgba(239,68,68,.22);
+          background: rgba(239,68,68,.10);
+          color: #b42318;
+        }
+
+        .ltc-login-form {
+          margin-top: 26px;
+          display: grid;
+          gap: 15px;
+        }
+
+        .ltc-field-wrap {
+          display: grid;
+          gap: 7px;
+        }
+
+        .ltc-input-shell {
+          position: relative;
+        }
+
+        .ltc-input-icon {
+          pointer-events: none;
+          position: absolute;
+          left: 17px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--green-700);
+          display: grid;
+          place-items: center;
+        }
+
+        .ltc-input-icon-svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        .ltc-eye-button {
+          position: absolute;
+          right: 17px;
+          top: 50%;
+          transform: translateY(-50%);
+          border: 0;
+          background: transparent;
+          color: var(--green-700);
+          cursor: pointer;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          transition: .25s var(--ease);
+        }
+
+        .ltc-eye-button:hover {
+          color: var(--green-950);
+          transform: translateY(-50%) scale(1.05);
+        }
+
+        .ltc-input {
+          width: 100%;
+          min-height: 54px;
+          border: 1px solid rgba(35,95,62,.18);
+          background: rgba(248,250,247,.88);
+          color: var(--dark);
+          border-radius: 999px;
+          padding: 0 18px 0 50px;
+          font-size: 14px;
+          outline: none;
+          transition: .25s var(--ease);
+          font-family: inherit;
+        }
+
+        .ltc-input.has-eye {
+          padding-right: 52px;
+        }
+
+        .ltc-input::placeholder {
+          color: rgba(102,112,133,.72);
+        }
+
+        .ltc-input:focus {
+          border-color: var(--green-700);
+          background: white;
+          box-shadow: 0 0 0 4px rgba(35,95,62,.1);
+        }
+
+        .ltc-input.error {
+          border-color: rgba(239,68,68,.55);
+          box-shadow: 0 0 0 4px rgba(239,68,68,.08);
+        }
+
+        .ltc-field-error {
+          margin: 0;
+          padding: 0 16px;
+          color: #b42318;
+          font-size: 11px;
+          line-height: 1.4;
+        }
+
+        .ltc-submit-button {
+          margin: 8px auto 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 50px;
+          width: 100%;
+          border-radius: 999px;
+          border: 0;
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 16px 35px rgba(215,168,77,.28);
+          font-size: 14px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: .28s var(--ease);
+        }
+
+        .ltc-submit-button:hover {
+          transform: translateY(-3px);
+        }
+
+        .ltc-submit-button:disabled {
+          cursor: not-allowed;
+          opacity: .6;
+          transform: none;
+        }
+
+        .ltc-auth-links {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          margin-top: 4px;
+          color: var(--muted);
+          font-size: 13px;
+          line-height: 1.5;
+          text-align: center;
+        }
+
+        .ltc-auth-links button {
+          border: 0;
+          background: transparent;
+          color: var(--green-800);
+          font-weight: 900;
+          cursor: pointer;
+          padding: 0;
+          transition: .25s var(--ease);
+        }
+
+        .ltc-auth-links button:hover {
+          color: var(--green-950);
+          text-decoration: underline;
+          text-underline-offset: 4px;
+        }
+
+        .ltc-footer {
+          width: 100%;
+          background: var(--footer-green);
+          color: white;
+          padding: 30px 0 12px;
+          margin: 0;
+        }
+
+        .ltc-footer .ltc-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .ltc-footer-grid {
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+          gap: 22px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid rgba(255,255,255,.1);
+        }
+
+        .ltc-footer-brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .ltc-footer-brand img {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          object-fit: cover;
+        }
+
+        .ltc-footer h4 {
+          color: white;
+          font-weight: 900;
+          font-size: 20px;
+          line-height: 1.2;
+          margin: 0;
+          text-transform: uppercase;
+        }
+
+        .ltc-footer h5 {
+          color: #f4d484;
+          font-size: 12px;
+          line-height: 1.2;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .14em;
+          margin: 0 0 10px;
+        }
+
+        .ltc-footer p,
+        .ltc-footer-link {
+          display: block;
+          color: rgba(255,255,255,.68);
+          font-size: 13px;
+          line-height: 1.55;
+          margin: 5px 0;
+        }
+
+        .ltc-footer-link {
+          border: 0;
+          background: transparent;
+          padding: 0;
+          cursor: pointer;
+          text-align: left;
+        }
+
+        .ltc-footer-link:hover {
+          color: white;
+          text-decoration: underline;
+        }
+
+        .ltc-socials {
+          display: flex;
+          gap: 8px;
+        }
+
+        .ltc-socials span {
+          width: 26px;
+          height: 26px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.13);
+        }
+
+        .ltc-copyright {
+          width: 100%;
+          padding-top: 14px;
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          color: rgba(255,255,255,.52);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        @media (max-width: 1000px) {
+          .ltc-login-main {
+            grid-template-columns: 1fr;
+            gap: 34px;
+            padding: 58px 0;
+          }
+
+          .ltc-login-copy {
+            max-width: 760px;
+            text-align: center;
+            margin: 0 auto;
+          }
+
+          .ltc-location-box {
+            margin-left: auto;
+            margin-right: auto;
+          }
+
+          .ltc-login-card {
+            max-width: 500px;
+            margin: 0 auto;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .ltc-header .ltc-container {
+            padding-left: 22px;
+            padding-right: 22px;
+          }
+
+          .ltc-nav {
+            min-height: auto;
+            padding: 18px 0;
+          }
+
+          .ltc-footer {
+            padding: 28px 0 12px;
+          }
+
+          .ltc-footer-grid {
+            grid-template-columns: 1fr;
+            gap: 18px;
+            padding-bottom: 22px;
+          }
+
+          .ltc-footer .ltc-container {
+            padding-left: 22px;
+            padding-right: 22px;
+          }
+
+          .ltc-copyright {
+            flex-direction: column;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .ltc-header .ltc-container,
+          .ltc-footer .ltc-container {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+
+          .ltc-logo h1 {
+            font-size: 14px;
+          }
+
+          .ltc-logo p {
+            font-size: 10px;
+          }
+
+          .ltc-desktop-nav {
+            gap: 4px;
+          }
+
+          .ltc-nav-link {
+            font-size: 11px;
+            padding: 9px 10px;
+          }
+
+          .ltc-login-main {
+            min-height: auto;
+            padding: 44px 0 58px;
+          }
+
+          .ltc-login-copy .eyebrow {
+            min-height: 48px;
+            padding: 0 22px;
+            font-size: 15px;
+            letter-spacing: .18em;
+          }
+
+          .ltc-login-copy h2 {
+            font-size: clamp(36px, 12vw, 48px);
+            letter-spacing: -.045em;
+          }
+
+          .ltc-login-copy p {
+            font-size: 15px;
+          }
+
+          .ltc-location-box {
+            width: 100%;
+            justify-content: center;
+            text-align: left;
+          }
+
+          .ltc-login-card {
+            padding: 28px 20px;
+          }
+
+          .ltc-card-title h1 {
+            font-size: 34px;
+          }
+
+          .ltc-auth-links {
+            flex-wrap: wrap;
+          }
+        }
+      `}</style>
+
+      <div className="ltc-login-shell">
+        {BACKGROUND_IMAGES.map((image, index) => (
           <div
-            className="mx-auto w-full max-w-[500px] rounded-[26px] border border-white/65 bg-white/10 px-6 pb-5 pt-7 shadow-[0_10px_45px_rgba(0,0,0,0.28)] backdrop-blur-[10px] sm:px-10 sm:pb-6 sm:pt-8"
-          >
-            <div className="text-center">
-              <p
-                className="text-[26px] leading-none tracking-[0.08em] text-white sm:text-[34px]"
-                style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 500 }}
-              >
-                PATIO DE
-              </p>
-              <h1
-                className="-mt-1 text-[42px] leading-none tracking-[0.03em] text-white sm:text-[58px]"
-                style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 800 }}
-              >
-                LORENZO
+            key={image}
+            className={`ltc-login-bg ${bgIndex === index ? "active" : ""}`}
+            style={{
+              backgroundImage: `url('${image}')`,
+            }}
+          />
+        ))}
+
+        <header className="ltc-header">
+          <div className="ltc-container ltc-nav">
+            <CrownLogo />
+
+            <nav className="ltc-desktop-nav" style={fontPoppins}>
+              <button type="button" onClick={goToHome} className="ltc-nav-link">
+                HOME
+              </button>
+
+              <button type="button" onClick={goToContact} className="ltc-nav-link">
+                CONTACT
+              </button>
+            </nav>
+          </div>
+        </header>
+
+        <main className="ltc-container ltc-login-main">
+          <section className="ltc-login-copy">
+            <div className="eyebrow" style={fontMontserrat}>
+              WELCOME TO
+            </div>
+
+            <h2 style={fontMontserrat}>
+              Patio de <span>Lorenzo</span>
+            </h2>
+
+            <p style={fontPontano}>
+              Sign in to continue your resort, venue, hotel, condo, and event package booking
+              experience.
+            </p>
+
+            <div className="ltc-location-box">
+              <PinIcon />
+
+              <div>
+                <h3 style={fontMontserrat}>Bacoor, Cavite</h3>
+                <p style={fontPoppins}>Eco Trend Subdivision</p>
+              </div>
+            </div>
+
+            <div className="ltc-location-box">
+              <PinIcon />
+
+              <div>
+                <h3 style={fontMontserrat}>Palanan, Makati</h3>
+                <p style={fontPoppins}>Building II, Curie Street</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="ltc-login-card">
+            <div className="ltc-card-title">
+              <p style={fontMontserrat}>Hotel & Resort Account</p>
+              <h1 style={fontMontserrat}>
+                 <span></span>
               </h1>
             </div>
 
             {errorMessage ? (
-              <div
-                className="mt-5 rounded-xl border border-red-200/70 bg-red-500/15 px-4 py-3 text-center text-sm text-white"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
+              <div className="ltc-error-alert" style={fontPoppins}>
                 {errorMessage}
               </div>
             ) : null}
 
+            {verificationNotice ? (
+              <div className={`ltc-status-alert ${verificationNotice.type}`} style={fontPoppins}>
+                <strong>{verificationNotice.title}</strong>
+                <span>{verificationNotice.message}</span>
+              </div>
+            ) : null}
+
             <form
-              className="mt-8 space-y-3"
+              className="ltc-login-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 handleLogin();
               }}
             >
-              <div className="relative">
-                <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-white/90">
-                  <UserIcon />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  className="h-[54px] w-full rounded-full border border-white/80 bg-white/18 pl-14 pr-5 text-[15px] text-white placeholder:text-white/85 focus:outline-none focus:ring-2 focus:ring-white/30"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                />
+              <div className="ltc-field-wrap">
+                <div className="ltc-input-shell">
+                  <span className="ltc-input-icon">
+                    <UserIcon />
+                  </span>
+
+                  <input
+                    type="text"
+                    maxLength={USERNAME_MAX_LENGTH}
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsernameField(e.target.value)}
+                    onBlur={() => setTouched((prev) => ({ ...prev, username: true }))}
+                    autoComplete="username"
+                    aria-invalid={fieldError("username") ? "true" : "false"}
+                    className={`ltc-input ${fieldError("username") ? "error" : ""}`}
+                    style={fontPoppins}
+                  />
+                </div>
+
+                {fieldError("username") ? (
+                  <p className="ltc-field-error" style={fontPoppins}>
+                    {fieldError("username")}
+                  </p>
+                ) : null}
               </div>
 
-              <div className="relative">
-                <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-white/90">
-                  <LockIcon />
-                </span>
-                <input
-                  type={showPw ? "text" : "password"}
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  className="h-[54px] w-full rounded-full border border-white/80 bg-white/18 pl-14 pr-14 text-[15px] text-white placeholder:text-white/85 focus:outline-none focus:ring-2 focus:ring-white/30"
-                  style={{ fontFamily: "'Poppins', sans-serif" }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw((v) => !v)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-white/95 transition hover:opacity-80"
-                  aria-label={showPw ? "Hide password" : "Show password"}
-                >
-                  <EyeIcon open={showPw} />
-                </button>
+              <div className="ltc-field-wrap">
+                <div className="ltc-input-shell">
+                  <span className="ltc-input-icon">
+                    <LockIcon />
+                  </span>
+
+                  <input
+                    type={showPw ? "text" : "password"}
+                    maxLength={PASSWORD_MAX_LENGTH}
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPasswordField(e.target.value)}
+                    onBlur={() => {}}
+                    autoComplete="current-password"
+                    aria-invalid={fieldError("password") ? "true" : "false"}
+                    className={`ltc-input has-eye ${fieldError("password") ? "error" : ""}`}
+                    style={fontPoppins}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    className="ltc-eye-button"
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                  >
+                    <EyeIcon open={showPw} />
+                  </button>
+                </div>
+
+                {fieldError("password") ? (
+                  <p className="ltc-field-error" style={fontPoppins}>
+                    {fieldError("password")}
+                  </p>
+                ) : null}
               </div>
 
-              <div className="pt-3">
-                <button
-                  type="submit"
-                  className="mx-auto block h-[50px] w-full max-w-[220px] rounded-full bg-[linear-gradient(180deg,#355E3B_0%,#163126_100%)] text-[15px] font-bold tracking-[0.06em] text-white shadow-[0_8px_20px_rgba(14,30,23,0.35)] transition hover:scale-[1.01] hover:opacity-95"
-                  style={{ fontFamily: "'Montserrat', sans-serif" }}
-                >
-                  SIGN IN
-                </button>
-              </div>
-
-              <div
-                className="flex items-center justify-center gap-2 pt-1 text-center text-[13px] text-white"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="ltc-submit-button"
+                style={fontMontserrat}
               >
-                <button
-                  type="button"
-                  onClick={goToForgotPassword}
-                  className="font-medium transition hover:opacity-80"
-                >
+                {isSubmitting ? "SIGNING IN..." : "SIGN IN"}
+              </button>
+
+              <div className="ltc-auth-links" style={fontPoppins}>
+                <button type="button" onClick={goToForgotPassword}>
                   Forget Password?
                 </button>
-                <span className="opacity-90">|</span>
-                <button
-                  type="button"
-                  onClick={goToSignUp}
-                  className="font-semibold transition hover:opacity-80"
-                >
+
+                <span>|</span>
+
+                <button type="button" onClick={goToSignUp}>
                   Create Account
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+          </section>
+        </main>
       </div>
 
-      <div className="absolute bottom-5 left-5 z-20 flex items-start gap-2 text-white sm:bottom-7 sm:left-7">
-        <div className="pt-0.5">
-          <PinIcon />
-        </div>
-        <div className="leading-tight">
-          <p
-            className="text-[18px] font-bold sm:text-[28px]"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
-            Bacoor, Cavite
-          </p>
-          <p
-            className="text-[12px] sm:text-[18px]"
-            style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400 }}
-          >
-            Eco Trend Subdivision
-          </p>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };
+
+function Footer() {
+  return (
+    <footer className="ltc-footer">
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <div className="ltc-footer-brand">
+            <img
+              src="/HotelLumispireLogo.png"
+              alt="Lumispire logo"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+
+            <h4 style={fontMontserrat}>Lumispire</h4>
+          </div>
+        </div>
+
+        <FooterColumn title="Menu">
+          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>Home</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
+            Virtual Tour
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-contact-us")}>
+            Contact
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-faqs")}>FAQs</FooterLink>
+          <FooterLink
+            onClick={() => {
+              window.location.href =
+                localStorage.getItem("token") || localStorage.getItem("hotelToken")
+                  ? "/hotel-profile"
+                  : "/hotel-login";
+            }}
+          >
+            {localStorage.getItem("token") || localStorage.getItem("hotelToken")
+              ? "Profile"
+              : "Sign In"}
+          </FooterLink>
+        </FooterColumn>
+
+        <FooterColumn title="Contact Information">
+          <FooterText>ltc.amsi@gmail.com</FooterText>
+          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
+          <FooterText>09959808051 / 09516281271</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Address">
+          <FooterText>2/F 5441 Currie Street,</FooterText>
+          <FooterText>Palanan, Makati City</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Follow Us">
+          <div className="ltc-socials">
+            <span />
+            <span />
+            <span />
+          </div>
+        </FooterColumn>
+      </div>
+
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
+      </div>
+    </footer>
+  );
+}
+
+function FooterColumn({ title, children }) {
+  return (
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function FooterLink({ children, onClick }) {
+  return (
+    <button onClick={onClick} type="button" className="ltc-footer-link" style={fontPontano}>
+      {children}
+    </button>
+  );
+}
+
+function FooterText({ children }) {
+  return <p style={fontPontano}>{children}</p>;
+}
 
 export default HotelLogIn;

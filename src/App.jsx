@@ -36,6 +36,7 @@ import HotelChat from "./HotelAndRestaurant/HotelChat";
 import HotelAdminChat from "./HotelAndRestaurant/HotelAdminChat";
 import HotelFaqs from "./HotelAndRestaurant/HotelFaqs";
 import HotelChatButton from "./HotelAndRestaurant/HotelChatButton";
+import BookingSuccessful from "./HotelAndRestaurant/BookingSuccessful";
 
 /* ===================== HOTEL AUTH ===================== */
 import HotelLogIn from "./HotelAndRestaurant/HotelLogIn";
@@ -266,6 +267,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="/event-package" element={<EventPackage />} />
         <Route path="/virtual-tour" element={<VirtualTour />} />
         <Route path="/hotel-faqs" element={<HotelFaqs />} />
+        <Route path="/booking-successful" element={<BookingSuccessful />} />
 
         <Route
           path="/event-form"
@@ -340,6 +342,7 @@ createRoot(document.getElementById("root")).render(
         />
         <Route path="/hotel-forgot-password" element={<HotelForgotPassword />} />
         <Route path="/hotel-reset-password/:token" element={<HotelResetPassword />} />
+        <Route path="/hotel-reset-password" element={<HotelResetPassword />} />
 
         <Route
           path="/hotel-change-password"

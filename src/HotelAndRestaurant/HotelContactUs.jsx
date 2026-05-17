@@ -1,328 +1,1448 @@
-// HotelContactUs.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelFaqBot from "./HotelFaqBot";
-import HotelHeader from "./HotelHeader";
 
-const contactDetails = [
-  {
-    title: "Visit us",
-    value: "Eco Trend, San Nicolas, Bacoor, Cavite",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z" />
-        <circle cx="12" cy="10" r="2.5" />
-      </svg>
-    ),
-  },
-  {
-    title: "Call us",
-    value: "09338699988 / 09064191405",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M22 16.92v3a2 2 0 0 1-2.18 2A19.8 19.8 0 0 1 3 5.18 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.62 2.6a2 2 0 0 1-.45 2.11L9 10a16 16 0 0 0 5 5l.57-.17a2 2 0 0 1 2.11.45c.83.29 1.7.5 2.6.62A2 2 0 0 1 22 16.92z" />
-      </svg>
-    ),
-  },
-  {
-    title: "Email us",
-    value: "lorenzoeventandvenue@gmail.com",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="3" y="5" width="18" height="14" rx="2" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="m3 7 9 6 9-6" />
-      </svg>
-    ),
-  },
-  {
-    title: "Office hours",
-    value: "Mon - Fri, 8:00 AM - 5:00 PM\nSaturday, 9:00 AM - 12:00 PM\nSunday, Closed",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="9" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v6l3 2" />
-      </svg>
-    ),
-  },
-];
+const HOTEL_LOGO = "/HotelLogo.png";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
+const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
 
-const inquiryTypes = ["Room Booking", "Resort Venue", "Event Package", "Payment Concern", "Other Concern"];
+const MAP_EMBED_URL =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3863.765198406772!2d120.96799167484153!3d14.440690780972236!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397d30043932aff%3A0x196265023d83cdf4!2sPatio%20de%20lorenzo!5e0!3m2!1sen!2sph!4v1778489406858!5m2!1sen!2sph";
 
-const HotelContactUs = () => {
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
+function getHotelToken() {
+  return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
+}
+
+const RevealOnScroll = ({ children, className = "", delay = 0, y = 18 }) => {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(element);
+        }
+      },
+      {
+        threshold: 0.12,
+        rootMargin: "0px 0px -40px 0px",
+      }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
+        transition: "opacity 650ms ease, transform 650ms ease",
+        transitionDelay: `${delay}ms`,
+        willChange: "opacity, transform",
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+export default function HotelContactUs() {
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [heroIndex, setHeroIndex] = useState(0);
 
-  const [form, setForm] = useState({
+  const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
-    inquiryType: "",
     subject: "",
     message: "",
   });
 
-  const [status, setStatus] = useState({ type: "", text: "" });
+  const [contactSending, setContactSending] = useState(false);
+  const [contactStatus, setContactStatus] = useState({ type: "", message: "" });
 
-  const setField = (key, value) => {
-    setForm((previous) => ({ ...previous, [key]: value }));
+  const API_BASE = useMemo(() => {
+    const raw = (
+      import.meta.env.VITE_HOTEL_API_BASE ||
+      import.meta.env.VITE_API_BASE ||
+      import.meta.env.VITE_API_URL ||
+      "http://localhost:5000"
+    ).replace(/\/+$/, "");
+
+    if (raw.endsWith("/api/hotel")) return raw;
+    if (raw.endsWith("/api")) return `${raw}/hotel`;
+    if (raw.includes("/api/hotel")) return raw;
+
+    return `${raw}/api/hotel`;
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const goToProfile = () => {
+    navigate(getHotelToken() ? "/hotel-profile" : "/hotel-login");
   };
 
-  const canSend = useMemo(() => {
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+  const setContactField = (key, value) => {
+    setContactForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
 
-    return (
-      form.name.trim().length >= 2 &&
-      emailOk &&
-      form.inquiryType.trim() &&
-      form.subject.trim().length >= 2 &&
-      form.message.trim().length >= 5
-    );
-  }, [form]);
+    setContactStatus({ type: "", message: "" });
+  };
 
-  const onSubmit = (event) => {
+  const handleSendContactMessage = async (event) => {
     event.preventDefault();
-    setStatus({ type: "", text: "" });
 
-    if (!canSend) {
-      setStatus({
+    const name = contactForm.name.trim();
+    const email = contactForm.email.trim();
+    const subject = contactForm.subject.trim();
+    const message = contactForm.message.trim();
+
+    if (!name || !email || !subject || !message) {
+      setContactStatus({
         type: "error",
-        text: "Please complete all fields with valid information.",
+        message: "Please complete all fields.",
       });
       return;
     }
 
-    // Connect your API here when the backend endpoint is ready.
-    setStatus({
-      type: "success",
-      text: "Your message has been prepared successfully. Our team will contact you soon.",
-    });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setContactStatus({
+        type: "error",
+        message: "Please enter a valid email address.",
+      });
+      return;
+    }
 
-    setForm({
-      name: "",
-      email: "",
-      inquiryType: "",
-      subject: "",
-      message: "",
-    });
+    if (message.length < 10) {
+      setContactStatus({
+        type: "error",
+        message: "Message must be at least 10 characters.",
+      });
+      return;
+    }
+
+    setContactSending(true);
+    setContactStatus({ type: "", message: "" });
+
+    try {
+      const res = await fetch(`${API_BASE}/contact-message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          subject,
+          message,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to send message.");
+      }
+
+      setContactStatus({
+        type: "success",
+        message: "Your message was sent successfully.",
+      });
+
+      setContactForm({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+    } catch (error) {
+      setContactStatus({
+        type: "error",
+        message: error.message || "Failed to send message.",
+      });
+    } finally {
+      setContactSending(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f6ee] text-[#24382b]">
-      <HotelHeader />
+    <div className="ltc-hotel-contact-page" style={fontPontano}>
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-      <main className="overflow-hidden">
-        <section className="relative isolate px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(56,85,65,0.18),transparent_34%),linear-gradient(180deg,#ffffff_0%,#f8f6ee_78%)]" />
-          <div className="absolute right-[-120px] top-16 -z-10 h-[280px] w-[280px] rounded-full bg-[#385541]/10 blur-3xl" />
-          <div className="absolute bottom-[-100px] left-[-120px] -z-10 h-[260px] w-[260px] rounded-full bg-[#bca46b]/20 blur-3xl" />
+        .ltc-hotel-contact-page {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --footer-green: #082719;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --dark: #101828;
+          --muted: #667085;
+          --glass: rgba(255,255,255,.78);
+          --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+          --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+          --radius: 24px;
+          --ease: cubic-bezier(.22,1,.36,1);
 
-          <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="max-w-2xl">
-              <p className="mb-4 inline-flex rounded-full border border-[#385541]/15 bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-[#385541] shadow-sm">
-                Contact Lumispire
+          min-height: 100vh;
+          color: var(--dark);
+          background:
+            radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+            radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+            linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+          line-height: 1.65;
+          letter-spacing: -.01em;
+          overflow-x: hidden;
+          font-family: "Inter", Arial, sans-serif;
+        }
+
+        .ltc-hotel-contact-page * {
+          box-sizing: border-box;
+        }
+
+        .ltc-container {
+          width: min(1180px, 92%);
+          margin: auto;
+        }
+
+        .ltc-header {
+          position: sticky;
+          top: 0;
+          z-index: 50;
+          width: 100%;
+          background: var(--footer-green);
+          border-bottom: 1px solid rgba(255,255,255,.1);
+          box-shadow: 0 10px 34px rgba(7,31,20,.14);
+          margin: 0;
+        }
+
+        .ltc-header .ltc-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .ltc-nav {
+          min-height: 76px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .ltc-logo {
+          display: flex;
+          align-items: center;
+          gap: 13px;
+          color: white;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          text-align: left;
+          padding: 0;
+        }
+
+        .ltc-logo-icon {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          background: white;
+          object-fit: cover;
+          box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+        }
+
+        .ltc-logo h1 {
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: -.04em;
+          margin: 0;
+        }
+
+        .ltc-logo p {
+          font-size: 11px;
+          color: rgba(255,255,255,.72);
+          margin: 3px 0 0;
+        }
+
+        .ltc-desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .ltc-nav-link {
+          color: rgba(255,255,255,.78);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          padding: 10px 14px;
+          border-radius: 999px;
+          transition: .25s var(--ease);
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+        }
+
+        .ltc-nav-link:hover,
+        .ltc-nav-link.active {
+          color: white;
+          background: rgba(255,255,255,.13);
+          transform: translateY(-1px);
+        }
+
+        .ltc-profile-button {
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 14px 28px rgba(215,168,77,.18);
+        }
+
+        .ltc-menu-button {
+          display: none;
+          color: white;
+          border: 0;
+          background: rgba(255,255,255,.1);
+          border-radius: 12px;
+          padding: 10px;
+          cursor: pointer;
+        }
+
+        .ltc-menu-button svg {
+          width: 24px;
+          height: 24px;
+        }
+
+        .ltc-sidebar-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 60;
+          background: rgba(0,0,0,.42);
+        }
+
+        .ltc-sidebar-panel {
+          position: absolute;
+          right: 0;
+          top: 0;
+          height: 100%;
+          width: min(310px, 86vw);
+          background: white;
+          box-shadow: -20px 0 60px rgba(0,0,0,.25);
+          padding: 20px;
+        }
+
+        .ltc-sidebar-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid rgba(16,24,40,.1);
+          padding-bottom: 16px;
+          margin-bottom: 16px;
+        }
+
+        .ltc-sidebar-title {
+          color: var(--green-950);
+          font-weight: 900;
+          letter-spacing: .14em;
+          font-size: 12px;
+          margin: 0;
+        }
+
+        .ltc-sidebar-close {
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          border: 0;
+          background: #f2f4f7;
+          color: #101828;
+          cursor: pointer;
+        }
+
+        .ltc-sidebar-link {
+          display: block;
+          width: 100%;
+          border: 0;
+          background: transparent;
+          color: #101828;
+          text-align: left;
+          border-radius: 14px;
+          padding: 13px 14px;
+          font-weight: 800;
+          margin-bottom: 8px;
+          cursor: pointer;
+        }
+
+        .ltc-sidebar-link:hover,
+        .ltc-sidebar-link.active {
+          background: var(--green-800);
+          color: white;
+        }
+
+        .ltc-hero {
+          position: relative;
+          overflow: hidden;
+          color: white;
+          isolation: isolate;
+          background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+          padding: 100px 0 96px;
+        }
+
+        .ltc-hero-slide {
+          position: absolute;
+          inset: 0;
+          z-index: -4;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          transition: opacity 1000ms ease;
+        }
+
+        .ltc-hero-slide.active {
+          opacity: 1;
+        }
+
+        .ltc-hero::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -3;
+          background:
+            linear-gradient(
+              120deg,
+              rgba(2, 18, 11, 0.96) 0%,
+              rgba(5, 37, 23, 0.88) 42%,
+              rgba(12, 64, 39, 0.76) 100%
+            );
+          opacity: .98;
+        }
+
+        .ltc-hero::after {
+          content: "";
+          position: absolute;
+          inset: -16% -10% -24% -10%;
+          z-index: -2;
+          background:
+            radial-gradient(circle at 16% 82%, rgba(19, 120, 72, 0.36), transparent 24%),
+            radial-gradient(circle at 36% 92%, rgba(7, 76, 47, 0.46), transparent 30%),
+            radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
+            radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
+            radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
+          filter: blur(30px);
+          pointer-events: none;
+        }
+
+        .ltc-hero-content {
+          position: relative;
+          z-index: 2;
+          max-width: 900px;
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        .ltc-hero h2 {
+          margin: 0;
+          color: white;
+          font-size: clamp(34px, 5vw, 58px);
+          line-height: 1.05;
+          font-weight: 900;
+          letter-spacing: -.055em;
+          text-shadow: 0 8px 26px rgba(0,0,0,.22);
+        }
+
+        .ltc-hero h2 span {
+          color: var(--gold-soft);
+        }
+
+        .ltc-hero p {
+          max-width: 760px;
+          margin: 18px auto 0;
+          color: rgba(255,255,255,.80);
+          font-size: 17px;
+          line-height: 1.8;
+        }
+
+        .ltc-section {
+          padding: 84px 0;
+        }
+
+        .ltc-section-title {
+          text-align: center;
+          margin-bottom: 42px;
+        }
+
+        .ltc-section-title span {
+          color: var(--green-700);
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .18em;
+        }
+
+        .ltc-section-title h3 {
+          margin: 10px 0 0;
+          color: var(--green-950);
+          font-size: clamp(32px,4vw,50px);
+          line-height: 1.08;
+          letter-spacing: -.055em;
+          font-weight: 900;
+        }
+
+        .ltc-section-title p {
+          max-width: 760px;
+          margin: 15px auto 0;
+          color: var(--muted);
+        }
+
+        .ltc-contact-layout {
+          display: grid;
+          grid-template-columns: .92fr 1.08fr;
+          gap: 28px;
+          align-items: stretch;
+        }
+
+        .ltc-contact-card,
+        .ltc-message-card,
+        .ltc-map-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: var(--radius);
+          background: var(--glass);
+          border: 1px solid rgba(255,255,255,.76);
+          box-shadow: var(--shadow-md);
+          backdrop-filter: blur(18px);
+          transition: .38s var(--ease);
+        }
+
+        .ltc-contact-card::before,
+        .ltc-message-card::before,
+        .ltc-map-card::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 6px;
+          background: linear-gradient(90deg,var(--green-700),var(--gold));
+          z-index: 3;
+        }
+
+        .ltc-contact-card:hover,
+        .ltc-message-card:hover,
+        .ltc-map-card:hover {
+          transform: translateY(-8px);
+          box-shadow: var(--shadow-lg);
+          border-color: rgba(215,168,77,.45);
+        }
+
+        .ltc-contact-card,
+        .ltc-message-card {
+          min-height: 540px;
+          padding: 34px;
+        }
+
+        .ltc-card-heading {
+          margin: 0;
+          color: var(--green-950);
+          font-size: clamp(28px, 4vw, 42px);
+          line-height: 1.08;
+          letter-spacing: -.055em;
+          font-weight: 900;
+        }
+
+        .ltc-card-heading span {
+          color: var(--gold);
+        }
+
+        .ltc-card-subtext {
+          margin: 14px 0 0;
+          color: var(--muted);
+          font-size: 15px;
+          line-height: 1.8;
+        }
+
+        .ltc-contact-list {
+          margin-top: 26px;
+          display: grid;
+          gap: 16px;
+        }
+
+        .ltc-contact-row {
+          display: grid;
+          grid-template-columns: 46px minmax(0, 1fr);
+          gap: 14px;
+          align-items: start;
+          padding: 16px;
+          border-radius: 20px;
+          background: rgba(35,95,62,.07);
+          border: 1px solid rgba(35,95,62,.08);
+          transition: .25s var(--ease);
+        }
+
+        .ltc-contact-row:hover {
+          transform: translateX(4px);
+          background: rgba(35,95,62,.1);
+        }
+
+        .ltc-contact-icon {
+          width: 46px;
+          height: 46px;
+          border-radius: 16px;
+          background: rgba(255,255,255,.86);
+          color: var(--green-800);
+          display: grid;
+          place-items: center;
+          box-shadow: 0 10px 24px rgba(8,39,25,.08);
+        }
+
+        .ltc-contact-icon svg {
+          width: 22px;
+          height: 22px;
+        }
+
+        .ltc-contact-row h4 {
+          margin: 0;
+          color: var(--green-950);
+          font-size: 14px;
+          line-height: 1.2;
+          font-weight: 900;
+          letter-spacing: -.02em;
+        }
+
+        .ltc-contact-row p {
+          margin: 5px 0 0;
+          color: var(--muted);
+          font-size: 14px;
+          line-height: 1.55;
+        }
+
+        .ltc-message-form {
+          margin-top: 26px;
+          display: grid;
+          gap: 14px;
+        }
+
+        .ltc-field {
+          display: grid;
+          gap: 7px;
+        }
+
+        .ltc-field span {
+          color: var(--green-950);
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+        }
+
+        .ltc-input,
+        .ltc-textarea {
+          width: 100%;
+          border: 1px solid rgba(35,95,62,.16);
+          background: rgba(255,255,255,.82);
+          color: var(--dark);
+          outline: none;
+          font-size: 14px;
+          font-family: inherit;
+          transition: .25s var(--ease);
+          box-shadow: 0 10px 24px rgba(8,39,25,.05);
+        }
+
+        .ltc-input {
+          height: 52px;
+          border-radius: 999px;
+          padding: 0 18px;
+        }
+
+        .ltc-textarea {
+          min-height: 132px;
+          resize: none;
+          border-radius: 20px;
+          padding: 14px 18px;
+          line-height: 1.6;
+        }
+
+        .ltc-input:focus,
+        .ltc-textarea:focus {
+          border-color: var(--green-700);
+          background: white;
+          box-shadow: 0 0 0 4px rgba(35,95,62,.1);
+        }
+
+        .ltc-contact-status {
+          border-radius: 14px;
+          padding: 12px 14px;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .ltc-contact-status.success {
+          color: #047857;
+          background: rgba(16,185,129,.10);
+          border: 1px solid rgba(16,185,129,.25);
+        }
+
+        .ltc-contact-status.error {
+          color: #b42318;
+          background: rgba(239,68,68,.10);
+          border: 1px solid rgba(239,68,68,.22);
+        }
+
+        .ltc-submit-button {
+          margin-top: 4px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 52px;
+          width: 100%;
+          border-radius: 999px;
+          border: 0;
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 16px 35px rgba(215,168,77,.28);
+          font-size: 14px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: .28s var(--ease);
+        }
+
+        .ltc-submit-button:hover {
+          transform: translateY(-3px);
+        }
+
+        .ltc-submit-button:disabled {
+          opacity: .65;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .ltc-map-section {
+          padding: 0 0 84px;
+        }
+
+        .ltc-map-card {
+          padding: 14px;
+        }
+
+        .ltc-map-frame {
+          width: 100%;
+          height: 460px;
+          border: 0;
+          display: block;
+          border-radius: 20px;
+          background: #e4e7ec;
+        }
+
+        .ltc-footer {
+          width: 100%;
+          background: var(--footer-green);
+          color: white;
+          padding: 30px 0 12px;
+          margin: 0;
+        }
+
+        .ltc-footer .ltc-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .ltc-footer-grid {
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+          gap: 22px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid rgba(255,255,255,.1);
+        }
+
+        .ltc-footer-brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .ltc-footer-brand img {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          object-fit: cover;
+        }
+
+        .ltc-footer h4 {
+          color: white;
+          font-weight: 900;
+          font-size: 20px;
+          line-height: 1.2;
+          margin: 0;
+          text-transform: uppercase;
+        }
+
+        .ltc-footer h5 {
+          color: #f4d484;
+          font-size: 12px;
+          line-height: 1.2;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .14em;
+          margin: 0 0 10px;
+        }
+
+        .ltc-footer p,
+        .ltc-footer-link {
+          display: block;
+          color: rgba(255,255,255,.68);
+          font-size: 13px;
+          line-height: 1.55;
+          margin: 5px 0;
+        }
+
+        .ltc-footer-link {
+          border: 0;
+          background: transparent;
+          padding: 0;
+          cursor: pointer;
+          text-align: left;
+        }
+
+        .ltc-footer-link:hover {
+          color: white;
+          text-decoration: underline;
+        }
+
+        .ltc-socials {
+          display: flex;
+          gap: 8px;
+        }
+
+        .ltc-socials span {
+          width: 26px;
+          height: 26px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.13);
+        }
+
+        .ltc-copyright {
+          width: 100%;
+          padding-top: 14px;
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          color: rgba(255,255,255,.52);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        @media (max-width: 1100px) {
+          .ltc-contact-layout,
+          .ltc-footer-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .ltc-contact-card,
+          .ltc-message-card {
+            min-height: auto;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .ltc-header .ltc-container {
+            padding-left: 22px;
+            padding-right: 22px;
+          }
+
+          .ltc-nav {
+            min-height: auto;
+            padding: 18px 0;
+          }
+
+          .ltc-desktop-nav {
+            display: none;
+          }
+
+          .ltc-menu-button {
+            display: grid;
+            place-items: center;
+          }
+
+          .ltc-footer {
+            padding: 28px 0 12px;
+          }
+
+          .ltc-footer-grid {
+            gap: 18px;
+            padding-bottom: 22px;
+          }
+
+          .ltc-footer .ltc-container {
+            padding-left: 22px;
+            padding-right: 22px;
+          }
+
+          .ltc-copyright {
+            flex-direction: column;
+          }
+
+          .ltc-map-frame {
+            height: 390px;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .ltc-header .ltc-container,
+          .ltc-footer .ltc-container {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+
+          .ltc-logo h1 {
+            font-size: 14px;
+          }
+
+          .ltc-logo p {
+            font-size: 10px;
+          }
+
+          .ltc-hero {
+            padding: 76px 0 74px;
+          }
+
+          .ltc-hero h2 {
+            font-size: clamp(34px, 11vw, 46px);
+            letter-spacing: -.045em;
+          }
+
+          .ltc-hero p {
+            font-size: 15px;
+          }
+
+          .ltc-section {
+            padding: 64px 0;
+          }
+
+          .ltc-contact-card,
+          .ltc-message-card {
+            padding: 24px;
+          }
+
+          .ltc-contact-row {
+            grid-template-columns: 42px minmax(0, 1fr);
+            padding: 14px;
+          }
+
+          .ltc-contact-icon {
+            width: 42px;
+            height: 42px;
+          }
+
+          .ltc-map-section {
+            padding-bottom: 64px;
+          }
+
+          .ltc-map-frame {
+            height: 330px;
+          }
+        }
+      `}</style>
+
+      <Header navigate={navigate} goToProfile={goToProfile} openMenu={() => setIsOpen(true)} />
+
+      <main>
+        <section className="ltc-hero">
+          {HERO_IMAGES.map((image, index) => (
+            <img
+              key={image}
+              src={image}
+              alt="Hotel and resort background"
+              className={`ltc-hero-slide ${heroIndex === index ? "active" : ""}`}
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+          ))}
+
+          <div className="ltc-container ltc-hero-content">
+            <RevealOnScroll>
+              <h2 style={fontMontserrat}>
+                Contact <span>Us</span>
+              </h2>
+
+              <p style={fontPontano}>
+                Reach out to our Hotel &amp; Resort team for inquiries, bookings, and assistance.
               </p>
-
-              <h1 className="font-['Montserrat',sans-serif] text-4xl font-black leading-tight text-[#385541] sm:text-5xl lg:text-6xl">
-                Let us help plan your stay, event, or resort visit.
-              </h1>
-
-              <p className="mt-5 max-w-xl text-base leading-8 text-[#59685e] sm:text-lg">
-                Send us your questions, booking concerns, event inquiries, or special requests. Our team will assist you with the best available options.
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate("/hotel-resort")}
-                  className="rounded-full bg-[#385541] px-6 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(56,85,65,0.25)] transition hover:bg-[#2d4435]"
-                >
-                  Explore Rooms
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate("/hotel-faqs")}
-                  className="rounded-full border border-[#385541]/20 bg-white px-6 py-3 text-sm font-bold text-[#385541] shadow-sm transition hover:bg-[#385541]/10"
-                >
-                  Read FAQs
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-white/70 bg-white/80 p-3 shadow-[0_24px_70px_rgba(36,56,43,0.16)] backdrop-blur">
-              <div className="rounded-[1.5rem] bg-[#385541] p-6 text-white sm:p-8">
-                <p className="text-sm font-bold uppercase tracking-[0.28em] text-white/70">
-                  Need immediate assistance?
-                </p>
-                <h2 className="mt-4 font-['Montserrat',sans-serif] text-2xl font-black sm:text-3xl">
-                  Reach our front desk directly.
-                </h2>
-                <p className="mt-4 max-w-xl text-sm leading-7 text-white/80">
-                  For urgent booking updates, payment verification, or same-day concerns, calling is the fastest way to reach us.
-                </p>
-
-                <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                  <a
-                    href="tel:09338699988"
-                    className="rounded-2xl bg-white px-5 py-4 text-sm font-bold text-[#385541] transition hover:bg-[#f8f6ee]"
-                  >
-                    Call 09338699988
-                  </a>
-                  <a
-                    href="mailto:lorenzoeventandvenue@gmail.com"
-                    className="rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-sm font-bold text-white transition hover:bg-white/15"
-                  >
-                    Send Email
-                  </a>
-                </div>
-              </div>
-            </div>
+            </RevealOnScroll>
           </div>
         </section>
 
-        <section className="px-5 pb-16 sm:px-8 lg:px-12">
-          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-            <aside className="space-y-4">
-              {contactDetails.map((item) => (
-                <article
-                  key={item.title}
-                  className="rounded-3xl border border-[#385541]/10 bg-white p-5 shadow-[0_14px_35px_rgba(36,56,43,0.08)]"
-                >
-                  <div className="flex gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#385541]/10 text-[#385541]">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-['Montserrat',sans-serif] text-sm font-extrabold uppercase tracking-[0.18em] text-[#385541]">
-                        {item.title}
-                      </h3>
-                      <p className="mt-2 whitespace-pre-line text-sm leading-7 text-[#65736a]">
-                        {item.value}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </aside>
+        <section className="ltc-section">
+          <div className="ltc-container">
+            <RevealOnScroll className="ltc-section-title">
+              <span>Get In Touch</span>
+              <h3 style={fontMontserrat}>We are ready to assist you</h3>
+              <p style={fontPontano}>
+                Send us a message or use the contact details below for faster inquiries about rooms,
+                venues, events, and reservations.
+              </p>
+            </RevealOnScroll>
 
-            <section className="rounded-[2rem] border border-[#385541]/10 bg-white p-5 shadow-[0_18px_50px_rgba(36,56,43,0.1)] sm:p-8">
-              <div className="mb-7">
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-[#b09658]">
-                  Message Form
-                </p>
-                <h2 className="mt-2 font-['Montserrat',sans-serif] text-2xl font-black text-[#385541] sm:text-3xl">
-                  Tell us how we can help.
-                </h2>
-                <p className="mt-3 text-sm leading-7 text-[#65736a]">
-                  Complete the form below and include enough details so our team can respond accurately.
-                </p>
-              </div>
+            <div className="ltc-contact-layout">
+              <RevealOnScroll className="ltc-contact-card">
+                <h3 className="ltc-card-heading" style={fontMontserrat}>
+                  Contact <span>Information</span>
+                </h3>
 
-              <form onSubmit={onSubmit} className="space-y-5">
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FormField
-                    label="Full name"
-                    placeholder="Enter your full name"
-                    value={form.name}
-                    onChange={(event) => setField("name", event.target.value)}
+                <p className="ltc-card-subtext" style={fontPontano}>
+                  Our team will help you with booking requests, package questions, venue details,
+                  and other hotel and resort concerns.
+                </p>
+
+                <div className="ltc-contact-list">
+                  <ContactRow icon="pin" title="Address">
+                    2/F 5441 Currie Street, Palanan, Makati City
+                  </ContactRow>
+
+                  <ContactRow icon="phone" title="Phone">
+                    09595808051 / 09516281271
+                  </ContactRow>
+
+                  <ContactRow icon="mail" title="Email">
+                    ltc.amsi@gmail.com
+                    <br />
+                    lorengladius@ltcmultiservices.com
+                  </ContactRow>
+
+                  <ContactRow icon="clock" title="Operating Hours">
+                    Monday - Thursday 8:00 AM - 5:00 PM
+                  </ContactRow>
+                </div>
+              </RevealOnScroll>
+
+              <RevealOnScroll className="ltc-message-card" delay={90}>
+                <h3 className="ltc-card-heading" style={fontMontserrat}>
+                  Send us <span>Message</span>
+                </h3>
+
+                <p className="ltc-card-subtext" style={fontPontano}>
+                  Fill out the form and we will get back to you as soon as possible.
+                </p>
+
+                <form className="ltc-message-form" onSubmit={handleSendContactMessage}>
+                  <Field
+                    label="Your Name"
+                    name="name"
+                    type="text"
+                    value={contactForm.name}
+                    onChange={(value) => setContactField("name", value)}
                   />
 
-                  <FormField
-                    label="Email address"
-                    placeholder="Enter your email"
+                  <Field
+                    label="Email Address"
+                    name="email"
                     type="email"
-                    value={form.email}
-                    onChange={(event) => setField("email", event.target.value)}
+                    value={contactForm.email}
+                    onChange={(value) => setContactField("email", value)}
                   />
-                </div>
 
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-bold text-[#385541]">
-                      Inquiry type
-                    </label>
-                    <select
-                      value={form.inquiryType}
-                      onChange={(event) => setField("inquiryType", event.target.value)}
-                      className="w-full rounded-2xl border border-[#385541]/15 bg-[#f8f6ee] px-5 py-3 text-sm font-semibold text-[#385541] outline-none transition focus:border-[#385541] focus:ring-4 focus:ring-[#385541]/10"
-                    >
-                      <option value="">Select inquiry type</option>
-                      {inquiryTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <FormField
+                  <Field
                     label="Subject"
-                    placeholder="Example: Reschedule my event"
-                    value={form.subject}
-                    onChange={(event) => setField("subject", event.target.value)}
+                    name="subject"
+                    type="text"
+                    value={contactForm.subject}
+                    onChange={(value) => setContactField("subject", value)}
                   />
-                </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-[#385541]">
-                    Message
+                  <label className="ltc-field">
+                    <span style={fontMontserrat}>Message</span>
+                    <textarea
+                      name="message"
+                      rows={4}
+                      className="ltc-textarea"
+                      style={fontPoppins}
+                      value={contactForm.message}
+                      onChange={(event) => setContactField("message", event.target.value)}
+                    />
                   </label>
-                  <textarea
-                    value={form.message}
-                    onChange={(event) => setField("message", event.target.value)}
-                    placeholder="Write your message here..."
-                    rows={7}
-                    className="w-full resize-none rounded-2xl border border-[#385541]/15 bg-[#f8f6ee] px-5 py-4 text-sm font-medium text-[#385541] outline-none transition placeholder:text-[#8a968d] focus:border-[#385541] focus:ring-4 focus:ring-[#385541]/10"
-                  />
-                </div>
 
-                {status.text ? (
-                  <div
-                    className={`rounded-2xl px-5 py-4 text-sm font-bold ${
-                      status.type === "success"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-red-50 text-red-600"
-                    }`}
-                  >
-                    {status.text}
-                  </div>
-                ) : null}
+                  {contactStatus.message ? (
+                    <div
+                      className={
+                        contactStatus.type === "success"
+                          ? "ltc-contact-status success"
+                          : "ltc-contact-status error"
+                      }
+                      style={fontPoppins}
+                    >
+                      {contactStatus.message}
+                    </div>
+                  ) : null}
 
-                <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs leading-6 text-[#7a877e]">
-                    Make sure your email is correct so we can reply to your concern.
-                  </p>
                   <button
                     type="submit"
-                    disabled={!canSend}
-                    className="rounded-full bg-[#385541] px-8 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(56,85,65,0.22)] transition hover:bg-[#2d4435] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="ltc-submit-button"
+                    style={fontMontserrat}
+                    disabled={contactSending}
                   >
-                    Send Message
+                    {contactSending ? "Sending..." : "Submit"}
                   </button>
-                </div>
-              </form>
-            </section>
+                </form>
+              </RevealOnScroll>
+            </div>
           </div>
         </section>
+
+        <section className="ltc-map-section">
+          <div className="ltc-container">
+            <RevealOnScroll className="ltc-section-title">
+              <span>Location Guide</span>
+              <h3 style={fontMontserrat}>Our Location Guide Map</h3>
+              <p style={fontPontano}>
+                Use the map below to locate Patio de Lorenzo and plan your visit.
+              </p>
+            </RevealOnScroll>
+
+            <RevealOnScroll className="ltc-map-card">
+              <iframe
+                title="Hotel location map"
+                src={MAP_EMBED_URL}
+                width="100%"
+                height="100%"
+                className="ltc-map-frame"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </RevealOnScroll>
+          </div>
+        </section>
+
+        <Footer />
       </main>
 
-      <HotelFaqBot />
+      {isOpen && (
+        <MobileMenu onClose={() => setIsOpen(false)} navigate={navigate} goToProfile={goToProfile} />
+      )}
     </div>
   );
-};
+}
 
-const FormField = ({ label, placeholder, value, onChange, type = "text" }) => {
+function Header({ navigate, goToProfile, openMenu }) {
+  const signedIn = getHotelToken();
+
+  return (
+    <header className="ltc-header">
+      <div className="ltc-container ltc-nav">
+        <button
+          onClick={() => navigate("/home")}
+          type="button"
+          className="ltc-logo"
+          aria-label="Go to home"
+        >
+          <img
+            src={HOTEL_LOGO}
+            alt="Hotel logo"
+            className="ltc-logo-icon"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+
+          <div>
+            <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+            <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
+          </div>
+        </button>
+
+        <nav className="ltc-desktop-nav" style={fontPoppins}>
+          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
+          <NavButton active label="Contact" onClick={() => navigate("/hotel-contact-us")} />
+          <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
+          <NavButton
+            label={signedIn ? "Profile" : "Sign In"}
+            onClick={goToProfile}
+            className="ltc-profile-button"
+          />
+        </nav>
+
+        <button onClick={openMenu} type="button" aria-label="Open menu" className="ltc-menu-button">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function NavButton({ label, onClick, active = false, className = "" }) {
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={`ltc-nav-link ${active ? "active" : ""} ${className}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Field({ label, name, type, value, onChange }) {
+  return (
+    <label className="ltc-field">
+      <span style={fontMontserrat}>{label}</span>
+      <input
+        name={name}
+        type={type}
+        className="ltc-input"
+        style={fontPoppins}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function ContactRow({ icon, title, children }) {
+  return (
+    <div className="ltc-contact-row">
+      <span className="ltc-contact-icon">
+        <ContactIcon type={icon} />
+      </span>
+
+      <div>
+        <h4 style={fontMontserrat}>{title}</h4>
+        <p style={fontPontano}>{children}</p>
+      </div>
+    </div>
+  );
+}
+
+function ContactIcon({ type }) {
+  if (type === "pin") {
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" />
+      </svg>
+    );
+  }
+
+  if (type === "phone") {
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1-.24c1.1.36 2.3.56 3.55.56a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.56 3.55a1 1 0 0 1-.24 1l-2.2 2.24Z" />
+      </svg>
+    );
+  }
+
+  if (type === "mail") {
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 4-8 5L4 8V6l8 5 8-5v2Z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.26 10.26 0 0 0 12 1.75Zm.75 10.56 3.73 2.15-.75 1.3-4.48-2.59V6h1.5v6.31Z" />
+    </svg>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="ltc-footer">
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <div className="ltc-footer-brand">
+            <img
+              src={LUMISPIRE_LOGO}
+              alt="Lumispire logo"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+
+            <h4 style={fontMontserrat}>Lumispire</h4>
+          </div>
+        </div>
+
+        <FooterColumn title="Menu">
+          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>Home</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
+            Virtual Tour
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-contact-us")}>
+            Contact
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-faqs")}>FAQs</FooterLink>
+          <FooterLink
+            onClick={() => {
+              window.location.href = getHotelToken() ? "/hotel-profile" : "/hotel-login";
+            }}
+          >
+            {getHotelToken() ? "Profile" : "Sign In"}
+          </FooterLink>
+        </FooterColumn>
+
+        <FooterColumn title="Contact Information">
+          <FooterText>ltc.amsi@gmail.com</FooterText>
+          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
+          <FooterText>09959808051 / 09516281271</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Address">
+          <FooterText>2/F 5441 Currie Street,</FooterText>
+          <FooterText>Palanan, Makati City</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Follow Us">
+          <div className="ltc-socials">
+            <span />
+            <span />
+            <span />
+          </div>
+        </FooterColumn>
+      </div>
+
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
+      </div>
+    </footer>
+  );
+}
+
+function FooterColumn({ title, children }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-[#385541]">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full rounded-2xl border border-[#385541]/15 bg-[#f8f6ee] px-5 py-3 text-sm font-medium text-[#385541] outline-none transition placeholder:text-[#8a968d] focus:border-[#385541] focus:ring-4 focus:ring-[#385541]/10"
-      />
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
     </div>
   );
-};
+}
 
-export default HotelContactUs;
+function FooterLink({ children, onClick }) {
+  return (
+    <button onClick={onClick} type="button" className="ltc-footer-link" style={fontPontano}>
+      {children}
+    </button>
+  );
+}
+
+function FooterText({ children }) {
+  return <p style={fontPontano}>{children}</p>;
+}
+
+function MobileMenu({ onClose, navigate, goToProfile }) {
+  const signedIn = getHotelToken();
+
+  return (
+    <div className="ltc-sidebar-overlay">
+      <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
+
+      <div className="ltc-sidebar-panel">
+        <div className="ltc-sidebar-top">
+          <p className="ltc-sidebar-title" style={fontPoppins}>
+            MENU
+          </p>
+
+          <button
+            onClick={onClose}
+            className="ltc-sidebar-close"
+            aria-label="Close menu"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
+
+        <MenuItem
+          label="HOME"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-resort");
+          }}
+        />
+
+        <MenuItem
+          label="VIRTUAL TOUR"
+          onClick={() => {
+            onClose();
+            navigate("/virtual-tour");
+          }}
+        />
+
+        <MenuItem
+          label="CONTACT"
+          active
+          onClick={() => {
+            onClose();
+            navigate("/hotel-contact-us");
+          }}
+        />
+
+        <MenuItem
+          label="FAQS"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-faqs");
+          }}
+        />
+
+        <MenuItem
+          label={signedIn ? "PROFILE" : "SIGN IN"}
+          onClick={() => {
+            onClose();
+            goToProfile();
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MenuItem({ label, onClick, active = false }) {
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={`ltc-sidebar-link ${active ? "active" : ""}`}
+      style={fontPoppins}
+    >
+      {label}
+    </button>
+  );
+}

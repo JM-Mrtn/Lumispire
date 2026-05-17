@@ -1,541 +1,1162 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelFaqBot from "./HotelFaqBot";
 
-const FAQ_CATEGORIES = [
-  { id: "all", label: "All" },
-  { id: "account", label: "Account" },
-  { id: "id", label: "ID Verification" },
-  { id: "booking", label: "Booking" },
-  { id: "payment", label: "Payment" },
-  { id: "reschedule", label: "Reschedule / Cancel" },
-  { id: "bot", label: "Help Bot" },
-];
+const HOTEL_LOGO = "/HotelLogo.png";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
+const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
 
-const FAQS = [
-  {
-    id: "create-account",
-    category: "account",
-    question: "How do I create a hotel account?",
-    answer:
-      "Go to the Hotel Sign Up page, fill in your name, username, email, phone number, and password, then submit the form. After signing up, check your email and click the verification link before using protected hotel features.",
-    tags: ["signup", "register", "email verification"],
-  },
-  {
-    id: "login-problem",
-    category: "account",
-    question: "Why can I not log in?",
-    answer:
-      "Make sure your email or username and password are correct. If your password is forgotten, use Forgot Password. If your account was deactivated by the admin, you need to contact hotel support.",
-    tags: ["login", "password", "deactivated"],
-  },
-  {
-    id: "forgot-password",
-    category: "account",
-    question: "How do I reset my password?",
-    answer:
-      "Open the Forgot Password page, enter your registered email, then check your email for the reset link. The reset link should be used before it expires.",
-    tags: ["forgot password", "reset password"],
-  },
-  {
-    id: "change-password",
-    category: "account",
-    question: "How do I change my password while logged in?",
-    answer:
-      "Go to your Hotel Profile, open Change Password, enter your current password and new password, then verify the OTP sent to your registered email.",
-    tags: ["change password", "otp", "profile"],
-  },
-  {
-    id: "id-required",
-    category: "id",
-    question: "Why do I need to verify my ID?",
-    answer:
-      "ID verification helps the hotel confirm that bookings and chat requests are made by a real guest. You need an approved ID before using hotel FAQ bot support.",
-    tags: ["id", "verification", "bot"],
-  },
-  {
-    id: "upload-id",
-    category: "id",
-    question: "How do I upload my ID?",
-    answer:
-      "Go to Hotel Profile, find the ID verification section, give consent, then upload a clear JPG, JPEG, PNG, WEBP, or PDF file of your valid government ID.",
-    tags: ["upload", "government id", "profile"],
-  },
-  {
-    id: "id-pending",
-    category: "id",
-    question: "What does pending ID verification mean?",
-    answer:
-      "Pending means your uploaded ID is waiting for admin review. You cannot upload another ID while it is pending. If the admin rejects it, you may upload again after the cooldown period.",
-    tags: ["pending", "admin review", "reupload"],
-  },
-  {
-    id: "book-hotel-room",
-    category: "booking",
-    question: "How do I book a hotel or condo room?",
-    answer:
-      "Open Hotel & Condo, choose a room package, select duration, date, time slot, pax, and payment method, then upload proof of payment before submitting your booking.",
-    tags: ["hotel", "condo", "room", "proof"],
-  },
-  {
-    id: "book-resort",
-    category: "booking",
-    question: "How do I book a resort or venue?",
-    answer:
-      "Open Resort & Venue, choose your venue, select the available duration and time slot, enter the pax count, choose payment method, upload proof of payment, and submit the booking.",
-    tags: ["resort", "venue", "lorenzo"],
-  },
-  {
-    id: "book-event",
-    category: "booking",
-    question: "How do I book an event package?",
-    answer:
-      "Open Event Package, choose the package, venue, capacity variation, event date, time slot, food menu choices, payment method, and proof of payment, then submit your event booking.",
-    tags: ["event", "wedding", "debut", "birthday", "corporate"],
-  },
-  {
-    id: "booking-status",
-    category: "booking",
-    question: "What do the booking statuses mean?",
-    answer:
-      "Pending means your booking is waiting for admin approval. Confirmed means the admin approved it. Cancelled means the booking was rejected, cancelled, or no longer active.",
-    tags: ["pending", "confirmed", "cancelled", "status"],
-  },
-  {
-    id: "time-slot-unavailable",
-    category: "booking",
-    question: "Why is my selected time slot unavailable?",
-    answer:
-      "A time slot can become unavailable when another pending or confirmed booking overlaps with it. Some booking types also require at least a 1-hour gap before or after another booking.",
-    tags: ["unavailable", "conflict", "time slot", "1 hour gap"],
-  },
-  {
-    id: "dynamic-pricing",
-    category: "booking",
-    question: "Why did my booking price increase?",
-    answer:
-      "Prices may increase because of seasonal dates, weekends, monthly confirmed booking demand, or additional pax charges beyond the base capacity.",
-    tags: ["price", "dynamic", "weekend", "seasonal", "additional pax"],
-  },
-  {
-    id: "payment-methods",
-    category: "payment",
-    question: "What payment methods are accepted?",
-    answer:
-      "The hotel booking forms accept Bank Transfer and GCash. You must upload a valid proof of payment image or PDF before submitting a booking.",
-    tags: ["gcash", "bank transfer", "proof of payment"],
-  },
-  {
-    id: "proof-required",
-    category: "payment",
-    question: "Why is proof of payment required?",
-    answer:
-      "Proof of payment is required so the admin can validate your booking request before approving it. Accepted proof files are usually images or PDFs within the file size limit.",
-    tags: ["proof", "receipt", "payment"],
-  },
-  {
-    id: "downpayment",
-    category: "payment",
-    question: "Can I pay a down payment?",
-    answer:
-      "Some summary pages allow a down payment option. If you select it, the system shows the amount to pay now and the remaining balance. Always keep your payment proof for admin checking.",
-    tags: ["down payment", "balance", "summary"],
-  },
-  {
-    id: "request-reschedule",
-    category: "reschedule",
-    question: "How do I request a reschedule?",
-    answer:
-      "For reschedule guidance, ask the Hotel FAQ Bot or read this FAQ page. For an official reschedule request, use the Contact Us page or call the hotel with your Booking ID, requested date/time, and reason.",
-    tags: ["reschedule", "booking id", "bot"],
-  },
-  {
-    id: "request-cancel",
-    category: "reschedule",
-    question: "How do I request a cancellation?",
-    answer:
-      "For cancellation guidance, ask the Hotel FAQ Bot or read this FAQ page. For an official cancellation request, use the Contact Us page or call the hotel with your Booking ID and cancellation reason.",
-    tags: ["cancel", "cancellation", "booking id"],
-  },
-  {
-    id: "bot-basic-help",
-    category: "bot",
-    question: "What can the Hotel FAQ Bot answer?",
-    answer:
-      "The Hotel FAQ Bot answers basic questions about bookings, payment, ID verification, password reset, booking status, prices, recommendations, and FAQs. It does not submit official requests.",
-    tags: ["reply", "working hours", "bot"],
-  },
-  {
-    id: "bot-not-official-request",
-    category: "bot",
-    question: "Can the FAQ bot approve, cancel, or reschedule my booking?",
-    answer:
-      "No. The FAQ bot only gives basic answers. For official booking changes, contact the hotel through the Contact Us page or the listed phone/email details.",
-    tags: ["locked", "concern", "message box"],
-  },
-  {
-    id: "bot-id-help",
-    category: "bot",
-    question: "Can the FAQ bot help with ID verification questions?",
-    answer:
-      "Yes. The FAQ bot can explain ID upload rules, pending review, rejected IDs, and basic verification steps. Final approval still depends on admin review.",
-    tags: ["verified", "id", "support"],
-  },
-];
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 
-const QUICK_ACTIONS = [
-  {
-    title: "Hotel FAQ Bot",
-    description: "Ask basic hotel booking, payment, ID, and account questions.",
-    button: "OPEN HELP BOT",
-    route: "/hotel-faqs",
-  },
-  {
-    title: "My Profile",
-    description: "Check your account, ID status, and profile details.",
-    button: "GO TO PROFILE",
-    route: "/hotel-profile",
-  },
-  {
-    title: "Book Again",
-    description: "Browse hotel, resort, and event services.",
-    button: "VIEW SERVICES",
-    route: "/hotel-resort",
-  },
-];
-
-function normalizeText(value = "") {
-  return String(value || "").toLowerCase().trim();
+function getHotelToken() {
+  return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
 }
 
-function getCategoryLabel(categoryId = "") {
-  return FAQ_CATEGORIES.find((item) => item.id === categoryId)?.label || "FAQ";
-}
+const faqs = [
+  {
+    question: "How can I make a booking?",
+    answer:
+      "Choose a service such as Resort & Venues, Hotel Condo, or Event Packages, then click Book Now. You may need to sign in before continuing.",
+  },
+  {
+    question: "Do I need an account before booking?",
+    answer:
+      "Yes. Guests need to sign in before submitting a booking request so the hotel team can verify and manage the reservation properly.",
+  },
+  {
+    question: "Where is the hotel located?",
+    answer:
+      "The hotel is located at 2/F 5441 Currie Street, Palanan, Makati City.",
+  },
+  {
+    question: "How can I contact the hotel team?",
+    answer:
+      "You may contact the team through ltc.amsi@gmail.com, lorengladius@ltcmultiservices.com, or by calling 09959808051 / 09516281271.",
+  },
+  {
+    question: "Can I view available packages before booking?",
+    answer:
+      "Yes. You can browse Resort & Venues, Hotel Condo, and Event Packages before submitting a booking request.",
+  },
+  {
+    question: "What happens after I submit a booking request?",
+    answer:
+      "The hotel team will review your request and contact you for confirmation, availability, and other booking details.",
+  },
+];
 
-function HighlightText({ text, query }) {
-  const original = String(text || "");
-  const search = String(query || "").trim();
+const RevealOnScroll = ({ children, className = "", delay = 0, y = 18 }) => {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  if (!search) return original;
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
 
-  const index = original.toLowerCase().indexOf(search.toLowerCase());
-  if (index === -1) return original;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(element);
+        }
+      },
+      {
+        threshold: 0.12,
+        rootMargin: "0px 0px -40px 0px",
+      }
+    );
 
-  const before = original.slice(0, index);
-  const match = original.slice(index, index + search.length);
-  const after = original.slice(index + search.length);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <>
-      {before}
-      <mark className="rounded bg-yellow-200 px-1 text-[#2f4d36]">{match}</mark>
-      {after}
-    </>
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
+        transition: "opacity 650ms ease, transform 650ms ease",
+        transitionDelay: `${delay}ms`,
+        willChange: "opacity, transform",
+      }}
+    >
+      {children}
+    </div>
   );
-}
+};
 
 export default function HotelFaqs() {
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [openIndex, setOpenIndex] = useState(0);
 
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [openId, setOpenId] = useState(FAQS[0]?.id || "");
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
 
-  const filteredFaqs = useMemo(() => {
-    const search = normalizeText(searchTerm);
+    return () => window.clearInterval(timer);
+  }, []);
 
-    return FAQS.filter((faq) => {
-      const categoryMatch = activeCategory === "all" || faq.category === activeCategory;
-
-      if (!categoryMatch) return false;
-      if (!search) return true;
-
-      const searchableText = [
-        faq.question,
-        faq.answer,
-        getCategoryLabel(faq.category),
-        ...(faq.tags || []),
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return searchableText.includes(search);
-    });
-  }, [activeCategory, searchTerm]);
-
-  const popularFaqs = FAQS.filter((faq) =>
-    ["id-required", "time-slot-unavailable", "request-reschedule", "chat-locked"].includes(faq.id)
-  );
-
-  const clearFilters = () => {
-    setActiveCategory("all");
-    setSearchTerm("");
-    setOpenId(FAQS[0]?.id || "");
-  };
-
-  const handleCategoryClick = (categoryId) => {
-    setActiveCategory(categoryId);
-    const firstMatch = FAQS.find((faq) => categoryId === "all" || faq.category === categoryId);
-    setOpenId(firstMatch?.id || "");
+  const goToProfile = () => {
+    navigate(getHotelToken() ? "/hotel-profile" : "/hotel-login");
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f6f1] text-[#2f4d36]">
-      <header className="border-b border-black/10 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-7 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="mb-4 rounded-full border border-[#355240]/20 bg-white px-4 py-2 text-xs font-extrabold text-[#355240] hover:bg-[#355240]/5"
-            >
-              ← BACK
-            </button>
+    <div className="ltc-hotel-faq-page" style={fontPontano}>
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-            <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#6f806d]">
-              Hotel Help Center
-            </p>
-            <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-[#355240] sm:text-5xl">
-              Frequently Asked Questions
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-[#355240]/70">
-              Find answers about hotel accounts, bookings, payments, ID verification,
-              rescheduling, cancellation requests, and FAQ bot support.
-            </p>
+        .ltc-hotel-faq-page {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --footer-green: #082719;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --dark: #101828;
+          --muted: #667085;
+          --glass: rgba(255,255,255,.78);
+          --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+          --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+          --radius: 24px;
+          --ease: cubic-bezier(.22,1,.36,1);
+
+          min-height: 100vh;
+          color: var(--dark);
+          background:
+            radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+            radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+            linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+          line-height: 1.65;
+          letter-spacing: -.01em;
+          overflow-x: hidden;
+          font-family: "Inter", Arial, sans-serif;
+        }
+
+        .ltc-hotel-faq-page * {
+          box-sizing: border-box;
+        }
+
+        .ltc-container {
+          width: min(1180px, 92%);
+          margin: auto;
+        }
+
+        .ltc-header {
+          position: sticky;
+          top: 0;
+          z-index: 50;
+          width: 100%;
+          background: var(--footer-green);
+          border-bottom: 1px solid rgba(255,255,255,.1);
+          box-shadow: 0 10px 34px rgba(7,31,20,.14);
+          margin: 0;
+        }
+
+        .ltc-header .ltc-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .ltc-nav {
+          min-height: 76px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .ltc-logo {
+          display: flex;
+          align-items: center;
+          gap: 13px;
+          color: white;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          text-align: left;
+          padding: 0;
+        }
+
+        .ltc-logo-icon {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          background: white;
+          object-fit: cover;
+          box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+        }
+
+        .ltc-logo h1 {
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: -.04em;
+          margin: 0;
+        }
+
+        .ltc-logo p {
+          font-size: 11px;
+          color: rgba(255,255,255,.72);
+          margin: 3px 0 0;
+        }
+
+        .ltc-desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .ltc-nav-link {
+          color: rgba(255,255,255,.78);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          padding: 10px 14px;
+          border-radius: 999px;
+          transition: .25s var(--ease);
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+        }
+
+        .ltc-nav-link:hover,
+        .ltc-nav-link.active {
+          color: white;
+          background: rgba(255,255,255,.13);
+          transform: translateY(-1px);
+        }
+
+        .ltc-profile-button {
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 14px 28px rgba(215,168,77,.18);
+        }
+
+        .ltc-menu-button {
+          display: none;
+          color: white;
+          border: 0;
+          background: rgba(255,255,255,.1);
+          border-radius: 12px;
+          padding: 10px;
+          cursor: pointer;
+        }
+
+        .ltc-menu-button svg {
+          width: 24px;
+          height: 24px;
+        }
+
+        .ltc-sidebar-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 60;
+          background: rgba(0,0,0,.42);
+        }
+
+        .ltc-sidebar-panel {
+          position: absolute;
+          right: 0;
+          top: 0;
+          height: 100%;
+          width: min(310px, 86vw);
+          background: white;
+          box-shadow: -20px 0 60px rgba(0,0,0,.25);
+          padding: 20px;
+        }
+
+        .ltc-sidebar-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid rgba(16,24,40,.1);
+          padding-bottom: 16px;
+          margin-bottom: 16px;
+        }
+
+        .ltc-sidebar-title {
+          color: var(--green-950);
+          font-weight: 900;
+          letter-spacing: .14em;
+          font-size: 12px;
+          margin: 0;
+        }
+
+        .ltc-sidebar-close {
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          border: 0;
+          background: #f2f4f7;
+          color: #101828;
+          cursor: pointer;
+        }
+
+        .ltc-sidebar-link {
+          display: block;
+          width: 100%;
+          border: 0;
+          background: transparent;
+          color: #101828;
+          text-align: left;
+          border-radius: 14px;
+          padding: 13px 14px;
+          font-weight: 800;
+          margin-bottom: 8px;
+          cursor: pointer;
+        }
+
+        .ltc-sidebar-link:hover,
+        .ltc-sidebar-link.active {
+          background: var(--green-800);
+          color: white;
+        }
+
+        .ltc-hero {
+          position: relative;
+          overflow: hidden;
+          color: white;
+          isolation: isolate;
+          background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+          padding: 100px 0 96px;
+        }
+
+        .ltc-hero-slide {
+          position: absolute;
+          inset: 0;
+          z-index: -4;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          transition: opacity 1000ms ease;
+        }
+
+        .ltc-hero-slide.active {
+          opacity: 1;
+        }
+
+        .ltc-hero::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -3;
+          background:
+            linear-gradient(
+              120deg,
+              rgba(2, 18, 11, 0.96) 0%,
+              rgba(5, 37, 23, 0.88) 42%,
+              rgba(12, 64, 39, 0.76) 100%
+            );
+          opacity: .98;
+        }
+
+        .ltc-hero::after {
+          content: "";
+          position: absolute;
+          inset: -16% -10% -24% -10%;
+          z-index: -2;
+          background:
+            radial-gradient(circle at 16% 82%, rgba(19, 120, 72, 0.36), transparent 24%),
+            radial-gradient(circle at 36% 92%, rgba(7, 76, 47, 0.46), transparent 30%),
+            radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
+            radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
+            radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
+          filter: blur(30px);
+          pointer-events: none;
+        }
+
+        .ltc-hero-content {
+          position: relative;
+          z-index: 2;
+          max-width: 920px;
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        .ltc-hero h2 {
+          margin: 0;
+          color: white;
+          font-size: clamp(36px, 5vw, 62px);
+          line-height: 1.05;
+          font-weight: 900;
+          letter-spacing: -.055em;
+          text-shadow: 0 8px 26px rgba(0,0,0,.22);
+        }
+
+        .ltc-hero h2 span {
+          color: var(--gold-soft);
+        }
+
+        .ltc-hero p {
+          max-width: 760px;
+          margin: 18px auto 0;
+          color: rgba(255,255,255,.80);
+          font-size: 17px;
+          line-height: 1.8;
+        }
+
+        .ltc-section {
+          padding: 84px 0;
+        }
+
+        .ltc-section-title {
+          text-align: center;
+          margin-bottom: 42px;
+        }
+
+        .ltc-section-title span {
+          color: var(--green-700);
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .18em;
+        }
+
+        .ltc-section-title h3 {
+          margin: 10px 0 0;
+          color: var(--green-950);
+          font-size: clamp(32px,4vw,50px);
+          line-height: 1.08;
+          letter-spacing: -.055em;
+          font-weight: 900;
+        }
+
+        .ltc-section-title p {
+          max-width: 760px;
+          margin: 15px auto 0;
+          color: var(--muted);
+        }
+
+        .ltc-faq-wrapper {
+          max-width: 980px;
+          margin: 0 auto;
+        }
+
+        .ltc-faq-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: var(--radius);
+          background: var(--glass);
+          border: 1px solid rgba(255,255,255,.76);
+          box-shadow: var(--shadow-md);
+          backdrop-filter: blur(18px);
+          padding: 34px;
+          transition: .38s var(--ease);
+        }
+
+        .ltc-faq-card::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 6px;
+          background: linear-gradient(90deg,var(--green-700),var(--gold));
+          z-index: 3;
+        }
+
+        .ltc-faq-card:hover {
+          transform: translateY(-8px);
+          box-shadow: var(--shadow-lg);
+          border-color: rgba(215,168,77,.45);
+        }
+
+        .ltc-faq-list {
+          display: grid;
+          gap: 14px;
+        }
+
+        .ltc-faq-item {
+          overflow: hidden;
+          border-radius: 20px;
+          background: rgba(255,255,255,.86);
+          border: 1px solid rgba(35,95,62,.10);
+          box-shadow: 0 10px 24px rgba(8,39,25,.055);
+          transition: .28s var(--ease);
+        }
+
+        .ltc-faq-item:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 18px 38px rgba(8,39,25,.10);
+        }
+
+        .ltc-faq-question {
+          width: 100%;
+          min-height: 68px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          border: 0;
+          cursor: pointer;
+          text-align: left;
+          padding: 18px 22px;
+          background: white;
+          color: var(--green-950);
+          transition: .25s var(--ease);
+        }
+
+        .ltc-faq-question.active {
+          color: white;
+          background: linear-gradient(135deg, var(--green-800), var(--green-700));
+        }
+
+        .ltc-faq-question:hover {
+          background: rgba(35,95,62,.08);
+        }
+
+        .ltc-faq-question.active:hover {
+          background: linear-gradient(135deg, var(--green-800), var(--green-700));
+        }
+
+        .ltc-faq-question span:first-child {
+          font-size: 15px;
+          line-height: 1.35;
+          font-weight: 900;
+          letter-spacing: -.02em;
+        }
+
+        .ltc-faq-icon {
+          flex: 0 0 auto;
+          width: 34px;
+          height: 34px;
+          border-radius: 999px;
+          display: grid;
+          place-items: center;
+          background: rgba(35,95,62,.08);
+          color: var(--green-800);
+          font-size: 22px;
+          font-weight: 900;
+          line-height: 1;
+          transition: .25s var(--ease);
+        }
+
+        .ltc-faq-question.active .ltc-faq-icon {
+          background: rgba(255,255,255,.18);
+          color: var(--gold-soft);
+        }
+
+        .ltc-faq-answer {
+          padding: 18px 22px 20px;
+          color: var(--muted);
+          background: rgba(255,255,255,.72);
+          font-size: 14px;
+          line-height: 1.8;
+        }
+
+        .ltc-help-card {
+          margin-top: 26px;
+          position: relative;
+          overflow: hidden;
+          border-radius: var(--radius);
+          background: linear-gradient(135deg, var(--green-900), var(--green-700));
+          box-shadow: var(--shadow-md);
+          padding: 30px;
+          color: white;
+        }
+
+        .ltc-help-card::after {
+          content: "";
+          position: absolute;
+          inset: -40% -20% auto auto;
+          width: 260px;
+          height: 260px;
+          border-radius: 999px;
+          background: rgba(244,212,132,.16);
+          filter: blur(10px);
+        }
+
+        .ltc-help-card-content {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 22px;
+        }
+
+        .ltc-help-card h4 {
+          margin: 0;
+          color: white;
+          font-size: 24px;
+          line-height: 1.15;
+          font-weight: 900;
+          letter-spacing: -.04em;
+        }
+
+        .ltc-help-card p {
+          margin: 8px 0 0;
+          color: rgba(255,255,255,.74);
+          font-size: 14px;
+          line-height: 1.7;
+        }
+
+        .ltc-help-button {
+          flex: 0 0 auto;
+          min-height: 48px;
+          border: 0;
+          border-radius: 999px;
+          padding: 0 22px;
+          cursor: pointer;
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 16px 35px rgba(215,168,77,.22);
+          font-size: 13px;
+          font-weight: 900;
+          transition: .28s var(--ease);
+        }
+
+        .ltc-help-button:hover {
+          transform: translateY(-3px);
+        }
+
+        .ltc-footer {
+          width: 100%;
+          background: var(--footer-green);
+          color: white;
+          padding: 30px 0 12px;
+          margin: 0;
+        }
+
+        .ltc-footer .ltc-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .ltc-footer-grid {
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+          gap: 22px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid rgba(255,255,255,.1);
+        }
+
+        .ltc-footer-brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .ltc-footer-brand img {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          object-fit: cover;
+        }
+
+        .ltc-footer h4 {
+          color: white;
+          font-weight: 900;
+          font-size: 20px;
+          line-height: 1.2;
+          margin: 0;
+          text-transform: uppercase;
+        }
+
+        .ltc-footer h5 {
+          color: #f4d484;
+          font-size: 12px;
+          line-height: 1.2;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .14em;
+          margin: 0 0 10px;
+        }
+
+        .ltc-footer p,
+        .ltc-footer-link {
+          display: block;
+          color: rgba(255,255,255,.68);
+          font-size: 13px;
+          line-height: 1.55;
+          margin: 5px 0;
+        }
+
+        .ltc-footer-link {
+          border: 0;
+          background: transparent;
+          padding: 0;
+          cursor: pointer;
+          text-align: left;
+        }
+
+        .ltc-footer-link:hover {
+          color: white;
+          text-decoration: underline;
+        }
+
+        .ltc-socials {
+          display: flex;
+          gap: 8px;
+        }
+
+        .ltc-socials span {
+          width: 26px;
+          height: 26px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.13);
+        }
+
+        .ltc-copyright {
+          width: 100%;
+          padding-top: 14px;
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          color: rgba(255,255,255,.52);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        @media (max-width: 1100px) {
+          .ltc-footer-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .ltc-header .ltc-container {
+            padding-left: 22px;
+            padding-right: 22px;
+          }
+
+          .ltc-nav {
+            min-height: auto;
+            padding: 18px 0;
+          }
+
+          .ltc-desktop-nav {
+            display: none;
+          }
+
+          .ltc-menu-button {
+            display: grid;
+            place-items: center;
+          }
+
+          .ltc-footer {
+            padding: 28px 0 12px;
+          }
+
+          .ltc-footer-grid {
+            gap: 18px;
+            padding-bottom: 22px;
+          }
+
+          .ltc-footer .ltc-container {
+            padding-left: 22px;
+            padding-right: 22px;
+          }
+
+          .ltc-copyright {
+            flex-direction: column;
+          }
+
+          .ltc-help-card-content {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .ltc-header .ltc-container,
+          .ltc-footer .ltc-container {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+
+          .ltc-logo h1 {
+            font-size: 14px;
+          }
+
+          .ltc-logo p {
+            font-size: 10px;
+          }
+
+          .ltc-hero {
+            padding: 76px 0 74px;
+          }
+
+          .ltc-hero h2 {
+            font-size: clamp(34px, 11vw, 46px);
+            letter-spacing: -.045em;
+          }
+
+          .ltc-hero p {
+            font-size: 15px;
+          }
+
+          .ltc-section {
+            padding: 64px 0;
+          }
+
+          .ltc-faq-card {
+            padding: 24px 18px;
+          }
+
+          .ltc-faq-question {
+            min-height: 62px;
+            padding: 16px;
+          }
+
+          .ltc-faq-answer {
+            padding: 16px;
+          }
+
+          .ltc-help-card {
+            padding: 24px;
+          }
+
+          .ltc-help-button {
+            width: 100%;
+          }
+        }
+      `}</style>
+
+      <Header navigate={navigate} goToProfile={goToProfile} openMenu={() => setIsOpen(true)} />
+
+      <main>
+        <section className="ltc-hero">
+          {HERO_IMAGES.map((image, index) => (
+            <img
+              key={image}
+              src={image}
+              alt="Hotel and resort background"
+              className={`ltc-hero-slide ${heroIndex === index ? "active" : ""}`}
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+          ))}
+
+          <div className="ltc-container ltc-hero-content">
+            <RevealOnScroll>
+              <h2 style={fontMontserrat}>
+                Frequently Asked <span>Questions</span>
+              </h2>
+
+              <p style={fontPontano}>
+                Find quick answers about bookings, hotel services, contact information, and package inquiries.
+              </p>
+            </RevealOnScroll>
           </div>
+        </section>
 
-          <div className="rounded-3xl border border-[#355240]/15 bg-[#355240] p-5 text-white shadow-sm lg:w-[330px]">
-            <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-white/60">
-              Need quick answers?
-            </p>
-            <h2 className="mt-2 text-2xl font-extrabold">Hotel FAQ Bot</h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-white/70">
-              For basic booking, payment, ID, and account questions, open the Hotel FAQ Bot. For official requests, use Contact Us.
-            </p>
-            <button
-              type="button"
-              onClick={() => setSearchTerm("help bot") || setActiveCategory("bot")}
-              className="mt-4 w-full rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-[#355240] hover:opacity-90"
-            >
-              OPEN HELP BOT
-            </button>
+        <section className="ltc-section">
+          <div className="ltc-container">
+            <RevealOnScroll className="ltc-section-title">
+              <span>FAQs</span>
+              <h3 style={fontMontserrat}>How can we help you?</h3>
+              <p style={fontPontano}>
+                Select a question below to view the answer.
+              </p>
+            </RevealOnScroll>
+
+            <div className="ltc-faq-wrapper">
+              <RevealOnScroll className="ltc-faq-card">
+                <div className="ltc-faq-list">
+                  {faqs.map((item, index) => {
+                    const isActive = openIndex === index;
+
+                    return (
+                      <article key={item.question} className="ltc-faq-item">
+                        <button
+                          type="button"
+                          onClick={() => setOpenIndex(isActive ? -1 : index)}
+                          className={`ltc-faq-question ${isActive ? "active" : ""}`}
+                        >
+                          <span style={fontMontserrat}>{item.question}</span>
+                          <span className="ltc-faq-icon">{isActive ? "−" : "+"}</span>
+                        </button>
+
+                        {isActive ? (
+                          <div className="ltc-faq-answer" style={fontPontano}>
+                            {item.answer}
+                          </div>
+                        ) : null}
+                      </article>
+                    );
+                  })}
+                </div>
+              </RevealOnScroll>
+
+              <RevealOnScroll className="ltc-help-card" delay={80}>
+                <div className="ltc-help-card-content">
+                  <div>
+                    <h4 style={fontMontserrat}>Still need assistance?</h4>
+                    <p style={fontPontano}>
+                      Contact our hotel and resort team for booking concerns, venue questions, and package details.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate("/hotel-contact-us")}
+                    className="ltc-help-button"
+                    style={fontMontserrat}
+                  >
+                    Contact Us
+                  </button>
+                </div>
+              </RevealOnScroll>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
+      </main>
+
+      {isOpen ? (
+        <MobileMenu onClose={() => setIsOpen(false)} navigate={navigate} goToProfile={goToProfile} />
+      ) : null}
+    </div>
+  );
+}
+
+function Header({ navigate, goToProfile, openMenu }) {
+  const signedIn = getHotelToken();
+
+  return (
+    <header className="ltc-header">
+      <div className="ltc-container ltc-nav">
+        <button
+          onClick={() => navigate("/home")}
+          type="button"
+          className="ltc-logo"
+          aria-label="Go to home"
+        >
+          <img
+            src={HOTEL_LOGO}
+            alt="Hotel logo"
+            className="ltc-logo-icon"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+
+          <div>
+            <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+            <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
+          </div>
+        </button>
+
+        <nav className="ltc-desktop-nav" style={fontPoppins}>
+          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
+          <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
+          <NavButton active label="FAQs" onClick={() => navigate("/hotel-faqs")} />
+          <NavButton
+            label={signedIn ? "Profile" : "Sign In"}
+            onClick={goToProfile}
+            className="ltc-profile-button"
+          />
+        </nav>
+
+        <button onClick={openMenu} type="button" aria-label="Open menu" className="ltc-menu-button">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function NavButton({ label, onClick, active = false, className = "" }) {
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={`ltc-nav-link ${active ? "active" : ""} ${className}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="ltc-footer">
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <div className="ltc-footer-brand">
+            <img
+              src={LUMISPIRE_LOGO}
+              alt="Lumispire logo"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+
+            <h4 style={fontMontserrat}>Lumispire</h4>
           </div>
         </div>
-      </header>
 
-      <main className="mx-auto max-w-6xl px-5 py-7">
-        <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
-          <div className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm">
-            <label className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6f806d]">
-              Search FAQs
-            </label>
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by keyword, like payment, ID, reschedule..."
-                className="h-12 flex-1 rounded-2xl border border-black/10 bg-[#fafaf7] px-4 text-sm font-semibold text-[#2f4d36] outline-none focus:border-[#355240]"
-              />
+        <FooterColumn title="Menu">
+          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>Home</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
+            Virtual Tour
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-contact-us")}>
+            Contact
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-faqs")}>FAQs</FooterLink>
+          <FooterLink
+            onClick={() => {
+              window.location.href = getHotelToken() ? "/hotel-profile" : "/hotel-login";
+            }}
+          >
+            {getHotelToken() ? "Profile" : "Sign In"}
+          </FooterLink>
+        </FooterColumn>
 
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="rounded-2xl border border-[#355240]/20 bg-white px-5 py-3 text-xs font-extrabold text-[#355240] hover:bg-[#355240]/5"
-              >
-                CLEAR
-              </button>
-            </div>
+        <FooterColumn title="Contact Information">
+          <FooterText>ltc.amsi@gmail.com</FooterText>
+          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
+          <FooterText>09959808051 / 09516281271</FooterText>
+        </FooterColumn>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {FAQ_CATEGORIES.map((category) => {
-                const isActive = activeCategory === category.id;
+        <FooterColumn title="Address">
+          <FooterText>2/F 5441 Currie Street,</FooterText>
+          <FooterText>Palanan, Makati City</FooterText>
+        </FooterColumn>
 
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => handleCategoryClick(category.id)}
-                    className={`rounded-full px-4 py-2 text-xs font-extrabold transition ${
-                      isActive
-                        ? "bg-[#355240] text-white shadow-sm"
-                        : "border border-black/10 bg-[#fafaf7] text-[#355240] hover:bg-[#355240]/5"
-                    }`}
-                  >
-                    {category.label}
-                  </button>
-                );
-              })}
-            </div>
+        <FooterColumn title="Follow Us">
+          <div className="ltc-socials">
+            <span />
+            <span />
+            <span />
           </div>
+        </FooterColumn>
+      </div>
 
-          <div className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm">
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6f806d]">
-              Quick Actions
-            </p>
-            <div className="mt-4 space-y-3">
-              {QUICK_ACTIONS.map((action) => (
-                <button
-                  key={action.route}
-                  type="button"
-                  onClick={() => navigate(action.route)}
-                  className="w-full rounded-2xl border border-black/10 bg-[#fafaf7] p-4 text-left transition hover:-translate-y-0.5 hover:border-[#355240]/35 hover:bg-[#355240]/5"
-                >
-                  <p className="text-sm font-extrabold text-[#355240]">{action.title}</p>
-                  <p className="mt-1 text-xs font-semibold leading-5 text-black/45">
-                    {action.description}
-                  </p>
-                  <p className="mt-3 text-xs font-extrabold text-[#355240]">
-                    {action.button} →
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
+      </div>
+    </footer>
+  );
+}
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
-          <aside className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm lg:sticky lg:top-5 lg:h-fit">
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6f806d]">
-              Popular Questions
-            </p>
-            <div className="mt-4 space-y-2">
-              {popularFaqs.map((faq) => (
-                <button
-                  key={faq.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveCategory("all");
-                    setSearchTerm("");
-                    setOpenId(faq.id);
-                  }}
-                  className={`w-full rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${
-                    openId === faq.id
-                      ? "bg-[#355240] text-white"
-                      : "bg-[#fafaf7] text-[#355240] hover:bg-[#355240]/5"
-                  }`}
-                >
-                  {faq.question}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-5 rounded-2xl bg-[#355240]/10 p-4">
-              <p className="text-sm font-extrabold text-[#355240]">
-                Tip for faster support
-              </p>
-              <p className="mt-2 text-xs font-semibold leading-5 text-black/50">
-                When asking about rescheduling or cancellation, include your Booking ID,
-                service type, date, time, and reason.
-              </p>
-            </div>
-          </aside>
-
-          <section className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#6f806d]">
-                  Results
-                </p>
-                <h2 className="text-2xl font-extrabold text-[#355240]">
-                  {filteredFaqs.length} question{filteredFaqs.length === 1 ? "" : "s"} found
-                </h2>
-              </div>
-
-              <p className="rounded-full bg-[#355240]/10 px-4 py-2 text-xs font-extrabold text-[#355240]">
-                Category: {getCategoryLabel(activeCategory)}
-              </p>
-            </div>
-
-            {filteredFaqs.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-[#355240]/25 bg-[#fafaf7] p-8 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#355240]/10 text-3xl">
-                  🔎
-                </div>
-                <h3 className="mt-4 text-2xl font-extrabold text-[#355240]">
-                  No FAQ matched your search
-                </h3>
-                <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-black/45">
-                  Try a different keyword, clear your filters, or open the Hotel FAQ Bot for basic guidance.
-                </p>
-                <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="rounded-full border border-[#355240]/20 bg-white px-5 py-2.5 text-xs font-extrabold text-[#355240] hover:bg-[#355240]/5"
-                  >
-                    CLEAR FILTERS
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm("help bot") || setActiveCategory("bot")}
-                    className="rounded-full bg-[#355240] px-5 py-2.5 text-xs font-extrabold text-white hover:opacity-90"
-                  >
-                    OPEN HELP BOT
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredFaqs.map((faq) => {
-                  const isOpen = openId === faq.id;
-
-                  return (
-                    <article
-                      key={faq.id}
-                      className="overflow-hidden rounded-3xl border border-black/10 bg-[#fafaf7]"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setOpenId(isOpen ? "" : faq.id)}
-                        className="flex w-full items-start justify-between gap-4 px-5 py-4 text-left"
-                      >
-                        <div>
-                          <span className="rounded-full bg-[#355240]/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#355240]">
-                            {getCategoryLabel(faq.category)}
-                          </span>
-                          <h3 className="mt-3 text-base font-extrabold text-[#355240] sm:text-lg">
-                            <HighlightText text={faq.question} query={searchTerm} />
-                          </h3>
-                        </div>
-
-                        <span
-                          className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-extrabold transition ${
-                            isOpen ? "bg-[#355240] text-white" : "bg-white text-[#355240]"
-                          }`}
-                        >
-                          {isOpen ? "−" : "+"}
-                        </span>
-                      </button>
-
-                      {isOpen ? (
-                        <div className="border-t border-black/10 bg-white px-5 py-4">
-                          <p className="text-sm font-semibold leading-7 text-black/60">
-                            <HighlightText text={faq.answer} query={searchTerm} />
-                          </p>
-
-                          {faq.tags?.length ? (
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              {faq.tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="rounded-full bg-[#f6f6f1] px-3 py-1 text-[11px] font-bold text-black/45"
-                                >
-                                  #{tag}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </section>
-      </main>
-      <HotelFaqBot />
+function FooterColumn({ title, children }) {
+  return (
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
     </div>
+  );
+}
+
+function FooterLink({ children, onClick }) {
+  return (
+    <button onClick={onClick} type="button" className="ltc-footer-link" style={fontPontano}>
+      {children}
+    </button>
+  );
+}
+
+function FooterText({ children }) {
+  return <p style={fontPontano}>{children}</p>;
+}
+
+function MobileMenu({ onClose, navigate, goToProfile }) {
+  const signedIn = getHotelToken();
+
+  return (
+    <div className="ltc-sidebar-overlay">
+      <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
+
+      <div className="ltc-sidebar-panel">
+        <div className="ltc-sidebar-top">
+          <p className="ltc-sidebar-title" style={fontPoppins}>
+            MENU
+          </p>
+
+          <button
+            onClick={onClose}
+            className="ltc-sidebar-close"
+            aria-label="Close menu"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
+
+        <MenuItem
+          label="HOME"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-resort");
+          }}
+        />
+
+        <MenuItem
+          label="VIRTUAL TOUR"
+          onClick={() => {
+            onClose();
+            navigate("/virtual-tour");
+          }}
+        />
+
+        <MenuItem
+          label="CONTACT"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-contact-us");
+          }}
+        />
+
+        <MenuItem
+          label="FAQS"
+          active
+          onClick={() => {
+            onClose();
+            navigate("/hotel-faqs");
+          }}
+        />
+
+        <MenuItem
+          label={signedIn ? "PROFILE" : "SIGN IN"}
+          onClick={() => {
+            onClose();
+            goToProfile();
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MenuItem({ label, onClick, active = false }) {
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={`ltc-sidebar-link ${active ? "active" : ""}`}
+      style={fontPoppins}
+    >
+      {label}
+    </button>
   );
 }

@@ -3,8 +3,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HotelAdminShell from "./HotelAdminShell";
 
-const GREEN_DARK = "#2A4F33";
-const CARD_BG = "#EDEADF";
+const GREEN_DARK = "#082719";
+const GREEN_SOFT = "#174A30";
+const GOLD = "#D7A84D";
+const CARD_BG = "#F8FBF9";
 
 const SERVICE_FILTERS = [
   { id: "ALL", label: "All Services" },
@@ -606,7 +608,7 @@ function getProofTitle(booking) {
 function Th({ children, className = "" }) {
   return (
     <th
-      className={`px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-black/60 ${className}`}
+      className={`px-5 py-4 text-xs font-extrabold uppercase tracking-[0.18em] text-[#667085] ${className}`}
     >
       {children}
     </th>
@@ -615,7 +617,7 @@ function Th({ children, className = "" }) {
 
 function Td({ children, className = "" }) {
   return (
-    <td className={`border-t border-black/5 px-4 py-4 align-top ${className}`}>
+    <td className={`border-t border-[#082719]/10 px-5 py-5 align-top text-[13px] font-semibold text-[#102418] ${className}`}>
       {children}
     </td>
   );
@@ -628,8 +630,8 @@ function FilterButton({ label, active, onClick }) {
       onClick={onClick}
       className={`rounded-full border px-4 py-2 text-xs font-extrabold transition ${
         active
-          ? "border-[#2A4F33] bg-[#2A4F33] text-white"
-          : "border-black/10 bg-white text-black/55 hover:border-[#2A4F33]/40 hover:text-[#2A4F33]"
+          ? "border-[#082719] bg-[#082719] text-white"
+          : "border-black/10 bg-white text-black/55 hover:border-[#082719]/40 hover:text-[#082719]"
       }`}
     >
       {label}
@@ -639,18 +641,25 @@ function FilterButton({ label, active, onClick }) {
 
 function StatCard({ label, value, helper = "" }) {
   return (
-    <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-      <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-black/40">
-        {label}
-      </p>
+    <div className="group relative h-full min-h-[128px] overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(8,39,25,0.12)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-[#D7A84D]/50 hover:shadow-[0_28px_70px_rgba(8,39,25,0.18)]">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
+      <div className="absolute -bottom-16 -right-16 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(215,168,77,0.24),transparent_62%)] transition duration-300 group-hover:scale-110" />
 
-      <p className="mt-2 text-3xl font-extrabold" style={{ color: GREEN_DARK }}>
-        {value}
-      </p>
+      <div className="relative z-10 flex h-full flex-col justify-between">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/42">
+            {label}
+          </p>
 
-      {helper ? (
-        <p className="mt-2 text-xs font-semibold text-black/45">{helper}</p>
-      ) : null}
+          <p className="mt-3 text-3xl font-black tracking-[-0.04em] text-[#082719]">
+            {value}
+          </p>
+        </div>
+
+        {helper ? (
+          <p className="mt-3 text-xs font-semibold text-black/48">{helper}</p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -674,7 +683,7 @@ function PaymentSummary({ booking, compact = false }) {
           </p>
         ) : null}
 
-        <p className="text-xs font-extrabold text-[#2A4F33]">
+        <p className="text-xs font-extrabold text-[#082719]">
           Paid: {formatPeso(paidAmount)}
         </p>
 
@@ -692,7 +701,7 @@ function PaymentSummary({ booking, compact = false }) {
           Payment Type
         </p>
 
-        <p className="mt-1 text-sm font-extrabold text-[#2A4F33]">
+        <p className="mt-1 text-sm font-extrabold text-[#082719]">
           {getPaymentTermLabel(paymentTerm)}
         </p>
       </div>
@@ -702,7 +711,7 @@ function PaymentSummary({ booking, compact = false }) {
           Amount Paid
         </p>
 
-        <p className="mt-1 text-sm font-extrabold text-[#2A4F33]">
+        <p className="mt-1 text-sm font-extrabold text-[#082719]">
           {formatPeso(paidAmount)}
         </p>
       </div>
@@ -712,7 +721,7 @@ function PaymentSummary({ booking, compact = false }) {
           Balance
         </p>
 
-        <p className="mt-1 text-sm font-extrabold text-[#2A4F33]">
+        <p className="mt-1 text-sm font-extrabold text-[#082719]">
           {formatPeso(balanceAmount)}
         </p>
       </div>
@@ -722,7 +731,7 @@ function PaymentSummary({ booking, compact = false }) {
           Total
         </p>
 
-        <p className="mt-1 text-sm font-extrabold text-[#2A4F33]">
+        <p className="mt-1 text-sm font-extrabold text-[#082719]">
           {formatPeso(totalAmount)}
         </p>
       </div>
@@ -1328,7 +1337,7 @@ export default function HotelAdminBookings() {
           type="button"
           onClick={fetchBookings}
           disabled={loading}
-          className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+          className="h-10 rounded-2xl bg-[#082719] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
         >
           {loading ? "REFRESHING..." : "REFRESH"}
         </button>
@@ -1380,10 +1389,8 @@ export default function HotelAdminBookings() {
         <StatCard label="Hotel & Condo" value={counts.hotel_room} />
       </div>
 
-      <div
-        className="mt-6 rounded-2xl border border-black/5 p-5 shadow-sm md:p-6"
-        style={{ backgroundColor: CARD_BG }}
-      >
+      <div className="relative mt-6 overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(8,39,25,0.12)] backdrop-blur-xl md:p-6">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
         <div>
           <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
             Filter by booking status
@@ -1433,7 +1440,7 @@ export default function HotelAdminBookings() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search customer, email, service, package, payment, downpayment, balance..."
-              className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#2A4F33]/20"
+              className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#082719]/20"
             />
           </div>
 
@@ -1445,7 +1452,7 @@ export default function HotelAdminBookings() {
             <select
               value={sortBy}
               onChange={(event) => setSortBy(event.target.value)}
-              className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#2A4F33]/20"
+              className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#082719]/20"
             >
               <option value="Recent">Recent</option>
               <option value="Oldest">Oldest</option>
@@ -1458,11 +1465,28 @@ export default function HotelAdminBookings() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-black/5 shadow-sm">
-        <div className="overflow-x-auto bg-white">
-          <table className="w-full min-w-[1380px] text-sm">
+      <div className="mt-6 overflow-hidden rounded-[28px] border border-white/80 bg-white/90 shadow-[0_18px_45px_rgba(8,39,25,0.12)] backdrop-blur-xl">
+        <div className="h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
+
+        <div className="flex flex-col gap-2 border-b border-[#082719]/10 bg-[#F8FBF9]/90 px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D7A84D]">
+              Booking Records
+            </p>
+            <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[#082719]">
+              Reservation Payments
+            </h3>
+          </div>
+
+          <p className="rounded-full border border-[#082719]/10 bg-white px-4 py-2 text-xs font-extrabold text-[#174A30] shadow-sm">
+            {filteredBookings.length} record{filteredBookings.length === 1 ? "" : "s"}
+          </p>
+        </div>
+
+        <div className="overflow-x-auto bg-white/70">
+          <table className="w-full min-w-[1380px] border-separate border-spacing-0 text-sm">
             <thead>
-              <tr className="bg-black/5 text-left">
+              <tr className="bg-[#F6F3EA] text-left">
                 <Th>Service</Th>
                 <Th>User</Th>
                 <Th>Booking</Th>
@@ -1479,7 +1503,7 @@ export default function HotelAdminBookings() {
               </tr>
             </thead>
 
-            <tbody>
+            <tbody className="divide-y divide-[#082719]/5">
               {loading ? (
                 <tr>
                   <td colSpan={13} className="p-8 text-center text-black/50">
@@ -1489,7 +1513,7 @@ export default function HotelAdminBookings() {
               ) : filteredBookings.length === 0 ? (
                 <tr>
                   <td colSpan={13} className="p-8 text-center text-black/50">
-                    <p className="font-bold text-[#2A4F33]">
+                    <p className="font-bold text-[#082719]">
                       No bookings found.
                     </p>
                     <p className="mt-1 text-xs">
@@ -1504,7 +1528,7 @@ export default function HotelAdminBookings() {
                     busyId === `${booking.bookingType}:${booking._id}`;
 
                   return (
-                    <tr key={`${booking.bookingType}-${booking._id}`}>
+                    <tr key={`${booking.bookingType}-${booking._id}`} className="group transition hover:bg-[#F8FBF9]">
                       <Td>
                         <span
                           className={getServiceBadgeClass(booking.bookingType)}
@@ -1514,7 +1538,7 @@ export default function HotelAdminBookings() {
                       </Td>
 
                       <Td>
-                        <p className="font-extrabold text-[#2A4F33]">
+                        <p className="font-extrabold text-[#082719]">
                           {booking.customerName}
                         </p>
 
@@ -1552,7 +1576,7 @@ export default function HotelAdminBookings() {
                         </span>
                       </Td>
 
-                      <Td className="font-extrabold text-[#2A4F33]">
+                      <Td className="font-extrabold text-[#082719]">
                         {formatPeso(booking.paidAmount)}
                       </Td>
 
@@ -1560,13 +1584,13 @@ export default function HotelAdminBookings() {
                         className={`font-extrabold ${
                           Number(booking.balanceAmount || 0) > 0
                             ? "text-amber-700"
-                            : "text-[#2A4F33]"
+                            : "text-[#082719]"
                         }`}
                       >
                         {formatPeso(booking.balanceAmount)}
                       </Td>
 
-                      <Td className="font-extrabold text-[#2A4F33]">
+                      <Td className="font-extrabold text-[#082719]">
                         {formatPeso(booking.totalAmount)}
                       </Td>
 
@@ -1577,11 +1601,11 @@ export default function HotelAdminBookings() {
                       </Td>
 
                       <Td className="text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
+                        <div className="flex flex-col items-end justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => openProof(booking)}
-                            className="rounded-xl border border-[#2A4F33]/20 px-3 py-2 text-xs font-extrabold text-[#2A4F33] hover:bg-[#2A4F33]/5"
+                            className="inline-flex h-10 w-[96px] items-center justify-center rounded-full border border-[#D7A84D]/70 bg-white text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#FFF7DC] hover:shadow-md"
                           >
                             Proof
                           </button>
@@ -1594,7 +1618,7 @@ export default function HotelAdminBookings() {
                                 onClick={() =>
                                   updateStatus(booking, "CONFIRMED")
                                 }
-                                className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-60"
+                                className="inline-flex h-10 w-[96px] items-center justify-center rounded-full border border-[#235F3E] bg-[#235F3E] text-xs font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#174A30] hover:shadow-md disabled:translate-y-0 disabled:opacity-60"
                               >
                                 {busy ? "Saving..." : "Approve"}
                               </button>
@@ -1603,7 +1627,7 @@ export default function HotelAdminBookings() {
                                 type="button"
                                 disabled={busy}
                                 onClick={() => handleCancel(booking)}
-                                className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-60"
+                                className="inline-flex h-10 w-[96px] items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F4D484] hover:shadow-md disabled:translate-y-0 disabled:opacity-60"
                               >
                                 {busy ? "Saving..." : "Reject"}
                               </button>
@@ -1615,7 +1639,7 @@ export default function HotelAdminBookings() {
                               type="button"
                               disabled={busy}
                               onClick={() => handleCancel(booking)}
-                              className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-60"
+                              className="inline-flex h-10 w-[96px] items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F4D484] hover:shadow-md disabled:translate-y-0 disabled:opacity-60"
                             >
                               {busy ? "Saving..." : "Cancel"}
                             </button>

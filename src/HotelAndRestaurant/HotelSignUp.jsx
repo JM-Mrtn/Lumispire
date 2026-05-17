@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const BACKGROUND_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+
+const PHONE_PLACEHOLDER = "Phone Number";
+const USERNAME_MIN_LENGTH = 5;
+const USERNAME_MAX_LENGTH = 20;
+
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
 const HotelSignUp = () => {
   const navigate = useNavigate();
 
@@ -13,6 +23,7 @@ const HotelSignUp = () => {
 
   const [form, setForm] = useState({
     firstName: "",
+    middleName: "",
     lastName: "",
     username: "",
     email: "",
@@ -30,11 +41,16 @@ const HotelSignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bgIndex, setBgIndex] = useState(0);
 
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [emailAvailable, setEmailAvailable] = useState(null);
+
+  const nameRegex = /^[A-Za-z\s]+$/;
+  const usernameRegex = /^[A-Za-z0-9]+$/;
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   const setField = (key, value) => {
     setForm((p) => ({ ...p, [key]: value }));
@@ -43,14 +59,17 @@ const HotelSignUp = () => {
     setSuccessMessage("");
   };
 
-  const nameRegex = /^[A-Za-z\s]+$/;
-  const usernameRegex = /^[A-Za-z0-9]+$/;
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
   const validateFirstName = (v) => {
     if (!v) return "First name is required";
     if (v.length > 20) return "First name must be max 20 characters";
     if (!nameRegex.test(v)) return "First name must contain letters only";
+    return "";
+  };
+
+  const validateMiddleName = (v) => {
+    if (!v) return "";
+    if (v.length > 20) return "Middle name must be max 20 characters";
+    if (!nameRegex.test(v)) return "Middle name must contain letters only";
     return "";
   };
 
@@ -63,7 +82,12 @@ const HotelSignUp = () => {
 
   const validateUsername = (v) => {
     if (!v) return "Username is required";
-    if (v.length > 20) return "Username must be max 20 characters";
+    if (v.length < USERNAME_MIN_LENGTH) {
+      return `Username must be at least ${USERNAME_MIN_LENGTH} characters`;
+    }
+    if (v.length > USERNAME_MAX_LENGTH) {
+      return `Username must be max ${USERNAME_MAX_LENGTH} characters`;
+    }
     if (!usernameRegex.test(v)) return "Username must be letters/numbers only";
     return "";
   };
@@ -78,22 +102,12 @@ const HotelSignUp = () => {
   const validatePhone = (v) => {
     if (!v) return "Phone number is required";
     if (!/^\d+$/.test(v)) return "Phone number must be numeric only";
-    if (v.length !== 11) return "Phone number must be 11 digits";
-    if (!v.startsWith("09")) return "Phone number must start with 09";
+    if (!/^09\d{9}$/.test(v)) {
+      return "Phone number must start with 09 and be exactly 11 digits.";
+    }
+
     return "";
   };
-
-  const passwordChecks = useMemo(() => {
-    const pw = form.password || "";
-    const u = form.username || "";
-    return {
-      lenOK: pw.length >= 6 && pw.length <= 20,
-      hasUpper: /[A-Z]/.test(pw),
-      hasLower: /[a-z]/.test(pw),
-      hasSymbol: /[^A-Za-z0-9]/.test(pw),
-      notUsername: pw && u ? pw !== u : true,
-    };
-  }, [form.password, form.username]);
 
   const validatePassword = (v) => {
     if (!v) return "Password is required";
@@ -101,12 +115,9 @@ const HotelSignUp = () => {
     if (!/[A-Z]/.test(v) || !/[a-z]/.test(v)) {
       return "Password must include uppercase and lowercase letters";
     }
-    if (!/[^A-Za-z0-9]/.test(v)) {
-      return "Password must contain at least one symbol";
-    }
-    if (form.username && v === form.username) {
-      return "Password must not match the username";
-    }
+    if (!/\d/.test(v)) return "Password must contain at least one number";
+    if (!/[^A-Za-z0-9]/.test(v)) return "Password must contain at least one symbol";
+    if (form.username && v === form.username) return "Password must not match the username";
     return "";
   };
 
@@ -119,6 +130,7 @@ const HotelSignUp = () => {
   const runAllValidation = () => {
     const next = {
       firstName: validateFirstName(form.firstName),
+      middleName: validateMiddleName(form.middleName),
       lastName: validateLastName(form.lastName),
       email: validateEmail(form.email),
       phone: validatePhone(form.phone),
@@ -127,12 +139,8 @@ const HotelSignUp = () => {
       confirmPassword: validateConfirmPassword(form.confirmPassword),
     };
 
-    if (!next.username && usernameAvailable === false) {
-      next.username = "Username already taken";
-    }
-    if (!next.email && emailAvailable === false) {
-      next.email = "Email already exists";
-    }
+    if (!next.username && usernameAvailable === false) next.username = "Username already taken";
+    if (!next.email && emailAvailable === false) next.email = "Email already exists";
 
     setErrors(next);
     return next;
@@ -143,7 +151,7 @@ const HotelSignUp = () => {
   };
 
   const onUsernameChange = (raw) => {
-    setField("username", raw.replace(/[^A-Za-z0-9]/g, "").slice(0, 20));
+    setField("username", raw.replace(/[^A-Za-z0-9]/g, "").slice(0, USERNAME_MAX_LENGTH));
     setUsernameAvailable(null);
   };
 
@@ -156,9 +164,18 @@ const HotelSignUp = () => {
     setField("phone", raw.replace(/\D/g, "").slice(0, 11));
   };
 
+
   const onBlurTrim = (key) => {
     setForm((p) => ({ ...p, [key]: (p[key] || "").trim() }));
   };
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const u = form.username.trim();
@@ -174,9 +191,7 @@ const HotelSignUp = () => {
 
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `${API_BASE}/check-username?username=${encodeURIComponent(u)}`
-        );
+        const res = await fetch(`${API_BASE}/check-username?username=${encodeURIComponent(u)}`);
 
         if (!res.ok) {
           setUsernameAvailable(null);
@@ -209,9 +224,7 @@ const HotelSignUp = () => {
 
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `${API_BASE}/check-email?email=${encodeURIComponent(e)}`
-        );
+        const res = await fetch(`${API_BASE}/check-email?email=${encodeURIComponent(e)}`);
 
         if (!res.ok) {
           setEmailAvailable(null);
@@ -233,11 +246,13 @@ const HotelSignUp = () => {
   useEffect(() => {
     if (Object.keys(touched).length === 0) return;
     runAllValidation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, usernameAvailable, emailAvailable]);
 
   const canSubmit = useMemo(() => {
     const localErrors = {
       firstName: validateFirstName(form.firstName),
+      middleName: validateMiddleName(form.middleName),
       lastName: validateLastName(form.lastName),
       email: validateEmail(form.email),
       phone: validatePhone(form.phone),
@@ -251,22 +266,16 @@ const HotelSignUp = () => {
     const doneChecking = !checkingUsername && !checkingEmail;
 
     return localOk && uniqueOk && doneChecking && !isSubmitting;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, usernameAvailable, emailAvailable, checkingUsername, checkingEmail, isSubmitting]);
 
   const fieldError = (key) => (touched[key] ? errors[key] : "");
 
   const getStatusColor = (type) => {
-    if (type === "ok") return "text-emerald-200";
-    if (type === "bad") return "text-red-200";
-    return "text-white/80";
+    if (type === "ok") return "ltc-status-ok";
+    if (type === "bad") return "ltc-status-bad";
+    return "ltc-status-neutral";
   };
-
-  const reqItem = (ok, text) => (
-    <li className={`flex items-center gap-2 ${ok ? "text-emerald-200" : "text-red-200"}`}>
-      <span className={`inline-block h-2.5 w-2.5 rounded-full ${ok ? "bg-emerald-300" : "bg-red-300"}`} />
-      {text}
-    </li>
-  );
 
   const handleSignUp = async () => {
     setErrorMessage("");
@@ -275,6 +284,7 @@ const HotelSignUp = () => {
 
     setTouched({
       firstName: true,
+      middleName: true,
       lastName: true,
       email: true,
       phone: true,
@@ -299,6 +309,7 @@ const HotelSignUp = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName: form.firstName.trim(),
+          middleName: form.middleName.trim(),
           lastName: form.lastName.trim(),
           username: form.username.trim(),
           email: signupEmail,
@@ -326,33 +337,33 @@ const HotelSignUp = () => {
     }
   };
 
-  const goToHome = () => navigate("/");
-  const goToContact = () => navigate("/contact-us");
+  const goToHome = () => navigate("/hotel-resort");
+  const goToContact = () => navigate("/hotel-contact-us");
   const goToLogIn = () => navigate("/hotel-login");
 
   const UserIcon = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M20 21a8 8 0 0 0-16 0" />
       <circle cx="12" cy="8" r="4" />
     </svg>
   );
 
   const LockIcon = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="5" y="11" width="14" height="10" rx="2" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V8a4 4 0 0 1 8 0v3" />
     </svg>
   );
 
   const MailIcon = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="m4 8 8 6 8-6" />
     </svg>
   );
 
   const PhoneIcon = () => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -362,7 +373,7 @@ const HotelSignUp = () => {
   );
 
   const EyeIcon = ({ open }) => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -373,356 +384,873 @@ const HotelSignUp = () => {
     </svg>
   );
 
-  const PinIcon = () => (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s7-5.686 7-11a7 7 0 1 0-14 0c0 5.314 7 11 7 11Z" />
-      <circle cx="12" cy="10" r="2.5" />
-    </svg>
-  );
-
   const CrownLogo = () => (
-    <div className="flex items-center gap-3">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#F0D47A]/80 bg-black/20 backdrop-blur-sm">
-        <svg viewBox="0 0 64 64" className="h-9 w-9 text-[#F0D47A]" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M14 44l4-18 14 10 14-10 4 18H14Z" />
-          <path d="M18 44c3 5 9 8 14 8s11-3 14-8" />
-          <circle cx="18" cy="22" r="3" />
-          <circle cx="32" cy="14" r="3" />
-          <circle cx="46" cy="22" r="3" />
-        </svg>
-      </div>
-
-      <div className="leading-tight text-white">
-        <p
-          className="text-[11px] font-semibold uppercase tracking-[0.28em]"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
-        >
-          Lumispire
-        </p>
-      </div>
-    </div>
-  );
-
-  const inputBase =
-    "h-[46px] w-full rounded-full border border-white/80 bg-white/18 pl-12 pr-5 text-[15px] text-white placeholder:text-white/85 focus:outline-none focus:ring-2 focus:ring-white/30";
-
-  const fieldBorder = (key) =>
-    fieldError(key) ? "border-red-300" : "border-white/80";
-
-  return (
-    <div
-      className="relative min-h-screen overflow-hidden text-white"
-      style={{ fontFamily: "'Inter', sans-serif" }}
-    >
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: "url('https://placehold.co/10x10')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          transform: "scale(1.08)",
+    <button type="button" onClick={() => navigate("/home")} className="ltc-logo" aria-label="Go to hotel home">
+      <img
+        src="/HotelLogo.png"
+        alt="Hotel logo"
+        className="ltc-logo-icon"
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
         }}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,26,38,0.25),rgba(12,16,24,0.35))]" />
-      <div className="absolute inset-0 bg-black/15" />
 
-      <header className="absolute inset-x-0 top-0 z-20 flex items-start justify-between px-6 pt-5 sm:px-10 sm:pt-7">
-        <CrownLogo />
+      <div>
+        <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+        <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
+      </div>
+    </button>
+  );
 
-        <nav
-          className="flex items-center gap-6 text-sm font-semibold tracking-wide text-white sm:gap-8 sm:text-[26px]"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
-        >
-          <button onClick={goToHome} className="transition hover:opacity-80">
-            HOME
-          </button>
-          <button onClick={goToContact} className="transition hover:opacity-80">
-            CONTACT
-          </button>
-        </nav>
-      </header>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-24 sm:px-6">
-        <div className="w-full max-w-[900px]">
-          <div className="mx-auto w-full max-w-[620px] rounded-[26px] border border-white/65 bg-white/10 px-5 pb-5 pt-6 shadow-[0_10px_45px_rgba(0,0,0,0.28)] backdrop-blur-[10px] sm:px-8 sm:pb-6 sm:pt-7">
-            <div className="text-center">
-              <p
-                className="text-[24px] leading-none tracking-[0.08em] text-white sm:text-[34px]"
-                style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 500 }}
-              >
-                PATIO DE
-              </p>
-              <h1
-                className="-mt-1 text-[40px] leading-none tracking-[0.03em] text-white sm:text-[58px]"
-                style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 800 }}
-              >
-                LORENZO
+  return (
+    <div className="ltc-hotel-signup-page" style={fontPontano}>
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+        .ltc-hotel-signup-page {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --footer-green: #082719;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --dark: #101828;
+          --muted: #667085;
+          --shadow-lg: 0 28px 70px rgba(8,39,25,.18);
+          --radius: 24px;
+          --ease: cubic-bezier(.22,1,.36,1);
+
+          min-height: 100vh;
+          color: var(--dark);
+          overflow-x: hidden;
+          font-family: "Inter", Arial, sans-serif;
+        }
+
+        .ltc-hotel-signup-page * {
+          box-sizing: border-box;
+        }
+
+        .ltc-signup-shell {
+          position: relative;
+          min-height: 100vh;
+          overflow: hidden;
+          isolation: isolate;
+          color: white;
+          background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+        }
+
+        .ltc-login-bg {
+          position: absolute;
+          inset: 0;
+          z-index: -4;
+          width: 100%;
+          height: 100%;
+          background-size: cover;
+          background-position: center;
+          opacity: 0;
+          transform: scale(1.04);
+          transition: opacity 1000ms ease;
+        }
+
+        .ltc-login-bg.active {
+          opacity: 1;
+        }
+
+        .ltc-signup-shell::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -3;
+          background:
+            linear-gradient(
+              120deg,
+              rgba(2, 18, 11, 0.96) 0%,
+              rgba(5, 37, 23, 0.88) 42%,
+              rgba(12, 64, 39, 0.76) 100%
+            );
+          opacity: .98;
+        }
+
+        .ltc-signup-shell::after {
+          content: "";
+          position: absolute;
+          inset: -16% -10% -24% -10%;
+          z-index: -2;
+          background:
+            radial-gradient(circle at 16% 82%, rgba(19, 120, 72, 0.36), transparent 24%),
+            radial-gradient(circle at 36% 92%, rgba(7, 76, 47, 0.46), transparent 30%),
+            radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
+            radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
+            radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
+          filter: blur(30px);
+          pointer-events: none;
+        }
+
+        .ltc-container {
+          width: min(1180px, 92%);
+          margin: auto;
+        }
+
+        .ltc-header {
+          position: relative;
+          z-index: 20;
+          width: 100%;
+          background: var(--footer-green);
+          border-bottom: 1px solid rgba(255,255,255,.1);
+          box-shadow: 0 10px 34px rgba(7,31,20,.14);
+          margin: 0;
+        }
+
+        .ltc-header .ltc-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .ltc-nav {
+          min-height: 76px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .ltc-logo {
+          display: flex;
+          align-items: center;
+          gap: 13px;
+          color: white;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          text-align: left;
+          padding: 0;
+        }
+
+        .ltc-logo-icon {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          background: white;
+          object-fit: cover;
+          box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+        }
+
+        .ltc-logo h1 {
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: -.04em;
+          margin: 0;
+        }
+
+        .ltc-logo p {
+          font-size: 11px;
+          color: rgba(255,255,255,.72);
+          margin: 3px 0 0;
+        }
+
+        .ltc-desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .ltc-nav-link {
+          color: rgba(255,255,255,.78);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          padding: 10px 14px;
+          border-radius: 999px;
+          transition: .25s var(--ease);
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+        }
+
+        .ltc-nav-link:hover {
+          color: white;
+          background: rgba(255,255,255,.13);
+          transform: translateY(-1px);
+        }
+
+        .ltc-signup-main {
+          position: relative;
+          z-index: 5;
+          min-height: calc(100vh - 76px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 44px 0;
+        }
+
+        .ltc-login-card {
+          position: relative;
+          overflow: hidden;
+          width: min(720px, 100%);
+          border-radius: 28px;
+          background: rgba(231,238,233,.88);
+          border: 1px solid rgba(255,255,255,.78);
+          box-shadow: var(--shadow-lg);
+          backdrop-filter: blur(18px);
+          padding: 28px 34px 30px;
+        }
+
+        .ltc-login-card::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 5px;
+          background: linear-gradient(90deg,var(--green-700),var(--gold));
+          z-index: 3;
+        }
+
+        .ltc-card-title {
+          text-align: center;
+          margin-bottom: 24px;
+        }
+
+        .ltc-card-title p {
+          margin: 0;
+          color: var(--green-700);
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .2em;
+        }
+
+        .ltc-card-title h1 {
+          margin: 8px 0 0;
+          color: var(--green-950);
+          font-size: clamp(36px, 4vw, 50px);
+          line-height: 1.02;
+          font-weight: 900;
+          letter-spacing: -.055em;
+        }
+
+        .ltc-card-title h1 span {
+          color: var(--gold);
+        }
+
+        .ltc-error-alert,
+        .ltc-success-alert {
+          margin-bottom: 14px;
+          border-radius: 14px;
+          padding: 10px 14px;
+          text-align: center;
+          font-size: 12px;
+          line-height: 1.45;
+          font-weight: 700;
+        }
+
+        .ltc-error-alert {
+          border: 1px solid rgba(239,68,68,.22);
+          background: rgba(239,68,68,.10);
+          color: #b42318;
+        }
+
+        .ltc-success-alert {
+          border: 1px solid rgba(16,185,129,.25);
+          background: rgba(16,185,129,.10);
+          color: #047857;
+        }
+
+        .ltc-login-form {
+          display: grid;
+          gap: 12px;
+        }
+
+        .ltc-form-grid {
+          display: grid;
+          gap: 12px;
+        }
+
+        .ltc-form-grid.three {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .ltc-form-grid.two {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ltc-field-wrap {
+          display: grid;
+          gap: 5px;
+          min-width: 0;
+        }
+
+        .ltc-input-shell {
+          position: relative;
+          min-width: 0;
+        }
+
+        .ltc-input-icon {
+          pointer-events: none;
+          position: absolute;
+          left: 15px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--green-700);
+          display: grid;
+          place-items: center;
+        }
+
+        .ltc-input-icon-svg {
+          width: 18px;
+          height: 18px;
+        }
+
+        .ltc-eye-button {
+          position: absolute;
+          right: 15px;
+          top: 50%;
+          transform: translateY(-50%);
+          border: 0;
+          background: transparent;
+          color: var(--green-700);
+          cursor: pointer;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          transition: .25s var(--ease);
+        }
+
+        .ltc-eye-button:hover {
+          color: var(--green-950);
+          transform: translateY(-50%) scale(1.05);
+        }
+
+        .ltc-input,
+        .ltc-select {
+          display: block;
+          width: 100%;
+          height: 46px;
+          min-height: 46px;
+          max-height: 46px;
+          border: 1px solid rgba(35,95,62,.10);
+          background: rgba(255,255,255,.92);
+          color: var(--dark);
+          border-radius: 999px;
+          font-size: 13.5px;
+          line-height: 46px;
+          outline: none;
+          transition: .25s var(--ease);
+          font-family: inherit;
+          box-shadow: 0 8px 18px rgba(8,39,25,.045);
+        }
+
+        .ltc-input {
+          padding: 0 15px 0 45px;
+        }
+
+        .ltc-select {
+          padding: 0 16px;
+          cursor: pointer;
+          appearance: auto;
+        }
+
+        .ltc-input.has-eye {
+          padding-right: 48px;
+        }
+
+        .ltc-input::placeholder {
+          color: rgba(102,112,133,.74);
+        }
+
+        .ltc-input:focus,
+        .ltc-select:focus {
+          border-color: var(--green-700);
+          background: white;
+          box-shadow: 0 0 0 4px rgba(35,95,62,.10);
+        }
+
+        .ltc-input.error,
+        .ltc-select.error {
+          border-color: rgba(239,68,68,.55);
+          box-shadow: 0 0 0 4px rgba(239,68,68,.08);
+        }
+
+        .ltc-field-error,
+        .ltc-status-text {
+          margin: 0;
+          padding: 0 14px;
+          font-size: 10.5px;
+          line-height: 1.35;
+        }
+
+        .ltc-field-error,
+        .ltc-status-bad {
+          color: #b42318;
+        }
+
+        .ltc-status-ok {
+          color: #047857;
+        }
+
+        .ltc-status-neutral {
+          color: var(--muted);
+        }
+
+        .ltc-submit-button {
+          margin: 8px auto 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: 48px;
+          width: 100%;
+          border-radius: 999px;
+          border: 0;
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 14px 30px rgba(215,168,77,.25);
+          font-size: 13.5px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: .28s var(--ease);
+        }
+
+        .ltc-submit-button:hover {
+          transform: translateY(-2px);
+        }
+
+        .ltc-submit-button:disabled {
+          cursor: not-allowed;
+          opacity: .6;
+          transform: none;
+        }
+
+        .ltc-auth-links {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-top: 8px;
+          color: var(--muted);
+          font-size: 13px;
+          line-height: 1.5;
+          text-align: center;
+        }
+
+        .ltc-auth-links button {
+          border: 0;
+          background: transparent;
+          color: var(--green-800);
+          font-weight: 900;
+          cursor: pointer;
+          padding: 0;
+          transition: .25s var(--ease);
+        }
+
+        .ltc-auth-links button:hover {
+          color: var(--green-950);
+          text-decoration: underline;
+          text-underline-offset: 4px;
+        }
+
+        @media (max-width: 900px) {
+          .ltc-header .ltc-container {
+            padding-left: 22px;
+            padding-right: 22px;
+          }
+
+          .ltc-nav {
+            min-height: auto;
+            padding: 18px 0;
+          }
+
+          .ltc-form-grid.three,
+          .ltc-form-grid.two {
+            grid-template-columns: 1fr;
+          }
+
+          .ltc-login-card {
+            width: min(520px, 100%);
+          }
+        }
+
+        @media (max-width: 600px) {
+          .ltc-header .ltc-container {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+
+          .ltc-logo h1 {
+            font-size: 14px;
+          }
+
+          .ltc-logo p {
+            font-size: 10px;
+          }
+
+          .ltc-desktop-nav {
+            gap: 4px;
+          }
+
+          .ltc-nav-link {
+            font-size: 11px;
+            padding: 9px 10px;
+          }
+
+          .ltc-signup-main {
+            min-height: auto;
+            padding: 32px 0 44px;
+          }
+
+          .ltc-login-card {
+            padding: 24px 18px;
+            border-radius: 24px;
+          }
+
+          .ltc-card-title h1 {
+            font-size: 36px;
+          }
+
+          .ltc-auth-links {
+            flex-wrap: wrap;
+          }
+        }
+      `}</style>
+
+      <div className="ltc-signup-shell">
+        {BACKGROUND_IMAGES.map((image, index) => (
+          <div
+            key={image}
+            className={`ltc-login-bg ${bgIndex === index ? "active" : ""}`}
+            style={{
+              backgroundImage: `url('${image}')`,
+            }}
+          />
+        ))}
+
+        <header className="ltc-header">
+          <div className="ltc-container ltc-nav">
+            <CrownLogo />
+
+            <nav className="ltc-desktop-nav" style={fontPoppins}>
+              <button type="button" onClick={goToHome} className="ltc-nav-link">
+                HOME
+              </button>
+
+              <button type="button" onClick={goToContact} className="ltc-nav-link">
+                CONTACT
+              </button>
+            </nav>
+          </div>
+        </header>
+
+        <main className="ltc-container ltc-signup-main">
+          <section className="ltc-login-card">
+            <div className="ltc-card-title">
+              <p style={fontMontserrat}>Create Your Account</p>
+
+              <h1 style={fontMontserrat}>
+                 <span></span>
               </h1>
             </div>
 
             {errorMessage ? (
-              <div
-                className="mt-4 rounded-xl border border-red-200/70 bg-red-500/15 px-4 py-3 text-center text-sm text-white"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
+              <div className="ltc-error-alert" style={fontPoppins}>
                 {errorMessage}
               </div>
             ) : null}
 
             {successMessage ? (
-              <div
-                className="mt-4 rounded-xl border border-emerald-200/70 bg-emerald-500/15 px-4 py-3 text-center text-sm text-white"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
+              <div className="ltc-success-alert" style={fontPoppins}>
                 {successMessage}
               </div>
             ) : null}
 
             <form
-              className="mt-6 space-y-3"
+              className="ltc-login-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!isSubmitting) handleSignUp();
               }}
             >
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/90">
+              <div className="ltc-form-grid three">
+                <div className="ltc-field-wrap">
+                  <div className="ltc-input-shell">
+                    <span className="ltc-input-icon">
                       <UserIcon />
                     </span>
+
                     <input
                       type="text"
                       maxLength={20}
                       placeholder="First Name"
-                      className={`${inputBase} ${fieldBorder("firstName")}`}
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                      className={`ltc-input ${fieldError("firstName") ? "error" : ""}`}
+                      style={fontPoppins}
                       value={form.firstName}
                       onChange={(e) => onNameChange("firstName", e.target.value)}
                       onBlur={() => onBlurTrim("firstName")}
                     />
                   </div>
-                  {!!fieldError("firstName") && (
-                    <p className="mt-1 px-3 text-[11px] text-red-200">{fieldError("firstName")}</p>
-                  )}
+
+                  {fieldError("firstName") ? (
+                    <p className="ltc-field-error" style={fontPoppins}>
+                      {fieldError("firstName")}
+                    </p>
+                  ) : null}
                 </div>
 
-                <div>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/90">
+                <div className="ltc-field-wrap">
+                  <div className="ltc-input-shell">
+                    <span className="ltc-input-icon">
                       <UserIcon />
                     </span>
+
+                    <input
+                      type="text"
+                      maxLength={20}
+                      placeholder="Middle Name"
+                      className={`ltc-input ${fieldError("middleName") ? "error" : ""}`}
+                      style={fontPoppins}
+                      value={form.middleName}
+                      onChange={(e) => onNameChange("middleName", e.target.value)}
+                      onBlur={() => onBlurTrim("middleName")}
+                    />
+                  </div>
+
+                  {fieldError("middleName") ? (
+                    <p className="ltc-field-error" style={fontPoppins}>
+                      {fieldError("middleName")}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="ltc-field-wrap">
+                  <div className="ltc-input-shell">
+                    <span className="ltc-input-icon">
+                      <UserIcon />
+                    </span>
+
                     <input
                       type="text"
                       maxLength={20}
                       placeholder="Last Name"
-                      className={`${inputBase} ${fieldBorder("lastName")}`}
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                      className={`ltc-input ${fieldError("lastName") ? "error" : ""}`}
+                      style={fontPoppins}
                       value={form.lastName}
                       onChange={(e) => onNameChange("lastName", e.target.value)}
                       onBlur={() => onBlurTrim("lastName")}
                     />
                   </div>
-                  {!!fieldError("lastName") && (
-                    <p className="mt-1 px-3 text-[11px] text-red-200">{fieldError("lastName")}</p>
-                  )}
+
+                  {fieldError("lastName") ? (
+                    <p className="ltc-field-error" style={fontPoppins}>
+                      {fieldError("lastName")}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/90">
+              <div className="ltc-form-grid two">
+                <div className="ltc-field-wrap">
+                  <div className="ltc-input-shell">
+                    <span className="ltc-input-icon">
                       <PhoneIcon />
                     </span>
+
                     <input
                       type="tel"
                       inputMode="numeric"
                       maxLength={11}
-                      placeholder="Phone Number"
-                      className={`${inputBase} ${fieldBorder("phone")}`}
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                      placeholder={PHONE_PLACEHOLDER}
+                      className={`ltc-input ${fieldError("phone") ? "error" : ""}`}
+                      style={fontPoppins}
                       value={form.phone}
                       onChange={(e) => onPhoneChange(e.target.value)}
                     />
                   </div>
-                  {!!fieldError("phone") && (
-                    <p className="mt-1 px-3 text-[11px] text-red-200">{fieldError("phone")}</p>
-                  )}
+
+                  {fieldError("phone") ? (
+                    <p className="ltc-field-error" style={fontPoppins}>
+                      {fieldError("phone")}
+                    </p>
+                  ) : null}
                 </div>
 
-                <div>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/90">
+                <div className="ltc-field-wrap">
+                  <div className="ltc-input-shell">
+                    <span className="ltc-input-icon">
                       <UserIcon />
                     </span>
+
                     <input
                       type="text"
-                      maxLength={20}
+                      maxLength={USERNAME_MAX_LENGTH}
                       placeholder="Username"
-                      className={`${inputBase} ${fieldBorder("username")}`}
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                      className={`ltc-input ${fieldError("username") ? "error" : ""}`}
+                      style={fontPoppins}
                       value={form.username}
                       onChange={(e) => onUsernameChange(e.target.value)}
                       onBlur={() => onBlurTrim("username")}
                     />
                   </div>
-                  <div className="mt-1 px-3 text-[11px]">
-                    {!!fieldError("username") && (
-                      <p className="text-red-200">{fieldError("username")}</p>
-                    )}
-                    {!errors.username && usernameAvailable === false && (
-                      <p className={getStatusColor("bad")}>Username already taken</p>
-                    )}
-                    {!errors.username && usernameAvailable === true && (
-                      <p className={getStatusColor("ok")}>Username is available</p>
-                    )}
-                    {checkingUsername && (
-                      <p className={getStatusColor("neutral")}>Checking…</p>
-                    )}
-                  </div>
+
+                  {fieldError("username") ? (
+                    <p className="ltc-field-error" style={fontPoppins}>
+                      {fieldError("username")}
+                    </p>
+                  ) : null}
+
+                  {!errors.username && usernameAvailable === false ? (
+                    <p className={`ltc-status-text ${getStatusColor("bad")}`} style={fontPoppins}>
+                      Username already taken
+                    </p>
+                  ) : null}
+
+                  {!errors.username && usernameAvailable === true ? (
+                    <p className={`ltc-status-text ${getStatusColor("ok")}`} style={fontPoppins}>
+                      Username is available
+                    </p>
+                  ) : null}
+
+                  {checkingUsername ? (
+                    <p className={`ltc-status-text ${getStatusColor("neutral")}`} style={fontPoppins}>
+                      Checking...
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/90">
+              <div className="ltc-form-grid two">
+                <div className="ltc-field-wrap">
+                  <div className="ltc-input-shell">
+                    <span className="ltc-input-icon">
                       <LockIcon />
                     </span>
+
                     <input
                       type={showPassword ? "text" : "password"}
                       maxLength={20}
                       placeholder="Password"
-                      className={`${inputBase} ${fieldBorder("password")} pr-14`}
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                      className={`ltc-input has-eye ${fieldError("password") ? "error" : ""}`}
+                      style={fontPoppins}
                       value={form.password}
                       onChange={(e) => setField("password", e.target.value)}
                     />
+
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/95 transition hover:opacity-80"
+                      className="ltc-eye-button"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       <EyeIcon open={showPassword} />
                     </button>
                   </div>
-                  {!!fieldError("password") && (
-                    <p className="mt-1 px-3 text-[11px] text-red-200">{fieldError("password")}</p>
-                  )}
+
+                  {fieldError("password") ? (
+                    <p className="ltc-field-error" style={fontPoppins}>
+                      {fieldError("password")}
+                    </p>
+                  ) : null}
                 </div>
 
-                <div>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/90">
+                <div className="ltc-field-wrap">
+                  <div className="ltc-input-shell">
+                    <span className="ltc-input-icon">
                       <LockIcon />
                     </span>
+
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       maxLength={20}
                       placeholder="Confirm Password"
-                      className={`${inputBase} ${fieldBorder("confirmPassword")} pr-14`}
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                      className={`ltc-input has-eye ${fieldError("confirmPassword") ? "error" : ""}`}
+                      style={fontPoppins}
                       value={form.confirmPassword}
                       onChange={(e) => setField("confirmPassword", e.target.value)}
                     />
+
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword((v) => !v)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/95 transition hover:opacity-80"
+                      className="ltc-eye-button"
                       aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                     >
                       <EyeIcon open={showConfirmPassword} />
                     </button>
                   </div>
-                  {!!fieldError("confirmPassword") && (
-                    <p className="mt-1 px-3 text-[11px] text-red-200">{fieldError("confirmPassword")}</p>
-                  )}
+
+                  {fieldError("confirmPassword") ? (
+                    <p className="ltc-field-error" style={fontPoppins}>
+                      {fieldError("confirmPassword")}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="mx-auto max-w-[360px]">
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/90">
+              <div className="ltc-field-wrap">
+                <div className="ltc-input-shell">
+                  <span className="ltc-input-icon">
                     <MailIcon />
                   </span>
+
                   <input
                     type="email"
                     maxLength={50}
                     placeholder="Email"
-                    className={`${inputBase} ${fieldBorder("email")}`}
-                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                    className={`ltc-input ${fieldError("email") ? "error" : ""}`}
+                    style={fontPoppins}
                     value={form.email}
                     onChange={(e) => onEmailChange(e.target.value)}
                     onBlur={() => onBlurTrim("email")}
                   />
                 </div>
-                <div className="mt-1 px-3 text-[11px]">
-                  {!!fieldError("email") && (
-                    <p className="text-red-200">{fieldError("email")}</p>
-                  )}
-                  {!errors.email && emailAvailable === false && (
-                    <p className={getStatusColor("bad")}>Email already exists</p>
-                  )}
-                  {!errors.email && emailAvailable === true && (
-                    <p className={getStatusColor("ok")}>Email is available</p>
-                  )}
-                  {checkingEmail && (
-                    <p className={getStatusColor("neutral")}>Checking…</p>
-                  )}
-                </div>
+
+                {fieldError("email") ? (
+                  <p className="ltc-field-error" style={fontPoppins}>
+                    {fieldError("email")}
+                  </p>
+                ) : null}
+
+                {!errors.email && emailAvailable === false ? (
+                  <p className={`ltc-status-text ${getStatusColor("bad")}`} style={fontPoppins}>
+                    Email already exists
+                  </p>
+                ) : null}
+
+                {!errors.email && emailAvailable === true ? (
+                  <p className={`ltc-status-text ${getStatusColor("ok")}`} style={fontPoppins}>
+                    Email is available
+                  </p>
+                ) : null}
+
+                {checkingEmail ? (
+                  <p className={`ltc-status-text ${getStatusColor("neutral")}`} style={fontPoppins}>
+                    Checking...
+                  </p>
+                ) : null}
               </div>
 
-              
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={!canSubmit}
-                  className="mx-auto block h-[50px] w-full max-w-[220px] rounded-full bg-[linear-gradient(180deg,#355E3B_0%,#163126_100%)] text-[15px] font-bold tracking-[0.06em] text-white shadow-[0_8px_20px_rgba(14,30,23,0.35)] transition hover:scale-[1.01] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-                  style={{ fontFamily: "'Montserrat', sans-serif" }}
-                >
-                  {isSubmitting ? "CREATING..." : "SIGN UP"}
-                </button>
-              </div>
-
-              <div
-                className="flex items-center justify-center gap-1 pt-1 text-center text-[13px] text-white"
-                style={{ fontFamily: "'Poppins', sans-serif" }}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="ltc-submit-button"
+                style={fontMontserrat}
               >
-                <span className="font-medium">Already Have Account?</span>
-                <button
-                  type="button"
-                  onClick={goToLogIn}
-                  className="font-semibold transition hover:opacity-80"
-                >
+                {isSubmitting ? "CREATING..." : "SIGN UP"}
+              </button>
+
+              <div className="ltc-auth-links" style={fontPoppins}>
+                <span>Already have an account?</span>
+
+                <button type="button" onClick={goToLogIn}>
                   Sign In
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute bottom-5 left-5 z-20 flex items-start gap-2 text-white sm:bottom-7 sm:left-7">
-        <div className="pt-0.5">
-          <PinIcon />
-        </div>
-        <div className="leading-tight">
-          <p
-            className="text-[18px] font-bold italic sm:text-[28px]"
-            style={{ fontFamily: "'Montagu Slab', serif" }}
-          >
-            Bacoor Cavite
-          </p>
-          <p
-            className="text-[12px] sm:text-[18px]"
-            style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400 }}
-          >
-            Eco Trend Subdivision
-          </p>
-        </div>
+          </section>
+        </main>
       </div>
     </div>
   );

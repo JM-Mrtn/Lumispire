@@ -45,7 +45,7 @@ const resortBookingSchema = new mongoose.Schema(
     maxBookablePax: { type: Number, default: 0, min: 0 },
     maxAdditionalPax: { type: Number, default: 20, min: 0 },
     additionalPax: { type: Number, default: 0, min: 0 },
-    additionalPaxRate: { type: Number, default: 250, min: 0 },
+    additionalPaxRate: { type: Number, default: 500, min: 0 },
     additionalPaxCharge: { type: Number, default: 0, min: 0 },
     seasonalIncreasePercent: { type: Number, default: 0, min: 0 },
     weekendIncreasePercent: { type: Number, default: 0, min: 0 },

@@ -17,6 +17,7 @@ import hotelRecommendationRoutes from "./routes/hotelRecommendationRoutes.js";
 import hotelGuestReviewRoutes from "./routes/hotelGuestReviewRoutes.js";
 import hotelChatRoutes from "./routes/hotelChatRoutes.js";
 import hotelServicePackageRoutes from "./routes/hotelServicePackageRoutes.js";
+import hotelContactRoutes from "./routes/hotelContactRoutes.js";
 import adminEnrollmentRoutes from "./routes/adminEnrollmentRoutes.js";
 import trainingAdminRoutes from "./routes/trainingAdminRoutes.js";
 import traineeRoutes from "./routes/traineeRoutes.js";
@@ -277,6 +278,7 @@ app.use("/api/hotel", hotelGuestReviewRoutes);
 app.use("/api/hotel", hotelAdminRoutes);
 app.use("/api/hotel/chat", hotelChatRoutes);
 app.use("/api/hotel", hotelServicePackageRoutes);
+app.use("/api/hotel", hotelContactRoutes);
 app.use("/api/hotel-admin", hotelAdminRoutes);
 
 /* ---------- MANPOWER ---------- */
@@ -356,7 +358,9 @@ io.use(async (socket, next) => {
       }
 
       const decoded = jwt.verify(token, secret);
-      const tokenRole = String(decoded?.role || decoded?.type || "").toLowerCase();
+      const tokenRole = String(
+        decoded?.role || decoded?.type || ""
+      ).toLowerCase();
 
       const isHotelAdmin =
         decoded?.isHotelAdmin === true ||

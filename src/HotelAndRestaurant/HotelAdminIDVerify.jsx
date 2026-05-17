@@ -102,6 +102,52 @@ function isAiAutoApproved(verification) {
   );
 }
 
+
+function getStatusBoxClass(type = "") {
+  if (type === "success") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (type === "warning") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  return "border-rose-200 bg-rose-50 text-rose-700";
+}
+
+function StatCard({ label, value, helper }) {
+  return (
+    <div className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(8,39,25,0.12)] backdrop-blur-xl">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
+      <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
+        {label}
+      </p>
+      <p className="mt-4 text-4xl font-black tracking-[-0.05em] text-[#082719]">
+        {value}
+      </p>
+      {helper ? (
+        <p className="mt-3 text-sm font-semibold text-black/55">{helper}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function Th({ children, className = "" }) {
+  return (
+    <th className={`px-5 py-4 text-xs font-extrabold uppercase tracking-[0.18em] text-[#667085] ${className}`}>
+      {children}
+    </th>
+  );
+}
+
+function Td({ children, className = "" }) {
+  return (
+    <td className={`border-t border-[#082719]/10 px-5 py-5 align-top text-[13px] font-semibold text-[#102418] ${className}`}>
+      {children}
+    </td>
+  );
+}
+
 export default function HotelAdminIDVerify() {
   const navigate = useNavigate();
   const API_BASE = useMemo(() => getHotelAdminApiBase(), []);
@@ -672,22 +718,37 @@ export default function HotelAdminIDVerify() {
     }
   };
 
-  const getPageStatusClass = () => {
-    if (pageStatus.type === "success") {
-      return "border border-emerald-200 bg-emerald-50 text-emerald-700";
-    }
+  const getPageStatusClass = () => getStatusBoxClass(pageStatus.type);
 
-    if (pageStatus.type === "warning") {
-      return "border border-amber-200 bg-amber-50 text-amber-700";
-    }
+  const counts = useMemo(() => {
+    const result = {
+      total: users.length,
+      pending: 0,
+      verified: 0,
+      rejected: 0,
+      submitted: 0,
+      aiApproved: 0,
+    };
 
-    return "border border-rose-200 bg-rose-50 text-rose-700";
-  };
+    users.forEach((user) => {
+      const verification = user?.hotelIdVerificationId || null;
+      const status = normalizeLower(user?.idVerificationStatus || "not_submitted");
+
+      if (status === "verified") result.verified += 1;
+      else if (status === "rejected") result.rejected += 1;
+      else if (status === "pending") result.pending += 1;
+
+      if (verification?._id) result.submitted += 1;
+      if (isAiAutoApproved(verification)) result.aiApproved += 1;
+    });
+
+    return result;
+  }, [users]);
 
   return (
     <HotelAdminShell
       title="Hotel ID Verification"
-      subtitle="Review uploaded IDs, preview files, and approve or reject hotel user verification requests."
+      subtitle="Review uploaded IDs, preview files, run AI checks, and approve or reject hotel user verification requests."
       activePage="idVerify"
       maxWidth="max-w-7xl"
       actions={
@@ -695,7 +756,7 @@ export default function HotelAdminIDVerify() {
           type="button"
           onClick={() => fetchUsers()}
           disabled={loading}
-          className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+          className="h-10 rounded-2xl bg-[#082719] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
         >
           {loading ? "REFRESHING..." : "REFRESH"}
         </button>
@@ -703,59 +764,95 @@ export default function HotelAdminIDVerify() {
     >
       {pageStatus.message ? (
         <div
-          className={`mb-5 rounded-xl px-4 py-3 text-sm font-semibold ${getPageStatusClass()}`}
+          className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${getPageStatusClass()}`}
         >
           {pageStatus.message}
         </div>
       ) : null}
 
-      <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm">
-        <input
-          type="text"
-          placeholder="Search by name, username, email, or phone"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-xl border border-[#d7dbd2] px-4 py-3 outline-none focus:border-[#355E3B]"
-        />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="All Users" value={counts.total} />
+        <StatCard label="Submitted IDs" value={counts.submitted} />
+        <StatCard label="Pending" value={counts.pending} />
+        <StatCard label="Verified" value={counts.verified} />
+        <StatCard label="Rejected" value={counts.rejected} />
+        <StatCard label="AI Approved" value={counts.aiApproved} />
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead className="bg-[#355E3B] text-white">
-              <tr>
-                <th className="px-4 py-3 text-sm font-semibold">Name</th>
-                <th className="px-4 py-3 text-sm font-semibold">Username</th>
-                <th className="px-4 py-3 text-sm font-semibold">Email</th>
-                <th className="px-4 py-3 text-sm font-semibold">Phone</th>
-                <th className="px-4 py-3 text-sm font-semibold">
-                  Email Verified
-                </th>
-                <th className="px-4 py-3 text-sm font-semibold">ID Status</th>
-                <th className="px-4 py-3 text-sm font-semibold">Uploaded ID</th>
-                <th className="px-4 py-3 text-sm font-semibold">AI Check</th>
-                <th className="px-4 py-3 text-sm font-semibold">Remarks</th>
-                <th className="px-4 py-3 text-sm font-semibold">Actions</th>
+      <div className="relative mt-6 overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(8,39,25,0.12)] backdrop-blur-xl md:p-6">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
+              Search verification records
+            </p>
+            <label className="mb-2 mt-4 block text-xs font-bold text-black/60">
+              Search
+            </label>
+            <input
+              type="text"
+              placeholder="Search by name, username, email, or phone"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-10 w-full rounded-full border border-black/10 bg-white px-4 text-sm font-semibold text-[#082719] outline-none focus:ring-2 focus:ring-[#082719]/20"
+            />
+          </div>
+
+          <p className="rounded-full border border-[#082719]/10 bg-white px-4 py-2 text-xs font-extrabold text-[#174A30] shadow-sm">
+            {filteredUsers.length} record{filteredUsers.length === 1 ? "" : "s"}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 overflow-hidden rounded-[28px] border border-white/80 bg-white/90 shadow-[0_18px_45px_rgba(8,39,25,0.12)] backdrop-blur-xl">
+        <div className="h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
+
+        <div className="flex flex-col gap-2 border-b border-[#082719]/10 bg-[#F8FBF9]/90 px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D7A84D]">
+              Verification Queue
+            </p>
+            <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[#082719]">
+              Hotel User ID Requests
+            </h3>
+          </div>
+
+          <p className="rounded-full border border-[#082719]/10 bg-white px-4 py-2 text-xs font-extrabold text-[#174A30] shadow-sm">
+            {filteredUsers.length} request{filteredUsers.length === 1 ? "" : "s"}
+          </p>
+        </div>
+
+        <div className="overflow-x-auto bg-white/70">
+          <table className="w-full min-w-[1320px] border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr className="bg-[#F6F3EA] text-left">
+                <Th>Name</Th>
+                <Th>Username</Th>
+                <Th>Email</Th>
+                <Th>Phone</Th>
+                <Th>Email</Th>
+                <Th>ID Status</Th>
+                <Th>Uploaded ID</Th>
+                <Th>AI Check</Th>
+                <Th>Remarks</Th>
+                <Th className="text-right">Actions</Th>
               </tr>
             </thead>
 
-            <tbody>
+            <tbody className="divide-y divide-[#082719]/5">
               {loading ? (
                 <tr>
-                  <td
-                    colSpan="10"
-                    className="px-4 py-8 text-center text-sm text-[#355E3B]/70"
-                  >
+                  <td colSpan={10} className="p-8 text-center text-black/50">
                     Loading users...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="10"
-                    className="px-4 py-8 text-center text-sm text-[#355E3B]/70"
-                  >
-                    No users found.
+                  <td colSpan={10} className="p-8 text-center text-black/50">
+                    <p className="font-bold text-[#082719]">No users found.</p>
+                    <p className="mt-1 text-xs">
+                      Try clearing the search field or refreshing the records.
+                    </p>
                   </td>
                 </tr>
               ) : (
@@ -767,8 +864,7 @@ export default function HotelAdminIDVerify() {
                   const aiApproved = isAiAutoApproved(verification);
                   const aiRejected = isRejectedByAi(verification);
 
-                  const status =
-                    user?.idVerificationStatus || "not_submitted";
+                  const status = user?.idVerificationStatus || "not_submitted";
 
                   const fullName =
                     `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
@@ -781,37 +877,38 @@ export default function HotelAdminIDVerify() {
                   );
 
                   return (
-                    <tr
-                      key={user._id}
-                      className="border-b border-[#edf0ea] align-top"
-                    >
-                      <td className="px-4 py-4 text-sm text-[#355E3B]">
-                        {fullName}
-                      </td>
+                    <tr key={user._id} className="group transition hover:bg-[#F8FBF9]">
+                      <Td>
+                        <p className="font-extrabold text-[#082719]">{fullName}</p>
+                      </Td>
 
-                      <td className="px-4 py-4 text-sm text-[#355E3B]">
-                        {user?.username || "—"}
-                      </td>
+                      <Td>{user?.username || "—"}</Td>
 
-                      <td className="px-4 py-4 text-sm text-[#355E3B]">
-                        {user?.email || "—"}
-                      </td>
+                      <Td>
+                        <p className="max-w-[210px] truncate" title={user?.email || ""}>
+                          {user?.email || "—"}
+                        </p>
+                      </Td>
 
-                      <td className="px-4 py-4 text-sm text-[#355E3B]">
-                        {user?.phone || "—"}
-                      </td>
+                      <Td>{user?.phone || "—"}</Td>
 
-                      <td className="px-4 py-4 text-sm text-[#355E3B]">
-                        {user?.emailVerified ||
-                        user?.isEmailVerified ||
-                        user?.verified
-                          ? "Yes"
-                          : "No"}
-                      </td>
-
-                      <td className="px-4 py-4 text-sm">
+                      <Td>
                         <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ${getStatusChip(
+                          className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-extrabold ${
+                            user?.emailVerified || user?.isEmailVerified || user?.verified
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-amber-200 bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {user?.emailVerified || user?.isEmailVerified || user?.verified
+                            ? "Verified"
+                            : "Not verified"}
+                        </span>
+                      </Td>
+
+                      <Td>
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-[11px] font-extrabold capitalize ${getStatusChip(
                             status
                           )}`}
                         >
@@ -825,15 +922,15 @@ export default function HotelAdminIDVerify() {
                             ? "Rejected"
                             : "Not Submitted"}
                         </span>
-                      </td>
+                      </Td>
 
-                      <td className="px-4 py-4 text-sm text-[#355E3B]">
+                      <Td>
                         {hasFile ? (
                           <div className="flex flex-col gap-2">
                             <button
                               type="button"
                               onClick={() => handlePreview(user)}
-                              className="rounded-lg bg-[#355E3B] px-3 py-2 text-xs font-semibold text-white hover:opacity-95"
+                              className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-[#D7A84D]/70 bg-white text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#FFF7DC] hover:shadow-md"
                             >
                               View ID
                             </button>
@@ -841,35 +938,34 @@ export default function HotelAdminIDVerify() {
                             <button
                               type="button"
                               onClick={() => handleOpenFile(user)}
-                              className="text-left text-xs font-semibold text-[#355E3B] underline"
+                              className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-[#082719]/15 bg-[#F8FBF9] text-xs font-extrabold text-[#174A30] shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
                             >
-                              Open file
+                              Open File
                             </button>
 
-                            <span className="text-[11px] text-[#355E3B]/70">
-                              {verification?.idFile?.originalName ||
-                                "Uploaded file"}
+                            <span className="max-w-[150px] truncate text-[11px] font-bold text-black/45" title={verification?.idFile?.originalName || "Uploaded file"}>
+                              {verification?.idFile?.originalName || "Uploaded file"}
                             </span>
                           </div>
                         ) : (
                           "—"
                         )}
-                      </td>
+                      </Td>
 
-                      <td className="min-w-[280px] px-4 py-4 text-sm text-[#355E3B]">
+                      <Td className="min-w-[280px]">
                         {hasFile ? (
                           <div className="space-y-2">
                             <span
-                              className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getAiChip(
+                              className={`inline-flex rounded-full px-3 py-1 text-[11px] font-extrabold ${getAiChip(
                                 verification
                               )}`}
                             >
                               {getAiLabel(verification)}
                             </span>
 
-                            <div className="space-y-1 text-xs text-[#355E3B]/80">
+                            <div className="space-y-1 text-xs font-semibold text-black/60">
                               <p>
-                                <span className="font-bold">Decision:</span>{" "}
+                                <span className="font-extrabold text-[#082719]">Decision:</span>{" "}
                                 <span className="capitalize">
                                   {aiApproved
                                     ? "Approve"
@@ -878,42 +974,40 @@ export default function HotelAdminIDVerify() {
                               </p>
 
                               <p>
-                                <span className="font-bold">Risk:</span>{" "}
+                                <span className="font-extrabold text-[#082719]">Risk:</span>{" "}
                                 <span className="capitalize">
                                   {formatValue(verification?.aiRiskLevel)}
                                 </span>
                               </p>
 
                               <p>
-                                <span className="font-bold">Score:</span>{" "}
-                                {Number.isFinite(
-                                  Number(verification?.confidenceScore)
-                                )
+                                <span className="font-extrabold text-[#082719]">Score:</span>{" "}
+                                {Number.isFinite(Number(verification?.confidenceScore))
                                   ? `${verification.confidenceScore}%`
                                   : "—"}
                               </p>
 
                               {aiApproved && status !== "verified" ? (
-                                <p className="font-bold text-emerald-700">
-                                  This ID passed AI auto-approval rules.
+                                <p className="font-extrabold text-emerald-700">
+                                  Passed AI auto-approval rules.
                                 </p>
                               ) : null}
 
                               {aiRejected ? (
-                                <p className="font-bold text-rose-700">
+                                <p className="font-extrabold text-rose-700">
                                   AI marked this ID as unsafe or invalid.
                                 </p>
                               ) : null}
                             </div>
 
                             {verification?.aiSummary ? (
-                              <p className="text-xs leading-relaxed text-[#355E3B]/70">
+                              <p className="text-xs font-semibold leading-relaxed text-black/50">
                                 {verification.aiSummary}
                               </p>
                             ) : null}
 
                             {verification?.aiError ? (
-                              <p className="text-xs font-semibold text-rose-700">
+                              <p className="text-xs font-extrabold text-rose-700">
                                 {verification.aiError}
                               </p>
                             ) : null}
@@ -923,46 +1017,45 @@ export default function HotelAdminIDVerify() {
                                 type="button"
                                 onClick={() => handleRunAiCheck(user)}
                                 disabled={aiBusy || !hasFile}
-                                className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex h-10 w-[132px] items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F4D484] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 {aiBusy
-                                  ? "Checking AI..."
-                                  : verification?.aiConnectionStatus ===
-                                    "connected"
-                                  ? "Rerun AI Check"
-                                  : "Run AI Check"}
+                                  ? "Checking..."
+                                  : verification?.aiConnectionStatus === "connected"
+                                  ? "Rerun AI"
+                                  : "Run AI"}
                               </button>
                             ) : null}
                           </div>
                         ) : (
                           "—"
                         )}
-                      </td>
+                      </Td>
 
-                      <td className="max-w-[280px] px-4 py-4 text-sm text-[#355E3B]/80">
-                        {user?.idVerificationRemarks || "—"}
-                      </td>
+                      <Td className="max-w-[240px]">
+                        <p className="line-clamp-4 text-xs font-semibold leading-5 text-black/55">
+                          {user?.idVerificationRemarks || "—"}
+                        </p>
+                      </Td>
 
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-2">
+                      <Td className="text-right">
+                        <div className="flex flex-col items-end justify-center gap-2">
                           {status === "verified" ? (
-                            <span className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+                            <span className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-xs font-extrabold text-emerald-700">
                               Verified
                             </span>
                           ) : aiApproved && !aiRejected ? (
-                            <span className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
-                              {autoApproving
-                                ? "Auto Approving..."
-                                : "AI Approved"}
+                            <span className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-xs font-extrabold text-emerald-700">
+                              {autoApproving ? "Auto..." : "AI Approved"}
                             </span>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleApprove(user)}
                               disabled={isBusy || !hasFile || aiRejected}
-                              className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-[#235F3E] bg-[#235F3E] text-xs font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#174A30] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              {isBusy ? "Processing..." : "Approve"}
+                              {isBusy ? "Saving..." : "Approve"}
                             </button>
                           )}
 
@@ -971,13 +1064,13 @@ export default function HotelAdminIDVerify() {
                               type="button"
                               onClick={() => openRejectModal(user._id)}
                               disabled={isBusy || !hasFile}
-                              className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F4D484] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Reject
                             </button>
                           ) : null}
                         </div>
-                      </td>
+                      </Td>
                     </tr>
                   );
                 })
@@ -988,13 +1081,14 @@ export default function HotelAdminIDVerify() {
       </div>
 
       {rejectingUserId ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="font-['Montserrat',sans-serif] text-xl font-extrabold text-[#355E3B]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-white/80 bg-white p-6 shadow-2xl">
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
+            <h2 className="text-xl font-black tracking-[-0.04em] text-[#082719]">
               Reject ID Verification
             </h2>
 
-            <p className="mt-2 text-sm text-[#355E3B]/80">
+            <p className="mt-2 text-sm font-semibold text-black/55">
               Add a reason for rejection.
             </p>
 
@@ -1003,14 +1097,14 @@ export default function HotelAdminIDVerify() {
               onChange={(e) => setRejectRemarks(e.target.value)}
               rows={5}
               placeholder="Enter rejection remarks..."
-              className="mt-4 w-full rounded-xl border border-[#d7dbd2] px-4 py-3 outline-none focus:border-[#355E3B]"
+              className="mt-4 w-full rounded-2xl border border-black/10 bg-[#F8FBF9] px-4 py-3 text-sm font-semibold text-[#082719] outline-none focus:ring-2 focus:ring-[#082719]/20"
             />
 
             <div className="mt-5 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={closeRejectModal}
-                className="rounded-xl border border-[#355E3B] px-4 py-2 text-sm font-semibold text-[#355E3B]"
+                className="inline-flex h-10 min-w-[104px] items-center justify-center rounded-full border border-[#082719]/15 bg-white px-4 text-xs font-extrabold text-[#082719] shadow-sm transition hover:bg-[#F8FBF9]"
               >
                 Cancel
               </button>
@@ -1019,7 +1113,7 @@ export default function HotelAdminIDVerify() {
                 type="button"
                 onClick={handleReject}
                 disabled={actionLoadingId === rejectingUserId}
-                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="inline-flex h-10 min-w-[128px] items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] px-4 text-xs font-extrabold text-[#082719] shadow-sm transition hover:bg-[#F4D484] disabled:opacity-50"
               >
                 {actionLoadingId === rejectingUserId
                   ? "Rejecting..."
@@ -1031,44 +1125,39 @@ export default function HotelAdminIDVerify() {
       ) : null}
 
       {previewUser ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-6">
-          <div className="max-h-full w-full max-w-4xl overflow-auto rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
+          <div className="relative max-h-full w-full max-w-4xl overflow-auto rounded-[28px] border border-white/80 bg-white p-5 shadow-2xl">
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <h2 className="font-['Montserrat',sans-serif] text-xl font-extrabold text-[#355E3B]">
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D7A84D]">
                   Uploaded ID Preview
-                </h2>
-
-                <p className="text-sm text-[#355E3B]/80">
+                </p>
+                <h2 className="mt-1 text-xl font-black tracking-[-0.04em] text-[#082719]">
                   {`${previewUser?.firstName || ""} ${
                     previewUser?.lastName || ""
                   }`.trim() || "User"}
-                </p>
+                </h2>
 
                 {previewUser?.hotelIdVerificationId ? (
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     <span
-                      className={`rounded-full px-3 py-1 font-semibold ${getAiChip(
+                      className={`rounded-full px-3 py-1 font-extrabold ${getAiChip(
                         previewUser.hotelIdVerificationId
                       )}`}
                     >
                       {getAiLabel(previewUser.hotelIdVerificationId)}
                     </span>
 
-                    <span className="rounded-full bg-[#f6f6f3] px-3 py-1 font-semibold text-[#355E3B]">
-                      Decision:{" "}
+                    <span className="rounded-full border border-[#082719]/10 bg-[#F8FBF9] px-3 py-1 font-extrabold text-[#082719]">
+                      Decision: {" "}
                       {isAiAutoApproved(previewUser.hotelIdVerificationId)
                         ? "approve"
-                        : formatValue(
-                            previewUser.hotelIdVerificationId.aiDecision
-                          )}
+                        : formatValue(previewUser.hotelIdVerificationId.aiDecision)}
                     </span>
 
-                    <span className="rounded-full bg-[#f6f6f3] px-3 py-1 font-semibold text-[#355E3B]">
-                      Risk:{" "}
-                      {formatValue(
-                        previewUser.hotelIdVerificationId.aiRiskLevel
-                      )}
+                    <span className="rounded-full border border-[#082719]/10 bg-[#F8FBF9] px-3 py-1 font-extrabold text-[#082719]">
+                      Risk: {formatValue(previewUser.hotelIdVerificationId.aiRiskLevel)}
                     </span>
                   </div>
                 ) : null}
@@ -1077,21 +1166,21 @@ export default function HotelAdminIDVerify() {
               <button
                 type="button"
                 onClick={closePreview}
-                className="rounded-xl border border-[#355E3B] px-4 py-2 text-sm font-semibold text-[#355E3B]"
+                className="inline-flex h-10 min-w-[96px] items-center justify-center rounded-full border border-[#082719]/15 bg-white px-4 text-xs font-extrabold text-[#082719] shadow-sm transition hover:bg-[#F8FBF9]"
               >
                 Close
               </button>
             </div>
 
             {previewUser?.hotelIdVerificationId?.aiSummary ? (
-              <div className="mb-4 rounded-xl border border-[#d7dbd2] bg-[#f6f6f3] p-4 text-sm text-[#355E3B]">
+              <div className="mb-4 rounded-2xl border border-[#082719]/10 bg-[#F8FBF9] p-4 text-sm text-[#082719]">
                 <p className="font-extrabold">AI ID Pre-check Summary</p>
-                <p className="mt-1 leading-relaxed">
+                <p className="mt-1 font-semibold leading-relaxed text-black/60">
                   {previewUser.hotelIdVerificationId.aiSummary}
                 </p>
 
                 {previewUser.hotelIdVerificationId.aiError ? (
-                  <p className="mt-2 text-xs font-semibold text-rose-700">
+                  <p className="mt-2 text-xs font-extrabold text-rose-700">
                     {previewUser.hotelIdVerificationId.aiError}
                   </p>
                 ) : null}
@@ -1099,39 +1188,39 @@ export default function HotelAdminIDVerify() {
             ) : null}
 
             {previewLoading ? (
-              <div className="rounded-xl bg-[#f6f6f3] p-6 text-sm text-[#355E3B]/80">
+              <div className="rounded-2xl bg-[#F8FBF9] p-8 text-center text-sm font-semibold text-black/55">
                 Loading preview...
               </div>
             ) : !previewUrl ? (
-              <div className="rounded-xl bg-[#f6f6f3] p-6 text-sm text-[#355E3B]/80">
+              <div className="rounded-2xl bg-[#F8FBF9] p-8 text-center text-sm font-semibold text-black/55">
                 No uploaded file found.
               </div>
             ) : isImageMime(previewMimeType) ? (
               <img
                 src={previewUrl}
                 alt="Uploaded ID"
-                className="max-h-[75vh] w-full rounded-xl bg-[#f6f6f3] object-contain"
+                className="max-h-[75vh] w-full rounded-2xl bg-[#F8FBF9] object-contain"
               />
             ) : isPdfMime(previewMimeType) ? (
               <div className="space-y-4">
                 <iframe
                   src={previewUrl}
                   title="Uploaded ID PDF"
-                  className="h-[75vh] w-full rounded-xl border"
+                  className="h-[75vh] w-full rounded-2xl border border-black/10 bg-[#F8FBF9]"
                 />
 
                 <a
                   href={previewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-block rounded-lg bg-[#355E3B] px-4 py-2 text-sm font-semibold text-white"
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#235F3E] bg-[#235F3E] px-5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#174A30]"
                 >
                   Open file in new tab
                 </a>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="rounded-xl bg-[#f6f6f3] p-6 text-sm text-[#355E3B]/80">
+                <div className="rounded-2xl bg-[#F8FBF9] p-8 text-center text-sm font-semibold text-black/55">
                   Preview is not supported for this file type.
                 </div>
 
@@ -1139,7 +1228,7 @@ export default function HotelAdminIDVerify() {
                   href={previewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-block rounded-lg bg-[#355E3B] px-4 py-2 text-sm font-semibold text-white"
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#235F3E] bg-[#235F3E] px-5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#174A30]"
                 >
                   Open file in new tab
                 </a>

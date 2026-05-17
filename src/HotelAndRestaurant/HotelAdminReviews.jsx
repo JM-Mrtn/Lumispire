@@ -223,160 +223,617 @@ const HotelAdminReviews = () => {
       title="Guest Reviews"
       subtitle="Read guest feedback, filter by rating, and save admin replies."
       activePage="reviews"
-      maxWidth="max-w-6xl"
+      maxWidth="max-w-7xl"
       actions={
         <button
           type="button"
           onClick={() => fetchReviews({ targetPage: page, targetTab: tab })}
           disabled={loading}
-          className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+          className="ltc-admin-refresh"
         >
-          {loading ? "REFRESHING..." : "REFRESH"}
+          {loading ? "Refreshing..." : "Refresh"}
         </button>
       }
     >
-      {status.message ? (
-        <div className={`mb-5 rounded-xl border px-4 py-3 text-sm ${statusStyles}`}>
-          {status.message}
-        </div>
-      ) : null}
+      <style>{`
+        .ltc-reviews-page {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --muted: #667085;
+          --glass: rgba(255,255,255,.78);
+          --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+          --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+          --radius: 24px;
+          --ease: cubic-bezier(.22,1,.36,1);
+        }
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <StatCard label="Total Reviews" value={summary.totalReviews} />
-        <StatCard
-          label="Average Rating"
-          value={
-            summary.averageRating
-              ? `${Number(summary.averageRating).toFixed(1)} ★`
-              : "—"
+        .ltc-reviews-page * {
+          box-sizing: border-box;
+        }
+
+        .ltc-admin-refresh {
+          min-height: 42px;
+          border-radius: 999px;
+          border: 0;
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 16px 35px rgba(215,168,77,.24);
+          padding: 0 22px;
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+          cursor: pointer;
+          transition: .28s var(--ease);
+        }
+
+        .ltc-admin-refresh:hover {
+          transform: translateY(-3px);
+        }
+
+        .ltc-admin-refresh:disabled {
+          cursor: not-allowed;
+          opacity: .6;
+          transform: none;
+        }
+
+        .ltc-admin-alert {
+          margin-bottom: 18px;
+          border-radius: 20px;
+          border: 1px solid rgba(215,168,77,.32);
+          background: rgba(244,212,132,.18);
+          color: var(--green-900);
+          padding: 14px 18px;
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .ltc-admin-alert.error {
+          border-color: rgba(225,29,72,.24);
+          background: rgba(255,241,242,.9);
+          color: #be123c;
+        }
+
+        .ltc-admin-alert.success {
+          border-color: rgba(35,95,62,.24);
+          background: rgba(236,253,245,.9);
+          color: var(--green-800);
+        }
+
+        .ltc-admin-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 18px;
+        }
+
+        .ltc-admin-stat-card,
+        .ltc-admin-panel,
+        .ltc-admin-review-card,
+        .ltc-admin-empty,
+        .ltc-admin-pagination {
+          position: relative;
+          overflow: hidden;
+          border-radius: var(--radius);
+          background: var(--glass);
+          border: 1px solid rgba(255,255,255,.76);
+          box-shadow: var(--shadow-md);
+          backdrop-filter: blur(18px);
+          animation: ltcAppleReveal .7s var(--ease) both;
+        }
+
+        .ltc-admin-stat-card {
+          min-height: 126px;
+          padding: 26px;
+          transition: transform .38s var(--ease), box-shadow .38s var(--ease), border-color .38s var(--ease), background .38s var(--ease);
+        }
+
+        .ltc-admin-stat-card::before,
+        .ltc-admin-panel::before,
+        .ltc-admin-review-card::before,
+        .ltc-admin-pagination::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 6px;
+          background: linear-gradient(90deg,var(--green-700),var(--gold));
+        }
+
+        .ltc-admin-stat-card::after,
+        .ltc-admin-review-card::after {
+          content: "";
+          position: absolute;
+          width: 170px;
+          height: 170px;
+          right: -80px;
+          bottom: -80px;
+          border-radius: 50%;
+          background:
+            radial-gradient(circle, rgba(215,168,77,.22), transparent 58%),
+            radial-gradient(circle, rgba(47,117,76,.18), transparent 66%);
+          opacity: .85;
+          transition: transform .45s var(--ease), opacity .45s var(--ease);
+        }
+
+        .ltc-admin-stat-card:hover,
+        .ltc-admin-review-card:hover {
+          transform: translateY(-10px) scale(1.01);
+          box-shadow: 0 34px 85px rgba(8,39,25,.20);
+          border-color: rgba(215,168,77,.54);
+          background: rgba(255,255,255,.92);
+        }
+
+        .ltc-admin-stat-card:hover::after,
+        .ltc-admin-review-card:hover::after {
+          transform: translate(-18px, -16px) scale(1.18);
+        }
+
+        .ltc-admin-stat-title,
+        .ltc-admin-panel-kicker,
+        .ltc-admin-review-kicker {
+          position: relative;
+          z-index: 1;
+          margin: 0;
+          color: rgba(16,24,40,.46);
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .18em;
+        }
+
+        .ltc-admin-stat-value {
+          position: relative;
+          z-index: 1;
+          margin: 12px 0 0;
+          color: var(--green-800);
+          font-size: 42px;
+          line-height: 1;
+          font-weight: 900;
+          letter-spacing: -.055em;
+        }
+
+        .ltc-admin-stat-note,
+        .ltc-admin-muted {
+          position: relative;
+          z-index: 1;
+          margin: 10px 0 0;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .ltc-admin-panel {
+          margin-top: 22px;
+          padding: 24px;
+        }
+
+        .ltc-admin-panel-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 18px;
+        }
+
+        .ltc-admin-filter-row,
+        .ltc-admin-page-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 9px;
+        }
+
+        .ltc-admin-filter,
+        .ltc-admin-page-btn {
+          min-height: 38px;
+          border-radius: 999px;
+          border: 1px solid rgba(35,95,62,.14);
+          background: rgba(255,255,255,.8);
+          color: rgba(16,24,40,.58);
+          padding: 0 15px;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: .25s var(--ease);
+        }
+
+        .ltc-admin-filter:hover,
+        .ltc-admin-filter.active,
+        .ltc-admin-page-btn:hover,
+        .ltc-admin-page-btn.active {
+          color: #102418;
+          border-color: rgba(215,168,77,.54);
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          transform: translateY(-2px);
+        }
+
+        .ltc-admin-page-btn:disabled {
+          cursor: not-allowed;
+          opacity: .45;
+          transform: none;
+        }
+
+        .ltc-admin-page-dots {
+          display: inline-flex;
+          min-height: 38px;
+          align-items: center;
+          color: rgba(16,24,40,.4);
+          padding: 0 6px;
+          font-weight: 900;
+        }
+
+        .ltc-admin-result-count {
+          margin: 0;
+          color: rgba(16,24,40,.46);
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .12em;
+        }
+
+        .ltc-admin-review-list {
+          display: grid;
+          gap: 18px;
+          margin-top: 22px;
+        }
+
+        .ltc-admin-review-card {
+          padding: 26px;
+          transition: transform .38s var(--ease), box-shadow .38s var(--ease), border-color .38s var(--ease), background .38s var(--ease);
+        }
+
+        .ltc-admin-review-top {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          justify-content: space-between;
+          gap: 18px;
+          align-items: flex-start;
+        }
+
+        .ltc-admin-review-title {
+          margin: 10px 0 0;
+          color: var(--green-950);
+          font-size: 26px;
+          line-height: 1.1;
+          font-weight: 900;
+          letter-spacing: -.045em;
+        }
+
+        .ltc-admin-review-meta {
+          margin: 7px 0 0;
+          color: rgba(16,24,40,.56);
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .ltc-admin-rating-box {
+          flex: 0 0 auto;
+          min-width: 132px;
+          border-radius: 20px;
+          border: 1px solid rgba(215,168,77,.25);
+          background: rgba(244,212,132,.18);
+          padding: 12px 16px;
+          text-align: center;
+        }
+
+        .ltc-admin-rating-label {
+          margin: 0;
+          color: rgba(124,74,3,.72);
+          font-size: 10px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .15em;
+        }
+
+        .ltc-admin-rating-stars {
+          margin: 4px 0 0;
+          color: var(--gold);
+          font-size: 22px;
+          line-height: 1;
+          font-weight: 900;
+          letter-spacing: .03em;
+        }
+
+        .ltc-admin-text-box {
+          position: relative;
+          z-index: 1;
+          margin-top: 18px;
+          border-radius: 22px;
+          border: 1px solid rgba(35,95,62,.08);
+          background:
+            radial-gradient(circle at 100% 0%, rgba(215,168,77,.10), transparent 26%),
+            rgba(246,250,247,.88);
+          padding: 18px;
+        }
+
+        .ltc-admin-text-label,
+        .ltc-admin-reply-label {
+          margin: 0;
+          color: rgba(16,24,40,.46);
+          font-size: 11px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .16em;
+        }
+
+        .ltc-admin-text-value {
+          margin: 8px 0 0;
+          color: rgba(16,24,40,.68);
+          font-size: 14px;
+          font-weight: 700;
+          line-height: 1.75;
+        }
+
+        .ltc-admin-reply-block {
+          position: relative;
+          z-index: 1;
+          margin-top: 18px;
+        }
+
+        .ltc-admin-reply-textarea {
+          margin-top: 9px;
+          width: 100%;
+          min-height: 110px;
+          resize: vertical;
+          border: 1px solid rgba(35,95,62,.14);
+          background: rgba(255,255,255,.88);
+          color: var(--green-950);
+          border-radius: 22px;
+          padding: 14px 16px;
+          font-size: 14px;
+          font-weight: 700;
+          outline: none;
+          transition: .25s var(--ease);
+        }
+
+        .ltc-admin-reply-textarea:focus {
+          border-color: rgba(35,95,62,.46);
+          background: white;
+          box-shadow: 0 0 0 4px rgba(35,95,62,.10);
+        }
+
+        .ltc-admin-save-wrap {
+          margin-top: 12px;
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .ltc-admin-save-btn {
+          min-height: 40px;
+          min-width: 126px;
+          border-radius: 999px;
+          border: 0;
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 12px 24px rgba(215,168,77,.20);
+          padding: 0 20px;
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .04em;
+          cursor: pointer;
+          transition: .25s var(--ease);
+        }
+
+        .ltc-admin-save-btn:hover {
+          transform: translateY(-2px);
+        }
+
+        .ltc-admin-save-btn:disabled {
+          cursor: not-allowed;
+          opacity: .6;
+          transform: none;
+        }
+
+        .ltc-admin-empty {
+          margin-top: 22px;
+          padding: 34px;
+          text-align: center;
+        }
+
+        .ltc-admin-empty-title {
+          margin: 0;
+          color: var(--green-800);
+          font-size: 20px;
+          font-weight: 900;
+        }
+
+        .ltc-admin-pagination {
+          margin-top: 22px;
+          padding: 18px;
+        }
+
+        .ltc-admin-pagination-inner {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+        }
+
+        .ltc-admin-pagination-text {
+          margin: 0;
+          color: rgba(16,24,40,.56);
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        @keyframes ltcAppleReveal {
+          from { opacity: 0; transform: translateY(34px) scale(.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @media (max-width: 1000px) {
+          .ltc-admin-stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
-        />
-        <StatCard label="Low Ratings" value={summary.lowRatings} />
-        <StatCard label="No Reply" value={summary.noReply} />
-      </div>
+        }
 
-      <div className="mt-6 rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-2">
-            {REVIEW_TABS.map((item) => (
-              <Tab
-                key={item.id}
-                label={item.label}
-                active={tab === item.id}
-                onClick={() => handleTabChange(item.id)}
-              />
-            ))}
+        @media (max-width: 700px) {
+          .ltc-admin-stats-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .ltc-admin-panel-head,
+          .ltc-admin-review-top,
+          .ltc-admin-pagination-inner {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .ltc-admin-rating-box {
+            width: 100%;
+          }
+
+          .ltc-admin-review-card,
+          .ltc-admin-panel,
+          .ltc-admin-stat-card {
+            padding: 20px;
+          }
+        }
+      `}</style>
+
+      <div className="ltc-reviews-page">
+        {status.message ? (
+          <div className={`ltc-admin-alert ${status.type || ""}`}>
+            {status.message}
           </div>
+        ) : null}
 
-          <p className="text-xs font-bold uppercase tracking-wide text-black/45">
-            Showing {reviews.length} of {summary.filteredTotal} result
-            {summary.filteredTotal === 1 ? "" : "s"}
-          </p>
+        <div className="ltc-admin-stats-grid">
+          <StatCard label="Total Reviews" value={summary.totalReviews} note="All submitted guest feedback" />
+          <StatCard
+            label="Average Rating"
+            value={
+              summary.averageRating
+                ? `${Number(summary.averageRating).toFixed(1)} ★`
+                : "—"
+            }
+            note="Overall guest satisfaction"
+          />
+          <StatCard label="Low Ratings" value={summary.lowRatings} note="Needs review or follow-up" />
+          <StatCard label="No Reply" value={summary.noReply} note="Waiting for admin reply" />
         </div>
-      </div>
 
-      <div className="mt-6 space-y-5">
-        {loading ? (
-          <div className="rounded-2xl border border-black/10 bg-white p-8 text-center text-black/50">
-            Loading reviews...
-          </div>
-        ) : reviews.length === 0 ? (
-          <div className="rounded-2xl border border-black/10 bg-white p-8 text-center">
-            <p className="font-bold text-[#2A4F33]">No reviews found.</p>
-          </div>
-        ) : (
-          reviews.map((review) => (
-            <div
-              key={review._id}
-              className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm"
-            >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/40">
-                    {review.serviceType || review.bookingType}
-                  </p>
-                  <h3 className="mt-2 text-2xl font-extrabold text-[#2A4F33]">
-                    {review.bookingTitle || "Booking Review"}
-                  </h3>
-                  <p className="mt-1 text-sm text-black/50">
-                    {review.firstName} {review.lastName} • {review.email}
-                  </p>
-                  <p className="mt-1 text-xs text-black/45">
-                    {formatDate(review.bookingDate)} • {review.bookingTime || "—"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-amber-50 px-4 py-3 text-center">
-                  <p className="text-xs font-bold uppercase text-amber-700/70">
-                    Rating
-                  </p>
-                  <p className="text-2xl font-extrabold text-amber-500">
-                    {"★".repeat(Number(review.rating || 0))}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-2xl bg-black/[0.035] p-4">
-                <p className="text-xs font-extrabold uppercase tracking-wide text-black/40">
-                  Guest Review
-                </p>
-                <p className="mt-2 text-sm leading-6 text-black/70">
-                  {review.reviewText || "No review text."}
-                </p>
-              </div>
-
-              <div className="mt-5">
-                <label className="mb-2 block text-xs font-extrabold uppercase tracking-wide text-[#2A4F33]/70">
-                  Admin Reply
-                </label>
-
-                <textarea
-                  value={replyDrafts[review._id] || ""}
-                  onChange={(e) =>
-                    setReplyDrafts((prev) => ({
-                      ...prev,
-                      [review._id]: e.target.value.slice(0, 1000),
-                    }))
-                  }
-                  rows={3}
-                  placeholder="Write a reply to the guest..."
-                  className="w-full rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2A4F33]/20"
+        <section className="ltc-admin-panel">
+          <div className="ltc-admin-panel-head">
+            <div className="ltc-admin-filter-row">
+              {REVIEW_TABS.map((item) => (
+                <Tab
+                  key={item.id}
+                  label={item.label}
+                  active={tab === item.id}
+                  onClick={() => handleTabChange(item.id)}
                 />
-
-                <div className="mt-3 flex justify-end">
-                  <button
-                    onClick={() => saveReply(review._id)}
-                    disabled={busyId === review._id}
-                    className="h-10 rounded-full bg-[#2A4F33] px-6 text-sm font-extrabold text-white hover:opacity-90 disabled:opacity-60"
-                  >
-                    {busyId === review._id ? "Saving..." : "Save Reply"}
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          ))
-        )}
-      </div>
 
-      {!loading && pagination.totalItems > 0 ? (
-        <PaginationBar
-          page={pagination.page}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.totalItems}
-          onPageChange={setPage}
-        />
-      ) : null}
+            <p className="ltc-admin-result-count">
+              Showing {reviews.length} of {summary.filteredTotal} result
+              {summary.filteredTotal === 1 ? "" : "s"}
+            </p>
+          </div>
+        </section>
+
+        <div className="ltc-admin-review-list">
+          {loading ? (
+            <div className="ltc-admin-empty">
+              <p className="ltc-admin-empty-title">Loading reviews...</p>
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="ltc-admin-empty">
+              <p className="ltc-admin-empty-title">No reviews found.</p>
+            </div>
+          ) : (
+            reviews.map((review) => (
+              <article key={review._id} className="ltc-admin-review-card">
+                <div className="ltc-admin-review-top">
+                  <div>
+                    <p className="ltc-admin-review-kicker">
+                      {review.serviceType || review.bookingType}
+                    </p>
+                    <h3 className="ltc-admin-review-title">
+                      {review.bookingTitle || "Booking Review"}
+                    </h3>
+                    <p className="ltc-admin-review-meta">
+                      {review.firstName} {review.lastName} • {review.email}
+                    </p>
+                    <p className="ltc-admin-review-meta">
+                      {formatDate(review.bookingDate)} • {review.bookingTime || "—"}
+                    </p>
+                  </div>
+
+                  <div className="ltc-admin-rating-box">
+                    <p className="ltc-admin-rating-label">Rating</p>
+                    <p className="ltc-admin-rating-stars">
+                      {"★".repeat(Number(review.rating || 0)) || "—"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="ltc-admin-text-box">
+                  <p className="ltc-admin-text-label">Guest Review</p>
+                  <p className="ltc-admin-text-value">
+                    {review.reviewText || "No review text."}
+                  </p>
+                </div>
+
+                <div className="ltc-admin-reply-block">
+                  <label className="ltc-admin-reply-label">
+                    Admin Reply
+                  </label>
+
+                  <textarea
+                    value={replyDrafts[review._id] || ""}
+                    onChange={(e) =>
+                      setReplyDrafts((prev) => ({
+                        ...prev,
+                        [review._id]: e.target.value.slice(0, 1000),
+                      }))
+                    }
+                    rows={3}
+                    placeholder="Write a reply to the guest..."
+                    className="ltc-admin-reply-textarea"
+                  />
+
+                  <div className="ltc-admin-save-wrap">
+                    <button
+                      type="button"
+                      onClick={() => saveReply(review._id)}
+                      disabled={busyId === review._id}
+                      className="ltc-admin-save-btn"
+                    >
+                      {busyId === review._id ? "Saving..." : "Save Reply"}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+
+        {!loading && pagination.totalItems > 0 ? (
+          <PaginationBar
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            onPageChange={setPage}
+          />
+        ) : null}
+      </div>
     </HotelAdminShell>
   );
 };
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, note }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
-      <p className="text-xs font-extrabold uppercase tracking-wide text-black/45">
-        {label}
-      </p>
-      <p className="mt-2 text-3xl font-extrabold text-[#2A4F33]">{value}</p>
+    <div className="ltc-admin-stat-card">
+      <p className="ltc-admin-stat-title">{label}</p>
+      <p className="ltc-admin-stat-value">{value}</p>
+      {note ? <p className="ltc-admin-stat-note">{note}</p> : null}
     </div>
   );
 }
@@ -384,12 +841,9 @@ function StatCard({ label, value }) {
 function Tab({ label, active, onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`h-9 rounded-full border px-5 text-xs font-extrabold ${
-        active
-          ? "border-[#2A4F33] bg-[#2A4F33] text-white"
-          : "border-black/10 bg-white text-black/60 hover:bg-black/5"
-      }`}
+      className={`ltc-admin-filter ${active ? "active" : ""}`}
     >
       {label}
     </button>
@@ -400,26 +854,26 @@ function PaginationBar({ page, totalPages, totalItems, onPageChange }) {
   const pages = buildPageNumbers(page, totalPages);
 
   return (
-    <div className="mt-6 rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <p className="text-sm font-bold text-black/55">
+    <div className="ltc-admin-pagination">
+      <div className="ltc-admin-pagination-inner">
+        <p className="ltc-admin-pagination-text">
           Page {page} of {totalPages} • {totalItems} total review
           {totalItems === 1 ? "" : "s"}
         </p>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="ltc-admin-page-row">
           <button
             type="button"
             onClick={() => onPageChange(Math.max(1, page - 1))}
             disabled={page <= 1}
-            className="h-9 rounded-full border border-black/10 px-4 text-xs font-extrabold text-black/60 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40"
+            className="ltc-admin-page-btn"
           >
             Previous
           </button>
 
           {pages.map((item, index) =>
             item === "..." ? (
-              <span key={`dots-${index}`} className="px-2 text-black/35">
+              <span key={`dots-${index}`} className="ltc-admin-page-dots">
                 ...
               </span>
             ) : (
@@ -427,11 +881,7 @@ function PaginationBar({ page, totalPages, totalItems, onPageChange }) {
                 key={item}
                 type="button"
                 onClick={() => onPageChange(item)}
-                className={`h-9 min-w-9 rounded-full border px-3 text-xs font-extrabold ${
-                  item === page
-                    ? "border-[#2A4F33] bg-[#2A4F33] text-white"
-                    : "border-black/10 bg-white text-black/60 hover:bg-black/5"
-                }`}
+                className={`ltc-admin-page-btn ${item === page ? "active" : ""}`}
               >
                 {item}
               </button>
@@ -442,7 +892,7 @@ function PaginationBar({ page, totalPages, totalItems, onPageChange }) {
             type="button"
             onClick={() => onPageChange(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
-            className="h-9 rounded-full border border-black/10 px-4 text-xs font-extrabold text-black/60 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40"
+            className="ltc-admin-page-btn"
           >
             Next
           </button>
@@ -451,7 +901,6 @@ function PaginationBar({ page, totalPages, totalItems, onPageChange }) {
     </div>
   );
 }
-
 function buildPageNumbers(page, totalPages) {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, index) => index + 1);
