@@ -72,6 +72,12 @@ export default function HotelContactUs() {
 
   const [contactSending, setContactSending] = useState(false);
   const [contactStatus, setContactStatus] = useState({ type: "", message: "" });
+  const [contactTouched, setContactTouched] = useState({
+    name: false,
+    email: false,
+    subject: false,
+    message: false,
+  });
 
   const API_BASE = useMemo(() => {
     const raw = (
@@ -100,6 +106,50 @@ export default function HotelContactUs() {
     navigate(getHotelToken() ? "/hotel-profile" : "/hotel-login");
   };
 
+  const validateContactField = (key, value) => {
+    const cleanValue = String(value || "").trim();
+
+    if (key === "name") {
+      if (!cleanValue) return "Name is required.";
+      if (cleanValue.length < 2) return "Name must be at least 2 characters.";
+      if (!/^[A-Za-zÑñ .'-]+$/.test(cleanValue)) {
+        return "Name can only contain letters, spaces, apostrophes, periods, and hyphens.";
+      }
+      return "";
+    }
+
+    if (key === "email") {
+      if (!cleanValue) return "Email address is required.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanValue)) {
+        return "Please enter a valid email address.";
+      }
+      return "";
+    }
+
+    if (key === "subject") {
+      if (!cleanValue) return "Subject is required.";
+      if (cleanValue.length < 3) return "Subject must be at least 3 characters.";
+      return "";
+    }
+
+    if (key === "message") {
+      if (!cleanValue) return "Message is required.";
+      if (cleanValue.length < 10) return "Message must be at least 10 characters.";
+      return "";
+    }
+
+    return "";
+  };
+
+  const contactErrors = {
+    name: validateContactField("name", contactForm.name),
+    email: validateContactField("email", contactForm.email),
+    subject: validateContactField("subject", contactForm.subject),
+    message: validateContactField("message", contactForm.message),
+  };
+
+  const hasContactErrors = Object.values(contactErrors).some(Boolean);
+
   const setContactField = (key, value) => {
     setContactForm((prev) => ({
       ...prev,
@@ -107,6 +157,13 @@ export default function HotelContactUs() {
     }));
 
     setContactStatus({ type: "", message: "" });
+  };
+
+  const setContactFieldTouched = (key) => {
+    setContactTouched((prev) => ({
+      ...prev,
+      [key]: true,
+    }));
   };
 
   const handleSendContactMessage = async (event) => {
@@ -117,26 +174,17 @@ export default function HotelContactUs() {
     const subject = contactForm.subject.trim();
     const message = contactForm.message.trim();
 
-    if (!name || !email || !subject || !message) {
-      setContactStatus({
-        type: "error",
-        message: "Please complete all fields.",
-      });
-      return;
-    }
+    setContactTouched({
+      name: true,
+      email: true,
+      subject: true,
+      message: true,
+    });
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (hasContactErrors) {
       setContactStatus({
         type: "error",
-        message: "Please enter a valid email address.",
-      });
-      return;
-    }
-
-    if (message.length < 10) {
-      setContactStatus({
-        type: "error",
-        message: "Message must be at least 10 characters.",
+        message: "Please fix the highlighted fields before sending.",
       });
       return;
     }
@@ -175,6 +223,13 @@ export default function HotelContactUs() {
         email: "",
         subject: "",
         message: "",
+      });
+
+      setContactTouched({
+        name: false,
+        email: false,
+        subject: false,
+        message: false,
       });
     } catch (error) {
       setContactStatus({
@@ -659,6 +714,28 @@ export default function HotelContactUs() {
           letter-spacing: .08em;
         }
 
+        .ltc-field-error {
+          min-height: 17px;
+          color: #b42318;
+          font-size: 11px;
+          font-weight: 800;
+          line-height: 1.35;
+          margin: -1px 0 0;
+        }
+
+        .ltc-input.invalid,
+        .ltc-textarea.invalid {
+          border-color: rgba(180,35,24,.55);
+          background: rgba(254,242,242,.92);
+          box-shadow: 0 0 0 4px rgba(180,35,24,.08);
+        }
+
+        .ltc-input.valid,
+        .ltc-textarea.valid {
+          border-color: rgba(35,95,62,.38);
+          background: rgba(240,253,244,.72);
+        }
+
         .ltc-input,
         .ltc-textarea {
           width: 100%;
@@ -776,7 +853,7 @@ export default function HotelContactUs() {
         .ltc-footer-grid {
           width: 100%;
           display: grid;
-          grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+          grid-template-columns: 1.1fr .75fr 1.1fr 1.1fr 1fr;
           gap: 22px;
           padding-bottom: 24px;
           border-bottom: 1px solid rgba(255,255,255,.1);
@@ -823,6 +900,17 @@ export default function HotelContactUs() {
           margin: 5px 0;
         }
 
+        .ltc-footer-small-text {
+          font-size: 12px !important;
+          line-height: 1.42 !important;
+          margin: 4px 0 !important;
+        }
+
+        .ltc-footer-small-text strong {
+          font-size: 12px !important;
+          line-height: 1.42 !important;
+        }
+
         .ltc-footer-link {
           border: 0;
           background: transparent;
@@ -834,6 +922,34 @@ export default function HotelContactUs() {
         .ltc-footer-link:hover {
           color: white;
           text-decoration: underline;
+        }
+
+        .ltc-facebook-link {
+          width: 34px;
+          height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 999px;
+          background: rgba(255,255,255,.10);
+          color: white;
+          cursor: pointer;
+          transition: .25s var(--ease);
+          margin-top: 6px;
+        }
+
+        .ltc-facebook-link:hover {
+          color: #f4d484;
+          border-color: rgba(244,212,132,.42);
+          background: rgba(244,212,132,.12);
+          transform: translateY(-2px);
+        }
+
+        .ltc-facebook-link svg {
+          width: 18px;
+          height: 18px;
+          fill: currentColor;
         }
 
         .ltc-socials {
@@ -1023,22 +1139,38 @@ export default function HotelContactUs() {
                 </p>
 
                 <div className="ltc-contact-list">
-                  <ContactRow icon="pin" title="Address">
+                  <ContactRow icon="pin" title="Resort Address">
+                    Ecotrend Subdivision San Nicolas, Bacoor Cavite
+                  </ContactRow>
+
+                  <ContactRow icon="pin" title="Hotel Address">
                     2/F 5441 Currie Street, Palanan, Makati City
                   </ContactRow>
 
-                  <ContactRow icon="phone" title="Phone">
-                    09595808051 / 09516281271
+                  <ContactRow icon="phone" title="Resort Contact No.">
+                    +63 9953781962
+                    <br />
+                    +63 9064191405
+                    <br />
+                    +63 9338699988
+                  </ContactRow>
+
+                  <ContactRow icon="phone" title="Hotel Contact No.">
+                    +63 9064191405
+                    <br />
+                    +63 9338699988
                   </ContactRow>
 
                   <ContactRow icon="mail" title="Email">
-                    ltc.amsi@gmail.com
+                    recruitment@ltcmultiservices.com
                     <br />
-                    lorengladius@ltcmultiservices.com
+                    marketing@ltcmultiservices.com
+                    <br />
+                    lorenzoeventandvenue@gmail.com
                   </ContactRow>
 
-                  <ContactRow icon="clock" title="Operating Hours">
-                    Monday - Thursday 8:00 AM - 5:00 PM
+                  <ContactRow icon="clock" title="Working Hours">
+                    8AM - 5PM (Daily)
                   </ContactRow>
                 </div>
               </RevealOnScroll>
@@ -1058,6 +1190,9 @@ export default function HotelContactUs() {
                     name="name"
                     type="text"
                     value={contactForm.name}
+                    error={contactErrors.name}
+                    touched={contactTouched.name}
+                    onBlur={() => setContactFieldTouched("name")}
                     onChange={(value) => setContactField("name", value)}
                   />
 
@@ -1066,6 +1201,9 @@ export default function HotelContactUs() {
                     name="email"
                     type="email"
                     value={contactForm.email}
+                    error={contactErrors.email}
+                    touched={contactTouched.email}
+                    onBlur={() => setContactFieldTouched("email")}
                     onChange={(value) => setContactField("email", value)}
                   />
 
@@ -1074,6 +1212,9 @@ export default function HotelContactUs() {
                     name="subject"
                     type="text"
                     value={contactForm.subject}
+                    error={contactErrors.subject}
+                    touched={contactTouched.subject}
+                    onBlur={() => setContactFieldTouched("subject")}
                     onChange={(value) => setContactField("subject", value)}
                   />
 
@@ -1082,11 +1223,28 @@ export default function HotelContactUs() {
                     <textarea
                       name="message"
                       rows={4}
-                      className="ltc-textarea"
+                      className={`ltc-textarea ${
+                        contactTouched.message
+                          ? contactErrors.message
+                            ? "invalid"
+                            : "valid"
+                          : ""
+                      }`}
                       style={fontPoppins}
                       value={contactForm.message}
+                      onBlur={() => setContactFieldTouched("message")}
                       onChange={(event) => setContactField("message", event.target.value)}
                     />
+
+                    {contactTouched.message && contactErrors.message ? (
+                      <p className="ltc-field-error" style={fontPoppins}>
+                        {contactErrors.message}
+                      </p>
+                    ) : (
+                      <p className="ltc-field-error" aria-hidden="true">
+                        {" "}
+                      </p>
+                    )}
                   </label>
 
                   {contactStatus.message ? (
@@ -1158,7 +1316,7 @@ function Header({ navigate, goToProfile, openMenu }) {
     <header className="ltc-header">
       <div className="ltc-container ltc-nav">
         <button
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/resort-venue")}
           type="button"
           className="ltc-logo"
           aria-label="Go to home"
@@ -1179,7 +1337,7 @@ function Header({ navigate, goToProfile, openMenu }) {
         </button>
 
         <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton active label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
@@ -1218,18 +1376,38 @@ function NavButton({ label, onClick, active = false, className = "" }) {
   );
 }
 
-function Field({ label, name, type, value, onChange }) {
+function Field({
+  label,
+  name,
+  type,
+  value,
+  error = "",
+  touched = false,
+  onBlur,
+  onChange,
+}) {
   return (
     <label className="ltc-field">
       <span style={fontMontserrat}>{label}</span>
       <input
         name={name}
         type={type}
-        className="ltc-input"
+        className={`ltc-input ${touched ? (error ? "invalid" : "valid") : ""}`}
         style={fontPoppins}
         value={value}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
       />
+
+      {touched && error ? (
+        <p className="ltc-field-error" style={fontPoppins}>
+          {error}
+        </p>
+      ) : (
+        <p className="ltc-field-error" aria-hidden="true">
+          {" "}
+        </p>
+      )}
     </label>
   );
 }
@@ -1300,7 +1478,7 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>Home</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>Home</FooterLink>
           <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
             Virtual Tour
           </FooterLink>
@@ -1317,23 +1495,44 @@ function Footer() {
           </FooterLink>
         </FooterColumn>
 
+        <FooterColumn title="Resort">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            Ecotrend Subdivision San Nicolas, Bacoor Cavite
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9953781962</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+
+        </FooterColumn>
+
+        <FooterColumn title="Hotel">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            2/F 5441 Currie Street, Palanan, Makati City
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+
+        </FooterColumn>
+
         <FooterColumn title="Contact Information">
-          <FooterText>ltc.amsi@gmail.com</FooterText>
-          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
-          <FooterText>09959808051 / 09516281271</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Address">
-          <FooterText>2/F 5441 Currie Street,</FooterText>
-          <FooterText>Palanan, Makati City</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <FooterText>recruitment@ltcmultiservices.com</FooterText>
+          <FooterText>marketing@ltcmultiservices.com</FooterText>
+          <FooterText>lorenzoeventandvenue@gmail.com</FooterText>
+          <FacebookLink />
         </FooterColumn>
       </div>
 
@@ -1342,6 +1541,28 @@ function Footer() {
         <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
+  );
+}
+
+function FacebookLink() {
+  return (
+    <button
+      type="button"
+      className="ltc-facebook-link"
+      aria-label="Open Facebook page"
+      title="Facebook"
+      onClick={() => {
+        window.open(
+          "https://www.facebook.com/4delorenzo?rdid=2DsYHS1ll77JUW6K&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18wf6uHcfv%2F#",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 12.06C22 6.48 17.52 2 11.94 2S2 6.48 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.9h2.77l-.44 2.91h-2.33V22c4.78-.76 8.45-4.92 8.45-9.94Z" />
+      </svg>
+    </button>
   );
 }
 
@@ -1362,8 +1583,12 @@ function FooterLink({ children, onClick }) {
   );
 }
 
-function FooterText({ children }) {
-  return <p style={fontPontano}>{children}</p>;
+function FooterText({ children, className = "" }) {
+  return (
+    <p className={className} style={fontPontano}>
+      {children}
+    </p>
+  );
 }
 
 function MobileMenu({ onClose, navigate, goToProfile }) {
@@ -1393,7 +1618,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           label="HOME"
           onClick={() => {
             onClose();
-            navigate("/hotel-resort");
+            navigate("/resort-venue");
           }}
         />
 

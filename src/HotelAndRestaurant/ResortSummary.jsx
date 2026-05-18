@@ -457,10 +457,31 @@ const pageStyles = `
   }
 
   .ltc-payment-grid {
-    margin-top: 24px;
+    margin-top: 18px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0,1fr));
     gap: 18px;
+  }
+
+  .ltc-qr-placeholder {
+    height: 230px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 18px;
+    color: white;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .ltc-qr-placeholder-bank {
+    background: linear-gradient(135deg, #174a30, #2f6848);
+  }
+
+  .ltc-qr-placeholder-gcash {
+    background: linear-gradient(135deg, #1d4ed8, #38bdf8);
   }
 
   .ltc-qr-card {
@@ -654,7 +675,7 @@ const pageStyles = `
   .ltc-footer-grid {
     width: 100%;
     display: grid;
-    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+    grid-template-columns: 1.1fr .75fr 1.1fr 1.1fr 1fr;
     gap: 22px;
     padding-bottom: 24px;
     border-bottom: 1px solid rgba(255,255,255,.1);
@@ -701,6 +722,17 @@ const pageStyles = `
     margin: 5px 0;
   }
 
+  .ltc-footer-small-text {
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+    margin: 4px 0 !important;
+  }
+
+  .ltc-footer-small-text strong {
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+  }
+
   .ltc-footer-link {
     border: 0;
     background: transparent;
@@ -714,16 +746,32 @@ const pageStyles = `
     text-decoration: underline;
   }
 
-  .ltc-socials {
-    display: flex;
-    gap: 8px;
+  .ltc-facebook-link {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    color: white;
+    cursor: pointer;
+    transition: .25s var(--ease);
+    margin-top: 6px;
   }
 
-  .ltc-socials span {
-    width: 26px;
-    height: 26px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.13);
+  .ltc-facebook-link:hover {
+    color: #f4d484;
+    border-color: rgba(244,212,132,.42);
+    background: rgba(244,212,132,.12);
+    transform: translateY(-2px);
+  }
+
+  .ltc-facebook-link svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
   }
 
   .ltc-copyright {
@@ -1023,7 +1071,7 @@ export default function ResortSummary() {
     if (!paymentMethod) {
       setStatus({
         type: "error",
-        message: "Please select a payment method by clicking a QR image or choosing from the dropdown.",
+        message: "Please select a payment method by clicking a QR card.",
       });
       return;
     }
@@ -1424,25 +1472,7 @@ function PaymentSection({
           </h2>
           <div className="ltc-section-line" />
         </div>
-
-        <select
-          value={paymentMethod}
-          onChange={(event) => setPaymentMethod(event.target.value)}
-          aria-invalid={showPaymentMethodError ? "true" : "false"}
-          className="ltc-select"
-          style={fontPoppins}
-        >
-          <option value="">Bank Transfer / GCASH</option>
-          <option value="BANK TRANSFER">Bank Transfer</option>
-          <option value="GCASH">GCASH</option>
-        </select>
       </div>
-
-      {showPaymentMethodError ? (
-        <p className="ltc-error-text" style={fontPoppins}>
-          Please select a payment method by clicking a QR image or choosing from the dropdown.
-        </p>
-      ) : null}
 
       <div className="ltc-info-box" style={fontPoppins}>
         <label style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 900 }}>
@@ -1458,8 +1488,14 @@ function PaymentSection({
       </div>
 
       <p className="ltc-help-text" style={{ ...fontPoppins, marginTop: 20 }}>
-        Click a QR image to select payment method.
+        Click a QR card below to select and reveal the payment QR image.
       </p>
+
+      {showPaymentMethodError ? (
+        <p className="ltc-error-text" style={{ ...fontPoppins, marginTop: 12 }}>
+          Please select a payment method by clicking a QR card.
+        </p>
+      ) : null}
 
       <div className="ltc-payment-grid">
         <QrImageCard
@@ -1467,6 +1503,8 @@ function PaymentSection({
           method="BANK TRANSFER"
           src={BANK_QR_IMAGE}
           selected={paymentMethod === "BANK TRANSFER"}
+          visible={paymentMethod === "BANK TRANSFER"}
+          placeholderClassName="ltc-qr-placeholder-bank"
           hasValidationError={showPaymentMethodError}
           onSelect={setPaymentMethod}
         />
@@ -1476,6 +1514,8 @@ function PaymentSection({
           method="GCASH"
           src={GCASH_QR_IMAGE}
           selected={paymentMethod === "GCASH"}
+          visible={paymentMethod === "GCASH"}
+          placeholderClassName="ltc-qr-placeholder-gcash"
           hasValidationError={showPaymentMethodError}
           onSelect={setPaymentMethod}
         />
@@ -1493,7 +1533,16 @@ function PaymentSection({
   );
 }
 
-function QrImageCard({ title, method, src, selected, hasValidationError, onSelect }) {
+function QrImageCard({
+  title,
+  method,
+  src,
+  selected,
+  visible,
+  placeholderClassName,
+  hasValidationError,
+  onSelect,
+}) {
   const [hasError, setHasError] = useState(false);
 
   return (
@@ -1509,26 +1558,37 @@ function QrImageCard({ title, method, src, selected, hasValidationError, onSelec
       ) : null}
 
       <div className="ltc-qr-frame">
-        {!hasError ? (
-          <img
-            src={src}
-            alt={title}
-            onError={() => setHasError(true)}
-          />
+        {visible ? (
+          !hasError ? (
+            <img
+              src={src}
+              alt={title}
+              onError={() => setHasError(true)}
+            />
+          ) : (
+            <div style={{ padding: 18, textAlign: "center" }}>
+              <p style={{ ...fontMontserrat, margin: 0, color: "#174a30", fontWeight: 900 }}>
+                {title}
+              </p>
+              <p style={{ ...fontPoppins, margin: "4px 0 0", color: "#667085", fontSize: 12 }}>
+                Add image in public folder.
+              </p>
+            </div>
+          )
         ) : (
-          <div style={{ padding: 18, textAlign: "center" }}>
-            <p style={{ ...fontMontserrat, margin: 0, color: "#174a30", fontWeight: 900 }}>
-              {title}
-            </p>
-            <p style={{ ...fontPoppins, margin: "4px 0 0", color: "#667085", fontSize: 12 }}>
-              Add image in public folder.
-            </p>
+          <div className={`ltc-qr-placeholder ${placeholderClassName || ""}`}>
+            <div>
+              <p style={{ margin: 0 }}>{method}</p>
+              <p style={{ margin: "6px 0 0", fontSize: 11, opacity: 0.82 }}>
+                Click this QR card to reveal QR
+              </p>
+            </div>
           </div>
         )}
       </div>
 
       <p className="ltc-qr-title" style={fontMontserrat}>
-        {title}
+        {visible ? title : `${title} Hidden`}
       </p>
     </button>
   );
@@ -1539,7 +1599,7 @@ function Header({ navigate, goToProfile, openMenu }) {
     <header className="ltc-header">
       <div className="ltc-container ltc-nav">
         <button
-          onClick={() => navigate("/hotel-resort")}
+          onClick={() => navigate("/resort-venue")}
           type="button"
           className="ltc-logo"
           aria-label="Go to home"
@@ -1560,7 +1620,7 @@ function Header({ navigate, goToProfile, openMenu }) {
         </button>
 
         <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
@@ -1683,7 +1743,7 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>
             Home
           </FooterLink>
           <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
@@ -1709,23 +1769,42 @@ function Footer() {
           </FooterLink>
         </FooterColumn>
 
+        <FooterColumn title="Resort">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            Ecotrend Subdivision San Nicolas, Bacoor Cavite
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9953781962</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Hotel">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            2/F 5441 Currie Street, Palanan, Makati City
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
         <FooterColumn title="Contact Information">
-          <FooterText>ltc.amsi@gmail.com</FooterText>
-          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
-          <FooterText>09959808051 / 09516281271</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Address">
-          <FooterText>2/F 5441 Currie Street,</FooterText>
-          <FooterText>Palanan, Makati City</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <FooterText>recruitment@ltcmultiservices.com</FooterText>
+          <FooterText>marketing@ltcmultiservices.com</FooterText>
+          <FooterText>lorenzoeventandvenue@gmail.com</FooterText>
+          <FacebookLink />
         </FooterColumn>
       </div>
 
@@ -1734,6 +1813,28 @@ function Footer() {
         <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
+  );
+}
+
+function FacebookLink() {
+  return (
+    <button
+      type="button"
+      className="ltc-facebook-link"
+      aria-label="Open Facebook page"
+      title="Facebook"
+      onClick={() => {
+        window.open(
+          "https://www.facebook.com/4delorenzo?rdid=2DsYHS1ll77JUW6K&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18wf6uHcfv%2F#",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 12.06C22 6.48 17.52 2 11.94 2S2 6.48 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.9h2.77l-.44 2.91h-2.33V22c4.78-.76 8.45-4.92 8.45-9.94Z" />
+      </svg>
+    </button>
   );
 }
 
@@ -1759,8 +1860,12 @@ function FooterLink({ children, onClick }) {
   );
 }
 
-function FooterText({ children }) {
-  return <p style={fontPontano}>{children}</p>;
+function FooterText({ children, className = "" }) {
+  return (
+    <p className={className} style={fontPontano}>
+      {children}
+    </p>
+  );
 }
 
 function MobileMenu({ onClose, navigate, goToProfile }) {
@@ -1788,7 +1893,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           label="HOME"
           onClick={() => {
             onClose();
-            navigate("/hotel-resort");
+            navigate("/resort-venue");
           }}
         />
 

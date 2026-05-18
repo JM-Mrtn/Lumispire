@@ -1,7 +1,7 @@
 // HotelRecommendations.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelChatButton from "./HotelChatButton";
+import HotelChatbot from "./HotelChatbot";
 
 const HOTEL_LOGO = "/HotelLogo.png";
 const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
@@ -1180,7 +1180,7 @@ const HotelRecommendations = () => {
       </main>
 
       <Footer />
-      <HotelChatButton />
+      <HotelChatbot />
 
       {isOpen ? (
         <MobileMenu

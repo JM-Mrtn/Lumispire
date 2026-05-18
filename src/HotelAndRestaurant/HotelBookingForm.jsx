@@ -505,7 +505,7 @@ const pageStyles = `
     color: var(--dark);
     outline: none;
     font-size: 14px;
-    font-family: inherit;
+    font-family: 'Poppins', sans-serif;
     font-weight: 700;
     padding: 0 18px;
     transition: .25s var(--ease);
@@ -514,7 +514,11 @@ const pageStyles = `
 
   .ltc-input::placeholder,
   .ltc-date-input::placeholder {
-    color: rgba(102,112,133,.68);
+    color: rgba(16,24,40,.62);
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 1;
   }
 
   .ltc-input:focus,
@@ -525,11 +529,19 @@ const pageStyles = `
     box-shadow: 0 0 0 4px rgba(35,95,62,.10);
   }
 
+  .ltc-select option:disabled {
+    color: #b42318;
+    background: #fff3f1;
+  }
+
   .ltc-input:disabled,
   .ltc-select:disabled,
   .ltc-date-input:disabled {
-    opacity: .68;
+    opacity: 1;
     cursor: not-allowed;
+    color: rgba(16,24,40,.62);
+    background: rgba(255,255,255,.88);
+    -webkit-text-fill-color: rgba(16,24,40,.62);
   }
 
   .ltc-hotel-booking-page .react-datepicker-wrapper,
@@ -821,7 +833,7 @@ const pageStyles = `
   .ltc-footer-grid {
     width: 100%;
     display: grid;
-    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+    grid-template-columns: 1.1fr .75fr 1.1fr 1.1fr 1fr;
     gap: 22px;
     padding-bottom: 24px;
     border-bottom: 1px solid rgba(255,255,255,.1);
@@ -868,6 +880,17 @@ const pageStyles = `
     margin: 5px 0;
   }
 
+  .ltc-footer-small-text {
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+    margin: 4px 0 !important;
+  }
+
+  .ltc-footer-small-text strong {
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+  }
+
   .ltc-footer-link {
     border: 0;
     background: transparent;
@@ -881,16 +904,32 @@ const pageStyles = `
     text-decoration: underline;
   }
 
-  .ltc-socials {
-    display: flex;
-    gap: 8px;
+  .ltc-facebook-link {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    color: white;
+    cursor: pointer;
+    transition: .25s var(--ease);
+    margin-top: 6px;
   }
 
-  .ltc-socials span {
-    width: 26px;
-    height: 26px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.13);
+  .ltc-facebook-link:hover {
+    color: #f4d484;
+    border-color: rgba(244,212,132,.42);
+    background: rgba(244,212,132,.12);
+    transform: translateY(-2px);
+  }
+
+  .ltc-facebook-link svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
   }
 
   .ltc-copyright {
@@ -1448,6 +1487,10 @@ export default function HotelBookingForm() {
     location.state?.selectedPackage ||
     location.state?.selectedPackageTitle ||
     "";
+  const presetRoomType =
+    location.state?.selectedRoomType || presetPackageTitle
+      ? normalizeRoomType(location.state?.selectedRoomType || presetPackageTitle)
+      : "";
 
   const [packages, setPackages] = useState(
     expandHotelPackages(DEFAULT_HOTEL_PACKAGES)
@@ -1459,6 +1502,8 @@ export default function HotelBookingForm() {
   const [status, setStatus] = useState({ type: "", message: "" });
   const [errors, setErrors] = useState({});
   const [confirmedBookings, setConfirmedBookings] = useState([]);
+  const [timeAvailabilityMap, setTimeAvailabilityMap] = useState({});
+  const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const [form, setForm] = useState({
@@ -1469,7 +1514,7 @@ export default function HotelBookingForm() {
     serviceType: "Hotel & Condo",
     packageId: presetPackageId,
     packageTitle: presetPackageTitle,
-    roomType: "",
+    roomType: presetRoomType,
     duration: "",
     date: "",
     time: "",
@@ -1682,13 +1727,38 @@ export default function HotelBookingForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.date, durationVariants, confirmedBookings]);
 
+  const getTimeAvailabilityKey = (time) => {
+    return [
+      form.roomType || "",
+      normalizeDuration(form.duration) || "",
+      form.date || "",
+      time || "",
+    ].join("|");
+  };
+
   const availableTimeOptions = useMemo(() => {
-    return timeOptions.map((option) => ({
-      ...option,
-      disabled: isTimeOptionBlocked(form.date, option.value),
-    }));
+    return timeOptions.map((option) => {
+      const key = getTimeAvailabilityKey(option.value);
+      const backendBlocked = timeAvailabilityMap[key] === false;
+      const localBlocked = isTimeOptionBlocked(form.date, option.value);
+      const disabled = backendBlocked || localBlocked;
+
+      return {
+        ...option,
+        disabled,
+        label: `${option.label}${disabled ? " — BOOKED / TOO CLOSE" : ""}`,
+      };
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeOptions, form.date, confirmedBookings]);
+  }, [timeOptions, form.date, form.roomType, form.duration, confirmedBookings, timeAvailabilityMap]);
+
+  const selectedTimeIsBlocked = useMemo(() => {
+    if (!form.date || !form.time) return false;
+
+    const key = getTimeAvailabilityKey(form.time);
+    return timeAvailabilityMap[key] === false || isTimeOptionBlocked(form.date, form.time);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.date, form.time, form.roomType, form.duration, confirmedBookings, timeAvailabilityMap]);
 
   const selectedDateBlockedBookings = useMemo(() => {
     if (!form.date) return [];
@@ -1846,11 +1916,37 @@ export default function HotelBookingForm() {
   useEffect(() => {
     if (presetAppliedRef.current || !packages.length) return;
 
+    if (!presetRoomType && !presetPackageId && !presetPackageTitle) {
+      setForm((prev) => ({
+        ...prev,
+        packageId: "",
+        packageTitle: "",
+        roomType: "",
+        duration: "",
+        date: "",
+        time: "",
+        pax: "",
+      }));
+
+      presetAppliedRef.current = true;
+      return;
+    }
+
+    const matchedById = presetPackageId
+      ? packages.find((item) => String(item._id) === String(presetPackageId))
+      : null;
+
+    const matchedByRoom = presetRoomType
+      ? packages.find((item) => normalizeRoomType(item.title) === presetRoomType)
+      : null;
+
+    const matched = matchedById || matchedByRoom;
+
     setForm((prev) => ({
       ...prev,
-      packageId: "",
-      packageTitle: "",
-      roomType: "",
+      packageId: matched?._id || presetPackageId || "",
+      packageTitle: matched?.title || presetPackageTitle || "",
+      roomType: matched ? normalizeRoomType(matched.title) : presetRoomType,
       duration: "",
       date: "",
       time: "",
@@ -1858,11 +1954,12 @@ export default function HotelBookingForm() {
     }));
 
     presetAppliedRef.current = true;
-  }, [packages]);
+  }, [packages, presetPackageId, presetPackageTitle, presetRoomType]);
 
   useEffect(() => {
     if (!form.roomType) {
       setConfirmedBookings([]);
+      setTimeAvailabilityMap({});
       return;
     }
 
@@ -1871,11 +1968,119 @@ export default function HotelBookingForm() {
   }, [form.roomType]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
+    const checkTimeSlots = async () => {
+      const token = localStorage.getItem("token") || localStorage.getItem("hotelToken");
+
+      if (
+        !token ||
+        !form.roomType ||
+        !form.duration ||
+        !form.date ||
+        !timeOptions.length
+      ) {
+        setTimeAvailabilityMap({});
+        setLoadingTimeSlots(false);
+        return;
+      }
+
+      setLoadingTimeSlots(true);
+
+      try {
+        const entries = await Promise.all(
+          timeOptions.map(async (option) => {
+            const key = [
+              form.roomType || "",
+              normalizeDuration(form.duration) || "",
+              form.date || "",
+              option.value || "",
+            ].join("|");
+
+            try {
+              const qs = new URLSearchParams({
+                packageId: selectedVariant?.package?._id || selectedPackage?._id || form.packageId || "",
+                roomType: form.roomType,
+                duration: normalizeDuration(form.duration),
+                date: form.date,
+                time: option.value,
+              }).toString();
+
+              const res = await fetch(`${API_BASE}/hotel-room-bookings/check?${qs}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+              });
+
+              const data = await res.json().catch(() => ({}));
+
+              if (!res.ok) {
+                return [key, false];
+              }
+
+              return [key, Boolean(data.available)];
+            } catch (error) {
+              if (error.name === "AbortError") return null;
+              return [key, false];
+            }
+          })
+        );
+
+        const nextMap = {};
+
+        entries.filter(Boolean).forEach(([key, available]) => {
+          nextMap[key] = available;
+        });
+
+        setTimeAvailabilityMap(nextMap);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingTimeSlots(false);
+        }
+      }
+    };
+
+    checkTimeSlots();
+
+    return () => {
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    API_BASE,
+    form.roomType,
+    form.duration,
+    form.date,
+    form.packageId,
+    selectedPackage?._id,
+    selectedVariant?.package?._id,
+    timeOptions,
+  ]);
+
+  useEffect(() => {
     setForm((prev) => ({
       ...prev,
       time: "",
+      pax: "",
     }));
+    setErrors((prev) => ({ ...prev, time: "", pax: "" }));
   }, [form.duration, form.date]);
+
+  useEffect(() => {
+    if (!form.time || !selectedTimeIsBlocked) return;
+
+    setForm((prev) => ({
+      ...prev,
+      time: "",
+      pax: "",
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      time:
+        "That time slot is unavailable or too close to an approved booking. Please choose another time.",
+      pax: "",
+    }));
+  }, [form.time, selectedTimeIsBlocked]);
 
   useEffect(() => {
     if (!form.date || !durationVariants.length) return;
@@ -1948,7 +2153,7 @@ export default function HotelBookingForm() {
       next.phone = "Phone must be 11 digits and start with 09.";
     }
 
-    if (!form.roomType) next.roomType = "Select room type.";
+    if (!form.roomType) next.roomType = "Select room.";
 
     if (!form.duration) {
       next.duration = "Select variation.";
@@ -1968,9 +2173,9 @@ export default function HotelBookingForm() {
       next.time = selectedVariationFullyBlocked
         ? "This variation is fully booked. Please choose another variation."
         : "Choose time.";
-    } else if (isTimeOptionBlocked(form.date, form.time)) {
+    } else if (selectedTimeIsBlocked) {
       next.time =
-        "This time is too close to an approved booking. Please keep at least 1 hour gap.";
+        "This time slot is unavailable or too close to an approved booking. Please choose another time.";
     }
 
     const pax = Number(form.pax || 0);
@@ -2019,14 +2224,14 @@ export default function HotelBookingForm() {
           ...prev,
           time:
             availability.message ||
-            "This time is too close to an approved booking. Please keep at least 1 hour gap.",
+            "This time slot is unavailable or too close to an approved booking. Please choose another time.",
         }));
 
         setStatus({
           type: "error",
           message:
             availability.message ||
-            "Selected room slot is not available. Please choose another slot.",
+            "Selected room slot is not available. Please choose another time slot.",
         });
 
         setSubmitting(false);
@@ -2214,14 +2419,20 @@ export default function HotelBookingForm() {
                     value={form.roomType}
                     onChange={applyRoomType}
                     options={roomTypeOptions}
-                    placeholder={loadingPackages ? "Loading rooms..." : "Select room type"}
+                    placeholder={loadingPackages ? "Loading rooms..." : "Select room"}
                     error={errors.roomType}
                     disabled={loadingPackages}
                   />
 
                   <DateField
                     label="Choose Date"
-                    placeholder="Select date"
+                    placeholder={
+                      !form.roomType
+                        ? "Select room first"
+                        : loadingCalendar
+                        ? "Loading available dates..."
+                        : "Select date"
+                    }
                     selectedDateObj={selectedDateObj}
                     minDateObj={minDateObj}
                     disabled={!form.roomType || loadingCalendar}
@@ -2282,16 +2493,28 @@ export default function HotelBookingForm() {
                     label="Time"
                     value={form.time}
                     onChange={(value) => {
+                      const selected = availableTimeOptions.find(
+                        (item) => item.value === value
+                      );
+
+                      if (selected?.disabled) {
+                        setForm((prev) => ({ ...prev, time: "", pax: "" }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          time:
+                            "That time slot is unavailable or too close to an approved booking. Please choose another time.",
+                          pax: "",
+                        }));
+                        return;
+                      }
+
                       setForm((prev) => ({ ...prev, time: value, pax: value ? "0" : "" }));
                       setErrors((prev) => ({ ...prev, time: "", pax: "" }));
                       setStatus({ type: "", message: "" });
                     }}
                     options={availableTimeOptions.map((item) => item.value)}
                     optionLabelMap={Object.fromEntries(
-                      availableTimeOptions.map((item) => [
-                        item.value,
-                        `${item.label}${item.disabled ? " — BOOKED" : ""}`,
-                      ])
+                      availableTimeOptions.map((item) => [item.value, item.label])
                     )}
                     disabledOptions={availableTimeOptions
                       .filter((item) => item.disabled)
@@ -2299,12 +2522,17 @@ export default function HotelBookingForm() {
                     placeholder={
                       !form.roomType
                         ? "Select room first"
-                        : !form.duration
-                        ? "Select variation first"
                         : !form.date
                         ? "Select date first"
+                        : !form.duration
+                        ? "Select variation first"
                         : selectedVariationFullyBlocked
                         ? "This variation is fully booked"
+                        : loadingTimeSlots
+                        ? "Checking available times..."
+                        : availableTimeOptions.length &&
+                          availableTimeOptions.every((item) => item.disabled)
+                        ? "No available time slots"
                         : "Choose time"
                     }
                     error={errors.time}
@@ -2312,9 +2540,18 @@ export default function HotelBookingForm() {
                       !form.roomType ||
                       !form.duration ||
                       !form.date ||
-                      selectedVariationFullyBlocked
+                      selectedVariationFullyBlocked ||
+                      loadingTimeSlots ||
+                      (availableTimeOptions.length &&
+                        availableTimeOptions.every((item) => item.disabled))
                     }
                   />
+
+                  {loadingTimeSlots ? (
+                    <p className="ltc-error-text" style={{ ...fontPoppins, color: "#475467" }}>
+                      Checking backend availability for each time slot...
+                    </p>
+                  ) : null}
 
                   <SelectField
                     label="Additional Pax"
@@ -2324,7 +2561,9 @@ export default function HotelBookingForm() {
                     optionLabelMap={Object.fromEntries(
                       Array.from({ length: MAX_ADDITIONAL_PAX + 1 }, (_, index) => [
                         String(index),
-                        index === 0 ? "No additional pax" : `${index} additional pax`,
+                        index === 0
+                          ? "No additional pax"
+                          : `${index} additional pax (+${formatPeso(index * ADDITIONAL_PAX_RATE)})`,
                       ])
                     )}
                     placeholder={
@@ -2443,7 +2682,7 @@ function Header({ navigate, goToProfile, openMenu }) {
     <header className="ltc-header">
       <div className="ltc-container ltc-nav">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/resort-venue")}
           type="button"
           className="ltc-logo"
           aria-label="Go to home"
@@ -2464,7 +2703,7 @@ function Header({ navigate, goToProfile, openMenu }) {
         </button>
 
         <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/")} />
+          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton
@@ -2618,23 +2857,33 @@ function DateField({
     <div className="ltc-field">
       <label style={fontMontserrat}>{label}</label>
 
-      <DatePicker
-        selected={selectedDateObj}
-        onChange={onChange}
-        minDate={minDateObj}
-        filterDate={filterDate}
-        disabled={disabled}
-        placeholderText={placeholder}
-        dateFormat="MM/dd/yyyy"
-        autoComplete="off"
-        onChangeRaw={(event) => event.preventDefault()}
-        onKeyDown={(event) => event.preventDefault()}
-        shouldCloseOnSelect
-        showPopperArrow={false}
-        popperPlacement="bottom-start"
-        wrapperClassName="w-full"
-        className="ltc-date-input"
-      />
+      {disabled ? (
+        <input
+          value={placeholder}
+          disabled
+          readOnly
+          className="ltc-date-input"
+          style={fontPoppins}
+        />
+      ) : (
+        <DatePicker
+          selected={selectedDateObj}
+          onChange={onChange}
+          minDate={minDateObj}
+          filterDate={filterDate}
+          placeholderText={placeholder}
+          dateFormat="MM/dd/yyyy"
+          autoComplete="off"
+          onChangeRaw={(event) => event.preventDefault()}
+          onKeyDown={(event) => event.preventDefault()}
+          shouldCloseOnSelect
+          showPopperArrow={false}
+          popperPlacement="bottom-start"
+          wrapperClassName="w-full"
+          className="ltc-date-input"
+          style={fontPoppins}
+        />
+      )}
 
       {error ? (
         <p className="ltc-error-text" style={fontPoppins}>
@@ -2664,29 +2913,68 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink>Home</FooterLink>
-          <FooterLink>Course</FooterLink>
-          <FooterLink>Requirements</FooterLink>
-          <FooterLink>Profile</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>
+            Home
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
+            Virtual Tour
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-contact-us")}>
+            Contact
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-faqs")}>
+            FAQs
+          </FooterLink>
+          <FooterLink
+            onClick={() => {
+              window.location.href =
+                localStorage.getItem("token") || localStorage.getItem("hotelToken")
+                  ? "/hotel-profile"
+                  : "/hotel-login";
+            }}
+          >
+            {localStorage.getItem("token") || localStorage.getItem("hotelToken")
+              ? "Profile"
+              : "Sign In"}
+          </FooterLink>
+        </FooterColumn>
+
+        <FooterColumn title="Resort">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            Ecotrend Subdivision San Nicolas, Bacoor Cavite
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9953781962</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Hotel">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            2/F 5441 Currie Street, Palanan, Makati City
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
         </FooterColumn>
 
         <FooterColumn title="Contact Information">
-          <FooterText>ltc.amsi@gmail.com</FooterText>
-          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
-          <FooterText>09959808051 / 09516281271</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Address">
-          <FooterText>2/F 5441 Currie Street,</FooterText>
-          <FooterText>Palanan, Makati City</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <FooterText>recruitment@ltcmultiservices.com</FooterText>
+          <FooterText>marketing@ltcmultiservices.com</FooterText>
+          <FooterText>lorenzoeventandvenue@gmail.com</FooterText>
+          <FacebookLink />
         </FooterColumn>
       </div>
 
@@ -2695,6 +2983,28 @@ function Footer() {
         <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
+  );
+}
+
+function FacebookLink() {
+  return (
+    <button
+      type="button"
+      className="ltc-facebook-link"
+      aria-label="Open Facebook page"
+      title="Facebook"
+      onClick={() => {
+        window.open(
+          "https://www.facebook.com/4delorenzo?rdid=2DsYHS1ll77JUW6K&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18wf6uHcfv%2F#",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 12.06C22 6.48 17.52 2 11.94 2S2 6.48 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.9h2.77l-.44 2.91h-2.33V22c4.78-.76 8.45-4.92 8.45-9.94Z" />
+      </svg>
+    </button>
   );
 }
 
@@ -2720,8 +3030,12 @@ function FooterLink({ children, onClick }) {
   );
 }
 
-function FooterText({ children }) {
-  return <p style={fontPontano}>{children}</p>;
+function FooterText({ children, className = "" }) {
+  return (
+    <p className={className} style={fontPontano}>
+      {children}
+    </p>
+  );
 }
 
 function MobileMenu({ onClose, navigate, goToProfile }) {
@@ -2749,7 +3063,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           label="HOME"
           onClick={() => {
             onClose();
-            navigate("/");
+            navigate("/resort-venue");
           }}
         />
 
@@ -2770,7 +3084,19 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
         />
 
         <MenuItem
-          label="PROFILE"
+          label="FAQS"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-faqs");
+          }}
+        />
+
+        <MenuItem
+          label={
+            localStorage.getItem("token") || localStorage.getItem("hotelToken")
+              ? "PROFILE"
+              : "SIGN IN"
+          }
           onClick={() => {
             onClose();
             goToProfile();

@@ -775,6 +775,13 @@ export default function EventPackage() {
           max-height: 430px;
           display: flex;
           flex-direction: column;
+          cursor: pointer;
+        }
+
+        .ltc-service-card:focus {
+          outline: none;
+          border-color: rgba(215,168,77,.70);
+          box-shadow: 0 0 0 4px rgba(215,168,77,.18), var(--shadow-lg);
         }
 
         .ltc-service-media {
@@ -846,27 +853,6 @@ export default function EventPackage() {
           -webkit-box-orient: vertical;
         }
 
-        .ltc-details-button {
-          margin-top: auto;
-          min-height: 42px;
-          flex: 0 0 42px;
-          border-radius: 999px;
-          border: 1px solid rgba(35,95,62,.18);
-          background: rgba(255,255,255,.82);
-          color: var(--green-800);
-          font-size: 13px;
-          font-weight: 900;
-          cursor: pointer;
-          transition: .28s var(--ease);
-        }
-
-        .ltc-details-button:hover {
-          transform: translateY(-2px);
-          background: var(--green-800);
-          color: white;
-          border-color: var(--green-800);
-        }
-
         .ltc-pagination {
           margin-top: 30px;
           display: flex;
@@ -931,7 +917,7 @@ export default function EventPackage() {
         .ltc-footer-grid {
           width: 100%;
           display: grid;
-          grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+          grid-template-columns: 1.1fr .75fr 1.1fr 1.1fr 1fr;
           gap: 22px;
           padding-bottom: 24px;
           border-bottom: 1px solid rgba(255,255,255,.1);
@@ -978,6 +964,17 @@ export default function EventPackage() {
           margin: 5px 0;
         }
 
+        .ltc-footer-small-text {
+          font-size: 12px !important;
+          line-height: 1.42 !important;
+          margin: 4px 0 !important;
+        }
+
+        .ltc-footer-small-text strong {
+          font-size: 12px !important;
+          line-height: 1.42 !important;
+        }
+
         .ltc-footer-link {
           border: 0;
           background: transparent;
@@ -989,6 +986,34 @@ export default function EventPackage() {
         .ltc-footer-link:hover {
           color: white;
           text-decoration: underline;
+        }
+
+        .ltc-facebook-link {
+          width: 34px;
+          height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 999px;
+          background: rgba(255,255,255,.10);
+          color: white;
+          cursor: pointer;
+          transition: .25s var(--ease);
+          margin-top: 6px;
+        }
+
+        .ltc-facebook-link:hover {
+          color: #f4d484;
+          border-color: rgba(244,212,132,.42);
+          background: rgba(244,212,132,.12);
+          transform: translateY(-2px);
+        }
+
+        .ltc-facebook-link svg {
+          width: 18px;
+          height: 18px;
+          fill: currentColor;
         }
 
         .ltc-socials {
@@ -1399,8 +1424,8 @@ export default function EventPackage() {
               </div>
 
               <button
-                onClick={() => goToBookNow(eventPackages[0])}
-                disabled={loadingPackages || !eventPackages.length}
+                onClick={() => goToBookNow()}
+                disabled={loadingPackages}
                 type="button"
                 className="ltc-book-button"
                 style={fontMontserrat}
@@ -1504,7 +1529,7 @@ function Header({ navigate, goToProfile, openMenu }) {
     <header className="ltc-header">
       <div className="ltc-container ltc-nav">
         <button
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/resort-venue")}
           type="button"
           className="ltc-logo"
           aria-label="Go to home"
@@ -1525,7 +1550,7 @@ function Header({ navigate, goToProfile, openMenu }) {
         </button>
 
         <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
@@ -1579,7 +1604,19 @@ function ServiceTab({ label, active = false, onClick }) {
 
 function ServiceCard({ title, imageSrc, topLine, secondLine, onDetails }) {
   return (
-    <article className="ltc-service-card">
+    <article
+      className="ltc-service-card"
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${title}`}
+      onClick={onDetails}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onDetails();
+        }
+      }}
+    >
       <div className="ltc-service-media">
         <img
           src={imageSrc}
@@ -1602,15 +1639,6 @@ function ServiceCard({ title, imageSrc, topLine, secondLine, onDetails }) {
         </div>
 
         <h3 style={fontMontserrat}>{title}</h3>
-
-        <button
-          onClick={onDetails}
-          type="button"
-          className="ltc-details-button"
-          style={fontMontserrat}
-        >
-          See Details
-        </button>
       </div>
     </article>
   );
@@ -1644,7 +1672,7 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>Home</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>Home</FooterLink>
           <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
             Virtual Tour
           </FooterLink>
@@ -1666,23 +1694,42 @@ function Footer() {
           </FooterLink>
         </FooterColumn>
 
+        <FooterColumn title="Resort">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            Ecotrend Subdivision San Nicolas, Bacoor Cavite
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9953781962</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Hotel">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            2/F 5441 Currie Street, Palanan, Makati City
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
         <FooterColumn title="Contact Information">
-          <FooterText>ltc.amsi@gmail.com</FooterText>
-          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
-          <FooterText>09959808051 / 09516281271</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Address">
-          <FooterText>2/F 5441 Currie Street,</FooterText>
-          <FooterText>Palanan, Makati City</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <FooterText>recruitment@ltcmultiservices.com</FooterText>
+          <FooterText>marketing@ltcmultiservices.com</FooterText>
+          <FooterText>lorenzoeventandvenue@gmail.com</FooterText>
+          <FacebookLink />
         </FooterColumn>
       </div>
 
@@ -1691,6 +1738,28 @@ function Footer() {
         <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
+  );
+}
+
+function FacebookLink() {
+  return (
+    <button
+      type="button"
+      className="ltc-facebook-link"
+      aria-label="Open Facebook page"
+      title="Facebook"
+      onClick={() => {
+        window.open(
+          "https://www.facebook.com/4delorenzo?rdid=2DsYHS1ll77JUW6K&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18wf6uHcfv%2F#",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 12.06C22 6.48 17.52 2 11.94 2S2 6.48 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.9h2.77l-.44 2.91h-2.33V22c4.78-.76 8.45-4.92 8.45-9.94Z" />
+      </svg>
+    </button>
   );
 }
 
@@ -1711,8 +1780,12 @@ function FooterLink({ children, onClick }) {
   );
 }
 
-function FooterText({ children }) {
-  return <p style={fontPontano}>{children}</p>;
+function FooterText({ children, className = "" }) {
+  return (
+    <p className={className} style={fontPontano}>
+      {children}
+    </p>
+  );
 }
 
 function MobileMenu({ onClose, navigate, goToProfile }) {
@@ -1742,7 +1815,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           label="HOME"
           onClick={() => {
             onClose();
-            navigate("/hotel-resort");
+            navigate("/resort-venue");
           }}
         />
 
@@ -1782,9 +1855,14 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
   );
 }
 
-function MenuItem({ label, onClick }) {
+function MenuItem({ label, onClick, active = false }) {
   return (
-    <button onClick={onClick} type="button" className="ltc-sidebar-link" style={fontPoppins}>
+    <button
+      onClick={onClick}
+      type="button"
+      className={`ltc-sidebar-link ${active ? "active" : ""}`}
+      style={fontPoppins}
+    >
       {label}
     </button>
   );

@@ -15,6 +15,28 @@ const STATUS_FILTERS = [
   { value: "CANCELLED", label: "Cancelled" },
 ];
 
+const CHART_SERVICE_FILTERS = [
+  { value: "ALL", label: "All Services" },
+  { value: "resort", label: "Resort" },
+  { value: "hotel_room", label: "Hotel" },
+  { value: "event", label: "Event" },
+];
+
+const CHART_STATUS_FILTERS = [
+  { value: "ALL", label: "All Status" },
+  { value: "BOOKED", label: "Booked Only" },
+  { value: "PENDING", label: "Pending" },
+  { value: "CONFIRMED", label: "Confirmed" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
+const CHART_MONTH_OPTIONS = [
+  { value: 3, label: "3 Months" },
+  { value: 6, label: "6 Months" },
+  { value: 7, label: "7 Months" },
+  { value: 12, label: "12 Months" },
+];
+
 const MONTH_NAMES = [
   "January",
   "February",
@@ -310,6 +332,102 @@ function formatPeso(value) {
   }).format(amount);
 }
 
+function getMonthKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function getMonthShortLabel(monthKey = "") {
+  const [year, month] = String(monthKey).split("-").map(Number);
+
+  if (!year || !month) return monthKey || "—";
+
+  return new Date(year, month - 1, 1).toLocaleDateString("en-PH", {
+    month: "short",
+  });
+}
+
+function getRecentMonthKeys(totalMonths = 7) {
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  return Array.from({ length: totalMonths }, (_, index) => {
+    const date = new Date(start);
+    date.setMonth(start.getMonth() - (totalMonths - 1 - index));
+    return getMonthKey(date);
+  });
+}
+
+function bookingMatchesSearch(booking = {}, search = "") {
+  const term = String(search || "").trim().toLowerCase();
+
+  if (!term) return true;
+
+  const raw = booking.raw || {};
+  const searchable = [
+    booking._id,
+    booking.bookingType,
+    booking.serviceLabel,
+    booking.title,
+    booking.customerName,
+    booking.email,
+    booking.phone,
+    booking.date,
+    booking.time,
+    booking.category,
+    booking.location,
+    booking.paymentMethod,
+    booking.status,
+    booking.totalAmount,
+    raw.firstName,
+    raw.lastName,
+    raw.email,
+    raw.phone,
+    raw.roomType,
+    raw.venue,
+    raw.eventPackage,
+    raw.packageTitle,
+    raw.selectedPackageTitle,
+    raw.selectedPackage,
+    raw.paymentTerm,
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .join(" ")
+    .toLowerCase();
+
+  return searchable.includes(term);
+}
+
+function normalizeChartStatusFilter(status = "ALL") {
+  const value = String(status || "ALL").toUpperCase();
+
+  if (value === "BOOKED") return "BOOKED";
+  if (value === "PENDING") return "PENDING";
+  if (value === "CONFIRMED") return "CONFIRMED";
+  if (value === "CANCELLED") return "CANCELLED";
+
+  return "ALL";
+}
+
+function buildLinePath(points = []) {
+  if (!points.length) return "";
+
+  return points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ");
+}
+
+function buildAreaPath(points = [], baseline = 0) {
+  if (!points.length) return "";
+
+  const line = buildLinePath(points);
+  const last = points[points.length - 1];
+  const first = points[0];
+
+  return `${line} L ${last.x} ${baseline} L ${first.x} ${baseline} Z`;
+}
+
 function getServiceShortLabel(type) {
   if (type === "event") return "Event";
   if (type === "hotel_room") return "Hotel";
@@ -400,6 +518,205 @@ function FilterButton({ active, children, onClick }) {
   );
 }
 
+function BookingLineChart({ data = [], activeService = "ALL" }) {
+  const width = 760;
+  const height = 280;
+  const padding = { top: 26, right: 28, bottom: 44, left: 42 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+
+  const visibleSeries = [
+    {
+      key: "resort",
+      label: "Resort",
+      stroke: "#10b981",
+      areaId: "resortTrendArea",
+      active: activeService === "ALL" || activeService === "resort",
+    },
+    {
+      key: "hotel_room",
+      label: "Hotel",
+      stroke: "#0ea5e9",
+      areaId: "hotelTrendArea",
+      active: activeService === "ALL" || activeService === "hotel_room",
+    },
+    {
+      key: "event",
+      label: "Event",
+      stroke: "#8b5cf6",
+      areaId: "eventTrendArea",
+      active: activeService === "ALL" || activeService === "event",
+    },
+  ].filter((item) => item.active);
+
+  const maxValue = Math.max(
+    1,
+    ...data.flatMap((item) => [
+      Number(item.resort || 0),
+      Number(item.hotel_room || 0),
+      Number(item.event || 0),
+      Number(item.total || 0),
+    ])
+  );
+
+  const ySteps = Array.from({ length: 5 }, (_, index) =>
+    Math.round((maxValue / 4) * index)
+  ).reverse();
+
+  const getPoints = (key) =>
+    data.map((item, index) => {
+      const x =
+        padding.left +
+        (data.length === 1 ? chartWidth / 2 : (chartWidth / (data.length - 1)) * index);
+      const y =
+        padding.top +
+        chartHeight -
+        (Number(item[key] || 0) / maxValue) * chartHeight;
+
+      return { ...item, x, y, value: Number(item[key] || 0), serviceKey: key };
+    });
+
+  return (
+    <div className="ltc-admin-chart-wrap">
+      <div className="ltc-admin-chart-legend">
+        {[
+          { key: "resort", label: "Resort", className: "resort" },
+          { key: "hotel_room", label: "Hotel", className: "hotel" },
+          { key: "event", label: "Event", className: "event" },
+        ]
+          .filter((item) => activeService === "ALL" || activeService === item.key)
+          .map((item) => (
+            <span key={item.key} className="ltc-admin-chart-legend-item">
+              <i className={item.className} />
+              {item.label}
+            </span>
+          ))}
+      </div>
+
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Monthly booking trend line chart"
+        className="ltc-admin-line-chart"
+      >
+        <defs>
+          <linearGradient id="resortTrendArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.20" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0.02" />
+          </linearGradient>
+          <linearGradient id="hotelTrendArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.02" />
+          </linearGradient>
+          <linearGradient id="eventTrendArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.02" />
+          </linearGradient>
+          <filter id="bookingTrendShadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="8" stdDeviation="7" floodColor="#082719" floodOpacity="0.14" />
+          </filter>
+        </defs>
+
+        {ySteps.map((step) => {
+          const y =
+            padding.top +
+            chartHeight -
+            (Number(step || 0) / maxValue) * chartHeight;
+
+          return (
+            <g key={`grid-${step}-${y}`}>
+              <line
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={y}
+                y2={y}
+                className="ltc-admin-chart-grid"
+              />
+              <text
+                x={padding.left - 12}
+                y={y + 4}
+                textAnchor="end"
+                className="ltc-admin-chart-label"
+              >
+                {step}
+              </text>
+            </g>
+          );
+        })}
+
+        {visibleSeries.map((series) => {
+          const points = getPoints(series.key);
+          const linePath = buildLinePath(points);
+          const areaPath = buildAreaPath(points, padding.top + chartHeight);
+
+          return (
+            <g key={series.key}>
+              {areaPath ? <path d={areaPath} fill={`url(#${series.areaId})`} /> : null}
+
+              {linePath ? (
+                <path
+                  d={linePath}
+                  fill="none"
+                  stroke={series.stroke}
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#bookingTrendShadow)"
+                />
+              ) : null}
+
+              {points.map((point) => (
+                <g key={`${series.key}-${point.monthKey}`}>
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r="6"
+                    fill="#ffffff"
+                    stroke={series.stroke}
+                    strokeWidth="4"
+                  />
+                  <title>{`${series.label} ${point.label}: ${point.value}`}</title>
+                </g>
+              ))}
+            </g>
+          );
+        })}
+
+        {data.map((item, index) => {
+          const x =
+            padding.left +
+            (data.length === 1 ? chartWidth / 2 : (chartWidth / (data.length - 1)) * index);
+
+          return (
+            <text
+              key={item.monthKey}
+              x={x}
+              y={height - 15}
+              textAnchor="middle"
+              className="ltc-admin-chart-month"
+            >
+              {item.label}
+            </text>
+          );
+        })}
+      </svg>
+
+      <div className="ltc-admin-chart-table">
+        {data.map((item) => (
+          <div key={item.monthKey} className="ltc-admin-chart-stat">
+            <span>{item.label}</span>
+            <strong>{item.total}</strong>
+            <small>
+              R {item.resort} • H {item.hotel_room} • E {item.event}
+            </small>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 export default function HotelAdminDashboard() {
   const navigate = useNavigate();
   const { adminBase, hotelBase } = useMemo(() => getApiBases(), []);
@@ -409,6 +726,10 @@ export default function HotelAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("BOOKED");
+  const [chartServiceFilter, setChartServiceFilter] = useState("ALL");
+  const [chartStatusFilter, setChartStatusFilter] = useState("BOOKED");
+  const [chartMonthRange, setChartMonthRange] = useState(7);
+  const [chartSearch, setChartSearch] = useState("");
 
   const [monthDate, setMonthDate] = useState(() => {
     const today = new Date();
@@ -632,6 +953,119 @@ export default function HotelAdminDashboard() {
 
     return result;
   }, [bookings, monthDate]);
+
+  const chartFilteredBookings = useMemo(() => {
+    const serviceFilter = String(chartServiceFilter || "ALL");
+    const statusFilterValue = normalizeChartStatusFilter(chartStatusFilter);
+
+    return bookings.filter((booking) => {
+      if (!booking.date && !booking.createdAt) return false;
+
+      if (serviceFilter !== "ALL" && booking.bookingType !== serviceFilter) {
+        return false;
+      }
+
+      const normalizedStatus = normalizeStatus(booking.status);
+
+      if (statusFilterValue === "BOOKED") {
+        if (!["PENDING", "CONFIRMED"].includes(normalizedStatus)) return false;
+      } else if (statusFilterValue !== "ALL" && normalizedStatus !== statusFilterValue) {
+        return false;
+      }
+
+      return bookingMatchesSearch(booking, chartSearch);
+    });
+  }, [bookings, chartServiceFilter, chartStatusFilter, chartSearch]);
+
+  const bookingTrendData = useMemo(() => {
+    const monthKeys = getRecentMonthKeys(Number(chartMonthRange) || 7);
+    const monthMap = new Map(
+      monthKeys.map((monthKey) => [
+        monthKey,
+        {
+          monthKey,
+          label: getMonthShortLabel(monthKey),
+          total: 0,
+          resort: 0,
+          hotel_room: 0,
+          event: 0,
+          pending: 0,
+          confirmed: 0,
+          cancelled: 0,
+        },
+      ])
+    );
+
+    chartFilteredBookings.forEach((booking) => {
+      const parsed =
+        parseISODate(booking.date) ||
+        (booking.createdAt ? new Date(booking.createdAt) : null);
+
+      if (!parsed || Number.isNaN(parsed.getTime())) return;
+
+      const monthKey = getMonthKey(parsed);
+      const row = monthMap.get(monthKey);
+
+      if (!row) return;
+
+      const status = normalizeStatus(booking.status);
+
+      row.total += 1;
+
+      if (row[booking.bookingType] !== undefined) {
+        row[booking.bookingType] += 1;
+      }
+
+      if (status === "PENDING") row.pending += 1;
+      if (status === "CONFIRMED") row.confirmed += 1;
+      if (status === "CANCELLED") row.cancelled += 1;
+    });
+
+    return Array.from(monthMap.values());
+  }, [chartFilteredBookings, chartMonthRange]);
+
+  const bookingTrendTotal = useMemo(
+    () => chartFilteredBookings.length,
+    [chartFilteredBookings]
+  );
+
+  const chartStats = useMemo(() => {
+    return chartFilteredBookings.reduce(
+      (result, booking) => {
+        result.total += 1;
+
+        if (result[booking.bookingType] !== undefined) {
+          result[booking.bookingType] += 1;
+        }
+
+        const status = normalizeStatus(booking.status);
+        if (status === "PENDING") result.pending += 1;
+        if (status === "CONFIRMED") result.confirmed += 1;
+        if (status === "CANCELLED") result.cancelled += 1;
+
+        return result;
+      },
+      {
+        total: 0,
+        resort: 0,
+        hotel_room: 0,
+        event: 0,
+        pending: 0,
+        confirmed: 0,
+        cancelled: 0,
+      }
+    );
+  }, [chartFilteredBookings]);
+
+  const chartSearchResults = useMemo(() => {
+    return [...chartFilteredBookings]
+      .sort((a, b) => {
+        const bTime = new Date(b.date || b.createdAt || 0).getTime();
+        const aTime = new Date(a.date || a.createdAt || 0).getTime();
+        return bTime - aTime;
+      })
+      .slice(0, 8);
+  }, [chartFilteredBookings]);
 
   const filteredCalendarBookings = useMemo(() => {
     return bookings.filter((booking) => {
@@ -1065,6 +1499,318 @@ export default function HotelAdminDashboard() {
             padding: 24px;
           }
 
+          .ltc-admin-chart-panel {
+            margin-top: 22px;
+          }
+
+          .ltc-admin-chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            margin-bottom: 18px;
+          }
+
+          .ltc-admin-chart-total {
+            min-width: 135px;
+            border-radius: 18px;
+            background: rgba(35,95,62,.08);
+            border: 1px solid rgba(35,95,62,.10);
+            color: var(--green-800);
+            padding: 14px 16px;
+            text-align: right;
+          }
+
+          .ltc-admin-chart-total span {
+            display: block;
+            color: rgba(16,24,40,.50);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+          }
+
+          .ltc-admin-chart-total strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 28px;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -.045em;
+          }
+
+          .ltc-admin-chart-controls {
+            display: grid;
+            grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(130px, .55fr)) auto;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 16px;
+          }
+
+          .ltc-admin-search-wrap,
+          .ltc-admin-chart-select-wrap {
+            display: grid;
+            gap: 6px;
+          }
+
+          .ltc-admin-search-wrap span,
+          .ltc-admin-chart-select-wrap span {
+            color: rgba(16,24,40,.52);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+          }
+
+          .ltc-admin-chart-search,
+          .ltc-admin-chart-select {
+            width: 100%;
+            min-height: 42px;
+            border-radius: 999px;
+            border: 1px solid rgba(35,95,62,.14);
+            background: rgba(255,255,255,.86);
+            color: var(--dark);
+            outline: none;
+            padding: 0 15px;
+            font-size: 12px;
+            font-weight: 800;
+            transition: .25s var(--ease);
+          }
+
+          .ltc-admin-chart-search:focus,
+          .ltc-admin-chart-select:focus {
+            border-color: rgba(215,168,77,.66);
+            box-shadow: 0 0 0 4px rgba(215,168,77,.15);
+            background: white;
+          }
+
+          .ltc-admin-chart-clear {
+            min-height: 42px;
+            border-radius: 999px;
+            border: 1px solid rgba(35,95,62,.14);
+            background: white;
+            color: var(--green-800);
+            padding: 0 18px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: .25s var(--ease);
+          }
+
+          .ltc-admin-chart-clear:hover {
+            color: white;
+            background: var(--green-800);
+            transform: translateY(-2px);
+          }
+
+          .ltc-admin-chart-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+          }
+
+          .ltc-admin-chart-mini-card {
+            border-radius: 18px;
+            border: 1px solid rgba(35,95,62,.08);
+            background: rgba(255,255,255,.84);
+            padding: 12px 14px;
+            box-shadow: 0 12px 26px rgba(8,39,25,.05);
+          }
+
+          .ltc-admin-chart-mini-card span {
+            display: block;
+            color: rgba(16,24,40,.48);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+          }
+
+          .ltc-admin-chart-mini-card strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 24px;
+            line-height: 1;
+            font-weight: 900;
+          }
+
+          .ltc-admin-chart-mini-card.resort strong { color: #10b981; }
+          .ltc-admin-chart-mini-card.hotel strong { color: #0ea5e9; }
+          .ltc-admin-chart-mini-card.event strong { color: #8b5cf6; }
+          .ltc-admin-chart-mini-card.pending strong { color: #f59e0b; }
+          .ltc-admin-chart-mini-card.confirmed strong { color: #047857; }
+          .ltc-admin-chart-mini-card.cancelled strong { color: #be123c; }
+
+          .ltc-admin-chart-wrap {
+            border-radius: 26px;
+            border: 1px solid rgba(35,95,62,.08);
+            background:
+              radial-gradient(circle at 100% 0%, rgba(215,168,77,.12), transparent 26%),
+              rgba(246,250,247,.88);
+            padding: 18px;
+          }
+
+          .ltc-admin-chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+          }
+
+          .ltc-admin-chart-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.84);
+            border: 1px solid rgba(35,95,62,.08);
+            color: rgba(16,24,40,.62);
+            padding: 7px 10px;
+            font-size: 11px;
+            font-weight: 900;
+          }
+
+          .ltc-admin-chart-legend-item i {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+          }
+
+          .ltc-admin-chart-legend-item i.resort { background: #10b981; }
+          .ltc-admin-chart-legend-item i.hotel { background: #0ea5e9; }
+          .ltc-admin-chart-legend-item i.event { background: #8b5cf6; }
+
+          .ltc-admin-line-chart {
+            width: 100%;
+            min-height: 240px;
+            display: block;
+          }
+
+          .ltc-admin-chart-grid {
+            stroke: rgba(35,95,62,.12);
+            stroke-width: 1;
+          }
+
+          .ltc-admin-chart-label,
+          .ltc-admin-chart-month {
+            fill: rgba(16,24,40,.52);
+            font-size: 11px;
+            font-weight: 800;
+          }
+
+          .ltc-admin-chart-month {
+            fill: var(--green-800);
+            font-weight: 900;
+          }
+
+          .ltc-admin-chart-dot {
+            fill: #f4d484;
+            stroke: #235f3e;
+            stroke-width: 4;
+          }
+
+          .ltc-admin-chart-dot-ring {
+            fill: rgba(35,95,62,.08);
+            stroke: rgba(35,95,62,.14);
+            stroke-width: 1;
+          }
+
+          .ltc-admin-chart-table {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 9px;
+          }
+
+          .ltc-admin-chart-stat {
+            border-radius: 16px;
+            background: rgba(255,255,255,.84);
+            border: 1px solid rgba(35,95,62,.08);
+            padding: 10px 12px;
+            text-align: center;
+          }
+
+          .ltc-admin-chart-stat span {
+            display: block;
+            color: rgba(16,24,40,.48);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+          }
+
+          .ltc-admin-chart-stat strong {
+            display: block;
+            margin-top: 2px;
+            color: var(--green-800);
+            font-size: 20px;
+            line-height: 1;
+            font-weight: 900;
+          }
+
+          .ltc-admin-chart-stat small {
+            display: block;
+            margin-top: 5px;
+            color: rgba(16,24,40,.50);
+            font-size: 10px;
+            line-height: 1.25;
+            font-weight: 800;
+          }
+
+          .ltc-admin-chart-results {
+            margin-top: 18px;
+            border-radius: 26px;
+            border: 1px solid rgba(35,95,62,.08);
+            background: rgba(246,250,247,.72);
+            padding: 18px;
+          }
+
+          .ltc-admin-chart-results-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 14px;
+          }
+
+          .ltc-admin-chart-result-list {
+            display: grid;
+            gap: 10px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 6px;
+          }
+
+          .ltc-admin-chart-result {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            width: 100%;
+            border: 1px solid rgba(35,95,62,.08);
+            border-radius: 20px;
+            background: rgba(255,255,255,.88);
+            box-shadow: 0 12px 26px rgba(8,39,25,.05);
+            padding: 13px 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: .25s var(--ease);
+          }
+
+          .ltc-admin-chart-result:hover {
+            transform: translateY(-3px);
+            background: rgba(244,212,132,.22);
+            border-color: rgba(215,168,77,.36);
+          }
+
+          .ltc-admin-chart-result-pills {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 7px;
+          }
+
           .ltc-admin-panel-head {
             display: flex;
             justify-content: space-between;
@@ -1440,6 +2186,18 @@ export default function HotelAdminDashboard() {
             .ltc-admin-summary-grid {
               grid-template-columns: repeat(2, minmax(0, 1fr));
             }
+
+            .ltc-admin-chart-table {
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .ltc-admin-chart-controls {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .ltc-admin-chart-mini-grid {
+              grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
           }
 
           @media (max-width: 900px) {
@@ -1471,8 +2229,33 @@ export default function HotelAdminDashboard() {
 
             .ltc-admin-stats-grid,
             .ltc-admin-summary-grid,
-            .ltc-admin-hero-metrics {
+            .ltc-admin-hero-metrics,
+            .ltc-admin-chart-table {
               grid-template-columns: 1fr;
+            }
+
+            .ltc-admin-chart-header {
+              flex-direction: column;
+            }
+
+            .ltc-admin-chart-total {
+              width: 100%;
+              text-align: left;
+            }
+
+            .ltc-admin-chart-controls,
+            .ltc-admin-chart-mini-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .ltc-admin-chart-result,
+            .ltc-admin-chart-results-head {
+              flex-direction: column;
+              align-items: flex-start;
+            }
+
+            .ltc-admin-chart-result-pills {
+              justify-content: flex-start;
             }
 
             .ltc-admin-calendar-days {
@@ -1518,6 +2301,188 @@ export default function HotelAdminDashboard() {
             note="Waiting for admin review"
           />
         </div>
+
+        <section className="ltc-admin-panel ltc-admin-chart-panel">
+          <div className="ltc-admin-chart-header">
+            <div>
+              <p className="ltc-admin-panel-kicker">Booking Trend</p>
+              <h2 className="ltc-admin-panel-title">Booking Line Graph</h2>
+              <p className="ltc-admin-muted">
+                Search and filter resort, hotel, and event bookings by service, status, guest, date, package, or payment information.
+              </p>
+            </div>
+
+            <div className="ltc-admin-chart-total">
+              <span>Filtered Total</span>
+              <strong>{bookingTrendTotal}</strong>
+            </div>
+          </div>
+
+          <div className="ltc-admin-chart-controls">
+            <div className="ltc-admin-search-wrap">
+              <span>Search</span>
+              <input
+                type="search"
+                value={chartSearch}
+                onChange={(event) => setChartSearch(event.target.value)}
+                placeholder="Search guest, booking, room, venue, email, phone, date..."
+                className="ltc-admin-chart-search"
+              />
+            </div>
+
+            <div className="ltc-admin-chart-select-wrap">
+              <span>Service</span>
+              <select
+                value={chartServiceFilter}
+                onChange={(event) => setChartServiceFilter(event.target.value)}
+                className="ltc-admin-chart-select"
+              >
+                {CHART_SERVICE_FILTERS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="ltc-admin-chart-select-wrap">
+              <span>Status</span>
+              <select
+                value={chartStatusFilter}
+                onChange={(event) => setChartStatusFilter(event.target.value)}
+                className="ltc-admin-chart-select"
+              >
+                {CHART_STATUS_FILTERS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="ltc-admin-chart-select-wrap">
+              <span>Range</span>
+              <select
+                value={chartMonthRange}
+                onChange={(event) => setChartMonthRange(Number(event.target.value))}
+                className="ltc-admin-chart-select"
+              >
+                {CHART_MONTH_OPTIONS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              className="ltc-admin-chart-clear"
+              onClick={() => {
+                setChartSearch("");
+                setChartServiceFilter("ALL");
+                setChartStatusFilter("BOOKED");
+                setChartMonthRange(7);
+              }}
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="ltc-admin-chart-mini-grid">
+            <div className="ltc-admin-chart-mini-card resort">
+              <span>Resort</span>
+              <strong>{chartStats.resort}</strong>
+            </div>
+            <div className="ltc-admin-chart-mini-card hotel">
+              <span>Hotel</span>
+              <strong>{chartStats.hotel_room}</strong>
+            </div>
+            <div className="ltc-admin-chart-mini-card event">
+              <span>Event</span>
+              <strong>{chartStats.event}</strong>
+            </div>
+            <div className="ltc-admin-chart-mini-card pending">
+              <span>Pending</span>
+              <strong>{chartStats.pending}</strong>
+            </div>
+            <div className="ltc-admin-chart-mini-card confirmed">
+              <span>Confirmed</span>
+              <strong>{chartStats.confirmed}</strong>
+            </div>
+            <div className="ltc-admin-chart-mini-card cancelled">
+              <span>Cancelled</span>
+              <strong>{chartStats.cancelled}</strong>
+            </div>
+          </div>
+
+          <BookingLineChart
+            data={bookingTrendData}
+            activeService={chartServiceFilter}
+          />
+
+          <div className="ltc-admin-chart-results">
+            <div className="ltc-admin-chart-results-head">
+              <div>
+                <p className="ltc-admin-panel-kicker">Matching Records</p>
+                <h3 className="ltc-admin-next-title">
+                  {chartSearchResults.length ? "Filtered Bookings" : "No Matching Bookings"}
+                </h3>
+              </div>
+
+              <span className="ltc-admin-pill-light">
+                Showing {chartSearchResults.length} of {chartStats.total}
+              </span>
+            </div>
+
+            <div className="ltc-admin-chart-result-list">
+              {chartSearchResults.length === 0 ? (
+                <div className="ltc-admin-empty">
+                  <p className="ltc-admin-empty-title">No bookings match these filters</p>
+                  <p className="ltc-admin-muted">
+                    Try clearing the search, changing service, or selecting a wider month range.
+                  </p>
+                </div>
+              ) : (
+                chartSearchResults.map((booking) => (
+                  <button
+                    key={`chart-${booking.bookingType}-${booking._id}`}
+                    type="button"
+                    className="ltc-admin-chart-result"
+                    onClick={() => {
+                      setSelectedDate(booking.date);
+                      const parsed = parseISODate(booking.date);
+                      if (parsed) {
+                        setMonthDate(
+                          new Date(parsed.getFullYear(), parsed.getMonth(), 1)
+                        );
+                      }
+                    }}
+                  >
+                    <div>
+                      <p className="ltc-admin-upcoming-title">{booking.title}</p>
+                      <p className="ltc-admin-upcoming-meta">
+                        {booking.customerName} • {formatDate(booking.date)} • {booking.time || "No time"}
+                      </p>
+                      <p className="ltc-admin-upcoming-meta">
+                        {booking.email || "No email"} • {booking.phone || "No phone"}
+                      </p>
+                    </div>
+
+                    <div className="ltc-admin-chart-result-pills">
+                      <span className={`ltc-admin-service-pill ${getServicePillClass(booking.bookingType)}`}>
+                        {booking.serviceLabel}
+                      </span>
+                      <span className={`ltc-admin-status-pill ${String(booking.status || "").toLowerCase()}`}>
+                        {booking.status}
+                      </span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
 
         <section className="ltc-admin-panel">
           <div className="ltc-admin-panel-head">

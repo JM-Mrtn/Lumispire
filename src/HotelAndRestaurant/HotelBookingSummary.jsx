@@ -457,10 +457,31 @@ const pageStyles = `
   }
 
   .ltc-payment-grid {
-    margin-top: 24px;
+    margin-top: 18px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0,1fr));
     gap: 18px;
+  }
+
+  .ltc-qr-placeholder {
+    height: 230px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 18px;
+    color: white;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .ltc-qr-placeholder-bank {
+    background: linear-gradient(135deg, #174a30, #2f6848);
+  }
+
+  .ltc-qr-placeholder-gcash {
+    background: linear-gradient(135deg, #1d4ed8, #38bdf8);
   }
 
   .ltc-qr-card {
@@ -654,7 +675,7 @@ const pageStyles = `
   .ltc-footer-grid {
     width: 100%;
     display: grid;
-    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+    grid-template-columns: 1.1fr .75fr 1.1fr 1.1fr 1fr;
     gap: 22px;
     padding-bottom: 24px;
     border-bottom: 1px solid rgba(255,255,255,.1);
@@ -701,6 +722,17 @@ const pageStyles = `
     margin: 5px 0;
   }
 
+  .ltc-footer-small-text {
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+    margin: 4px 0 !important;
+  }
+
+  .ltc-footer-small-text strong {
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+  }
+
   .ltc-footer-link {
     border: 0;
     background: transparent;
@@ -714,16 +746,32 @@ const pageStyles = `
     text-decoration: underline;
   }
 
-  .ltc-socials {
-    display: flex;
-    gap: 8px;
+  .ltc-facebook-link {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    color: white;
+    cursor: pointer;
+    transition: .25s var(--ease);
+    margin-top: 6px;
   }
 
-  .ltc-socials span {
-    width: 26px;
-    height: 26px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.13);
+  .ltc-facebook-link:hover {
+    color: #f4d484;
+    border-color: rgba(244,212,132,.42);
+    background: rgba(244,212,132,.12);
+    transform: translateY(-2px);
+  }
+
+  .ltc-facebook-link svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
   }
 
   .ltc-copyright {
@@ -903,7 +951,6 @@ const pageStyles = `
   }
 `;
 
-
 function getApiBase() {
   const raw = (
     import.meta.env.VITE_HOTEL_API_BASE ||
@@ -931,30 +978,29 @@ function formatPeso(value) {
   }).format(num);
 }
 
-function formatDateMMDDYYYY(yyyyMmDd) {
-  if (!yyyyMmDd || !/^\d{4}-\d{2}-\d{2}$/.test(String(yyyyMmDd))) {
-    return yyyyMmDd || "";
+function formatDateMMDDYYYY(value) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+    return value || "";
   }
 
-  const [, month, day] = yyyyMmDd.split("-");
-  const year = yyyyMmDd.split("-")[0];
+  const [year, month, day] = value.split("-");
   return `${month}/${day}/${year}`;
 }
 
-function getSavedDraft() {
+function safeParseBookingDraft() {
   try {
-    return JSON.parse(sessionStorage.getItem("hotelBookingDraft") || "null");
+    return JSON.parse(sessionStorage.getItem("resortBookingDraft") || "null");
   } catch {
     return null;
   }
 }
 
-export default function HotelBookingSummary() {
+export default function ResortSummary() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
   const API_BASE = useMemo(() => getApiBase(), []);
-  const bookingData = state || getSavedDraft();
+  const bookingData = state || safeParseBookingDraft();
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -997,20 +1043,20 @@ export default function HotelBookingSummary() {
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 
     if (!allowedTypes.includes(file.type)) {
+      setProofFile(null);
       setStatus({
         type: "error",
         message: "Only JPG, PNG, or PDF files are allowed.",
       });
-      setProofFile(null);
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
+      setProofFile(null);
       setStatus({
         type: "error",
         message: "File size must not exceed 5MB.",
       });
-      setProofFile(null);
       return;
     }
 
@@ -1025,13 +1071,16 @@ export default function HotelBookingSummary() {
     if (!paymentMethod) {
       setStatus({
         type: "error",
-        message: "Please select a payment method by clicking a QR image or choosing from the dropdown.",
+        message: "Please select a payment method by clicking a QR card.",
       });
       return;
     }
 
     if (!proofFile) {
-      setStatus({ type: "error", message: "Please upload proof of payment." });
+      setStatus({
+        type: "error",
+        message: "Please upload proof of payment.",
+      });
       return;
     }
 
@@ -1045,59 +1094,83 @@ export default function HotelBookingSummary() {
     setLoading(true);
 
     try {
-      const fd = new FormData();
+      const formData = new FormData();
 
-      fd.append("serviceType", bookingData.serviceType || "Hotel & Condo");
-      fd.append("packageId", bookingData.packageId || bookingData.selectedPackageId || "");
-      fd.append(
-        "packageTitle",
-        bookingData.selectedPackageTitle ||
-          bookingData.selectedPackage ||
-          bookingData.packageTitle ||
+      formData.append("serviceType", bookingData.serviceType || "Resort & Venue");
+      formData.append(
+        "packageId",
+        bookingData.packageId || bookingData.selectedPackageId || ""
+      );
+      formData.append(
+        "venue",
+        bookingData.venue || bookingData.selectedPackageTitle || ""
+      );
+      formData.append("date", bookingData.date || "");
+      formData.append(
+        "category",
+        bookingData.category ||
+          bookingData.selectedVariantLabel ||
+          bookingData.selectedDuration ||
           ""
       );
-      fd.append("roomType", bookingData.roomType || "");
-      fd.append("duration", bookingData.duration || "");
-      fd.append("date", bookingData.date || "");
-      fd.append("time", bookingData.time || "");
-      fd.append("pax", String(bookingData.pax || ""));
-      fd.append("maxPax", String(bookingData.maxPax || bookingData.pax || ""));
-      fd.append("price", String(fullTotalAmount));
-      fd.append("totalAmount", String(fullTotalAmount));
-      fd.append("amountToPay", String(amountToPay));
-      fd.append("paidAmount", String(amountToPay));
-      fd.append("balanceAmount", String(balanceAmount));
-      fd.append("paymentTerm", isDownPayment ? "DOWN_PAYMENT" : "FULL_PAYMENT");
-      fd.append("paymentMethod", paymentMethod);
-      fd.append("proof", proofFile);
+      formData.append("time", bookingData.time || "");
+      formData.append(
+        "pax",
+        String(bookingData.pax || bookingData.totalGuests || "")
+      );
+      formData.append(
+        "totalGuests",
+        String(bookingData.totalGuests || bookingData.pax || "")
+      );
 
-      const res = await fetch(`${API_BASE}/hotel-room-bookings`, {
+      formData.append("price", String(fullTotalAmount));
+      formData.append("totalAmount", String(fullTotalAmount));
+      formData.append("amountToPay", String(amountToPay));
+      formData.append("paidAmount", String(amountToPay));
+      formData.append("balanceAmount", String(balanceAmount));
+      formData.append(
+        "paymentTerm",
+        isDownPayment ? "DOWN_PAYMENT" : "FULL_PAYMENT"
+      );
+      formData.append("paymentMethod", paymentMethod);
+      formData.append("proof", proofFile);
+
+      const response = await fetch(`${API_BASE}/resort-bookings`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
       });
 
-      const data = await res.json().catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
 
-      if (res.status === 401 || res.status === 403) {
+      if (response.status === 401 || response.status === 403) {
         localStorage.removeItem("token");
         localStorage.removeItem("hotelToken");
         navigate("/hotel-login");
         return;
       }
 
-      if (!res.ok) {
-        setStatus({ type: "error", message: data.message || "Hotel booking failed." });
+      if (!response.ok) {
+        setStatus({
+          type: "error",
+          message: data.message || "Resort booking failed.",
+        });
         return;
       }
 
-      sessionStorage.removeItem("hotelBookingDraft");
-      setStatus({ type: "success", message: "Submitted! Waiting for admin approval." });
+      sessionStorage.removeItem("resortBookingDraft");
+
+      setStatus({
+        type: "success",
+        message: "Submitted! Waiting for admin approval.",
+      });
 
       setTimeout(() => {
         navigate("/booking-successful", {
           state: {
-            serviceType: "Hotel & Condo",
+            serviceType: "Resort & Venue",
             booking: bookingData,
             amountPaid: amountToPay,
             totalAmount: fullTotalAmount,
@@ -1107,8 +1180,12 @@ export default function HotelBookingSummary() {
         });
       }, 1000);
     } catch (error) {
-      console.error("submit hotel booking error:", error);
-      setStatus({ type: "error", message: "Network error. Please try again." });
+      console.error("submit resort booking error:", error);
+
+      setStatus({
+        type: "error",
+        message: "Network error. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -1129,7 +1206,7 @@ export default function HotelBookingSummary() {
           <section className="ltc-hero">
             <img
               src={HERO_IMAGES[0]}
-              alt="Hotel booking background"
+              alt="Resort booking background"
               className="ltc-hero-slide"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
@@ -1138,7 +1215,7 @@ export default function HotelBookingSummary() {
 
             <div className="ltc-container ltc-hero-content">
               <span className="ltc-eyebrow" style={fontMontserrat}>
-                Hotel & Condo Booking
+                Resort & Venue Booking
               </span>
 
               <h1 className="ltc-hero-title" style={fontMontserrat}>
@@ -1146,7 +1223,7 @@ export default function HotelBookingSummary() {
               </h1>
 
               <p className="ltc-hero-text" style={fontPontano}>
-                Please complete the hotel booking form first before reviewing your summary.
+                Please complete the resort booking form first before reviewing your summary.
               </p>
             </div>
           </section>
@@ -1158,16 +1235,13 @@ export default function HotelBookingSummary() {
                   No Booking Data Found
                 </h2>
 
-                <p
-                  className="ltc-info-box"
-                  style={{ ...fontPoppins, maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}
-                >
+                <p className="ltc-info-box" style={{ ...fontPoppins, maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}>
                   Please complete the booking form first.
                 </p>
 
                 <div className="ltc-actions">
                   <button
-                    onClick={() => navigate("/hotel-booking-form")}
+                    onClick={() => navigate("/resort-form")}
                     type="button"
                     className="ltc-primary-button"
                     style={fontMontserrat}
@@ -1207,7 +1281,7 @@ export default function HotelBookingSummary() {
         <section className="ltc-hero">
           <img
             src={HERO_IMAGES[0]}
-            alt="Hotel booking background"
+            alt="Resort booking background"
             className="ltc-hero-slide"
             onError={(event) => {
               event.currentTarget.style.display = "none";
@@ -1216,15 +1290,15 @@ export default function HotelBookingSummary() {
 
           <div className="ltc-container ltc-hero-content">
             <span className="ltc-eyebrow" style={fontMontserrat}>
-              Hotel & Condo Booking
+              Resort & Venue Booking
             </span>
 
             <h1 className="ltc-hero-title" style={fontMontserrat}>
-              Hotel Booking <span>Summary</span>
+              Booking <span>Summary</span>
             </h1>
 
             <p className="ltc-hero-text" style={fontPontano}>
-              Review your hotel and condo booking details, choose your payment option,
+              Review your resort and venue booking details, choose your payment option,
               and upload your proof of payment before submitting.
             </p>
           </div>
@@ -1250,7 +1324,7 @@ export default function HotelBookingSummary() {
                   </div>
 
                   <input
-                    value={bookingData.serviceType || "Hotel & Condo"}
+                    value={bookingData.serviceType || "Resort & Venue"}
                     disabled
                     readOnly
                     className="ltc-service-pill"
@@ -1263,18 +1337,36 @@ export default function HotelBookingSummary() {
                     label="Package"
                     value={
                       bookingData.selectedPackageTitle ||
-                      bookingData.packageTitle ||
-                      bookingData.selectedPackage
+                      bookingData.selectedPackage ||
+                      bookingData.venue
                     }
                   />
-                  <ReadOnlyField label="Room Type" value={bookingData.roomType} />
-                  <ReadOnlyField label="Duration" value={bookingData.duration} />
-                  <ReadOnlyField label="Date" value={formatDateMMDDYYYY(bookingData.date)} />
+
+                  <ReadOnlyField
+                    label="Venue"
+                    value={bookingData.venue || bookingData.selectedVenue}
+                  />
+
+                  <ReadOnlyField
+                    label="Choose Date"
+                    value={formatDateMMDDYYYY(bookingData.date)}
+                  />
+
+                  <ReadOnlyField
+                    label="Variation"
+                    value={
+                      bookingData.category ||
+                      bookingData.selectedVariantLabel ||
+                      bookingData.selectedDuration
+                    }
+                  />
+
                   <ReadOnlyField label="Time" value={bookingData.time} />
-                  <ReadOnlyField label="Pax" value={bookingData.pax} />
-                  <ReadOnlyField label="Max Pax" value={bookingData.maxPax} />
-                  <ReadOnlyField label="Base Price" value={formatPeso(bookingData.basePrice)} />
-                  <ReadOnlyField label="Total Amount" value={formatPeso(fullTotalAmount)} />
+
+                  <ReadOnlyField
+                    label="Number of Pax"
+                    value={bookingData.pax || bookingData.totalGuests}
+                  />
                 </div>
               </section>
 
@@ -1332,7 +1424,7 @@ export default function HotelBookingSummary() {
                 </button>
 
                 <button
-                  onClick={() => navigate("/hotel-booking-form", { state: bookingData })}
+                  onClick={() => navigate("/resort-form", { state: bookingData })}
                   disabled={loading}
                   type="button"
                   className="ltc-secondary-button"
@@ -1380,58 +1472,30 @@ function PaymentSection({
           </h2>
           <div className="ltc-section-line" />
         </div>
-
-        <select
-          value={paymentMethod}
-          onChange={(event) => setPaymentMethod(event.target.value)}
-          aria-invalid={showPaymentMethodError ? "true" : "false"}
-          className="ltc-select"
-          style={fontPoppins}
-        >
-          <option value="">Bank Transfer / GCASH</option>
-          <option value="BANK TRANSFER">Bank Transfer</option>
-          <option value="GCASH">GCASH</option>
-        </select>
       </div>
+
+      <div className="ltc-info-box" style={fontPoppins}>
+        <label style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 900 }}>
+          <input
+            type="checkbox"
+            checked={isDownPayment}
+            onChange={(event) => setIsDownPayment(event.target.checked)}
+            style={{ accentColor: "#174a30", width: 16, height: 16 }}
+          />
+          Down payment only 50%
+        </label>
+        <p>Leave unchecked for full payment.</p>
+      </div>
+
+      <p className="ltc-help-text" style={{ ...fontPoppins, marginTop: 20 }}>
+        Click a QR card below to select and reveal the payment QR image.
+      </p>
 
       {showPaymentMethodError ? (
-        <p className="ltc-error-text" style={fontPoppins}>
-          Please select a payment method by clicking a QR image or choosing from the dropdown.
+        <p className="ltc-error-text" style={{ ...fontPoppins, marginTop: 12 }}>
+          Please select a payment method by clicking a QR card.
         </p>
       ) : null}
-
-      <div className="ltc-field" style={{ maxWidth: 420, marginTop: 18 }}>
-        <label style={fontMontserrat}>Payment Terms</label>
-
-        <div className="ltc-info-box" style={{ marginTop: 0 }}>
-          <label
-            style={{
-              ...fontPoppins,
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              color: "#174a30",
-              fontWeight: 900,
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={isDownPayment}
-              onChange={(event) => setIsDownPayment(event.target.checked)}
-              style={{ width: 16, height: 16, accentColor: "#174a30" }}
-            />
-            Down payment only 50%
-          </label>
-
-          <p style={{ ...fontPoppins, marginTop: 6, color: "#667085", fontSize: 12 }}>
-            Leave unchecked for full payment.
-          </p>
-        </div>
-      </div>
-
-      <p className="ltc-info-box" style={fontPoppins}>
-        Click a QR image to select payment method.
-      </p>
 
       <div className="ltc-payment-grid">
         <QrImageCard
@@ -1439,6 +1503,8 @@ function PaymentSection({
           method="BANK TRANSFER"
           src={BANK_QR_IMAGE}
           selected={paymentMethod === "BANK TRANSFER"}
+          visible={paymentMethod === "BANK TRANSFER"}
+          placeholderClassName="ltc-qr-placeholder-bank"
           hasValidationError={showPaymentMethodError}
           onSelect={setPaymentMethod}
         />
@@ -1448,6 +1514,8 @@ function PaymentSection({
           method="GCASH"
           src={GCASH_QR_IMAGE}
           selected={paymentMethod === "GCASH"}
+          visible={paymentMethod === "GCASH"}
+          placeholderClassName="ltc-qr-placeholder-gcash"
           hasValidationError={showPaymentMethodError}
           onSelect={setPaymentMethod}
         />
@@ -1465,7 +1533,16 @@ function PaymentSection({
   );
 }
 
-function QrImageCard({ title, method, src, selected, hasValidationError, onSelect }) {
+function QrImageCard({
+  title,
+  method,
+  src,
+  selected,
+  visible,
+  placeholderClassName,
+  hasValidationError,
+  onSelect,
+}) {
   const [hasError, setHasError] = useState(false);
 
   return (
@@ -1476,29 +1553,42 @@ function QrImageCard({ title, method, src, selected, hasValidationError, onSelec
         hasValidationError ? "error" : ""
       }`}
     >
-      {selected ? <span className="ltc-selected-badge">Selected</span> : null}
+      {selected ? (
+        <span className="ltc-selected-badge">Selected</span>
+      ) : null}
 
       <div className="ltc-qr-frame">
-        {!hasError ? (
-          <img
-            src={src}
-            alt={title}
-            onError={() => setHasError(true)}
-          />
+        {visible ? (
+          !hasError ? (
+            <img
+              src={src}
+              alt={title}
+              onError={() => setHasError(true)}
+            />
+          ) : (
+            <div style={{ padding: 18, textAlign: "center" }}>
+              <p style={{ ...fontMontserrat, margin: 0, color: "#174a30", fontWeight: 900 }}>
+                {title}
+              </p>
+              <p style={{ ...fontPoppins, margin: "4px 0 0", color: "#667085", fontSize: 12 }}>
+                Add image in public folder.
+              </p>
+            </div>
+          )
         ) : (
-          <div style={{ padding: 18, textAlign: "center" }}>
-            <p style={{ ...fontMontserrat, margin: 0, color: "#174a30", fontWeight: 900 }}>
-              {title}
-            </p>
-            <p style={{ ...fontPoppins, margin: "4px 0 0", color: "#667085", fontSize: 12 }}>
-              Add image in public folder.
-            </p>
+          <div className={`ltc-qr-placeholder ${placeholderClassName || ""}`}>
+            <div>
+              <p style={{ margin: 0 }}>{method}</p>
+              <p style={{ margin: "6px 0 0", fontSize: 11, opacity: 0.82 }}>
+                Click this QR card to reveal QR
+              </p>
+            </div>
           </div>
         )}
       </div>
 
       <p className="ltc-qr-title" style={fontMontserrat}>
-        {title}
+        {visible ? title : `${title} Hidden`}
       </p>
     </button>
   );
@@ -1509,7 +1599,7 @@ function Header({ navigate, goToProfile, openMenu }) {
     <header className="ltc-header">
       <div className="ltc-container ltc-nav">
         <button
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/resort-venue")}
           type="button"
           className="ltc-logo"
           aria-label="Go to home"
@@ -1530,7 +1620,7 @@ function Header({ navigate, goToProfile, openMenu }) {
         </button>
 
         <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
@@ -1653,7 +1743,7 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>
             Home
           </FooterLink>
           <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
@@ -1679,23 +1769,42 @@ function Footer() {
           </FooterLink>
         </FooterColumn>
 
+        <FooterColumn title="Resort">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            Ecotrend Subdivision San Nicolas, Bacoor Cavite
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9953781962</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Hotel">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            2/F 5441 Currie Street, Palanan, Makati City
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
         <FooterColumn title="Contact Information">
-          <FooterText>ltc.amsi@gmail.com</FooterText>
-          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
-          <FooterText>09959808051 / 09516281271</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Address">
-          <FooterText>2/F 5441 Currie Street,</FooterText>
-          <FooterText>Palanan, Makati City</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <FooterText>recruitment@ltcmultiservices.com</FooterText>
+          <FooterText>marketing@ltcmultiservices.com</FooterText>
+          <FooterText>lorenzoeventandvenue@gmail.com</FooterText>
+          <FacebookLink />
         </FooterColumn>
       </div>
 
@@ -1704,6 +1813,28 @@ function Footer() {
         <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
+  );
+}
+
+function FacebookLink() {
+  return (
+    <button
+      type="button"
+      className="ltc-facebook-link"
+      aria-label="Open Facebook page"
+      title="Facebook"
+      onClick={() => {
+        window.open(
+          "https://www.facebook.com/4delorenzo?rdid=2DsYHS1ll77JUW6K&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18wf6uHcfv%2F#",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 12.06C22 6.48 17.52 2 11.94 2S2 6.48 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.9h2.77l-.44 2.91h-2.33V22c4.78-.76 8.45-4.92 8.45-9.94Z" />
+      </svg>
+    </button>
   );
 }
 
@@ -1729,8 +1860,12 @@ function FooterLink({ children, onClick }) {
   );
 }
 
-function FooterText({ children }) {
-  return <p style={fontPontano}>{children}</p>;
+function FooterText({ children, className = "" }) {
+  return (
+    <p className={className} style={fontPontano}>
+      {children}
+    </p>
+  );
 }
 
 function MobileMenu({ onClose, navigate, goToProfile }) {
@@ -1758,7 +1893,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           label="HOME"
           onClick={() => {
             onClose();
-            navigate("/hotel-resort");
+            navigate("/resort-venue");
           }}
         />
 
@@ -1787,7 +1922,11 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
         />
 
         <MenuItem
-          label="PROFILE"
+          label={
+            localStorage.getItem("token") || localStorage.getItem("hotelToken")
+              ? "PROFILE"
+              : "SIGN IN"
+          }
           onClick={() => {
             onClose();
             goToProfile();

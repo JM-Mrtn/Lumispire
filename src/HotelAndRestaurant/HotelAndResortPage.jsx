@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelFaqBot from "./HotelFaqBot";
 
 const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
 

@@ -35,7 +35,7 @@ import HotelAdminReviews from "./HotelAndRestaurant/HotelAdminReviews";
 import HotelChat from "./HotelAndRestaurant/HotelChat";
 import HotelAdminChat from "./HotelAndRestaurant/HotelAdminChat";
 import HotelFaqs from "./HotelAndRestaurant/HotelFaqs";
-import HotelChatButton from "./HotelAndRestaurant/HotelChatButton";
+import HotelChatbot from "./HotelAndRestaurant/HotelChatbot";
 import BookingSuccessful from "./HotelAndRestaurant/BookingSuccessful";
 
 /* ===================== HOTEL AUTH ===================== */
@@ -233,7 +233,7 @@ const FloatingAssistants = () => {
 
   return (
     <>
-      {showHotelChatButton ? <HotelChatButton /> : null}
+      {showHotelChatButton ? <HotelChatbot /> : null}
       {showManpowerChatbot ? <ManpowerChatbot /> : null}
     </>
   );

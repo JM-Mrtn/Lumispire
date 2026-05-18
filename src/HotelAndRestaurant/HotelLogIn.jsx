@@ -11,6 +11,10 @@ const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
 const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 
+function getHotelToken() {
+  return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
+}
+
 const HotelLogIn = () => {
   const navigate = useNavigate();
 
@@ -22,6 +26,7 @@ const HotelLogIn = () => {
   const [errors, setErrors] = useState({});
   const [bgIndex, setBgIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
 
   const verificationStatus = useMemo(() => {
@@ -189,7 +194,7 @@ const HotelLogIn = () => {
   };
 
   const goToSignUp = () => navigate("/hotel-signup");
-  const goToHome = () => navigate("/hotel-resort");
+  const goToHome = () => navigate("/resort-venue");
   const goToContact = () => navigate("/hotel-contact-us");
   const goToForgotPassword = () => navigate("/hotel-forgot-password");
 
@@ -227,7 +232,7 @@ const HotelLogIn = () => {
   );
 
   const CrownLogo = () => (
-    <button type="button" onClick={() => navigate("/home")} className="ltc-logo" aria-label="Go to hotel home">
+    <button type="button" onClick={() => navigate("/resort-venue")} className="ltc-logo" aria-label="Go to hotel home">
       <img
         src="/HotelLogo.png"
         alt="Hotel logo"
@@ -429,6 +434,92 @@ const HotelLogIn = () => {
           color: white;
           background: rgba(255,255,255,.13);
           transform: translateY(-1px);
+        }
+
+        .ltc-profile-button {
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 14px 28px rgba(215,168,77,.18);
+        }
+
+        .ltc-menu-button {
+          display: none;
+          color: white;
+          border: 0;
+          background: rgba(255,255,255,.1);
+          border-radius: 12px;
+          padding: 10px;
+          cursor: pointer;
+        }
+
+        .ltc-menu-button svg {
+          width: 24px;
+          height: 24px;
+        }
+
+        .ltc-sidebar-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 60;
+          background: rgba(0,0,0,.42);
+        }
+
+        .ltc-sidebar-panel {
+          position: absolute;
+          right: 0;
+          top: 0;
+          height: 100%;
+          width: min(310px, 86vw);
+          background: white;
+          box-shadow: -20px 0 60px rgba(0,0,0,.25);
+          padding: 20px;
+        }
+
+        .ltc-sidebar-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid rgba(16,24,40,.1);
+          padding-bottom: 16px;
+          margin-bottom: 16px;
+        }
+
+        .ltc-sidebar-title {
+          color: var(--green-950);
+          font-weight: 900;
+          letter-spacing: .14em;
+          font-size: 12px;
+          margin: 0;
+        }
+
+        .ltc-sidebar-close {
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          border: 0;
+          background: #f2f4f7;
+          color: #101828;
+          cursor: pointer;
+        }
+
+        .ltc-sidebar-link {
+          display: block;
+          width: 100%;
+          border: 0;
+          background: transparent;
+          color: #101828;
+          text-align: left;
+          border-radius: 14px;
+          padding: 13px 14px;
+          font-weight: 800;
+          margin-bottom: 8px;
+          cursor: pointer;
+        }
+
+        .ltc-sidebar-link:hover,
+        .ltc-sidebar-link.active {
+          background: var(--green-800);
+          color: white;
         }
 
         .ltc-login-main {
@@ -792,7 +883,7 @@ const HotelLogIn = () => {
         .ltc-footer-grid {
           width: 100%;
           display: grid;
-          grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+          grid-template-columns: 1.1fr .75fr 1.1fr 1.1fr 1fr;
           gap: 22px;
           padding-bottom: 24px;
           border-bottom: 1px solid rgba(255,255,255,.1);
@@ -839,6 +930,17 @@ const HotelLogIn = () => {
           margin: 5px 0;
         }
 
+        .ltc-footer-small-text {
+          font-size: 12px !important;
+          line-height: 1.42 !important;
+          margin: 4px 0 !important;
+        }
+
+        .ltc-footer-small-text strong {
+          font-size: 12px !important;
+          line-height: 1.42 !important;
+        }
+
         .ltc-footer-link {
           border: 0;
           background: transparent;
@@ -850,6 +952,34 @@ const HotelLogIn = () => {
         .ltc-footer-link:hover {
           color: white;
           text-decoration: underline;
+        }
+
+        .ltc-facebook-link {
+          width: 34px;
+          height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 999px;
+          background: rgba(255,255,255,.10);
+          color: white;
+          cursor: pointer;
+          transition: .25s var(--ease);
+          margin-top: 6px;
+        }
+
+        .ltc-facebook-link:hover {
+          color: #f4d484;
+          border-color: rgba(244,212,132,.42);
+          background: rgba(244,212,132,.12);
+          transform: translateY(-2px);
+        }
+
+        .ltc-facebook-link svg {
+          width: 18px;
+          height: 18px;
+          fill: currentColor;
         }
 
         .ltc-socials {
@@ -946,12 +1076,12 @@ const HotelLogIn = () => {
           }
 
           .ltc-desktop-nav {
-            gap: 4px;
+            display: none;
           }
 
-          .ltc-nav-link {
-            font-size: 11px;
-            padding: 9px 10px;
+          .ltc-menu-button {
+            display: grid;
+            place-items: center;
           }
 
           .ltc-login-main {
@@ -1015,10 +1145,51 @@ const HotelLogIn = () => {
                 HOME
               </button>
 
+              <button
+                type="button"
+                onClick={() => navigate("/virtual-tour")}
+                className="ltc-nav-link"
+              >
+                VIRTUAL TOUR
+              </button>
+
               <button type="button" onClick={goToContact} className="ltc-nav-link">
                 CONTACT
               </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/hotel-faqs")}
+                className="ltc-nav-link"
+              >
+                FAQS
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate(getHotelToken() ? "/hotel-profile" : "/hotel-login")}
+                className="ltc-nav-link ltc-profile-button"
+              >
+                {getHotelToken() ? "PROFILE" : "SIGN IN"}
+              </button>
             </nav>
+
+            <button
+              onClick={() => setIsOpen(true)}
+              type="button"
+              aria-label="Open menu"
+              className="ltc-menu-button"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
         </header>
 
@@ -1172,10 +1343,99 @@ const HotelLogIn = () => {
         </main>
       </div>
 
+      {isOpen ? (
+        <MobileMenu
+          onClose={() => setIsOpen(false)}
+          navigate={navigate}
+          goToProfile={() => navigate(getHotelToken() ? "/hotel-profile" : "/hotel-login")}
+        />
+      ) : null}
+
       <Footer />
     </div>
   );
 };
+
+function MobileMenu({ onClose, navigate, goToProfile }) {
+  const signedIn = getHotelToken();
+
+  return (
+    <div className="ltc-sidebar-overlay">
+      <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
+
+      <div className="ltc-sidebar-panel">
+        <div className="ltc-sidebar-top">
+          <p className="ltc-sidebar-title" style={fontPoppins}>
+            MENU
+          </p>
+
+          <button
+            onClick={onClose}
+            className="ltc-sidebar-close"
+            aria-label="Close menu"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
+
+        <MenuItem
+          label="HOME"
+          onClick={() => {
+            onClose();
+            navigate("/resort-venue");
+          }}
+        />
+
+        <MenuItem
+          label="VIRTUAL TOUR"
+          onClick={() => {
+            onClose();
+            navigate("/virtual-tour");
+          }}
+        />
+
+        <MenuItem
+          label="CONTACT"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-contact-us");
+          }}
+        />
+
+        <MenuItem
+          label="FAQS"
+          onClick={() => {
+            onClose();
+            navigate("/hotel-faqs");
+          }}
+        />
+
+        <MenuItem
+          label={signedIn ? "PROFILE" : "SIGN IN"}
+          active={!signedIn}
+          onClick={() => {
+            onClose();
+            goToProfile();
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MenuItem({ label, onClick, active = false }) {
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={`ltc-sidebar-link ${active ? "active" : ""}`}
+      style={fontPoppins}
+    >
+      {label}
+    </button>
+  );
+}
 
 function Footer() {
   return (
@@ -1196,7 +1456,7 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>Home</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>Home</FooterLink>
           <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
             Virtual Tour
           </FooterLink>
@@ -1218,23 +1478,42 @@ function Footer() {
           </FooterLink>
         </FooterColumn>
 
+        <FooterColumn title="Resort">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            Ecotrend Subdivision San Nicolas, Bacoor Cavite
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9953781962</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Hotel">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            2/F 5441 Currie Street, Palanan, Makati City
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
         <FooterColumn title="Contact Information">
-          <FooterText>ltc.amsi@gmail.com</FooterText>
-          <FooterText>lorengladius@ltcmultiservices.com</FooterText>
-          <FooterText>09959808051 / 09516281271</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Address">
-          <FooterText>2/F 5441 Currie Street,</FooterText>
-          <FooterText>Palanan, Makati City</FooterText>
-        </FooterColumn>
-
-        <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <FooterText>recruitment@ltcmultiservices.com</FooterText>
+          <FooterText>marketing@ltcmultiservices.com</FooterText>
+          <FooterText>lorenzoeventandvenue@gmail.com</FooterText>
+          <FacebookLink />
         </FooterColumn>
       </div>
 
@@ -1243,6 +1522,28 @@ function Footer() {
         <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
+  );
+}
+
+function FacebookLink() {
+  return (
+    <button
+      type="button"
+      className="ltc-facebook-link"
+      aria-label="Open Facebook page"
+      title="Facebook"
+      onClick={() => {
+        window.open(
+          "https://www.facebook.com/4delorenzo?rdid=2DsYHS1ll77JUW6K&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18wf6uHcfv%2F#",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 12.06C22 6.48 17.52 2 11.94 2S2 6.48 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.9h2.77l-.44 2.91h-2.33V22c4.78-.76 8.45-4.92 8.45-9.94Z" />
+      </svg>
+    </button>
   );
 }
 
@@ -1263,8 +1564,12 @@ function FooterLink({ children, onClick }) {
   );
 }
 
-function FooterText({ children }) {
-  return <p style={fontPontano}>{children}</p>;
+function FooterText({ children, className = "" }) {
+  return (
+    <p className={className} style={fontPontano}>
+      {children}
+    </p>
+  );
 }
 
 export default HotelLogIn;
