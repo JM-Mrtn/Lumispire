@@ -93,12 +93,7 @@ function getCertificateVenue(certificate) {
 }
 
 function getCertificateSerial(certificate) {
-  return (
-    certificate?.serialNo ||
-    certificate?.certificateSerialNo ||
-    certificate?.certificateNo ||
-    "-"
-  );
+  return certificate?.serialNo || certificate?.certificateSerialNo || "-";
 }
 
 function getCertificateDate(value) {
@@ -295,7 +290,7 @@ function TemplateBackground() {
   );
 }
 
-function CertificateTextOverlay({ certificate }) {
+function CertificateTextOverlay({ certificate, pdfMode = false }) {
   const traineeName = toTitleCase(certificate?.traineeName || "Trainee Name");
   const courseTitle = getQualificationTitle(certificate);
   const issuedAt =
@@ -304,23 +299,59 @@ function CertificateTextOverlay({ certificate }) {
 
   const { day, month, year } = getManilaDateParts(issuedAt);
   const daySuffix = getOrdinalSuffix(day);
+  const serialNo = getCertificateSerial(certificate);
 
   return (
     <>
       <div
         style={{
           position: "absolute",
+          right: 25,
+          top: 18,
+          width: 380,
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "flex-end",
+          gap: "16px",
+          color: "#3d3d3d",
+          fontFamily: '"Times New Roman", Georgia, serif',
+          fontWeight: 700,
+          lineHeight: 1,
+          textAlign: "right",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span
+          style={{
+            fontSize: "32px",
+            letterSpacing: "0.01em",
+          }}
+        >
+          SERIAL NO.
+        </span>
+        <span
+          style={{
+            fontSize: "28px",
+            letterSpacing: "0.03em",
+          }}
+        >
+          {serialNo}
+        </span>
+      </div>
+      <div
+        style={{
+          position: "absolute",
           left: 438,
-          top: 370,
+          top: pdfMode ? 330 : 370,
           width: 970,
-          height: 140,
+          height: pdfMode ? 132 : 140,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           color: "#00533e",
           fontFamily:
             '"Great Vibes", "Allura", "Edwardian Script ITC", "Segoe Script", "Brush Script MT", cursive',
-          fontSize: `${getNameFontSize(traineeName)}px`,
+          fontSize: `${pdfMode ? Math.max(68, getNameFontSize(traineeName) - 8) : getNameFontSize(traineeName)}px`,
           fontWeight: 400,
           lineHeight: 1,
           whiteSpace: "nowrap",
@@ -378,7 +409,7 @@ function CertificateTextOverlay({ certificate }) {
   );
 }
 
-function CertificateArt({ certificate }) {
+function CertificateArt({ certificate, pdfMode = false }) {
   return (
     <div
       data-pdf-capture-root="true"
@@ -391,7 +422,7 @@ function CertificateArt({ certificate }) {
       }}
     >
       <TemplateBackground />
-      <CertificateTextOverlay certificate={certificate} />
+      <CertificateTextOverlay certificate={certificate} pdfMode={pdfMode} />
     </div>
   );
 }
@@ -450,7 +481,7 @@ function CertificateTemplate({ certificate, captureRef }) {
         className="pdf-capture fixed left-[-10000px] top-0"
         aria-hidden="true"
       >
-        <CertificateArt certificate={certificate} />
+        <CertificateArt certificate={certificate} pdfMode />
       </div>
 
       <div className="print:hidden mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

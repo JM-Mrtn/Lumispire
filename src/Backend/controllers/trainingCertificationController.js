@@ -45,14 +45,95 @@ function buildCertificateNo(courseKey = "") {
   return `TAMSI-${prefix}-${year}-${random}`;
 }
 
-function buildSerialNo(courseKey = "", issuedAt = new Date()) {
-  const prefix = getCoursePrefix(courseKey);
+function isFormattedSerialNo(value = "") {
+  return /^\d{4}-\d{5}$/.test(String(value || "").trim());
+}
+
+function normalizeLegacySerialNo(value = "") {
+  const clean = String(value || "").trim();
+
+  if (isFormattedSerialNo(clean)) return clean;
+  if (/^\d{9}$/.test(clean)) return `${clean.slice(0, 4)}-${clean.slice(4)}`;
+
+  return "";
+}
+
+async function serialNoExists(serialNo = "", excludeId = null) {
+  const clean = String(serialNo || "").trim();
+  if (!clean) return false;
+
+  const query = { serialNo: clean };
+  if (excludeId) query._id = { $ne: excludeId };
+
+  const existing = await TrainingCertificate.findOne(query).select("_id").lean();
+  return Boolean(existing);
+}
+
+async function buildSerialNo(issuedAt = new Date(), excludeId = null) {
   const d = new Date(issuedAt);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const random = String(Date.now()).slice(-5);
-  return `${prefix}-${year}${month}${day}-${random}`;
+  const year = Number.isNaN(d.getTime()) ? new Date().getFullYear() : d.getFullYear();
+  const prefix = String(year);
+
+  const related = await TrainingCertificate.find({
+    serialNo: new RegExp(`^${prefix}-?\\d{5}$`),
+  })
+    .select("serialNo")
+    .lean();
+
+  let maxNumber = 0;
+  for (const item of related) {
+    const raw = String(item?.serialNo || "").trim();
+    const normalized = normalizeLegacySerialNo(raw);
+    if (!normalized) continue;
+
+    const sequence = Number(normalized.slice(-5));
+    if (Number.isFinite(sequence) && sequence > maxNumber) {
+      maxNumber = sequence;
+    }
+  }
+
+  let nextNumber = maxNumber + 1;
+  while (nextNumber <= 99999) {
+    const candidate = `${prefix}-${String(nextNumber).padStart(5, "0")}`;
+    if (!(await serialNoExists(candidate, excludeId))) {
+      return candidate;
+    }
+    nextNumber += 1;
+  }
+
+  throw new Error(`Serial number limit reached for ${year}.`);
+}
+
+async function ensureCertificateSerialNo(certificate, issuedAt = null) {
+  if (!certificate) return "";
+
+  const current = String(certificate.serialNo || "").trim();
+  const normalized = normalizeLegacySerialNo(current);
+
+  if (normalized && normalized !== current) {
+    const taken = await serialNoExists(normalized, certificate._id);
+    if (!taken) {
+      certificate.serialNo = normalized;
+      await certificate.save();
+      return normalized;
+    }
+  }
+
+  if (isFormattedSerialNo(current)) {
+    return current;
+  }
+
+  const generated = await buildSerialNo(
+    issuedAt || certificate.issuedAt || new Date(),
+    certificate._id
+  );
+
+  if (generated !== current) {
+    certificate.serialNo = generated;
+    await certificate.save();
+  }
+
+  return generated;
 }
 
 function buildVerificationCode() {
@@ -366,7 +447,7 @@ export async function markTraineePassedByProfessor(req, res) {
       certificate = await TrainingCertificate.create({
         ...snapshot,
         certificateNo: buildCertificateNo(courseKey),
-        serialNo: buildSerialNo(courseKey, now),
+        serialNo: await buildSerialNo(now),
         verificationCode: buildVerificationCode(),
         status: "issued",
       });
@@ -409,11 +490,8 @@ export async function markTraineePassedByProfessor(req, res) {
       certificate.remarks = snapshot.remarks;
       certificate.status = "issued";
 
-      if (!certificate.serialNo) {
-        certificate.serialNo = buildSerialNo(courseKey, certificate.issuedAt || now);
-      }
-
       await certificate.save();
+      await ensureCertificateSerialNo(certificate, certificate.issuedAt || now);
     }
 
     trainee.trainingStatus = "Completed";
@@ -478,6 +556,8 @@ export async function getMyTrainingCertificate(req, res) {
         message: "Certificate is not available.",
       });
     }
+
+    await ensureCertificateSerialNo(certificate, certificate.issuedAt || new Date());
 
     return res.json({
       success: true,

@@ -30,12 +30,20 @@ const CHART_STATUS_FILTERS = [
   { value: "CANCELLED", label: "Cancelled" },
 ];
 
-const CHART_MONTH_OPTIONS = [
-  { value: 3, label: "3 Months" },
-  { value: 6, label: "6 Months" },
-  { value: 7, label: "7 Months" },
-  { value: 12, label: "12 Months" },
-];
+function getCurrentYear() {
+  return new Date().getFullYear();
+}
+
+function getYearOptions(backYears = 5, forwardYears = 1) {
+  const currentYear = getCurrentYear();
+  const startYear = currentYear - backYears;
+  const endYear = currentYear + forwardYears;
+
+  return Array.from(
+    { length: endYear - startYear + 1 },
+    (_, index) => endYear - index
+  );
+}
 
 const MONTH_NAMES = [
   "January",
@@ -348,14 +356,12 @@ function getMonthShortLabel(monthKey = "") {
   });
 }
 
-function getRecentMonthKeys(totalMonths = 7) {
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+function getYearMonthKeys(year = getCurrentYear()) {
+  const selectedYear = Number(year) || getCurrentYear();
 
-  return Array.from({ length: totalMonths }, (_, index) => {
-    const date = new Date(start);
-    date.setMonth(start.getMonth() - (totalMonths - 1 - index));
-    return getMonthKey(date);
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = String(index + 1).padStart(2, "0");
+    return `${selectedYear}-${month}`;
   });
 }
 
@@ -519,65 +525,62 @@ function FilterButton({ active, children, onClick }) {
 }
 
 function BookingLineChart({ data = [], activeService = "ALL" }) {
-  const width = 760;
-  const height = 280;
-  const padding = { top: 26, right: 28, bottom: 44, left: 42 };
+  const width = 860;
+  const height = 330;
+  const padding = { top: 34, right: 34, bottom: 54, left: 56 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
+  const yAxisMax = 100;
 
   const visibleSeries = [
     {
       key: "resort",
       label: "Resort",
-      stroke: "#10b981",
-      areaId: "resortTrendArea",
+      stroke: "#2563eb",
+      dotClassName: "resort",
       active: activeService === "ALL" || activeService === "resort",
     },
     {
       key: "hotel_room",
       label: "Hotel",
-      stroke: "#0ea5e9",
-      areaId: "hotelTrendArea",
+      stroke: "#38bdf8",
+      dotClassName: "hotel",
       active: activeService === "ALL" || activeService === "hotel_room",
     },
     {
       key: "event",
       label: "Event",
-      stroke: "#8b5cf6",
-      areaId: "eventTrendArea",
+      stroke: "#ef4444",
+      dotClassName: "event",
       active: activeService === "ALL" || activeService === "event",
     },
   ].filter((item) => item.active);
 
-  const maxValue = Math.max(
-    1,
-    ...data.flatMap((item) => [
-      Number(item.resort || 0),
-      Number(item.hotel_room || 0),
-      Number(item.event || 0),
-      Number(item.total || 0),
-    ])
-  );
-
-  const ySteps = Array.from({ length: 5 }, (_, index) =>
-    Math.round((maxValue / 4) * index)
-  ).reverse();
+  const ySteps = [100, 75, 50, 25, 0];
+  const clampToAxis = (value) => Math.min(yAxisMax, Math.max(0, Number(value || 0)));
 
   const getPoints = (key) =>
     data.map((item, index) => {
       const x =
         padding.left +
         (data.length === 1 ? chartWidth / 2 : (chartWidth / (data.length - 1)) * index);
-      const y =
-        padding.top +
-        chartHeight -
-        (Number(item[key] || 0) / maxValue) * chartHeight;
+      const value = clampToAxis(item[key]);
+      const y = padding.top + chartHeight - (value / yAxisMax) * chartHeight;
 
-      return { ...item, x, y, value: Number(item[key] || 0), serviceKey: key };
+      return {
+        ...item,
+        x,
+        y,
+        value,
+        rawValue: Number(item[key] || 0),
+        serviceKey: key,
+      };
     });
 
   return (
     <div className="ltc-admin-chart-wrap">
+      <h3 className="ltc-admin-chart-title">Booking Sources by Month</h3>
+
       <div className="ltc-admin-chart-legend">
         {[
           { key: "resort", label: "Resort", className: "resort" },
@@ -596,35 +599,14 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
       <svg
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label="Monthly booking trend line chart"
+        aria-label="12 month resort, hotel, and event booking line chart"
         className="ltc-admin-line-chart"
       >
-        <defs>
-          <linearGradient id="resortTrendArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#10b981" stopOpacity="0.20" />
-            <stop offset="100%" stopColor="#10b981" stopOpacity="0.02" />
-          </linearGradient>
-          <linearGradient id="hotelTrendArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.02" />
-          </linearGradient>
-          <linearGradient id="eventTrendArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.02" />
-          </linearGradient>
-          <filter id="bookingTrendShadow" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="8" stdDeviation="7" floodColor="#082719" floodOpacity="0.14" />
-          </filter>
-        </defs>
-
         {ySteps.map((step) => {
-          const y =
-            padding.top +
-            chartHeight -
-            (Number(step || 0) / maxValue) * chartHeight;
+          const y = padding.top + chartHeight - (step / yAxisMax) * chartHeight;
 
           return (
-            <g key={`grid-${step}-${y}`}>
+            <g key={`grid-${step}`}>
               <line
                 x1={padding.left}
                 x2={width - padding.right}
@@ -633,7 +615,7 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
                 className="ltc-admin-chart-grid"
               />
               <text
-                x={padding.left - 12}
+                x={padding.left - 15}
                 y={y + 4}
                 textAnchor="end"
                 className="ltc-admin-chart-label"
@@ -647,21 +629,18 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
         {visibleSeries.map((series) => {
           const points = getPoints(series.key);
           const linePath = buildLinePath(points);
-          const areaPath = buildAreaPath(points, padding.top + chartHeight);
 
           return (
             <g key={series.key}>
-              {areaPath ? <path d={areaPath} fill={`url(#${series.areaId})`} /> : null}
-
               {linePath ? (
                 <path
                   d={linePath}
                   fill="none"
                   stroke={series.stroke}
-                  strokeWidth="5"
+                  strokeWidth="4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  filter="url(#bookingTrendShadow)"
+                  className="ltc-admin-chart-line"
                 />
               ) : null}
 
@@ -670,12 +649,10 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
                   <circle
                     cx={point.x}
                     cy={point.y}
-                    r="6"
-                    fill="#ffffff"
-                    stroke={series.stroke}
-                    strokeWidth="4"
+                    r="5"
+                    className={`ltc-admin-chart-dot ${series.dotClassName}`}
                   />
-                  <title>{`${series.label} ${point.label}: ${point.value}`}</title>
+                  <title>{`${series.label} ${point.label}: ${point.rawValue}`}</title>
                 </g>
               ))}
             </g>
@@ -691,7 +668,7 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
             <text
               key={item.monthKey}
               x={x}
-              y={height - 15}
+              y={height - 18}
               textAnchor="middle"
               className="ltc-admin-chart-month"
             >
@@ -707,7 +684,7 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
             <span>{item.label}</span>
             <strong>{item.total}</strong>
             <small>
-              R {item.resort} • H {item.hotel_room} • E {item.event}
+              R {item.resort} - H {item.hotel_room} - E {item.event}
             </small>
           </div>
         ))}
@@ -715,7 +692,6 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
     </div>
   );
 }
-
 
 export default function HotelAdminDashboard() {
   const navigate = useNavigate();
@@ -728,7 +704,7 @@ export default function HotelAdminDashboard() {
   const [statusFilter, setStatusFilter] = useState("BOOKED");
   const [chartServiceFilter, setChartServiceFilter] = useState("ALL");
   const [chartStatusFilter, setChartStatusFilter] = useState("BOOKED");
-  const [chartMonthRange, setChartMonthRange] = useState(7);
+  const [chartYear, setChartYear] = useState(getCurrentYear());
   const [chartSearch, setChartSearch] = useState("");
 
   const [monthDate, setMonthDate] = useState(() => {
@@ -978,7 +954,7 @@ export default function HotelAdminDashboard() {
   }, [bookings, chartServiceFilter, chartStatusFilter, chartSearch]);
 
   const bookingTrendData = useMemo(() => {
-    const monthKeys = getRecentMonthKeys(Number(chartMonthRange) || 7);
+    const monthKeys = getYearMonthKeys(chartYear);
     const monthMap = new Map(
       monthKeys.map((monthKey) => [
         monthKey,
@@ -1022,7 +998,7 @@ export default function HotelAdminDashboard() {
     });
 
     return Array.from(monthMap.values());
-  }, [chartFilteredBookings, chartMonthRange]);
+  }, [chartFilteredBookings, chartYear]);
 
   const bookingTrendTotal = useMemo(
     () => chartFilteredBookings.length,
@@ -1643,32 +1619,36 @@ export default function HotelAdminDashboard() {
           .ltc-admin-chart-mini-card.cancelled strong { color: #be123c; }
 
           .ltc-admin-chart-wrap {
-            border-radius: 26px;
-            border: 1px solid rgba(35,95,62,.08);
-            background:
-              radial-gradient(circle at 100% 0%, rgba(215,168,77,.12), transparent 26%),
-              rgba(246,250,247,.88);
-            padding: 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(16,24,40,.08);
+            background: #ffffff;
+            padding: 18px 18px 14px;
+            box-shadow: 0 12px 26px rgba(8,39,25,.06);
+          }
+
+          .ltc-admin-chart-title {
+            margin: 0 0 10px;
+            color: rgba(16,24,40,.82);
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -.02em;
           }
 
           .ltc-admin-chart-legend {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 10px;
           }
 
           .ltc-admin-chart-legend-item {
             display: inline-flex;
             align-items: center;
-            gap: 7px;
-            border-radius: 999px;
-            background: rgba(255,255,255,.84);
-            border: 1px solid rgba(35,95,62,.08);
-            color: rgba(16,24,40,.62);
-            padding: 7px 10px;
+            gap: 6px;
+            color: rgba(16,24,40,.68);
             font-size: 11px;
-            font-weight: 900;
+            font-weight: 800;
           }
 
           .ltc-admin-chart-legend-item i {
@@ -1677,43 +1657,52 @@ export default function HotelAdminDashboard() {
             border-radius: 999px;
           }
 
-          .ltc-admin-chart-legend-item i.resort { background: #10b981; }
-          .ltc-admin-chart-legend-item i.hotel { background: #0ea5e9; }
-          .ltc-admin-chart-legend-item i.event { background: #8b5cf6; }
+          .ltc-admin-chart-legend-item i.resort { background: #2563eb; }
+          .ltc-admin-chart-legend-item i.hotel { background: #38bdf8; }
+          .ltc-admin-chart-legend-item i.event { background: #ef4444; }
 
           .ltc-admin-line-chart {
             width: 100%;
-            min-height: 240px;
+            min-height: 300px;
             display: block;
           }
 
           .ltc-admin-chart-grid {
-            stroke: rgba(35,95,62,.12);
+            stroke: rgba(16,24,40,.10);
             stroke-width: 1;
           }
 
           .ltc-admin-chart-label,
           .ltc-admin-chart-month {
-            fill: rgba(16,24,40,.52);
+            fill: rgba(16,24,40,.46);
             font-size: 11px;
-            font-weight: 800;
+            font-weight: 700;
           }
 
           .ltc-admin-chart-month {
-            fill: var(--green-800);
-            font-weight: 900;
+            fill: rgba(16,24,40,.50);
+            font-weight: 800;
+          }
+
+          .ltc-admin-chart-line {
+            filter: none;
           }
 
           .ltc-admin-chart-dot {
-            fill: #f4d484;
-            stroke: #235f3e;
-            stroke-width: 4;
+            fill: #ffffff;
+            stroke-width: 3;
           }
 
-          .ltc-admin-chart-dot-ring {
-            fill: rgba(35,95,62,.08);
-            stroke: rgba(35,95,62,.14);
-            stroke-width: 1;
+          .ltc-admin-chart-dot.resort {
+            stroke: #2563eb;
+          }
+
+          .ltc-admin-chart-dot.hotel {
+            stroke: #38bdf8;
+          }
+
+          .ltc-admin-chart-dot.event {
+            stroke: #ef4444;
           }
 
           .ltc-admin-chart-table {
@@ -2306,14 +2295,14 @@ export default function HotelAdminDashboard() {
           <div className="ltc-admin-chart-header">
             <div>
               <p className="ltc-admin-panel-kicker">Booking Trend</p>
-              <h2 className="ltc-admin-panel-title">Booking Line Graph</h2>
+              <h2 className="ltc-admin-panel-title">January-December Booking Line Graph</h2>
               <p className="ltc-admin-muted">
-                Search and filter resort, hotel, and event bookings by service, status, guest, date, package, or payment information.
+                Tracks Resort, Hotel, and Event bookings using three separate lines with a fixed 0-100 Y-axis.
               </p>
             </div>
 
             <div className="ltc-admin-chart-total">
-              <span>Filtered Total</span>
+              <span>{chartYear} Total</span>
               <strong>{bookingTrendTotal}</strong>
             </div>
           </div>
@@ -2361,15 +2350,15 @@ export default function HotelAdminDashboard() {
             </div>
 
             <div className="ltc-admin-chart-select-wrap">
-              <span>Range</span>
+              <span>Year</span>
               <select
-                value={chartMonthRange}
-                onChange={(event) => setChartMonthRange(Number(event.target.value))}
+                value={chartYear}
+                onChange={(event) => setChartYear(Number(event.target.value))}
                 className="ltc-admin-chart-select"
               >
-                {CHART_MONTH_OPTIONS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
+                {getYearOptions().map((year) => (
+                  <option key={year} value={year}>
+                    {year}
                   </option>
                 ))}
               </select>
@@ -2382,10 +2371,10 @@ export default function HotelAdminDashboard() {
                 setChartSearch("");
                 setChartServiceFilter("ALL");
                 setChartStatusFilter("BOOKED");
-                setChartMonthRange(7);
+                setChartYear(getCurrentYear());
               }}
             >
-              Reset
+              Refresh
             </button>
           </div>
 
@@ -2440,7 +2429,7 @@ export default function HotelAdminDashboard() {
                 <div className="ltc-admin-empty">
                   <p className="ltc-admin-empty-title">No bookings match these filters</p>
                   <p className="ltc-admin-muted">
-                    Try clearing the search, changing service, or selecting a wider month range.
+                    Try clearing the search, changing service, status, or selecting a different year.
                   </p>
                 </div>
               ) : (

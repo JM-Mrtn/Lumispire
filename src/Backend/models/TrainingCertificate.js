@@ -127,7 +127,6 @@ const trainingCertificateSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
-      index: true,
     },
     verificationCode: {
       type: String,
@@ -282,6 +281,17 @@ const trainingCertificateSchema = new mongoose.Schema(
 trainingCertificateSchema.index(
   { traineeUserId: 1, courseKey: 1, status: 1 },
   { unique: true, partialFilterExpression: { status: "issued" } }
+);
+
+trainingCertificateSchema.index(
+  { serialNo: 1 },
+  {
+    unique: true,
+    name: "uniq_training_certificate_serial_no",
+    partialFilterExpression: {
+      serialNo: { $exists: true, $type: "string", $gt: "" },
+    },
+  }
 );
 
 const TrainingCertificate =

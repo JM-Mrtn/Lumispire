@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
   AdminShell,
   LoadingState,
   SectionCard,
@@ -15,6 +24,21 @@ function normalizeApiBase(raw) {
 }
 
 const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
+
+const MONTH_LABELS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 function getAdminToken() {
   return localStorage.getItem("manpowerAdminToken") || "";
@@ -33,10 +57,27 @@ function adminHeaders(extra = {}) {
   };
 }
 
+function buildMonthlyApplicantRows(rows = []) {
+  return MONTH_LABELS.map((month) => {
+    const found = rows.find((row) => row?.month === month);
+
+    return {
+      month,
+      total: Number(found?.total || 0),
+    };
+  });
+}
+
 export default function ManpowerAdminDashboard() {
   const navigate = useNavigate();
+  const currentYear = new Date().getFullYear();
   const [token, setToken] = useState(getAdminToken());
   const [loading, setLoading] = useState(true);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [availableYears, setAvailableYears] = useState([currentYear]);
+  const [monthlyApplicants, setMonthlyApplicants] = useState(
+    buildMonthlyApplicantRows()
+  );
   const [summary, setSummary] = useState({
     totalEmployees: 0,
     activeEmployees: 0,
@@ -59,17 +100,20 @@ export default function ManpowerAdminDashboard() {
       return;
     }
 
-    loadDashboard();
+    loadDashboard(selectedYear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, navigate]);
+  }, [token, navigate, selectedYear]);
 
-  async function loadDashboard() {
+  async function loadDashboard(year = selectedYear) {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_BASE}/manpower/admin/dashboard`, {
-        headers: adminHeaders(),
-      });
+      const res = await fetch(
+        `${API_BASE}/manpower/admin/dashboard?year=${encodeURIComponent(year)}`,
+        {
+          headers: adminHeaders(),
+        }
+      );
 
       const data = await res.json().catch(() => ({}));
 
@@ -82,8 +126,21 @@ export default function ManpowerAdminDashboard() {
         throw new Error(data?.message || "Failed to load admin dashboard.");
       }
 
+      const apiSelectedYear = Number(data?.selectedYear || year || currentYear);
+      const apiYears = Array.isArray(data?.availableYears)
+        ? data.availableYears.map((item) => Number(item)).filter(Number.isFinite)
+        : [];
+      const nextYears = apiYears.length ? apiYears : [apiSelectedYear];
+
+      if (!nextYears.includes(apiSelectedYear)) {
+        nextYears.unshift(apiSelectedYear);
+      }
+
       setSummary(data?.summary || {});
       setVacancyBreakdown(data?.vacancyBreakdown || []);
+      setMonthlyApplicants(buildMonthlyApplicantRows(data?.monthlyApplicants));
+      setSelectedYear(apiSelectedYear);
+      setAvailableYears(nextYears);
     } catch (error) {
       alert(error?.message || "Failed to load admin dashboard.");
     } finally {
@@ -140,6 +197,71 @@ export default function ManpowerAdminDashboard() {
               subtitle="Applicants already marked as hired"
             />
           </section>
+
+          <SectionCard
+            title="Total Monthly Applicants"
+            subtitle="Applicant count from January to December."
+          >
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[#24352c]">
+                  Filter by Year
+                </p>
+                <p className="text-xs text-[#6b7a6d]">
+                  Select a year to view the total monthly applicants.
+                </p>
+              </div>
+
+              <select
+                value={selectedYear}
+                onChange={(event) => setSelectedYear(Number(event.target.value))}
+                className="w-full rounded-xl border border-[#cfdac8] bg-white px-4 py-3 text-sm font-semibold text-[#24352c] outline-none transition focus:border-[#6f7d49] focus:ring-4 focus:ring-[#6f7d49]/10 sm:w-48"
+              >
+                {availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="h-[380px] rounded-2xl border border-[#d9e3d5] bg-white p-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={monthlyApplicants}
+                  margin={{ top: 20, right: 24, left: 0, bottom: 12 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    interval={0}
+                    tick={{ fontSize: 11 }}
+                    angle={-25}
+                    textAnchor="end"
+                    height={78}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    ticks={[0, 25, 50, 75, 100]}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <Tooltip
+                    formatter={(value) => [`${value} applicants`, "Total"]}
+                    labelFormatter={(label) => `${label} ${selectedYear}`}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    name="Applicants"
+                    stroke="#1f5f3b"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionCard>
 
           <SectionCard
             title="Vacancy Account Overview"

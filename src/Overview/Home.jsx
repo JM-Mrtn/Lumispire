@@ -43,7 +43,7 @@ const Home = () => {
       description:
         "Discover hospitality-focused services designed to deliver excellent guest experiences.",
       buttonText: "View Hotel & Resort",
-      route: "/hotel-resort",
+      route: "/resort-venue",
     },
     {
       image: "/TrainingAds.png",

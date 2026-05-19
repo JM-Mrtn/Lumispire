@@ -221,15 +221,92 @@ export async function manpowerAdminLogin(req, res) {
 
 export async function getManpowerAdminDashboard(req, res) {
   try {
-    const [employees, hiredApplications, jobs] = await Promise.all([
-      ManpowerEmployee.find()
-        .select(
-          "vacancy active mustChangePassword companyEmail personalEmail createdAt updatedAt dailyRate"
-        )
-        .lean(),
-      ManpowerApplication.countDocuments({ status: "HIRED" }),
-      ManpowerJob.find().sort({ title: 1 }).lean(),
-    ]);
+    const requestedYear = Number(req.query?.year || new Date().getFullYear());
+    const selectedYear = Number.isFinite(requestedYear)
+      ? requestedYear
+      : new Date().getFullYear();
+
+    const yearStart = new Date(selectedYear, 0, 1, 0, 0, 0, 0);
+    const yearEnd = new Date(selectedYear + 1, 0, 1, 0, 0, 0, 0);
+
+    const monthLabels = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const [employees, hiredApplications, jobs, monthlyApplicantRows, yearRows] =
+      await Promise.all([
+        ManpowerEmployee.find()
+          .select(
+            "vacancy active mustChangePassword companyEmail personalEmail createdAt updatedAt dailyRate"
+          )
+          .lean(),
+        ManpowerApplication.countDocuments({ status: "HIRED" }),
+        ManpowerJob.find().sort({ title: 1 }).lean(),
+        ManpowerApplication.aggregate([
+          {
+            $match: {
+              createdAt: {
+                $gte: yearStart,
+                $lt: yearEnd,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: { $month: "$createdAt" },
+              total: { $sum: 1 },
+            },
+          },
+          {
+            $sort: {
+              _id: 1,
+            },
+          },
+        ]),
+        ManpowerApplication.aggregate([
+          {
+            $group: {
+              _id: { $year: "$createdAt" },
+            },
+          },
+          {
+            $sort: {
+              _id: -1,
+            },
+          },
+        ]),
+      ]);
+
+    const monthlyApplicants = monthLabels.map((month, index) => {
+      const monthNumber = index + 1;
+      const found = monthlyApplicantRows.find(
+        (row) => Number(row?._id) === monthNumber
+      );
+
+      return {
+        month,
+        total: Number(found?.total || 0),
+      };
+    });
+
+    const availableYears = yearRows
+      .map((row) => Number(row?._id))
+      .filter((year) => Number.isFinite(year));
+
+    if (!availableYears.includes(selectedYear)) {
+      availableYears.unshift(selectedYear);
+    }
 
     const summary = {
       totalEmployees: employees.length,
@@ -295,6 +372,9 @@ export async function getManpowerAdminDashboard(req, res) {
       vacancyBreakdown: Array.from(map.values()).filter(
         (item) => item.totalAccounts > 0
       ),
+      monthlyApplicants,
+      selectedYear,
+      availableYears,
     });
   } catch (error) {
     console.error("getManpowerAdminDashboard error:", error);
