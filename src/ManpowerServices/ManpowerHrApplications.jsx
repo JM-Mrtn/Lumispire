@@ -61,6 +61,14 @@ function getApplicantName(app) {
   );
 }
 
+function getApplicantInitials(app) {
+  const first = String(app?.firstName || getApplicantName(app).split(/\s+/)[0] || "").trim();
+  const last = String(app?.lastName || getApplicantName(app).split(/\s+/).slice(-1)[0] || "").trim();
+  const initials = `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+
+  return initials || "AP";
+}
+
 function getStatusChipClass(status = "") {
   const normalized = String(status || "").toUpperCase();
 
@@ -270,51 +278,182 @@ function getResumeScoreValue(app) {
   return Number.isFinite(score) ? score : 0;
 }
 
-function BrandLogo() {
-  return (
-    <div className="flex items-center gap-5">
-      <img
-        src="/logo.png"
-        alt="Manpower Logo"
-        className="h-16 w-16 rounded-full object-cover"
-        onError={(event) => {
-          event.currentTarget.style.display = "none";
-        }}
-      />
+function SidebarIcon({ type }) {
+  const common = "h-4 w-4";
 
-      <h1 className="text-[28px] font-black uppercase tracking-wide text-[#315b42] sm:text-[34px]">
-        MANPOWER SERVICES
-      </h1>
-    </div>
+  if (type === "applicants") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-8 0v2" />
+        <circle cx="12" cy="7" r="4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 8v6M23 11h-6" />
+      </svg>
+    );
+  }
+
+  if (type === "payroll") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h4M15 15h2" />
+      </svg>
+    );
+  }
+
+  if (type === "leave") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 2v4M16 2v4M3 10h18" />
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m8 15 2.4 2.4L16 12" />
+      </svg>
+    );
+  }
+
+  if (type === "billing") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6M9 11h6M9 15h3" />
+      </svg>
+    );
+  }
+
+  if (type === "logout") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m16 17 5-5-5-5M21 12H9" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="7" height="7" rx="2" />
+      <rect x="14" y="3" width="7" height="7" rx="2" />
+      <rect x="14" y="14" width="7" height="7" rx="2" />
+      <rect x="3" y="14" width="7" height="7" rx="2" />
+    </svg>
   );
 }
 
-function SidebarButton({ active = false, children, onClick }) {
+
+function ApplicantActionIcon({ type }) {
+  const common = "h-4 w-4";
+
+  if (type === "view") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    );
+  }
+
+  if (type === "ai") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" />
+        <circle cx="12" cy="12" r="4" />
+      </svg>
+    );
+  }
+
+  if (type === "schedule") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 2v4M16 2v4M3 10h18" />
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m9 15 2 2 4-5" />
+      </svg>
+    );
+  }
+
+  if (type === "hire") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-8 0v2" />
+        <circle cx="12" cy="7" r="4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m17 11 2 2 4-4" />
+      </svg>
+    );
+  }
+
+  return null;
+}
+
+function SidebarButton({ active = false, children, onClick, icon = "dashboard" }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full px-6 py-4 text-center text-[16px] font-black uppercase transition ${
+      className={`group flex min-h-[52px] w-full items-center gap-4 rounded-[26px] px-6 text-left text-[13px] font-black tracking-tight transition duration-300 ${
         active
-          ? "bg-[#d5ddd6] text-[#244b35]"
-          : "text-white hover:bg-white/10"
+          ? "bg-white text-[#071f14] shadow-[0_18px_38px_rgba(0,0,0,0.20)]"
+          : "text-white hover:translate-x-1 hover:bg-white/10"
       }`}
     >
-      {children}
+      <span
+        className={`grid h-8 w-8 shrink-0 place-items-center transition duration-300 ${
+          active
+            ? "text-[#071f14]"
+            : "text-white/85 group-hover:text-[#f4d484]"
+        }`}
+      >
+        <SidebarIcon type={icon} />
+      </span>
+      <span className="min-w-0 flex-1 leading-tight">{children}</span>
     </button>
   );
 }
 
-function SummaryCard({ title, value }) {
+function SummaryCard({ title, value, tone = "green" }) {
+  const valueColor =
+    tone === "red"
+      ? "text-[#9d2f2f]"
+      : tone === "gold"
+      ? "text-[#bd6b00]"
+      : "text-[#071f14]";
+
   return (
-    <div className="rounded-lg border-[3px] border-[#718575] bg-[#456650] px-4 py-3 text-white shadow-sm">
-      <h3 className="text-[15px] font-black uppercase leading-tight">
+    <div className="group relative min-h-[132px] overflow-hidden rounded-3xl border border-white/80 bg-white p-6 text-left shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(8,39,25,0.16)]">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-14 -right-12 h-36 w-36 rounded-full bg-[#f4d484]/20 blur-2xl transition group-hover:scale-110" />
+      <p className="relative text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
         {title}
-      </h3>
-      <p className="mt-3 text-center text-[32px] font-black leading-none">
+      </p>
+      <p className={`relative mt-4 text-4xl font-black leading-none tracking-tight ${valueColor}`}>
         {formatCount(value)}
       </p>
     </div>
+  );
+}
+
+function SectionCard({ eyebrow, title, children, className = "", right = null }) {
+  return (
+    <section className={`relative overflow-hidden rounded-3xl border border-white/80 bg-white text-[#071f14] shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 ${className}`}>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-16 h-44 w-44 rounded-full bg-[#f4d484]/20 blur-2xl" />
+      <div className="relative p-6">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="shrink-0">
+            {eyebrow ? (
+              <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2 className="mt-2 whitespace-nowrap text-2xl font-black tracking-tight text-[#071f14]">
+                {title}
+              </h2>
+            ) : null}
+          </div>
+          {right ? <div className="w-full xl:flex-1">{right}</div> : null}
+        </div>
+        <div className={title || eyebrow ? "mt-5" : ""}>{children}</div>
+      </div>
+    </section>
   );
 }
 
@@ -927,9 +1066,8 @@ export default function ManpowerHrApplications() {
   const filteredApplications = useMemo(() => {
     const keyword = searchValue.trim().toLowerCase();
 
-    if (!keyword) return applications;
-
-    return applications.filter((app) => {
+    const matchedApplications = applications.filter((app) => {
+      const resumeStatus = app?.resumeScreening?.status || "not_screened";
       const haystack = [
         getApplicantName(app),
         app?.vacancy,
@@ -944,9 +1082,31 @@ export default function ManpowerHrApplications() {
         .join(" ")
         .toLowerCase();
 
-      return haystack.includes(keyword);
+      const matchesKeyword = !keyword || haystack.includes(keyword);
+      const matchesStatus = !statusFilter || app?.status === statusFilter;
+      const matchesVacancy = !vacancyFilter || app?.vacancy === vacancyFilter;
+      const matchesResumeStatus = !resumeStatusFilter || resumeStatus === resumeStatusFilter;
+
+      return matchesKeyword && matchesStatus && matchesVacancy && matchesResumeStatus;
     });
-  }, [applications, searchValue]);
+
+    return [...matchedApplications].sort((a, b) => {
+      const aScore = getResumeScoreValue(a);
+      const bScore = getResumeScoreValue(b);
+      const aDate = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bDate = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+
+      if (sortBy === "lowest_score") return aScore - bScore;
+      if (sortBy === "newest") return bDate - aDate;
+      if (sortBy === "oldest") return aDate - bDate;
+
+      return bScore - aScore;
+    });
+  }, [applications, searchValue, statusFilter, vacancyFilter, resumeStatusFilter, sortBy]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, vacancyFilter, resumeStatusFilter, sortBy, searchValue]);
 
   const totalPages = Math.max(1, Math.ceil(filteredApplications.length / itemsPerPage));
 
@@ -992,79 +1152,96 @@ export default function ManpowerHrApplications() {
       : "max-w-2xl";
 
   return (
-    <div className="min-h-screen bg-[#0f3a1e] font-sans text-white">
-      <header className="border-b border-[#d7decf] bg-[#f7f9f5]">
-        <div className="flex h-[90px] items-center px-8">
-          <BrandLogo />
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
+        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+          <div className="text-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
+              Manpower Services HR
+            </p>
+            <h1 className="mt-3 text-[17px] font-black leading-tight tracking-tight text-white">
+              LTC Manpower Services
+            </h1>
+          </div>
 
-      <div className="grid min-h-[calc(100vh-90px)] lg:grid-cols-[265px_1fr]">
-        <aside className="flex bg-[#294f35] lg:min-h-[calc(100vh-90px)]">
-          <div className="flex w-full flex-col">
-            <div className="border-b border-white/15 px-6 py-8 text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#9ca59d] bg-white text-[28px] font-black text-[#315b42]">
-                HR
-              </div>
+          <nav className="mt-12 flex-1 space-y-4">
+            <SidebarButton icon="dashboard" onClick={() => navigate("/manpower-hr")}>
+              Dashboard
+            </SidebarButton>
 
-              <h2 className="mt-5 text-[17px] font-black uppercase leading-tight text-white">
-                Human Resources
-              </h2>
+            <SidebarButton
+              active
+              icon="applicants"
+              onClick={() => navigate("/manpower-hr-applications")}
+            >
+              Manage Applicants
+            </SidebarButton>
 
-              <p className="mt-2 break-all text-[11px] font-bold text-white">
-                {hrEmail}
-              </p>
-            </div>
+            <SidebarButton icon="payroll" onClick={() => navigate("/manpower-hr-payroll")}>
+              Manage Payroll
+            </SidebarButton>
 
-            <nav className="border-t border-white/5">
-              <SidebarButton onClick={() => navigate("/manpower-hr")}>
-                Dashboard
-              </SidebarButton>
+            <SidebarButton icon="leave" onClick={() => navigate("/manpower-hr-leaves")}>
+              Manage File Leave
+            </SidebarButton>
 
-              <SidebarButton active onClick={() => navigate("/manpower-hr-applications")}>
-                Manage Applicants
-              </SidebarButton>
+            <SidebarButton icon="billing" onClick={() => navigate("/manpower-hr-billing")}>
+              Manage Billing
+            </SidebarButton>
+          </nav>
 
-              <SidebarButton onClick={() => navigate("/manpower-hr-payroll")}>
-                Manage Payroll
-              </SidebarButton>
-
-              <SidebarButton onClick={() => navigate("/manpower-hr-leaves")}>
-                Manage File Leave
-              </SidebarButton>
-
-              <SidebarButton onClick={() => navigate("/manpower-hr-billing")}>
-                Manage Billing
-              </SidebarButton>
-            </nav>
-
-            <div className="mt-auto px-6 py-8">
-              <button
-                type="button"
-                onClick={logout}
-                className="w-full rounded-full px-5 py-3 text-[16px] font-black uppercase text-white transition hover:bg-white/10"
-              >
-                Sign Out
-              </button>
-            </div>
+          <div className="border-t border-white/15 pt-7">
+            <button
+              type="button"
+              onClick={logout}
+              className="group flex min-h-[52px] w-full items-center gap-4 rounded-[26px] bg-white/10 px-6 text-left text-[13px] font-black capitalize tracking-tight text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#f4d484] hover:text-[#071f14]"
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center text-white/90 transition duration-300 group-hover:text-[#071f14]">
+                <SidebarIcon type="logout" />
+              </span>
+              <span>Sign out</span>
+            </button>
+            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
+              © LTC Manpower Services
+            </p>
           </div>
         </aside>
 
-        <main className="bg-[#0f3a1e] px-6 py-6 lg:px-8">
-          <section>
-            <h1 className="text-[32px] font-black uppercase leading-tight text-white md:text-[38px]">
-              Manage Applicants
-            </h1>
-            <div className="mt-2 h-[4px] w-[360px] max-w-full bg-white/65" />
+        <main className="min-w-0 px-5 py-6 lg:px-8">
+          <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
+            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
+            <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+            <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-[#f4d484]">
+                  Manpower HR Center
+                </p>
+                <h1 className="mt-3 max-w-3xl text-[38px] font-black leading-[0.98] tracking-[-0.055em] md:text-[56px]">
+                  Manage Applicants
+                </h1>
+                <p className="mt-4 max-w-2xl text-[15px] font-semibold leading-7 text-white/75">
+                  Review manpower applications, AI resume ranking, exam scores, interview status, and hiring actions in one professional dashboard.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadApplications}
+                disabled={loadingList}
+                className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-white px-7 text-[13px] font-black uppercase tracking-[0.08em] text-[#071f14] shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#f4d484] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {loadingList ? "Refreshing..." : "Refresh Applicants"}
+              </button>
+            </div>
           </section>
 
-          <section className="mt-6 grid gap-7 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="mt-7 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             <button type="button" onClick={() => setStatusFilter("")}>
               <SummaryCard title="Total Applicants" value={summary.totalApplicants} />
             </button>
 
             <button type="button" onClick={() => setStatusFilter("PENDING")}>
-              <SummaryCard title="Pending Approval" value={summary.pending} />
+              <SummaryCard title="Pending Approval" value={summary.pending} tone="gold" />
             </button>
 
             <button
@@ -1074,6 +1251,7 @@ export default function ManpowerHrApplications() {
               <SummaryCard
                 title="Interview Scheduled"
                 value={summary.interviewScheduled}
+                tone="gold"
               />
             </button>
 
@@ -1094,34 +1272,33 @@ export default function ManpowerHrApplications() {
             </button>
 
             <button type="button" onClick={() => setStatusFilter("REJECTED")}>
-              <SummaryCard title="Rejected" value={summary.rejected} />
+              <SummaryCard title="Rejected" value={summary.rejected} tone="red" />
             </button>
           </section>
 
-          <section className="mt-7 rounded-2xl border border-white/20 bg-white/10 p-4 text-white">
+          <SectionCard eyebrow="AI Ranking" title="Resume Screening Ranking" className="mt-7">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <h2 className="text-[20px] font-black uppercase">Resume Screening Ranking</h2>
-                <p className="mt-1 max-w-3xl text-sm font-semibold text-white/75">
+                <p className="max-w-3xl text-sm font-semibold leading-6 text-[#071f14]/60">
                   Applicants are ranked per selected job by AI resume score, match status, and exam percentage.
                   Choose a vacancy to see who is most qualified for that job.
                 </p>
               </div>
 
               <div className="grid min-w-[280px] grid-cols-2 gap-3 text-center sm:grid-cols-4 lg:min-w-[520px]">
-                <div className="rounded-xl bg-white px-3 py-3 text-[#294f35]">
+                <div className="rounded-2xl bg-[#f8fbf9] px-3 py-3 text-[#071f14]">
                   <p className="text-xs font-black uppercase">Strong</p>
                   <p className="text-2xl font-black">{resumeStats.strongMatches}</p>
                 </div>
-                <div className="rounded-xl bg-white px-3 py-3 text-[#294f35]">
+                <div className="rounded-2xl bg-[#f8fbf9] px-3 py-3 text-[#071f14]">
                   <p className="text-xs font-black uppercase">Possible</p>
                   <p className="text-2xl font-black">{resumeStats.possibleMatches}</p>
                 </div>
-                <div className="rounded-xl bg-white px-3 py-3 text-[#294f35]">
+                <div className="rounded-2xl bg-[#f8fbf9] px-3 py-3 text-[#071f14]">
                   <p className="text-xs font-black uppercase">Average</p>
                   <p className="text-2xl font-black">{formatScore(resumeStats.averageScore)}</p>
                 </div>
-                <div className="rounded-xl bg-white px-3 py-3 text-[#294f35]">
+                <div className="rounded-2xl bg-[#f8fbf9] px-3 py-3 text-[#071f14]">
                   <p className="text-xs font-black uppercase">Top</p>
                   <p className="text-2xl font-black">{formatScore(resumeStats.topScore)}</p>
                 </div>
@@ -1133,34 +1310,35 @@ export default function ManpowerHrApplications() {
                 {activeScreeningSummary.slice(0, 4).map((row) => (
                   <div
                     key={row.vacancy}
-                    className="rounded-xl border border-white/15 bg-[#294f35] p-4"
+                    className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="font-black">{row.vacancy}</h3>
-                        <p className="mt-1 text-xs font-semibold text-white/70">
+                        <p className="mt-1 text-xs font-semibold text-[#071f14]/55">
                           {row.screenedApplicants}/{row.totalApplicants} screened • Avg {formatScore(row.averageScore)}
                         </p>
                       </div>
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#294f35]">
+                      <span className="rounded-full bg-[#082719] px-3 py-1 text-xs font-black text-white">
                         Top {formatScore(row.topScore)}
                       </span>
                     </div>
 
-                    <p className="mt-3 text-sm font-semibold text-white/80">
+                    <p className="mt-3 text-sm font-semibold text-[#071f14]/70">
                       Best candidate: {row.topApplicant?.fullName || "No applicant yet"}
                     </p>
                   </div>
                 ))}
               </div>
             )}
-          </section>
+          </SectionCard>
 
-          <section className="mt-7 overflow-hidden rounded-lg bg-[#294f35]">
-            <div className="flex flex-col gap-4 rounded-t-lg bg-white px-4 py-4 text-[#294f35] lg:flex-row lg:items-center lg:justify-between">
-              <h2 className="text-[18px] font-black">List of Applicants</h2>
-
-              <div className="grid w-full gap-3 lg:max-w-5xl lg:grid-cols-[1.2fr_1fr_1fr_1fr_auto]">
+          <SectionCard
+            eyebrow="Applicant Records"
+            title="List of Applicants"
+            className="mt-7"
+            right={
+              <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(250px,1fr)_170px_190px_160px_48px] xl:items-center">
                 <input
                   type="text"
                   value={searchValue}
@@ -1168,8 +1346,8 @@ export default function ManpowerHrApplications() {
                     setSearchValue(event.target.value);
                     setPage(1);
                   }}
-                  placeholder="Search applicant, email, score"
-                  className="h-[34px] w-full rounded-full border border-[#aab5aa] bg-white px-4 text-[13px] font-semibold text-[#294f35] outline-none"
+                  placeholder="Search applicant, email, score..."
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[13px] font-bold text-[#071f14] outline-none transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_28px_rgba(8,39,25,0.08)] focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)] sm:col-span-2 xl:col-span-1"
                 />
 
                 <select
@@ -1178,7 +1356,7 @@ export default function ManpowerHrApplications() {
                     setVacancyFilter(event.target.value);
                     setPage(1);
                   }}
-                  className="h-[34px] w-full rounded-full border border-[#aab5aa] bg-white px-4 text-[13px] font-black text-[#294f35] outline-none"
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_28px_rgba(8,39,25,0.08)] focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
                 >
                   <option value="">All Jobs</option>
                   {vacancies.map((vacancy) => (
@@ -1194,7 +1372,7 @@ export default function ManpowerHrApplications() {
                     setResumeStatusFilter(event.target.value);
                     setPage(1);
                   }}
-                  className="h-[34px] w-full rounded-full border border-[#aab5aa] bg-white px-4 text-[13px] font-black text-[#294f35] outline-none"
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_28px_rgba(8,39,25,0.08)] focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
                 >
                   <option value="">All Resume Status</option>
                   <option value="strong_match">Strong Match</option>
@@ -1210,7 +1388,7 @@ export default function ManpowerHrApplications() {
                     setSortBy(event.target.value);
                     setPage(1);
                   }}
-                  className="h-[34px] w-full rounded-full border border-[#aab5aa] bg-white px-4 text-[13px] font-black text-[#294f35] outline-none"
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_28px_rgba(8,39,25,0.08)] focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
                 >
                   <option value="resume_score">Most Qualified</option>
                   <option value="lowest_score">Lowest Score</option>
@@ -1222,168 +1400,353 @@ export default function ManpowerHrApplications() {
                   type="button"
                   onClick={loadApplications}
                   disabled={loadingList}
-                  className="h-[34px] min-w-[110px] rounded-full bg-[#174322] px-5 text-[12px] font-black text-white transition hover:bg-[#0f3319] disabled:cursor-not-allowed disabled:opacity-70"
+                  title={loadingList ? "Loading applicants" : "Refresh applicants"}
+                  aria-label={loadingList ? "Loading applicants" : "Refresh applicants"}
+                  className="group grid min-h-[48px] w-full place-items-center rounded-full bg-[#174a30] text-white shadow-[0_14px_28px_rgba(8,39,25,0.16)] transition hover:-translate-y-0.5 hover:bg-[#082719] hover:shadow-[0_18px_38px_rgba(8,39,25,0.22)] disabled:cursor-not-allowed disabled:opacity-70 sm:col-span-2 xl:col-span-1 xl:w-12"
                 >
-                  {loadingList ? "Loading..." : "Refresh"}
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`h-5 w-5 ${loadingList ? "animate-spin" : "transition duration-300 group-hover:rotate-180"}`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12a8 8 0 0 1-13.66 5.66" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 12A8 8 0 0 1 17.66 6.34" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 18H4v3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 6h3V3" />
+                  </svg>
                 </button>
               </div>
-            </div>
-
-            <div className="min-h-[320px]">
+            }
+          >
+            <div className="overflow-hidden rounded-3xl border border-[#d7e2da] bg-[#f8fbf9]">
               {pagedApplications.length ? (
-                pagedApplications.map((app, index) => {
-                  const rankNumber =
-                    app?.resumeRank || (page - 1) * itemsPerPage + index + 1;
-                  const resumeScore = getResumeScoreValue(app);
-                  const resumeStatus = app?.resumeScreening?.status || "not_screened";
+                <div className="divide-y divide-[#d7e2da]">
+                  {pagedApplications.map((app, index) => {
+                    const resumeScore = getResumeScoreValue(app);
+                    const resumeStatus = app?.resumeScreening?.status || "not_screened";
 
-                  const examScore =
-                    app?.assessment?.status === "completed"
-                      ? `${app?.assessment?.percentage ?? 0}%`
-                      : "-";
+                    const examScore =
+                      app?.assessment?.status === "completed"
+                        ? `${app?.assessment?.percentage ?? 0}%`
+                        : "-";
 
-                  return (
-                    <div
-                      key={app._id}
-                      className="grid gap-4 border-b border-white/25 px-4 py-5 text-white md:grid-cols-[64px_1fr_0.85fr_0.55fr_0.75fr_0.65fr_0.75fr_1.8fr] md:items-center"
-                    >
-                      <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-white text-[#315b42]">
-                        <span className="text-[10px] font-black uppercase leading-none">Rank</span>
-                        <span className="text-[16px] font-black leading-none">#{rankNumber}</span>
-                      </div>
-
-                      <div>
-                        <p className="text-[16px] font-black">{getApplicantName(app)}</p>
-                        <p className="mt-1 break-all text-[11px] font-bold text-white/70">
-                          {app.email || "Email"}
-                        </p>
-                      </div>
-
-                      <p className="text-[16px] font-black">{app.vacancy || "Job"}</p>
-
-                      <p className="text-[18px] font-black">{formatScore(resumeScore)}</p>
-
-                      <span
-                        className={`inline-flex justify-center rounded-full px-3 py-1 text-[11px] font-black ${getResumeScreeningChipClass(
-                          resumeStatus
-                        )}`}
+                    return (
+                      <article
+                        key={app._id}
+                        className="group grid gap-4 bg-white/70 px-5 py-5 transition duration-300 hover:bg-white hover:shadow-[0_16px_40px_rgba(8,39,25,0.08)] md:grid-cols-[58px_minmax(210px,1.45fr)_minmax(120px,0.85fr)_90px_minmax(132px,0.85fr)_80px_minmax(132px,0.9fr)_150px] md:items-center"
                       >
-                        {prettifyValue(resumeStatus)}
-                      </span>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#082719] text-[16px] font-black uppercase tracking-[0.04em] text-[#f4d484] shadow-[0_12px_26px_rgba(8,39,25,0.18)] ring-1 ring-[#f4d484]/20 transition duration-300 group-hover:scale-105">
+                          {getApplicantInitials(app)}
+                        </div>
 
-                      <p className="text-[15px] font-black">{examScore}</p>
+                        <div>
+                          <p className="text-[15px] font-black text-[#071f14]">{getApplicantName(app)}</p>
+                          <p className="mt-1 break-all text-[11px] font-bold text-[#071f14]/55">
+                            {app.email || "Email"}
+                          </p>
+                        </div>
 
-                      <span
-                        className={`inline-flex justify-center rounded-full px-3 py-1 text-[11px] font-black ${getStatusChipClass(
-                          app.status
-                        )}`}
+                        <p className="text-[13px] font-black text-[#071f14] md:text-left">{app.vacancy || "Job"}</p>
+
+                        <p className="text-[18px] font-black text-[#071f14] md:text-center">{formatScore(resumeScore)}</p>
+
+                        <span
+                          className={`inline-flex min-w-[118px] justify-center rounded-full px-3 py-1 text-center text-[11px] font-black ${getResumeScreeningChipClass(
+                            resumeStatus
+                          )}`}
+                        >
+                          {prettifyValue(resumeStatus)}
+                        </span>
+
+                        <p className="text-[14px] font-black text-[#071f14] md:text-center">{examScore}</p>
+
+                        <span
+                          className={`inline-flex min-w-[118px] justify-center rounded-full px-3 py-1 text-center text-[11px] font-black ${getStatusChipClass(
+                            app.status
+                          )}`}
+                        >
+                          {prettifyValue(app.status || "PENDING")}
+                        </span>
+
+                        <div className="grid w-fit grid-cols-4 gap-2 md:ml-auto md:justify-self-end">
+                          <button
+                            type="button"
+                            onClick={() => loadApplicationDetails(app._id, "view")}
+                            title="View Details"
+                            aria-label="View Details"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d7e2da] bg-[#eef4ef] text-[#174a30] shadow-[0_8px_18px_rgba(8,39,25,0.08)] transition duration-300 hover:-translate-y-0.5 hover:border-[#d7a84d] hover:bg-[#e1f2e5] hover:shadow-[0_12px_26px_rgba(8,39,25,0.12)]"
+                          >
+                            <ApplicantActionIcon type="view" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => loadApplicationDetails(app._id, "ai")}
+                            disabled={screeningActionId === app._id}
+                            title={screeningActionId === app._id ? "Screening..." : "AI Screen"}
+                            aria-label={screeningActionId === app._id ? "Screening..." : "AI Screen"}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#dce6fb] bg-[#eef4ff] text-[#244b92] shadow-[0_8px_18px_rgba(8,39,25,0.08)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#dfe9ff] hover:shadow-[0_12px_26px_rgba(8,39,25,0.12)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+                          >
+                            <ApplicantActionIcon type="ai" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              loadApplicationDetails(app._id, "schedule")
+                            }
+                            title="Interview Schedule"
+                            aria-label="Interview Schedule"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#f5ddba] bg-[#fff3df] text-[#b54708] shadow-[0_8px_18px_rgba(8,39,25,0.08)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#ffe8bf] hover:shadow-[0_12px_26px_rgba(8,39,25,0.12)]"
+                          >
+                            <ApplicantActionIcon type="schedule" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => loadApplicationDetails(app._id, "hire")}
+                            title="Hire"
+                            aria-label="Hire"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#082719] bg-[#082719] text-white shadow-[0_8px_18px_rgba(8,39,25,0.14)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#174a30] hover:shadow-[0_12px_26px_rgba(8,39,25,0.18)]"
+                          >
+                            <ApplicantActionIcon type="hire" />
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+
+                  <div className="flex flex-col gap-4 border-t border-[#d7e2da] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-[12px] font-bold text-[#071f14]/55">
+                      Page <b className="text-[#071f14]">{page}</b> of <b className="text-[#071f14]">{totalPages}</b> • Showing <b className="text-[#071f14]">{pagedApplications.length}</b> of <b className="text-[#071f14]">{filteredApplications.length}</b> applicants
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                        disabled={page <= 1}
+                        className="rounded-full border border-[#d7e2da] bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] text-[#071f14] transition hover:-translate-y-0.5 hover:border-[#d7a84d] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
                       >
-                        {app.status || "PENDING"}
+                        Prev
+                      </button>
+                      <span className="rounded-full bg-[#082719] px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] text-white">
+                        Page {page} of {totalPages}
                       </span>
-
-                      <div className="flex flex-wrap gap-2 md:justify-end">
-                        <button
-                          type="button"
-                          onClick={() => loadApplicationDetails(app._id, "view")}
-                          className="min-w-[90px] rounded-full bg-[#bdf0a8] px-4 py-1 text-[11px] font-black text-[#294f35] transition hover:bg-[#a9df94]"
-                        >
-                          View Details
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => loadApplicationDetails(app._id, "ai")}
-                          disabled={screeningActionId === app._id}
-                          className="min-w-[92px] rounded-full bg-[#d5e7ff] px-4 py-1 text-[11px] font-black text-[#244b92] transition hover:bg-[#c5dcff] disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          {screeningActionId === app._id ? "Screening..." : "AI Screen"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            loadApplicationDetails(app._id, "schedule")
-                          }
-                          className="min-w-[100px] rounded-full bg-[#bdf0a8] px-4 py-1 text-[11px] font-black text-[#294f35] transition hover:bg-[#a9df94]"
-                        >
-                          Interview Schedule
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => loadApplicationDetails(app._id, "hire")}
-                          className="min-w-[86px] rounded-full bg-white px-4 py-1 text-[11px] font-black text-[#294f35] transition hover:bg-[#e7eee3]"
-                        >
-                          Hire
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPage((current) => Math.min(totalPages, current + 1))
+                        }
+                        disabled={page >= totalPages}
+                        className="rounded-full border border-[#d7e2da] bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] text-[#071f14] transition hover:-translate-y-0.5 hover:border-[#d7a84d] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
+                      >
+                        Next
+                      </button>
                     </div>
-                  );
-                })
+                  </div>
+                </div>
               ) : (
-                <div className="px-4 py-14 text-center text-[14px] font-semibold text-white/80">
+                <div className="px-4 py-14 text-center text-[14px] font-bold text-[#071f14]/55">
                   {loadingList ? "Loading applicants..." : "No applicants found."}
                 </div>
               )}
             </div>
-          </section>
+          </SectionCard>
 
-          <div className="mt-4 flex items-center justify-between text-white">
-            <p className="text-[16px] font-black">
-              Page {page} / {totalPages}
-            </p>
-
-            <div className="flex items-center gap-5">
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={page <= 1}
-                className="text-[28px] leading-none text-white transition hover:text-white/70 disabled:opacity-30"
-              >
-                ‹
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
-                disabled={page >= totalPages}
-                className="text-[16px] font-black text-white transition hover:text-white/70 disabled:opacity-30"
-              >
-                Next Page
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
-                disabled={page >= totalPages}
-                className="text-[28px] leading-none text-white transition hover:text-white/70 disabled:opacity-30"
-              >
-                ›
-              </button>
-            </div>
-          </div>
         </main>
       </div>
 
+
+      <style>{`
+        @keyframes hrModalOverlayIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes hrModalCardIn {
+          from { opacity: 0; transform: translateY(22px) scale(.975); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .ltc-hr-modal-overlay {
+          animation: hrModalOverlayIn .22s ease-out both;
+          backdrop-filter: blur(8px);
+        }
+
+        .ltc-hr-action-modal {
+          position: relative;
+          border: 1px solid rgba(255,255,255,.82);
+          box-shadow: 0 34px 90px rgba(8,39,25,.32);
+          animation: hrModalCardIn .34s cubic-bezier(.22,1,.36,1) both;
+          background:
+            radial-gradient(circle at top right, rgba(244,212,132,.16), transparent 30%),
+            linear-gradient(180deg,#ffffff 0%,#f8fbf9 100%);
+        }
+
+        .ltc-hr-action-modal::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 7px;
+          background: linear-gradient(90deg,#235f3e,#2f754c,#d7a84d);
+          z-index: 5;
+        }
+
+        .ltc-hr-modal-header {
+          position: sticky;
+          top: 0;
+          z-index: 4;
+          background:
+            radial-gradient(circle at 88% 20%, rgba(244,212,132,.24), transparent 28%),
+            linear-gradient(135deg,#071f14,#174a30 58%,#315b42);
+          color: white;
+          padding: 28px;
+          border: 0;
+        }
+
+        .ltc-hr-modal-header p,
+        .ltc-hr-modal-header h2 {
+          color: inherit;
+        }
+
+        .ltc-hr-modal-header .ltc-hr-modal-eyebrow {
+          color: #f4d484;
+          text-shadow: 0 8px 24px rgba(0,0,0,.16);
+        }
+
+        .ltc-hr-modal-header .ltc-hr-modal-subtitle {
+          color: rgba(255,255,255,.76);
+          max-width: 900px;
+        }
+
+        .ltc-hr-modal-close {
+          min-height: 44px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.94);
+          color: #071f14;
+          box-shadow: 0 16px 34px rgba(0,0,0,.16);
+          transition: transform .28s cubic-bezier(.22,1,.36,1), background .28s cubic-bezier(.22,1,.36,1), box-shadow .28s cubic-bezier(.22,1,.36,1);
+        }
+
+        .ltc-hr-modal-close:hover {
+          transform: translateY(-2px);
+          background: #f4d484;
+          box-shadow: 0 20px 44px rgba(0,0,0,.20);
+        }
+
+        .ltc-hr-action-modal > .grid,
+        .ltc-hr-action-modal > .space-y-4,
+        .ltc-hr-action-modal > .rounded-2xl,
+        .ltc-hr-action-modal > .overflow-hidden,
+        .ltc-hr-action-modal > .text-center {
+          margin: 24px;
+        }
+
+        .ltc-hr-action-modal section.rounded-2xl,
+        .ltc-hr-action-modal div.rounded-2xl {
+          border: 1px solid rgba(215,226,218,.85);
+          box-shadow: 0 16px 40px rgba(8,39,25,.08);
+          transition: transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s cubic-bezier(.22,1,.36,1), border-color .28s cubic-bezier(.22,1,.36,1);
+        }
+
+        .ltc-hr-action-modal section.rounded-2xl:hover,
+        .ltc-hr-action-modal div.rounded-2xl:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 24px 58px rgba(8,39,25,.12);
+          border-color: rgba(215,168,77,.48);
+        }
+
+        .ltc-hr-action-modal h3,
+        .ltc-hr-action-modal .font-black {
+          letter-spacing: -0.02em;
+        }
+
+        .ltc-hr-action-modal input,
+        .ltc-hr-action-modal textarea,
+        .ltc-hr-action-modal select {
+          border-radius: 18px !important;
+          border-color: #d7e2da !important;
+          background: rgba(255,255,255,.94) !important;
+          min-height: 52px;
+          box-shadow: 0 10px 24px rgba(8,39,25,.05);
+          transition: transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s cubic-bezier(.22,1,.36,1), border-color .24s cubic-bezier(.22,1,.36,1);
+        }
+
+        .ltc-hr-action-modal textarea {
+          min-height: 128px;
+          resize: vertical;
+        }
+
+        .ltc-hr-action-modal input:focus,
+        .ltc-hr-action-modal textarea:focus,
+        .ltc-hr-action-modal select:focus {
+          transform: translateY(-1px);
+          border-color: #d7a84d !important;
+          box-shadow: 0 18px 38px rgba(8,39,25,.11) !important;
+          outline: none !important;
+        }
+
+        .ltc-hr-action-modal button:not(.ltc-hr-modal-close) {
+          border-radius: 999px !important;
+          min-height: 46px;
+          transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s cubic-bezier(.22,1,.36,1), filter .25s cubic-bezier(.22,1,.36,1);
+        }
+
+        .ltc-hr-action-modal button:not(.ltc-hr-modal-close):hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 18px 38px rgba(8,39,25,.16);
+          filter: saturate(1.05);
+        }
+
+        .ltc-hr-action-modal button:disabled {
+          opacity: .68;
+          cursor: not-allowed;
+        }
+
+        .ltc-hr-action-modal .bg-[#f8faf6],
+        .ltc-hr-action-modal .bg-[#f8fbf9] {
+          background: linear-gradient(135deg,#fbfdfb,#f3f8f4) !important;
+        }
+
+        .ltc-hr-action-modal .bg-[#eef4ff] {
+          background: linear-gradient(135deg,#eef4ff,#f7fbff) !important;
+          border-color: rgba(147,177,230,.38) !important;
+        }
+
+        .ltc-hr-action-modal .bg-[#faecec] {
+          background: linear-gradient(135deg,#fff1f1,#faecec) !important;
+          border-color: rgba(157,47,47,.18) !important;
+        }
+
+        @media (max-width: 640px) {
+          .ltc-hr-modal-header { padding: 24px 18px; }
+          .ltc-hr-action-modal > .grid,
+          .ltc-hr-action-modal > .space-y-4,
+          .ltc-hr-action-modal > .rounded-2xl,
+          .ltc-hr-action-modal > .overflow-hidden,
+          .ltc-hr-action-modal > .text-center { margin: 18px; }
+        }
+      `}</style>
+
       {activeModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/55 p-4">
+        <div className="ltc-hr-modal-overlay fixed inset-0 z-40 flex items-center justify-center bg-[#071f14]/70 p-4">
           <div
-            className={`max-h-[92vh] w-full ${modalWidthClass} overflow-y-auto rounded-[24px] bg-white p-6 text-[#24352c] shadow-xl`}
+            className={`ltc-hr-action-modal max-h-[92vh] w-full ${modalWidthClass} overflow-y-auto rounded-[32px] bg-white text-[#24352c] shadow-xl`}
           >
-            <div className="mb-5 flex items-start justify-between gap-4 border-b border-[#e2eadf] pb-4">
+            <div className="ltc-hr-modal-header flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6b7a6d]">
+                <p className="ltc-hr-modal-eyebrow text-xs font-black uppercase tracking-[0.24em]">
                   Manpower HR Action
                 </p>
-                <h2 className="mt-1 text-2xl font-black text-[#24352c]">
+                <h2 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
                   {modalTitle}
                 </h2>
                 {selectedApp && (
-                  <p className="mt-1 text-sm font-semibold text-[#5f6f61]">
+                  <p className="ltc-hr-modal-subtitle mt-2 text-sm font-semibold leading-6">
                     {getApplicantName(selectedApp)} • {selectedApp.vacancy || "Job"} • {selectedApp.email || "Email"}
                   </p>
                 )}
@@ -1392,7 +1755,7 @@ export default function ManpowerHrApplications() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-full bg-[#eef3ea] px-4 py-2 text-sm font-black text-[#395345] transition hover:bg-[#dfe8dd]"
+                className="ltc-hr-modal-close px-5 py-2 text-sm font-black"
               >
                 Close
               </button>
@@ -1613,7 +1976,7 @@ export default function ManpowerHrApplications() {
                   <section className="rounded-2xl bg-[#f8faf6] p-4">
                     <h3 className="font-black text-[#24352c]">Separate Actions</h3>
                     <p className="mt-2 text-sm font-semibold text-[#5f6f61]">
-                      Each action now opens its own modal, so viewing details, AI screening, scheduling, hiring, and rejecting no longer share one large form.
+                      Choose an action below. Each workflow opens in a separate designed modal for a cleaner HR review process.
                     </p>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <button

@@ -55,6 +55,443 @@ const NAME_REGEX = /^[A-Za-zÀ-ÿ]+(?: [A-Za-zÀ-ÿ]+)*$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 const PH_PHONE_REGEX = /^(09\d{9}|\+639\d{9})$/;
 
+const enrollmentPageStyles = `
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
+
+  .ltc-enrollment-page {
+    --green-950: #071f14;
+    --green-900: #0e3321;
+    --green-800: #174a30;
+    --green-700: #235f3e;
+    --footer-green: #082719;
+    --gold: #d7a84d;
+    --gold-soft: #f4d484;
+    --dark: #101828;
+    --muted: #667085;
+    --glass: rgba(255,255,255,.84);
+    --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+    --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+    --radius: 24px;
+    --ease: cubic-bezier(.22,1,.36,1);
+    min-height: 100vh;
+    color: var(--dark) !important;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+      radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%) !important;
+    line-height: 1.65;
+    letter-spacing: -.01em;
+    overflow-x: hidden;
+    font-family: "Inter", Arial, sans-serif;
+  }
+
+  .ltc-enrollment-page * { box-sizing: border-box; }
+
+  .ltc-enrollment-page header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    background: var(--footer-green) !important;
+    border-bottom: 1px solid rgba(255,255,255,.1) !important;
+    box-shadow: 0 10px 34px rgba(7,31,20,.14) !important;
+    backdrop-filter: blur(14px);
+  }
+
+  .ltc-enrollment-page header > div:first-child {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 76px !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+
+  .ltc-enrollment-page header > div:first-child {
+    justify-content: flex-start !important;
+    gap: 14px !important;
+  }
+
+  .ltc-enrollment-page header nav {
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .ltc-enrollment-page header > div:first-child > button:last-of-type {
+    margin-left: 10px !important;
+  }
+
+  .ltc-enrollment-page header button { transition: .25s var(--ease); }
+  .ltc-enrollment-page header button:hover { transform: translateY(-1px); }
+
+  .ltc-enrollment-page header img {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 999px;
+    background: white;
+    object-fit: cover;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+  }
+
+  .ltc-enrollment-page header span {
+    color: white !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    letter-spacing: -.04em !important;
+  }
+
+  .ltc-enrollment-page header nav button,
+  .ltc-enrollment-page header > div:first-child > button:last-child,
+  .ltc-enrollment-page header > div:first-child > button:nth-last-child(2) {
+    color: rgba(255,255,255,.78) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    padding: 9px 12px !important;
+    border-radius: 999px !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .ltc-enrollment-page header nav button:hover,
+  .ltc-enrollment-page header nav button:nth-child(3),
+  .ltc-enrollment-page header > div:first-child > button:nth-last-child(2):hover {
+    color: white !important;
+    background: rgba(255,255,255,.13) !important;
+    border-bottom: 0 !important;
+  }
+
+  .ltc-enrollment-page header > div:first-child > button:nth-last-child(2) {
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+    box-shadow: 0 14px 28px rgba(215,168,77,.18) !important;
+  }
+
+  .ltc-enrollment-page header > div:last-child {
+    background: var(--footer-green) !important;
+    border-top: 1px solid rgba(255,255,255,.1) !important;
+  }
+
+  .ltc-enrollment-page header > div:last-child > div {
+    background: rgba(255,255,255,.08) !important;
+    border: 1px solid rgba(255,255,255,.1) !important;
+  }
+
+  .ltc-enrollment-page header > div:last-child button {
+    color: rgba(255,255,255,.82) !important;
+    background: transparent !important;
+  }
+
+  .ltc-enrollment-page header > div:last-child button:hover {
+    color: white !important;
+    background: rgba(255,255,255,.12) !important;
+  }
+
+  .ltc-enrollment-page main > section:first-child {
+    display: none !important;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) {
+    position: relative;
+    overflow: hidden;
+    color: white !important;
+    isolation: isolate;
+    padding: 82px 0 78px !important;
+    background:
+      linear-gradient(90deg, rgba(3,24,15,.94) 0%, rgba(8,39,25,.88) 42%, rgba(21,95,59,.72) 100%),
+      url('/tamsi-building.jpg') center/cover no-repeat !important;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2)::before,
+  .ltc-enrollment-page main > section:nth-child(2)::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    pointer-events: none;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2)::before {
+    width: 360px;
+    height: 360px;
+    right: -90px;
+    top: -130px;
+    background: radial-gradient(circle, rgba(244,212,132,.20), transparent 68%);
+    z-index: -1;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2)::after {
+    width: 420px;
+    height: 420px;
+    left: -160px;
+    bottom: -220px;
+    background: radial-gradient(circle, rgba(255,255,255,.13), transparent 67%);
+    z-index: -1;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) h1 {
+    font-size: clamp(48px, 8vw, 84px) !important;
+    line-height: .95 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.065em !important;
+    color: white !important;
+    text-shadow: none !important;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) h1::after {
+    content: " Application";
+    color: var(--gold-soft);
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) h1 {
+    font-size: 0 !important;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) h1::before {
+    content: "Training Enrollment";
+    font-size: clamp(48px, 8vw, 84px) !important;
+    line-height: .95 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.065em !important;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) h1::after {
+    font-size: clamp(48px, 8vw, 84px) !important;
+    line-height: .95 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.065em !important;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) h1 + div {
+    width: 118px !important;
+    height: 4px !important;
+    margin-top: 26px !important;
+    background: linear-gradient(90deg, transparent, var(--gold-soft), transparent) !important;
+    opacity: .96;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(3) {
+    background:
+      radial-gradient(circle at 10% 10%, rgba(215,168,77,.12), transparent 28%),
+      linear-gradient(180deg,#f8fbf9 0%,#eef7f2 100%) !important;
+    padding: 58px 20px 72px !important;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(3) > div {
+    width: min(1180px, 94%) !important;
+    max-width: 1180px !important;
+    margin: 0 auto !important;
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(14,51,33,.10);
+    border-radius: 30px;
+    box-shadow: var(--shadow-lg);
+    padding: clamp(22px, 4vw, 46px);
+    backdrop-filter: blur(18px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(3) > div::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 0% 0%, rgba(244,212,132,.22), transparent 26%),
+      radial-gradient(circle at 100% 0%, rgba(35,95,62,.08), transparent 30%);
+    pointer-events: none;
+  }
+
+  .ltc-enrollment-page form,
+  .ltc-enrollment-page main > section:nth-child(3) > div > div {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ltc-enrollment-page form { display: grid; gap: 28px; }
+
+  .ltc-enrollment-page form > section {
+    background: rgba(255,255,255,.72);
+    border: 1px solid rgba(14,51,33,.10);
+    border-radius: 24px;
+    padding: clamp(18px, 3vw, 30px);
+    box-shadow: 0 16px 34px rgba(8,39,25,.08);
+    transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease);
+  }
+
+  .ltc-enrollment-page form > section:hover {
+    transform: translateY(-3px);
+    border-color: rgba(215,168,77,.34);
+    box-shadow: 0 24px 48px rgba(8,39,25,.12);
+  }
+
+  .ltc-enrollment-page h2 {
+    color: var(--green-900) !important;
+    font-size: clamp(22px, 3vw, 30px) !important;
+    font-weight: 900 !important;
+    letter-spacing: -.04em !important;
+  }
+
+  .ltc-enrollment-page h2 + div {
+    background: linear-gradient(90deg, var(--gold), transparent) !important;
+    height: 3px !important;
+    opacity: 1 !important;
+  }
+
+  .ltc-enrollment-page label,
+  .ltc-enrollment-page form p,
+  .ltc-enrollment-page form span {
+    color: #334f3c !important;
+  }
+
+  .ltc-enrollment-page label {
+    font-weight: 900 !important;
+    letter-spacing: .02em !important;
+  }
+
+  .ltc-enrollment-page input,
+  .ltc-enrollment-page select {
+    min-height: 46px !important;
+    border-radius: 15px !important;
+    border: 1px solid rgba(14,51,33,.14) !important;
+    background: rgba(255,255,255,.94) !important;
+    color: #193826 !important;
+    box-shadow: 0 10px 24px rgba(8,39,25,.06) !important;
+    transition: border-color .25s var(--ease), box-shadow .25s var(--ease), transform .25s var(--ease) !important;
+  }
+
+  .ltc-enrollment-page input:focus,
+  .ltc-enrollment-page select:focus {
+    border-color: rgba(215,168,77,.78) !important;
+    box-shadow: 0 0 0 4px rgba(215,168,77,.16), 0 12px 30px rgba(8,39,25,.10) !important;
+    transform: translateY(-1px);
+  }
+
+  .ltc-enrollment-page input[type="checkbox"] {
+    min-height: auto !important;
+    width: 18px !important;
+    height: 18px !important;
+    accent-color: var(--green-800) !important;
+    box-shadow: none !important;
+  }
+
+  .ltc-enrollment-page input[type="file"] {
+    padding-top: 8px !important;
+    height: auto !important;
+  }
+
+  .ltc-enrollment-page input::file-selector-button {
+    background: linear-gradient(135deg, var(--green-800), var(--green-700)) !important;
+    color: white !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    padding: 7px 12px !important;
+    margin-right: 10px !important;
+    font-weight: 900 !important;
+  }
+
+  .ltc-enrollment-page form a {
+    color: var(--green-900) !important;
+    background: rgba(215,168,77,.16);
+    border: 1px solid rgba(215,168,77,.34);
+    border-radius: 999px;
+    padding: 12px 18px;
+    text-decoration: none;
+  }
+
+  .ltc-enrollment-page form a:hover {
+    background: rgba(215,168,77,.26);
+    transform: translateY(-1px);
+  }
+
+  .ltc-enrollment-page form button[type="submit"],
+  .ltc-enrollment-page form button[type="button"] {
+    min-height: 48px !important;
+    min-width: 210px !important;
+    border-radius: 999px !important;
+    border: 0 !important;
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+    box-shadow: 0 18px 34px rgba(215,168,77,.24) !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: .08em !important;
+  }
+
+  .ltc-enrollment-page form button[type="button"] {
+    color: var(--green-900) !important;
+    background: white !important;
+    border: 1px solid rgba(14,51,33,.14) !important;
+    box-shadow: 0 12px 26px rgba(8,39,25,.08) !important;
+  }
+
+  .ltc-enrollment-page form button:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    filter: brightness(1.02);
+  }
+
+  .ltc-enrollment-page [class*="text-red"] { color: #b42318 !important; }
+  .ltc-enrollment-page [class*="text-green"] { color: #027a48 !important; }
+  .ltc-enrollment-page [class*="text-yellow"] { color: #854a0e !important; }
+
+  .ltc-enrollment-page footer {
+    background: var(--footer-green) !important;
+    color: rgba(255,255,255,.78) !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ltc-enrollment-page footer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 8% 10%, rgba(215,168,77,.12), transparent 28%),
+      radial-gradient(circle at 88% 80%, rgba(255,255,255,.08), transparent 24%);
+    pointer-events: none;
+  }
+
+  .ltc-enrollment-page footer > div { position: relative; z-index: 1; }
+  .ltc-enrollment-page footer h2,
+  .ltc-enrollment-page footer h3 { color: white !important; }
+  .ltc-enrollment-page footer p,
+  .ltc-enrollment-page footer button,
+  .ltc-enrollment-page footer div { color: rgba(255,255,255,.74) !important; }
+  .ltc-enrollment-page footer button:hover { color: var(--gold-soft) !important; }
+  .ltc-enrollment-page footer [class*="border"] { border-color: rgba(255,255,255,.10) !important; }
+
+  @media (max-width: 768px) {
+    .ltc-enrollment-page header > div:first-child {
+      padding-left: 18px !important;
+      padding-right: 18px !important;
+    }
+
+    .ltc-enrollment-page main > section:nth-child(2) {
+      padding: 58px 18px 56px !important;
+    }
+
+    .ltc-enrollment-page main > section:nth-child(2) h1::before,
+    .ltc-enrollment-page main > section:nth-child(2) h1::after {
+      font-size: 42px !important;
+    }
+
+    .ltc-enrollment-page main > section:nth-child(3) {
+      padding: 34px 10px 48px !important;
+    }
+
+    .ltc-enrollment-page main > section:nth-child(3) > div {
+      width: min(100%, 94%) !important;
+      border-radius: 22px;
+      padding: 18px;
+    }
+
+    .ltc-enrollment-page form > section { padding: 18px; }
+  }
+`;
+
+
 const FILE_RULES = {
   birthCertificate: {
     label: "Birth Certificate",
@@ -925,10 +1362,11 @@ export default function TrainingEnrollmentForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#123a20] text-white">
+    <div className="ltc-enrollment-page">
+      <style>{enrollmentPageStyles}</style>
       {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-[#d7ddcf] bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex h-[62px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
+        <div className="mx-auto flex h-[62px] max-w-[1440px] items-center px-5 sm:px-8 lg:px-12">
           <button
             type="button"
             onClick={() => goTo("/training")}
@@ -946,7 +1384,7 @@ export default function TrainingEnrollmentForm() {
             </span>
           </button>
 
-          <nav className="hidden items-center gap-9 md:flex">
+          <nav className="ml-auto hidden items-center gap-3 md:flex lg:gap-4">
             <button
               type="button"
               onClick={() => goTo("/training")}
@@ -991,7 +1429,7 @@ export default function TrainingEnrollmentForm() {
           <button
             type="button"
             onClick={() => goTo("/trainee-login")}
-            className="hidden text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] md:block"
+            className="ml-3 hidden text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] md:block lg:ml-4"
           >
             Sign In
           </button>
@@ -1534,31 +1972,31 @@ export default function TrainingEnrollmentForm() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-white text-[#4d6f55]">
-        <div className="mx-auto max-w-[1440px] px-5 py-5 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.4fr_0.8fr_1.2fr_1fr_0.8fr]">
-            <div className="border-[#d6ded2] md:border-r md:pr-7">
+      <footer className="w-full bg-white text-[#4d6f55]">
+        <div className="w-full px-0 py-3">
+          <div className="grid grid-cols-1 gap-3 px-4 sm:px-6 md:grid-cols-[1.25fr_0.7fr_1.1fr_0.9fr_0.65fr] lg:px-8">
+            <div className="border-[#d6ded2] md:border-r md:pr-4">
               <div className="flex items-center gap-4">
                 <img
                   src="/TamsiLogo.png"
                   alt="Lumispire Logo"
-                  className="h-14 w-14 object-contain"
+                  className="h-10 w-10 object-contain"
                   onError={(e) => {
                     e.currentTarget.src =
                       "https://placehold.co/80x80/ffffff/4d6f55?text=L";
                   }}
                 />
 
-                <h2 className="font-['Montserrat',sans-serif] text-3xl font-extrabold tracking-wide text-[#45674b]">
+                <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
                   LUMISPIRE
                 </h2>
               </div>
             </div>
 
-            <div className="border-[#d6ded2] md:border-r md:px-6">
-              <h3 className="text-sm font-extrabold text-[#45674b]">Menu</h3>
+            <div className="border-[#d6ded2] md:border-r md:px-4">
+              <h3 className="text-xs font-extrabold text-[#45674b]">Menu</h3>
 
-              <div className="mt-2 space-y-1 text-xs font-semibold text-[#6b776d]">
+              <div className="mt-1 space-y-0.5 text-[11px] font-semibold text-[#6b776d]">
                 <button
                   type="button"
                   onClick={() => goTo("/training")}
@@ -1593,37 +2031,37 @@ export default function TrainingEnrollmentForm() {
               </div>
             </div>
 
-            <div className="border-[#d6ded2] md:border-r md:px-6">
-              <h3 className="text-sm font-extrabold text-[#45674b]">
+            <div className="border-[#d6ded2] md:border-r md:px-4">
+              <h3 className="text-xs font-extrabold text-[#45674b]">
                 Contact Information
               </h3>
 
-              <div className="mt-2 space-y-1 text-xs font-semibold leading-relaxed text-[#6b776d]">
+              <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
                 <p>ltc.tamsi@gmail.com</p>
                 <p>lorengladis@ltcmultiservices.com</p>
                 <p>0995906805 / 09516281271</p>
               </div>
             </div>
 
-            <div className="border-[#d6ded2] md:border-r md:px-6">
-              <h3 className="text-sm font-extrabold text-[#45674b]">
+            <div className="border-[#d6ded2] md:border-r md:px-4">
+              <h3 className="text-xs font-extrabold text-[#45674b]">
                 Address
               </h3>
 
-              <div className="mt-2 space-y-1 text-xs font-semibold leading-relaxed text-[#6b776d]">
+              <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
                 <p>2/F 5441 Currie Street,</p>
                 <p>Palanan, Makati City</p>
               </div>
             </div>
 
-            <div className="md:pl-6">
-              <h3 className="text-sm font-extrabold text-[#45674b]">
+            <div className="md:pl-4">
+              <h3 className="text-xs font-extrabold text-[#45674b]">
                 Follow Us
               </h3>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-col gap-2 border-t border-[#d6ded2] pt-3 text-[10px] font-bold text-[#7b897e] sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-3 flex flex-col gap-1 border-t border-[#d6ded2] px-4 pt-2 text-[9px] font-bold text-[#7b897e] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <p>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
             <p>Developed by CRMS Tech Alliance</p>
           </div>

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ProfessorLayout from "./ProfessorLayout";
 
 function normalizeApiBase(raw) {
   if (!raw) return "http://localhost:5000/api";
@@ -371,6 +372,56 @@ function SummaryCard({ label, value }) {
       </div>
       <div className="mt-2 text-lg font-black text-[#395345]">{value}</div>
     </div>
+  );
+}
+
+
+function DashboardStatCard({ title, value, note }) {
+  return (
+    <article className="group relative min-h-[118px] overflow-hidden rounded-[24px] border border-white/80 bg-white p-5 shadow-[0_16px_40px_rgba(8,39,25,0.10)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_65px_rgba(8,39,25,0.16)]">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-14 h-40 w-40 rounded-full bg-[#f4d484]/20 blur-2xl transition duration-300 group-hover:scale-110" />
+      <p className="relative text-xs font-black uppercase tracking-[0.22em] text-[#071f14]/45">{title}</p>
+      <p className="relative mt-4 text-4xl font-black leading-none tracking-tight text-[#071f14]">{value}</p>
+      {note ? <p className="relative mt-3 text-sm font-semibold leading-5 text-[#071f14]/55">{note}</p> : null}
+    </article>
+  );
+}
+
+function DashboardSection({ eyebrow, title, description, children, className = "" }) {
+  return (
+    <section className={`relative overflow-hidden rounded-[28px] border border-white/80 bg-white p-6 shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 ${className}`}>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-20 -right-20 h-52 w-52 rounded-full bg-[#f4d484]/20 blur-2xl" />
+      <div className="relative">
+        {eyebrow ? <p className="text-xs font-black uppercase tracking-[0.24em] text-[#071f14]/45">{eyebrow}</p> : null}
+        {title ? <h2 className="mt-2 text-2xl font-black tracking-tight text-[#071f14]">{title}</h2> : null}
+        {description ? <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-[#071f14]/55">{description}</p> : null}
+        <div className={title || eyebrow || description ? "mt-5" : ""}>{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function DashboardButton({ children, onClick, disabled, variant = "primary", className = "", type = "button" }) {
+  const styles =
+    variant === "gold"
+      ? "bg-[#f4d484] text-[#071f14] shadow-[0_14px_30px_rgba(215,168,77,0.22)] hover:bg-[#efd075]"
+      : variant === "outline"
+      ? "border border-[#dbe4dc] bg-white text-[#071f14]/75 hover:border-[#235f3e]/45 hover:text-[#071f14]"
+      : variant === "danger"
+      ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+      : "bg-[#235f3e] text-white shadow-[0_14px_30px_rgba(8,39,25,0.22)] hover:bg-[#174a30]";
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex h-11 min-w-[118px] items-center justify-center rounded-full px-5 text-xs font-black uppercase tracking-[0.12em] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 ${styles} ${className}`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -1102,438 +1153,286 @@ export default function ProfessorAttendance() {
   const rfidOpen = selectedRfidSession?.isOpen === true;
 
   return (
-    <div className="min-h-screen bg-[#12391f] font-sans text-white">
-      <header className="flex h-[88px] items-center bg-white px-6 shadow-sm md:px-10">
-        <div className="flex items-center gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#2d5238] bg-white text-sm font-black text-[#2d5238]">
-            LC
-          </div>
+    <ProfessorLayout
+      title="Manage Trainee Attendance"
+      subtitle="Track RFID scans, create attendance records, verify proof, and export attendance reports."
+    >
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap");
 
-          <h1 className="text-xl font-black uppercase tracking-wide text-[#2d5238] md:text-3xl">
-            Training &amp; Assessment
-          </h1>
+        .professor-attendance-page,
+        .professor-attendance-page button,
+        .professor-attendance-page input,
+        .professor-attendance-page select,
+        .professor-attendance-page textarea {
+          font-family: "Open Sans", Arial, sans-serif;
+        }
+      `}</style>
+
+      <div className="professor-attendance-page space-y-6">
+        {msg.text ? (
+          <div
+            className={`rounded-[22px] px-5 py-4 text-sm font-bold shadow-[0_14px_32px_rgba(8,39,25,0.08)] ring-1 ${
+              msg.type === "success"
+                ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                : "bg-rose-50 text-rose-800 ring-rose-200"
+            }`}
+          >
+            {msg.text}
+          </div>
+        ) : null}
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <DashboardStatCard title="Students" value={recordMergedRows.length} note="Loaded trainees" />
+          <DashboardStatCard title="Present" value={recordMergedRows.filter((row) => row.status === "Present").length} note="Marked present" />
+          <DashboardStatCard title="Late" value={recordMergedRows.filter((row) => row.status === "Late").length} note="Late records" />
+          <DashboardStatCard title="Pending" value={recordMergedRows.filter((row) => !row.status || row.status === "Pending").length} note="Awaiting review" />
         </div>
-      </header>
 
-      <div className="flex min-h-[calc(100vh-88px)] flex-col lg:flex-row">
-        <aside className="flex w-full flex-col bg-[#2d5038] lg:w-[262px]">
-          <div className="border-b border-white/15 px-6 py-8 text-center">
-            <div className="mx-auto h-[76px] w-[76px] rounded-full border-4 border-[#b7bbb6] bg-white shadow-sm" />
-
-            <h2 className="mt-5 text-base font-black uppercase leading-tight">
-              {professorName}
-            </h2>
-
-            <p className="mt-1 break-words text-xs font-semibold text-white/80">
-              {professorEmail}
-            </p>
-          </div>
-
-          <nav className="flex-1 py-6">
-            {menuItems.map((item) => {
-              const active = item.label === "Manage Attendance";
-
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => navigate(item.path)}
-                  className={`block w-full px-11 py-4 text-left text-sm font-black uppercase transition ${
-                    active
-                      ? "bg-[#d8e0da] text-[#1e3e2a]"
-                      : "text-white hover:bg-white/10"
+        <DashboardSection
+          eyebrow="RFID Attendance"
+          title={`${selectedCourseForRfid || "Course"} RFID Attendance`}
+          description="View one RFID attendance session at a time. Select a session below to keep the scan list organized."
+        >
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <span
+                  className={`inline-flex h-8 items-center rounded-full border px-3 text-[11px] font-black uppercase tracking-[0.14em] ${
+                    rfidOpen
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-rose-200 bg-rose-50 text-rose-700"
                   }`}
                 >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="px-20 pb-10 lg:px-20">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm font-black uppercase text-white transition hover:text-[#d8e0da]"
-            >
-              Sign Out
-            </button>
-          </div>
-        </aside>
-
-        <main className="flex-1 bg-[#12391f] px-5 py-6 md:px-8 lg:px-8">
-          <section className="mx-auto max-w-[1040px]">
-            <div className="mb-7">
-              <h2 className="text-3xl font-black uppercase tracking-tight md:text-[34px]">
-                Manage Trainee Attendance
-              </h2>
-              <div className="mt-1 h-1 w-full max-w-[530px] bg-white/60" />
-            </div>
-
-            {msg.text ? (
-              <div
-                className={`mb-5 rounded-xl px-4 py-3 text-sm font-bold ring-1 ${
-                  msg.type === "success"
-                    ? "bg-green-50 text-green-800 ring-green-200"
-                    : "bg-red-50 text-red-800 ring-red-200"
-                }`}
-              >
-                {msg.text}
+                  {rfidOpen ? "Open" : "Closed"}
+                </span>
+                <span className="inline-flex h-8 items-center rounded-full bg-[#edf4ee] px-3 text-[11px] font-black uppercase tracking-[0.14em] text-[#235f3e]">
+                  {selectedCourseForRfid || "No course selected"}
+                </span>
               </div>
-            ) : null}
 
-            <div className="mb-7 rounded-2xl bg-[#2d5038] p-5 shadow-sm ring-1 ring-white/15">
-              <div className="grid gap-5 lg:grid-cols-[1fr_260px]">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-xl font-black uppercase">
-                      {selectedCourseForRfid || "Course"} RFID Attendance
-                    </h3>
-
-                    <span
-                      className={`rounded-full px-4 py-1 text-xs font-black uppercase ${
-                        rfidOpen
-                          ? "bg-[#bdf0a4] text-[#2d5038]"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {rfidOpen ? "Open" : "Closed"}
-                    </span>
-                  </div>
-
-                  <p className="mt-2 max-w-2xl text-sm font-bold text-white/85">
-                    View one RFID attendance session at a time. Select a session
-                    below to avoid a long scan list.
-                  </p>
-
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
-                        RFID Session
-                      </label>
-
-                      <select
-                        value={selectedRfidSessionId}
-                        onChange={(e) => {
-                          const nextId = e.target.value;
-                          setSelectedRfidSessionId(nextId);
-                          loadRfidStatus(nextId);
-                        }}
-                        disabled={rfidLoading || !rfidSessions.length}
-                        className="mt-2 h-11 w-full rounded-xl border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none disabled:bg-white/70"
-                      >
-                        {!rfidSessions.length ? (
-                          <option value="">No RFID sessions today</option>
-                        ) : (
-                          rfidSessions.map((session, index) => (
-                            <option
-                              key={session.id || session._id}
-                              value={session.id || session._id}
-                            >
-                              {buildRfidSessionLabel(session, index)}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
-                        Selected Session Details
-                      </label>
-
-                      <div className="mt-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-white">
-                        <div>
-                          Date: {selectedRfidSession?.attendanceDate || todayLocalISO()}
-                        </div>
-                        <div>
-                          Station: {selectedRfidSession?.station || `${selectedCourseForRfid} RFID Station`}
-                        </div>
-                        <div>
-                          Time In: {Number(selectedRfidSession?.timeInCount || 0)} • Time Out:{" "}
-                          {Number(selectedRfidSession?.timeOutCount || 0)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 rounded-2xl bg-white/10 p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <h4 className="text-sm font-black uppercase">
-                        Scans in selected session
-                      </h4>
-
-                      <div className="text-xs font-black text-white/70">
-                        Page {rfidPage} / {rfidTotalPages}
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {rfidLoading ? (
-                        <div className="rounded-xl bg-white/10 px-4 py-5 text-sm font-bold text-white/75 md:col-span-2">
-                          Loading RFID session...
-                        </div>
-                      ) : paginatedRfidLogs.length ? (
-                        paginatedRfidLogs.map((log) => (
-                          <div
-                            key={log.id || `${log.uid}-${log.createdAt}`}
-                            className="rounded-xl bg-white/10 px-4 py-3"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="font-black">
-                                  {log.traineeName || log.uid || "RFID Scan"}
-                                </div>
-                                <div className="mt-1 text-xs font-bold text-white/75">
-                                  {log.message || "RFID scan processed."}
-                                </div>
-                                <div className="mt-1 text-xs font-bold uppercase text-white/55">
-                                  {formatDateTime(log.createdAt)}
-                                </div>
-                              </div>
-
-                              <span
-                                className={`rounded-full px-3 py-1 text-[10px] font-black uppercase ${
-                                  log.status === "success"
-                                    ? "bg-[#bdf0a4] text-[#2d5038]"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {log.action || log.status || "scan"}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="rounded-xl bg-white/10 px-4 py-5 text-center text-sm font-bold text-white/75 md:col-span-2">
-                          No scans in this RFID session yet.
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-end gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setRfidPage((prev) => Math.max(1, prev - 1))}
-                        disabled={rfidPage <= 1}
-                        className="rounded-lg border border-white/25 px-4 py-2 text-xs font-black uppercase disabled:opacity-40"
-                      >
-                        Previous
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setRfidPage((prev) => Math.min(rfidTotalPages, prev + 1))
-                        }
-                        disabled={rfidPage >= rfidTotalPages}
-                        className="rounded-lg border border-white/25 px-4 py-2 text-xs font-black uppercase disabled:opacity-40"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <button
-                    type="button"
-                    onClick={openRfidAttendance}
-                    disabled={rfidLoading || !selectedCourseForRfid}
-                    className="rounded-xl bg-white px-5 py-4 text-xs font-black uppercase tracking-widest text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Open RFID Attendance
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={openScannerDisplay}
-                    disabled={!rfidOpen}
-                    className="rounded-xl bg-[#bdf0a4] px-5 py-4 text-xs font-black uppercase tracking-widest text-[#2d5038] transition hover:bg-[#d7ffc7] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Open Scanner Display
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={closeRfidAttendance}
-                    disabled={rfidLoading || !rfidOpen}
-                    className="rounded-xl border border-white/25 px-5 py-4 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Close RFID
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => loadRfidStatus(selectedRfidSessionId)}
-                    disabled={rfidLoading}
-                    className="rounded-xl border border-white/25 px-5 py-4 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Refresh RFID
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={exportRfidAttendance}
-                    disabled={!selectedRfidSession}
-                    className="rounded-xl bg-white px-5 py-4 text-xs font-black uppercase tracking-widest text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Export RFID Session
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-7 rounded-lg bg-[#2d5038] px-5 py-4 shadow-sm">
-              <div className="grid gap-5 lg:grid-cols-[1fr_auto_auto_auto] lg:items-end">
-                <div>
-                  <label className="text-base font-black uppercase text-white">
-                    Course
-                  </label>
-
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs font-black uppercase tracking-[0.18em] text-[#071f14]/60">
+                    RFID Session
+                  </span>
                   <select
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    disabled={courseOptions.length <= 1}
-                    className="mt-1 h-8 w-full max-w-[270px] rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none disabled:bg-white/80"
+                    value={selectedRfidSessionId}
+                    onChange={(e) => {
+                      const nextId = e.target.value;
+                      setSelectedRfidSessionId(nextId);
+                      loadRfidStatus(nextId);
+                    }}
+                    disabled={rfidLoading || !rfidSessions.length}
+                    className="mt-2 h-12 w-full rounded-full border border-[#dbe4dc] bg-[#fbfcfa] px-5 text-sm font-bold text-[#071f14] outline-none transition focus:border-[#235f3e] focus:bg-white focus:shadow-[0_0_0_4px_rgba(35,95,62,0.10)] disabled:opacity-60"
                   >
-                    {!courseOptions.length ? (
-                      <option value="">No assigned course</option>
+                    {!rfidSessions.length ? (
+                      <option value="">No RFID sessions today</option>
                     ) : (
-                      courseOptions.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
+                      rfidSessions.map((session, index) => (
+                        <option key={session.id || session._id} value={session.id || session._id}>
+                          {buildRfidSessionLabel(session, index)}
                         </option>
                       ))
                     )}
                   </select>
+                </label>
+
+                <div className="rounded-[22px] border border-[#dbe4dc] bg-[#fbfcfa] px-5 py-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#071f14]/45">
+                    Selected Session Details
+                  </p>
+                  <div className="mt-2 space-y-1 text-sm font-bold leading-6 text-[#071f14]/65">
+                    <p>Date: {selectedRfidSession?.attendanceDate || todayLocalISO()}</p>
+                    <p>Station: {selectedRfidSession?.station || `${selectedCourseForRfid} RFID Station`}</p>
+                    <p>
+                      Time In: {Number(selectedRfidSession?.timeInCount || 0)} • Time Out:{" "}
+                      {Number(selectedRfidSession?.timeOutCount || 0)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-[#dbe4dc] bg-[#fbfcfa] p-5">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#071f14]/45">
+                      Scans in Selected Session
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-[#071f14]/55">
+                      Page {rfidPage} / {rfidTotalPages}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <DashboardButton
+                      variant="outline"
+                      onClick={() => setRfidPage((prev) => Math.max(1, prev - 1))}
+                      disabled={rfidPage <= 1}
+                      className="h-9 min-w-[92px] px-3"
+                    >
+                      Previous
+                    </DashboardButton>
+                    <DashboardButton
+                      variant="outline"
+                      onClick={() => setRfidPage((prev) => Math.min(rfidTotalPages, prev + 1))}
+                      disabled={rfidPage >= rfidTotalPages}
+                      className="h-9 min-w-[78px] px-3"
+                    >
+                      Next
+                    </DashboardButton>
+                  </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={refreshPage}
-                  disabled={pageLoading}
-                  className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {pageLoading ? "Loading..." : "Refresh"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={openCreateAttendanceModal}
-                  disabled={pageLoading || !allowedCourses.length}
-                  className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Create Attendance
-                </button>
-
-                <button
-                  type="button"
-                  onClick={exportAttendance}
-                  disabled={pageLoading || !allowedCourses.length}
-                  className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Export Attendance
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-lg bg-[#2d5038] shadow-sm">
-              <div className="bg-white px-4 py-4">
-                <h3 className="text-lg font-black text-[#2d5038]">My Students</h3>
-              </div>
-
-              <div className="min-h-[372px] divide-y divide-white/25">
-                {pageLoading ? (
-                  [1, 2].map((item) => (
-                    <div
-                      key={item}
-                      className="grid gap-4 px-3 py-4 md:grid-cols-[64px_1.4fr_1.4fr_.7fr_.7fr_100px_90px] md:items-center"
-                    >
-                      <div className="h-11 w-11 rounded-full bg-white" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-5 rounded-full bg-[#bdf0a4]" />
-                      <div className="h-5 rounded-full bg-white" />
+                <div className="grid max-h-[310px] gap-3 overflow-y-auto pr-1 md:grid-cols-2">
+                  {rfidLoading ? (
+                    <div className="rounded-[18px] border border-[#dbe4dc] bg-white px-4 py-5 text-sm font-bold text-[#071f14]/60 md:col-span-2">
+                      Loading RFID session...
                     </div>
-                  ))
-                ) : paginatedRows.length ? (
-                  paginatedRows.map((row) => (
-                    <div
-                      key={row.key}
-                      className="grid gap-4 px-3 py-4 text-sm font-black md:grid-cols-[64px_1.4fr_1.4fr_.7fr_.7fr_100px_90px] md:items-center"
-                    >
-                      <div className="h-11 w-11 rounded-full bg-white" />
-
-                      <div className="text-white">{row.traineeName}</div>
-
-                      <div className="break-words text-white/90">{row.email}</div>
-
-                      <div className="text-white/90">{row.course}</div>
-
-                      <div className="text-white/90">Status</div>
-
-                      <div>
-                        <StatusPill row={row} />
+                  ) : paginatedRfidLogs.length ? (
+                    paginatedRfidLogs.map((log) => (
+                      <div key={log.id || `${log.uid}-${log.createdAt}`} className="rounded-[18px] border border-[#dbe4dc] bg-white px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-[#071f14]">{log.traineeName || log.uid || "RFID Scan"}</p>
+                            <p className="mt-1 line-clamp-2 text-xs font-semibold text-[#071f14]/55">{log.message || "RFID scan processed."}</p>
+                            <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.10em] text-[#071f14]/40">{formatDateTime(log.createdAt)}</p>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-black uppercase ${
+                              log.status === "success"
+                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                : "bg-rose-50 text-rose-700 ring-1 ring-rose-200"
+                            }`}
+                          >
+                            {log.action || log.status || "scan"}
+                          </span>
+                        </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setViewModalRow(row)}
-                        className="inline-flex min-w-[84px] justify-center rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038] transition hover:bg-[#eef1e7]"
-                      >
-                        View
-                      </button>
+                    ))
+                  ) : (
+                    <div className="rounded-[18px] border border-[#dbe4dc] bg-white px-4 py-5 text-center text-sm font-bold text-[#071f14]/60 md:col-span-2">
+                      No scans in this RFID session yet.
                     </div>
-                  ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid content-start gap-3">
+              <DashboardButton onClick={openRfidAttendance} disabled={rfidLoading || !selectedCourseForRfid}>Open RFID</DashboardButton>
+              <DashboardButton variant="gold" onClick={openScannerDisplay} disabled={!rfidOpen}>Scanner</DashboardButton>
+              <DashboardButton variant="outline" onClick={closeRfidAttendance} disabled={rfidLoading || !rfidOpen}>Close RFID</DashboardButton>
+              <DashboardButton variant="outline" onClick={() => loadRfidStatus(selectedRfidSessionId)} disabled={rfidLoading}>Refresh RFID</DashboardButton>
+              <DashboardButton variant="outline" onClick={exportRfidAttendance} disabled={!selectedRfidSession}>Export RFID</DashboardButton>
+            </div>
+          </div>
+        </DashboardSection>
+
+        <DashboardSection
+          eyebrow="Attendance Records"
+          title="My Students"
+          description="Filter by assigned course, create attendance records, review proof submissions, and export the attendance list."
+        >
+          <div className="grid gap-4 lg:grid-cols-[minmax(220px,320px)_1fr] lg:items-end">
+            <label className="block">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-[#071f14]/60">Course</span>
+              <select
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                disabled={courseOptions.length <= 1}
+                className="mt-2 h-12 w-full rounded-full border border-[#dbe4dc] bg-[#fbfcfa] px-5 text-sm font-bold text-[#071f14] outline-none transition focus:border-[#235f3e] focus:bg-white focus:shadow-[0_0_0_4px_rgba(35,95,62,0.10)] disabled:opacity-60"
+              >
+                {!courseOptions.length ? (
+                  <option value="">No assigned course</option>
                 ) : (
-                  <div className="px-5 py-12 text-center text-sm font-bold text-white/80">
-                    No trainees found for this course.
-                  </div>
+                  courseOptions.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))
                 )}
-              </div>
+              </select>
+            </label>
+
+            <div className="flex flex-wrap gap-3 lg:justify-end">
+              <DashboardButton onClick={refreshPage} disabled={pageLoading}>{pageLoading ? "Loading..." : "Refresh"}</DashboardButton>
+              <DashboardButton variant="gold" onClick={openCreateAttendanceModal} disabled={pageLoading || !allowedCourses.length}>Create</DashboardButton>
+              <DashboardButton variant="outline" onClick={exportAttendance} disabled={pageLoading || !allowedCourses.length}>Export</DashboardButton>
+            </div>
+          </div>
+
+          <div className="mt-6 overflow-hidden rounded-[24px] border border-[#dbe4dc] bg-[#fbfcfa]">
+            <div className="hidden grid-cols-[64px_1.3fr_1.45fr_.8fr_.8fr_120px_100px] gap-4 border-b border-[#dbe4dc] bg-[#f7f8f3] px-4 py-4 text-[11px] font-black uppercase tracking-[0.16em] text-[#071f14]/45 md:grid">
+              <span />
+              <span>Trainee</span>
+              <span>Email</span>
+              <span>Course</span>
+              <span>Status</span>
+              <span>Attendance</span>
+              <span>Action</span>
             </div>
 
-            <div className="mt-5 flex items-center justify-between px-2 text-base font-bold">
-              <div>
-                Page {page} / {totalPages}
-              </div>
-
-              <div className="flex items-center gap-5">
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page <= 1}
-                  className="text-3xl leading-none text-white disabled:opacity-30"
-                  aria-label="Previous page"
-                >
-                  ‹
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
-                  className="font-black text-white disabled:opacity-30"
-                >
-                  Next Page
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
-                  className="text-3xl leading-none text-white disabled:opacity-30"
-                  aria-label="Next page"
-                >
-                  ›
-                </button>
-              </div>
+            <div className="min-h-[320px] divide-y divide-[#dbe4dc]">
+              {pageLoading ? (
+                [1, 2].map((item) => (
+                  <div key={item} className="grid gap-4 px-4 py-4 md:grid-cols-[64px_1.3fr_1.45fr_.8fr_.8fr_120px_100px] md:items-center">
+                    <div className="h-11 w-11 rounded-full bg-white shadow-sm" />
+                    <div className="h-4 rounded-full bg-[#e6ece7]" />
+                    <div className="h-4 rounded-full bg-[#e6ece7]" />
+                    <div className="h-4 rounded-full bg-[#e6ece7]" />
+                    <div className="h-4 rounded-full bg-[#e6ece7]" />
+                    <div className="h-5 rounded-full bg-[#e6ece7]" />
+                    <div className="h-8 rounded-full bg-white" />
+                  </div>
+                ))
+              ) : paginatedRows.length ? (
+                paginatedRows.map((row) => (
+                  <div key={row.key} className="grid gap-3 px-4 py-4 text-sm font-bold text-[#071f14] md:grid-cols-[64px_1.3fr_1.45fr_.8fr_.8fr_120px_100px] md:items-center">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-xs font-black text-[#235f3e] shadow-sm ring-1 ring-[#dbe4dc]">
+                      {(row.traineeName || "T").slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="break-words font-black">{row.traineeName}</div>
+                    <div className="break-words text-[#071f14]/60">{row.email}</div>
+                    <div className="text-[#071f14]/70">{row.course}</div>
+                    <div className="text-[#071f14]/60">Status</div>
+                    <div><StatusPill row={row} /></div>
+                    <button
+                      type="button"
+                      onClick={() => setViewModalRow(row)}
+                      className="inline-flex h-9 min-w-[84px] items-center justify-center rounded-full border border-[#dbe4dc] bg-white px-3 text-xs font-black text-[#071f14] transition hover:border-[#235f3e]/40 hover:text-[#235f3e]"
+                    >
+                      View
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="px-5 py-12 text-center text-sm font-bold text-[#071f14]/60">
+                  No trainees found for this course.
+                </div>
+              )}
             </div>
-          </section>
-        </main>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 px-1 text-sm font-bold text-[#071f14]/65">
+            <div>Page {page} / {totalPages}</div>
+            <div className="flex items-center gap-2">
+              <DashboardButton
+                variant="outline"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page <= 1}
+                className="h-9 min-w-[92px] px-3"
+              >
+                Previous
+              </DashboardButton>
+              <DashboardButton
+                variant="outline"
+                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={page >= totalPages}
+                className="h-9 min-w-[92px] px-3"
+              >
+                Next
+              </DashboardButton>
+            </div>
+          </div>
+        </DashboardSection>
       </div>
 
       <div className={modalBackdropClasses(createModalOpen)}>
@@ -1861,6 +1760,6 @@ export default function ProfessorAttendance() {
           </div>
         </div>
       </div>
-    </div>
+    </ProfessorLayout>
   );
 }

@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildTrainingFileUrl } from "./trainingFileUrl";
+import ProfessorLayout from "./ProfessorLayout";
 import {
   API_BASE,
   fetchJson,
@@ -372,6 +373,71 @@ function SummaryCard({ label, value }) {
       </div>
       <div className="mt-2 text-lg font-black text-[#395345]">{value}</div>
     </div>
+  );
+}
+
+
+function DashboardStatCard({ title, value, note }) {
+  return (
+    <article className="group relative min-h-[118px] overflow-hidden rounded-[24px] border border-white/80 bg-white p-5 shadow-[0_16px_40px_rgba(8,39,25,0.10)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_65px_rgba(8,39,25,0.16)]">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-14 h-40 w-40 rounded-full bg-[#f4d484]/20 blur-2xl transition duration-300 group-hover:scale-110" />
+      <p className="relative text-xs font-black uppercase tracking-[0.22em] text-[#071f14]/45">{title}</p>
+      <p className="relative mt-4 text-4xl font-black leading-none tracking-tight text-[#071f14]">{value}</p>
+      {note ? <p className="relative mt-3 text-sm font-semibold leading-5 text-[#071f14]/55">{note}</p> : null}
+    </article>
+  );
+}
+
+function DashboardSection({ eyebrow, title, description, children, className = "" }) {
+  return (
+    <section className={`relative overflow-hidden rounded-[28px] border border-white/80 bg-white p-6 shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 ${className}`}>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-20 -right-20 h-52 w-52 rounded-full bg-[#f4d484]/20 blur-2xl" />
+      <div className="relative">
+        {eyebrow ? <p className="text-xs font-black uppercase tracking-[0.24em] text-[#071f14]/45">{eyebrow}</p> : null}
+        {title ? <h2 className="mt-2 text-2xl font-black tracking-tight text-[#071f14]">{title}</h2> : null}
+        {description ? <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-[#071f14]/55">{description}</p> : null}
+        <div className={title || eyebrow || description ? "mt-5" : ""}>{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function DashboardButton({ children, onClick, disabled, variant = "primary", className = "", type = "button" }) {
+  const styles =
+    variant === "gold"
+      ? "bg-[#f4d484] text-[#071f14] shadow-[0_14px_30px_rgba(215,168,77,0.22)] hover:bg-[#efd075]"
+      : variant === "outline"
+      ? "border border-[#dbe4dc] bg-white text-[#071f14]/75 hover:border-[#235f3e]/45 hover:text-[#071f14]"
+      : variant === "danger"
+      ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+      : "bg-[#235f3e] text-white shadow-[0_14px_30px_rgba(8,39,25,0.22)] hover:bg-[#174a30]";
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex h-10 min-w-[96px] items-center justify-center rounded-full px-4 text-[11px] font-black uppercase tracking-[0.12em] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 ${styles} ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function AssignmentStatusBadge({ label }) {
+  const styles =
+    label === "Open"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : label === "Scheduled"
+      ? "border-blue-200 bg-blue-50 text-blue-700"
+      : "border-amber-200 bg-amber-50 text-amber-700";
+
+  return (
+    <span className={`inline-flex h-8 min-w-[92px] items-center justify-center rounded-full border px-3 text-[10px] font-black uppercase tracking-[0.12em] ${styles}`}>
+      {label}
+    </span>
   );
 }
 
@@ -1006,249 +1072,297 @@ export default function ProfessorAssignments() {
   }
 
   return (
-    <div className="min-h-screen bg-[#12391f] font-sans text-white">
-      <header className="flex h-[88px] items-center bg-white px-6 shadow-sm md:px-10">
-        <div className="flex items-center gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#2d5238] bg-white text-sm font-black text-[#2d5238]">
-            LC
-          </div>
+    <ProfessorLayout
+      title="Manage Trainee Assignments"
+      subtitle="Create assignments, review submissions, and record trainee scores using the same clean dashboard layout."
+    >
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap");
 
-          <h1 className="text-xl font-black uppercase tracking-wide text-[#2d5238] md:text-3xl">
-            Training &amp; Assessment
-          </h1>
+        .professor-assignments-page,
+        .professor-assignments-page button,
+        .professor-assignments-page input,
+        .professor-assignments-page select,
+        .professor-assignments-page textarea {
+          font-family: "Open Sans", Arial, sans-serif;
+        }
+
+        .pa-table-card {
+          width: 100%;
+          overflow: hidden;
+          border-radius: 22px;
+          border: 1px solid #dbe4dc;
+          background: rgba(255,255,255,0.92);
+          box-shadow: 0 14px 34px rgba(8,39,25,.07);
+        }
+
+        .pa-assignment-grid {
+          display: grid;
+          grid-template-columns: minmax(250px, 1.55fr) minmax(96px, .62fr) minmax(78px, .48fr) minmax(190px, 1.05fr) minmax(112px, .72fr) minmax(88px, .56fr);
+          column-gap: 18px;
+          align-items: center;
+        }
+
+        .pa-table-head {
+          padding: 16px 24px;
+          background: #f7f8f3;
+          border-bottom: 1px solid #dbe4dc;
+          color: rgba(7,31,20,.52);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+        }
+
+        .pa-table-head span,
+        .pa-table-row > div {
+          min-width: 0;
+        }
+
+        .pa-table-head span:nth-child(2),
+        .pa-table-head span:nth-child(3),
+        .pa-table-head span:nth-child(5),
+        .pa-table-head span:nth-child(6),
+        .pa-table-row > div:nth-child(2),
+        .pa-table-row > div:nth-child(3),
+        .pa-table-row > div:nth-child(5),
+        .pa-table-row > div:nth-child(6) {
+          justify-self: center;
+          text-align: center;
+        }
+
+        .pa-table-head span:nth-child(4),
+        .pa-table-row > div:nth-child(4) {
+          justify-self: start;
+          text-align: left;
+        }
+
+        .pa-table-row {
+          min-height: 92px;
+          padding: 17px 24px;
+          border-bottom: 1px solid #e4ebe4;
+          color: rgba(7,31,20,.72);
+          font-size: 14px;
+          font-weight: 700;
+          transition: background .2s ease;
+        }
+
+        .pa-table-row:last-child {
+          border-bottom: 0;
+        }
+
+        .pa-table-row:hover {
+          background: rgba(247,248,243,.72);
+        }
+
+        .pa-action-cell {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .pa-action-button {
+          width: 72px !important;
+          min-width: 72px !important;
+          height: 32px !important;
+          padding: 0 10px !important;
+          border-radius: 999px !important;
+          font-size: 10px !important;
+          letter-spacing: .12em !important;
+          box-shadow: 0 8px 18px rgba(8,39,25,.08) !important;
+        }
+
+        @media (max-width: 1023px) {
+          .pa-assignment-grid {
+            grid-template-columns: 1fr;
+            row-gap: 12px;
+          }
+
+          .pa-table-head {
+            display: none;
+          }
+
+          .pa-table-row {
+            padding: 18px;
+          }
+
+          .pa-action-cell {
+            justify-content: flex-start;
+          }
+        }
+      `}</style>
+
+      <div className="professor-assignments-page space-y-6">
+        {msg.text ? (
+          <div
+            className={`rounded-[22px] px-5 py-4 text-sm font-bold shadow-[0_14px_32px_rgba(8,39,25,0.08)] ring-1 ${
+              msg.type === "success"
+                ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                : "bg-rose-50 text-rose-800 ring-rose-200"
+            }`}
+          >
+            {msg.text}
+          </div>
+        ) : null}
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <DashboardStatCard title="Assignments" value={items.length} note="Total created" />
+          <DashboardStatCard title="Open" value={items.filter((item) => getStatusLabel(item) === "Open").length} note="Accepting submissions" />
+          <DashboardStatCard title="Scheduled" value={items.filter((item) => getStatusLabel(item) === "Scheduled").length} note="Upcoming upload windows" />
+          <DashboardStatCard title="Past Due" value={items.filter((item) => getStatusLabel(item) === "Past Due").length} note="Closed deadlines" />
         </div>
-      </header>
 
-      <div className="flex min-h-[calc(100vh-88px)] flex-col lg:flex-row">
-        <aside className="flex w-full flex-col bg-[#2d5038] lg:w-[267px]">
-          <div className="border-b border-white/15 px-6 py-8 text-center">
-            <div className="mx-auto h-[76px] w-[76px] rounded-full border-4 border-[#b7bbb6] bg-white shadow-sm" />
-
-            <h2 className="mt-5 text-base font-black uppercase leading-tight">
-              {professorName}
-            </h2>
-
-            <p className="mt-1 break-words text-xs font-semibold text-white/80">
-              {professorEmail}
-            </p>
-          </div>
-
-          <nav className="flex-1 py-6">
-            {menuItems.map((item) => {
-              const active = item.label === "Manage Assignment";
-
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => navigate(item.path)}
-                  className={`block w-full px-11 py-4 text-left text-sm font-black uppercase transition ${
-                    active
-                      ? "bg-[#d8e0da] text-[#1e3e2a]"
-                      : "text-white hover:bg-white/10"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="px-20 pb-10">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm font-black uppercase text-white transition hover:text-[#d8e0da]"
-            >
-              Sign Out
-            </button>
-          </div>
-        </aside>
-
-        <main className="flex-1 bg-[#12391f] px-5 py-6 md:px-8 lg:px-8">
-          <section className="mx-auto max-w-[1040px]">
-            <div className="mb-7">
-              <h2 className="text-3xl font-black uppercase tracking-tight md:text-[34px]">
-                Manage Trainee Assignment
-              </h2>
-              <div className="mt-1 h-1 w-full max-w-[530px] bg-white/60" />
-            </div>
-
-            {msg.text ? (
-              <div
-                className={`mb-5 rounded-xl px-4 py-3 text-sm font-bold ring-1 ${
-                  msg.type === "success"
-                    ? "bg-green-50 text-green-800 ring-green-200"
-                    : "bg-red-50 text-red-800 ring-red-200"
-                }`}
+        <DashboardSection
+          eyebrow="Search Records"
+          title="Assignment Queue"
+          description="Filter by assigned course, refresh the list, or create a new trainee assignment."
+        >
+          <div className="grid gap-4 lg:grid-cols-[minmax(220px,340px)_1fr] lg:items-end">
+            <label className="block">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-[#071f14]/60">Course</span>
+              <select
+                value={courseFilter}
+                onChange={(e) => setCourseFilter(e.target.value)}
+                disabled={courseFilterOptions.length <= 1}
+                className="mt-2 h-12 w-full rounded-full border border-[#dbe4dc] bg-[#fbfcfa] px-5 text-sm font-bold text-[#071f14] outline-none transition focus:border-[#235f3e] focus:bg-white focus:shadow-[0_0_0_4px_rgba(35,95,62,0.10)] disabled:opacity-60"
               >
-                {msg.text}
-              </div>
-            ) : null}
+                {!courseFilterOptions.length ? (
+                  <option value="">No assigned course</option>
+                ) : (
+                  courseFilterOptions.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
 
-            <div className="mb-9 rounded-lg bg-[#2d5038] px-5 py-4 shadow-sm">
-              <div className="grid gap-5 lg:grid-cols-[1fr_auto_auto] lg:items-end">
-                <div>
-                  <label className="text-base font-black uppercase text-white">
-                    Course
-                  </label>
+            <div className="flex flex-wrap gap-3 lg:justify-end">
+              <DashboardButton onClick={loadItems} disabled={loading}>
+                {loading ? "Loading..." : "Refresh"}
+              </DashboardButton>
+              <DashboardButton
+                variant="gold"
+                onClick={() => setCreateModalOpen(true)}
+                disabled={!allowedCourses.length}
+              >
+                Create
+              </DashboardButton>
+            </div>
+          </div>
+        </DashboardSection>
 
-                  <select
-                    value={courseFilter}
-                    onChange={(e) => setCourseFilter(e.target.value)}
-                    disabled={courseFilterOptions.length <= 1}
-                    className="mt-1 h-8 w-full max-w-[270px] rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none disabled:bg-white/80"
-                  >
-                    {!courseFilterOptions.length ? (
-                      <option value="">No assigned course</option>
-                    ) : (
-                      courseFilterOptions.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={loadItems}
-                  disabled={loading}
-                  className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {loading ? "Loading..." : "Refresh"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setCreateModalOpen(true)}
-                  disabled={!allowedCourses.length}
-                  className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Create Assignment
-                </button>
-              </div>
+        <DashboardSection
+          eyebrow="Assignment Records"
+          title="Trainee Assignments"
+          description="View assignment details, uploaded files, trainee submissions, and grade scores."
+        >
+          <div className="pa-table-card">
+            <div className="pa-table-head pa-assignment-grid hidden lg:grid">
+              <span>Assignment</span>
+              <span>Submissions</span>
+              <span>Points</span>
+              <span>Deadline</span>
+              <span>Status</span>
+              <span>Action</span>
             </div>
 
-            <div className="overflow-hidden rounded-lg bg-[#2d5038] shadow-sm">
-              <div className="bg-white px-4 py-4">
-                <h3 className="text-lg font-black text-[#2d5038]">
-                  Trainee Assignment
-                </h3>
-              </div>
+            <div className="divide-y divide-[#e4ebe4]">
+              {loading ? (
+                [1, 2, 3].map((item) => (
+                  <div key={item} className="pa-table-row pa-assignment-grid">
+                    <div className="h-5 rounded-full bg-[#e7eee8]" />
+                    <div className="h-5 rounded-full bg-[#e7eee8]" />
+                    <div className="h-5 rounded-full bg-[#e7eee8]" />
+                    <div className="h-5 rounded-full bg-[#e7eee8]" />
+                    <div className="h-8 rounded-full bg-[#e7eee8]" />
+                    <div className="h-9 rounded-full bg-[#e7eee8]" />
+                  </div>
+                ))
+              ) : paginatedItems.length ? (
+                paginatedItems.map((item) => {
+                  const statusLabel = getStatusLabel(item);
 
-              <div className="min-h-[372px] divide-y divide-white/25">
-                {loading ? (
-                  [1, 2].map((item) => (
+                  return (
                     <div
-                      key={item}
-                      className="grid gap-4 px-3 py-4 md:grid-cols-[80px_1.4fr_1.2fr_.9fr_.9fr_100px_90px] md:items-center"
+                      key={getAssignmentId(item)}
+                      className="pa-table-row pa-assignment-grid"
                     >
-                      <div className="h-11 w-11 rounded-full bg-white" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-5 rounded-full bg-[#bdf0a4]" />
-                      <div className="h-5 rounded-full bg-white" />
-                    </div>
-                  ))
-                ) : paginatedItems.length ? (
-                  paginatedItems.map((item) => {
-                    const statusLabel = getStatusLabel(item);
-
-                    return (
-                      <div
-                        key={getAssignmentId(item)}
-                        className="grid gap-4 px-3 py-4 text-sm font-black md:grid-cols-[80px_1.4fr_1.2fr_.9fr_.9fr_100px_90px] md:items-center"
-                      >
-                        <div className="h-11 w-11 rounded-full bg-white" />
-
-                        <div className="text-white">
+                      <div className="min-w-0">
+                        <p className="break-words text-base font-black leading-6 text-[#071f14]">
                           {item.title || "Title of Assignment"}
-                        </div>
+                        </p>
+                        <p className="mt-1 break-words text-xs font-semibold uppercase tracking-[0.12em] text-[#071f14]/45">
+                          {item.course || "Assigned Course"}
+                        </p>
+                      </div>
 
-                        <div className="text-white/90">
-                          {getSubmissionCount(item)} Submission
-                        </div>
+                      <div>
+                        <span className="lg:hidden text-[11px] font-black uppercase tracking-[0.14em] text-[#071f14]/40">Submissions: </span>
+                        {getSubmissionCount(item)}
+                      </div>
 
-                        <div className="text-white/90">
-                          {item.totalPoints || FIXED_TOTAL_POINTS}
-                        </div>
+                      <div>
+                        <span className="lg:hidden text-[11px] font-black uppercase tracking-[0.14em] text-[#071f14]/40">Points: </span>
+                        {item.totalPoints || FIXED_TOTAL_POINTS}
+                      </div>
 
-                        <div className="text-white/90">
-                          {item.dueDate ? formatDateTime(item.dueDate) : "Deadline"}
-                        </div>
+                      <div className="leading-5">
+                        <span className="lg:hidden text-[11px] font-black uppercase tracking-[0.14em] text-[#071f14]/40">Deadline: </span>
+                        {item.dueDate ? formatDateTime(item.dueDate) : "No deadline"}
+                      </div>
 
-                        <div>
-                          <span
-                            className={`inline-flex min-w-[84px] justify-center rounded-full px-3 py-1 text-[10px] font-black ${statusPillClass(
-                              statusLabel
-                            )}`}
-                          >
-                            {statusLabel}
-                          </span>
-                        </div>
+                      <div>
+                        <AssignmentStatusBadge label={statusLabel} />
+                      </div>
 
-                        <button
-                          type="button"
+                      <div className="pa-action-cell">
+                        <DashboardButton
+                          variant="outline"
                           onClick={() => openAssignmentDetails(item)}
-                          className="inline-flex min-w-[84px] justify-center rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038] transition hover:bg-[#eef1e7]"
+                          className="pa-action-button"
                         >
                           View
-                        </button>
+                        </DashboardButton>
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className="px-5 py-12 text-center text-sm font-bold text-white/80">
-                    No assignments found for this course.
-                  </div>
-                )}
-              </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="px-5 py-12 text-center text-sm font-bold text-[#071f14]/55">
+                  No assignments found for this course.
+                </div>
+              )}
             </div>
+          </div>
 
-            <div className="mt-5 flex items-center justify-between px-2 text-base font-bold">
-              <div>
-                Page {page} / {totalPages}
-              </div>
+          <div className="mt-5 flex flex-col gap-3 text-sm font-bold text-[#071f14]/60 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Page {page} / {totalPages}
+            </span>
 
-              <div className="flex items-center gap-5">
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page <= 1}
-                  className="text-3xl leading-none text-white disabled:opacity-30"
-                  aria-label="Previous page"
-                >
-                  ‹
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
-                  className="font-black text-white disabled:opacity-30"
-                >
-                  Next Page
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
-                  className="text-3xl leading-none text-white disabled:opacity-30"
-                  aria-label="Next page"
-                >
-                  ›
-                </button>
-              </div>
+            <div className="flex flex-wrap gap-3">
+              <DashboardButton
+                variant="outline"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page <= 1}
+                className="h-9 min-w-[96px] px-4"
+              >
+                Previous
+              </DashboardButton>
+              <DashboardButton
+                variant="outline"
+                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={page >= totalPages}
+                className="h-9 min-w-[80px] px-4"
+              >
+                Next
+              </DashboardButton>
             </div>
-          </section>
-        </main>
+          </div>
+        </DashboardSection>
       </div>
-
       <ModalShell
         open={createModalOpen}
         onClose={closeCreateModal}
@@ -1994,6 +2108,6 @@ export default function ProfessorAssignments() {
           </div>
         </form>
       </ModalShell>
-    </div>
+    </ProfessorLayout>
   );
 }

@@ -27,6 +27,9 @@ const API_BASE = normalizeApiBase(
 
 const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
 const ROWS_PER_PAGE = 5;
+const GREEN_DARK = "#2A4F33";
+const GREEN_MID = "#355E3B";
+const SOFT_BG = "#F6F6F1";
 
 function getAdminToken() {
   return localStorage.getItem("trainingAdminToken") || "";
@@ -294,10 +297,10 @@ function ModalShell({ open, onClose, title, children, maxWidth = "max-w-6xl" }) 
       onClick={onClose}
     >
       <div
-        className={`max-h-[90vh] w-full ${maxWidth} overflow-hidden rounded-[28px] bg-white text-[#395345] shadow-2xl`}
+        className={`max-h-[90vh] w-full ${maxWidth} overflow-hidden rounded-[28px] bg-white text-[#2A4F33] shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-[#e8ece2] px-6 py-4">
+        <div className="flex items-center justify-between border-b border-black/10 px-6 py-4">
           <h3 className="text-xl font-black">{title}</h3>
 
           <button
@@ -672,6 +675,22 @@ export default function TrainingAdminEnrollments() {
     return filteredRows.slice(start, start + ROWS_PER_PAGE);
   }, [filteredRows, page]);
 
+  const enrollmentStats = useMemo(() => {
+    const countByStatus = (target) =>
+      rows.filter(
+        (row) =>
+          String(row.approvalStatus || "pending").toLowerCase() === target
+      ).length;
+
+    return {
+      total: rows.length,
+      pending: countByStatus("pending"),
+      approved: countByStatus("approved"),
+      rejected: countByStatus("rejected"),
+      visible: filteredRows.length,
+    };
+  }, [rows, filteredRows]);
+
   useEffect(() => {
     setPage(1);
   }, [status, search]);
@@ -688,400 +707,607 @@ export default function TrainingAdminEnrollments() {
       title="Manage Enrollments"
       subtitle="Review submitted trainee details and uploaded documents before approving or rejecting applications."
     >
-      {msg.text ? (
-        <div
-          className={`mb-5 rounded-xl px-4 py-3 text-sm font-bold ring-1 ${
-            msg.type === "success"
-              ? "bg-green-50 text-green-800 ring-green-200"
-              : "bg-red-50 text-red-800 ring-red-200"
-          }`}
-        >
-          {msg.text}
+      <style>{`
+        .ta-enrollments {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --soft-bg: #f6f6f1;
+          --muted: #667085;
+          color: #101828;
+        }
+
+        .ta-enroll-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: 24px;
+          border: 1px solid rgba(16, 24, 40, 0.06);
+          background: rgba(255, 255, 255, 0.92);
+          box-shadow: 0 14px 34px rgba(8, 39, 25, 0.08);
+        }
+
+        .ta-enroll-card::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto 0;
+          height: 5px;
+          background: linear-gradient(90deg, var(--green-700), var(--gold));
+        }
+
+        .ta-enroll-card::after {
+          content: "";
+          position: absolute;
+          width: 170px;
+          height: 170px;
+          right: -86px;
+          bottom: -86px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(215, 168, 77, 0.20), transparent 60%);
+          pointer-events: none;
+        }
+
+        .ta-enroll-stat {
+          min-height: 118px;
+          padding: 24px;
+          transition: transform .25s ease, box-shadow .25s ease;
+        }
+
+        .ta-enroll-stat:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 20px 42px rgba(8, 39, 25, 0.12);
+        }
+
+        .ta-enroll-pill {
+          min-height: 42px;
+          border-radius: 999px;
+          padding: 0 18px;
+          font-size: 12px;
+          font-weight: 900;
+          transition: transform .2s ease, background .2s ease, color .2s ease;
+        }
+
+        .ta-enroll-pill:hover {
+          transform: translateY(-1px);
+        }
+
+        .ta-enroll-table-scroll {
+          overflow-x: auto;
+          scrollbar-width: thin;
+        }
+
+        .ta-enroll-table {
+          min-width: 1040px;
+        }
+
+        .ta-enroll-row {
+          display: grid;
+          grid-template-columns: 1.35fr 1fr 1.35fr 1fr .82fr 112px;
+          gap: 18px;
+          align-items: center;
+        }
+
+        .ta-enroll-data-row {
+          border-top: 1px solid rgba(16, 24, 40, 0.08);
+          transition: background .22s ease;
+        }
+
+        .ta-enroll-data-row:hover {
+          background: rgba(246, 246, 241, 0.82);
+        }
+
+        .ta-enroll-actions {
+          width: 112px;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 8px;
+          align-items: center;
+          justify-items: stretch;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .ta-enroll-action {
+          width: 112px;
+          height: 38px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 900;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid transparent;
+          transition: transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease, color .2s ease;
+        }
+
+        .ta-enroll-action:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 12px 26px rgba(8, 39, 25, 0.12);
+        }
+
+        .ta-action-view {
+          background: #ffffff;
+          color: #082719;
+          border-color: rgba(8, 39, 25, 0.14);
+          box-shadow: 0 8px 18px rgba(8, 39, 25, 0.08);
+        }
+
+        .ta-action-view:hover:not(:disabled) {
+          background: #f6f8f5;
+          border-color: rgba(8, 39, 25, 0.26);
+        }
+
+        .ta-action-approve {
+          background: #082719;
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.12);
+          box-shadow: 0 10px 22px rgba(8, 39, 25, 0.18);
+        }
+
+        .ta-action-approve:hover:not(:disabled) {
+          background: #0e3321;
+        }
+
+        .ta-action-reject {
+          background: #fff6dc;
+          color: #6f4a00;
+          border-color: rgba(215, 168, 77, 0.48);
+          box-shadow: 0 8px 18px rgba(215, 168, 77, 0.12);
+        }
+
+        .ta-action-reject:hover:not(:disabled) {
+          background: #f4d484;
+          color: #102418;
+          border-color: #d7a84d;
+        }
+
+        .ta-enroll-action:disabled {
+          cursor: not-allowed;
+          opacity: .62;
+          transform: none;
+          box-shadow: none;
+        }
+
+        @media (max-width: 900px) {
+          .ta-enroll-stat {
+            min-height: 102px;
+            padding: 20px;
+          }
+        }
+      `}</style>
+
+      <div className="ta-enrollments">
+        {msg.text ? (
+          <div
+            className={`mb-5 rounded-2xl border px-4 py-3 text-sm font-bold ${
+              msg.type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-rose-200 bg-rose-50 text-rose-800"
+            }`}
+          >
+            {msg.text}
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard title="All Enrollments" value={enrollmentStats.total} note="Submitted applications" />
+          <StatCard title="Pending" value={enrollmentStats.pending} note="Waiting for admin review" />
+          <StatCard title="Approved" value={enrollmentStats.approved} note="Accepted trainee requests" />
+          <StatCard title="Rejected" value={enrollmentStats.rejected} note="Declined applications" />
         </div>
-      ) : null}
 
-      <div className="mb-7 rounded-lg bg-[#2d5038] px-5 py-4 shadow-sm">
-        <div className="grid gap-5 lg:grid-cols-[1fr_auto_auto_auto_auto] lg:items-end">
-          <div>
-            <label className="text-base font-black uppercase text-white">
-              Search
-            </label>
+        <section className="ta-enroll-card mt-6 p-5 md:p-6">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-black/40">
+                Search Records
+              </p>
+              <h2 className="mt-2 text-2xl font-extrabold text-[#2A4F33]">
+                Enrollment Queue
+              </h2>
+              <p className="mt-1 text-sm font-semibold text-black/45">
+                Search applicants, filter by approval status, or refresh the latest enrollment list.
+              </p>
+            </div>
 
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none"
-              placeholder="Search applicant"
-            />
+            <div className="grid w-full gap-3 xl:max-w-3xl xl:grid-cols-[1fr_auto]">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-12 w-full rounded-2xl border border-black/10 bg-[#F6F6F1] px-4 text-sm font-bold text-[#2A4F33] outline-none transition focus:border-[#2A4F33]/40 focus:bg-white focus:ring-4 focus:ring-[#2A4F33]/10"
+                placeholder="Search applicant, email, course, or status"
+              />
+
+              <button
+                type="button"
+                onClick={load}
+                disabled={loading}
+                className="ta-enroll-pill bg-[#2A4F33] px-6 text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+              >
+                {loading ? "Loading..." : "Refresh"}
+              </button>
+            </div>
           </div>
 
-          {["pending", "approved", "rejected"].map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setStatus(item)}
-              className={`h-8 rounded-md px-8 text-xs font-black transition ${
-                status === item
-                  ? "bg-[#d8e0da] text-[#1e3e2a]"
-                  : "bg-white text-[#2d5038] hover:bg-[#eef1e7]"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
-
-          <button
-            type="button"
-            onClick={load}
-            disabled={loading}
-            className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:opacity-60"
-          >
-            {loading ? "Loading..." : "Refresh"}
-          </button>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-lg bg-[#2d5038] shadow-sm">
-        <div className="bg-white px-4 py-4">
-          <h3 className="text-lg font-black text-[#2d5038]">
-            Enrollment Requests
-          </h3>
-        </div>
-
-        <div className="min-h-[372px] divide-y divide-white/25">
-          {loading ? (
-            [1, 2].map((item) => (
-              <div
+          <div className="mt-5 flex flex-wrap gap-2">
+            {["pending", "approved", "rejected"].map((item) => (
+              <button
                 key={item}
-                className="grid gap-4 px-3 py-4 md:grid-cols-[64px_1.3fr_1fr_1.2fr_.8fr_100px_170px] md:items-center"
+                type="button"
+                onClick={() => setStatus(item)}
+                className={`ta-enroll-pill border ${
+                  status === item
+                    ? "border-[#2A4F33] bg-[#2A4F33] text-white shadow-sm"
+                    : "border-black/10 bg-white text-black/55 hover:bg-[#F6F6F1]"
+                }`}
               >
-                <div className="h-11 w-11 rounded-full bg-white" />
-                <div className="h-4 rounded-full bg-white/35" />
-                <div className="h-4 rounded-full bg-white/35" />
-                <div className="h-4 rounded-full bg-white/35" />
-                <div className="h-4 rounded-full bg-white/35" />
-                <div className="h-5 rounded-full bg-[#bdf0a4]" />
-                <div className="h-5 rounded-full bg-white" />
+                {item.charAt(0).toUpperCase() + item.slice(1)}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="ta-enroll-card mt-6">
+          <div className="flex flex-col gap-3 px-5 pb-4 pt-6 md:flex-row md:items-center md:justify-between md:px-6">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-black/40">
+                Enrollment Requests
+              </p>
+              <h3 className="mt-2 text-3xl font-extrabold text-[#2A4F33]">
+                Trainee Applications
+              </h3>
+              <p className="mt-1 text-sm font-semibold text-black/45">
+                Showing {filteredRows.length} record{filteredRows.length === 1 ? "" : "s"} for {status} status.
+              </p>
+            </div>
+
+            <span className="inline-flex w-fit rounded-full bg-[#E9F1D9] px-4 py-2 text-xs font-extrabold uppercase tracking-wide text-[#2F5E3A]">
+              Page {page} of {totalPages}
+            </span>
+          </div>
+
+          <div className="ta-enroll-table-scroll">
+            <div className="ta-enroll-table px-5 pb-5 md:px-6">
+              <div className="ta-enroll-row rounded-2xl bg-[#F6F6F1] px-4 py-4 text-xs font-extrabold uppercase tracking-[0.18em] text-black/45">
+                <div>Applicant</div>
+                <div>Course</div>
+                <div>Email</div>
+                <div>Submitted</div>
+                <div>Status</div>
+                <div className="text-center">Actions</div>
               </div>
-            ))
-          ) : paginatedRows.length ? (
-            paginatedRows.map((row) => (
-              <div
-                key={row.id}
-                className="grid gap-4 px-3 py-4 text-sm font-black md:grid-cols-[64px_1.3fr_1fr_1.2fr_.8fr_100px_170px] md:items-center"
-              >
-                <div className="h-11 w-11 rounded-full bg-white" />
 
-                <div className="text-white">
-                  <div>{row.fullName}</div>
-                  <div className="text-xs text-white/70">
-                    {row.gender || "-"} • {row.status || "-"}
+              <div className="mt-3 overflow-hidden rounded-2xl border border-black/5 bg-white">
+                {loading ? (
+                  [1, 2].map((item) => (
+                    <div key={item} className="ta-enroll-row ta-enroll-data-row px-4 py-5">
+                      <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-6 rounded-full bg-black/10" />
+                      <div className="h-8 rounded-full bg-black/10" />
+                    </div>
+                  ))
+                ) : paginatedRows.length ? (
+                  paginatedRows.map((row) => (
+                    <div key={row.id} className="ta-enroll-row ta-enroll-data-row px-4 py-5 text-sm font-bold text-[#102418]">
+                      <div>
+                        <div className="font-extrabold text-[#2A4F33]">{row.fullName}</div>
+                        <div className="mt-1 text-xs font-semibold text-black/45">
+                          {row.gender || "-"} • {row.status || "-"}
+                        </div>
+                      </div>
+
+                      <div className="text-black/65">{row.course || "Course"}</div>
+
+                      <div className="break-words text-black/65">{row.personalEmail || "-"}</div>
+
+                      <div className="text-black/65">{formatDate(row.createdAt)}</div>
+
+                      <div>
+                        <span
+                          className={`inline-flex min-w-[92px] justify-center rounded-full px-3 py-1.5 text-[10px] font-black uppercase ${statusClass(
+                            row.approvalStatus
+                          )}`}
+                        >
+                          {row.approvalStatus || "Pending"}
+                        </span>
+                      </div>
+
+                      <div className="ta-enroll-actions">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRow(row)}
+                          className="ta-enroll-action ta-action-view"
+                        >
+                          View
+                        </button>
+
+                        {status === "pending" ? (
+                          <button
+                            type="button"
+                            onClick={() => approve(row.id)}
+                            disabled={actingId === row.id}
+                            className="ta-enroll-action ta-action-approve"
+                          >
+                            Approve
+                          </button>
+                        ) : null}
+
+                        {status === "pending" ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRejectModal({
+                                open: true,
+                                id: row.id,
+                                remarks: "",
+                              })
+                            }
+                            disabled={actingId === row.id}
+                            className="ta-enroll-action ta-action-reject"
+                          >
+                            Reject
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-5 py-12 text-center text-sm font-bold text-black/45">
+                    No records.
                   </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-5 flex flex-col gap-3 rounded-3xl border border-black/5 bg-white px-5 py-4 text-sm font-bold shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-black/50">
+            Page <span className="font-extrabold text-[#2A4F33]">{page}</span> / {totalPages}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page <= 1}
+              className="h-10 rounded-2xl border border-black/10 bg-white px-4 text-xs font-extrabold text-[#2A4F33] hover:bg-[#F6F6F1] disabled:opacity-30"
+            >
+              Previous
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={page >= totalPages}
+              className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-30"
+            >
+              Next Page
+            </button>
+          </div>
+        </div>
+
+        <ModalShell
+          open={Boolean(selectedRow)}
+          onClose={() => setSelectedRow(null)}
+          title="Enrollment Details"
+          maxWidth="max-w-6xl"
+        >
+          {selectedRow ? (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-3xl bg-[#F6F6F1] p-5 ring-1 ring-[#2A4F33]/10">
+                <h3 className="text-base font-black text-[#2A4F33]">
+                  Applicant Information
+                </h3>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <InfoItem label="Full Name" value={selectedRow.fullName} />
+                  <InfoItem label="Course" value={selectedRow.course} />
+                  <InfoItem
+                    label="Personal Email"
+                    value={selectedRow.personalEmail}
+                  />
+                  <InfoItem label="Phone" value={selectedRow.phoneNumber} />
+                  <InfoItem label="Birthdate" value={selectedRow.birthDate} />
+                  <InfoItem label="Age" value={selectedRow.age} />
+                  <InfoItem label="Gender" value={selectedRow.gender} />
+                  <InfoItem label="Status" value={selectedRow.status} />
+                  <InfoItem
+                    label="Complete Address"
+                    value={selectedRow.completeAddress}
+                  />
+                  <InfoItem
+                    label="Educational Attainment"
+                    value={
+                      selectedRow.otherEducationText
+                        ? `${formatList(selectedRow.educationAttainment)}${
+                            selectedRow.educationAttainment.includes("Others")
+                              ? ` (${selectedRow.otherEducationText})`
+                              : ""
+                          }`
+                        : formatList(selectedRow.educationAttainment)
+                    }
+                  />
+                  <InfoItem
+                    label="Employment Status"
+                    value={formatList(selectedRow.employmentStatus)}
+                  />
+                  <InfoItem
+                    label="Requested At"
+                    value={formatDate(selectedRow.createdAt)}
+                  />
+                  <InfoItem
+                    label="Approval Status"
+                    value={selectedRow.approvalStatus || "-"}
+                  />
                 </div>
 
-                <div className="text-white/90">{row.course || "Course"}</div>
+                {selectedRow.traineeEmail ||
+                selectedRow.tempPassword ||
+                selectedRow.remarks ? (
+                  <div className="mt-5 rounded-2xl bg-white p-4 ring-1 ring-[#2A4F33]/10">
+                    <p className="text-sm font-black text-[#2A4F33]">
+                      Admin / Generated Account Info
+                    </p>
 
-                <div className="break-words text-white/90">
-                  {row.personalEmail || "-"}
-                </div>
+                    <div className="mt-3 space-y-3">
+                      {selectedRow.traineeEmail ? (
+                        <CopyRow
+                          label="Generated Trainee Email"
+                          value={selectedRow.traineeEmail}
+                          onCopied={(ok) =>
+                            setMsg({
+                              type: ok ? "success" : "error",
+                              text: ok ? "Copied trainee email." : "Copy failed.",
+                            })
+                          }
+                        />
+                      ) : null}
 
-                <div className="text-white/90">{formatDate(row.createdAt)}</div>
+                      {selectedRow.tempPassword ? (
+                        <CopyRow
+                          label="Temporary Password"
+                          value={selectedRow.tempPassword}
+                          monospace
+                          onCopied={(ok) =>
+                            setMsg({
+                              type: ok ? "success" : "error",
+                              text: ok ? "Copied temp password." : "Copy failed.",
+                            })
+                          }
+                        />
+                      ) : null}
 
-                <div>
-                  <span
-                    className={`inline-flex min-w-[84px] justify-center rounded-full px-3 py-1 text-[10px] font-black ${statusClass(
-                      row.approvalStatus
-                    )}`}
-                  >
-                    {row.approvalStatus || "Pending"}
-                  </span>
-                </div>
+                      {selectedRow.remarks ? (
+                        <InfoItem label="Remarks" value={selectedRow.remarks} />
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
 
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRow(row)}
-                    className="rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038]"
-                  >
-                    View
-                  </button>
-
-                  {status === "pending" ? (
+                {selectedRow.approvalStatus === "pending" ? (
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
                     <button
+                      onClick={() => approve(selectedRow.id)}
+                      disabled={actingId === selectedRow.id}
+                      className="ta-enroll-action ta-action-approve"
                       type="button"
-                      onClick={() => approve(row.id)}
-                      disabled={actingId === row.id}
-                      className="rounded-full bg-[#bdf0a4] px-3 py-1 text-[10px] font-black text-[#2d5038] disabled:opacity-60"
                     >
-                      Approve
+                      {actingId === selectedRow.id ? "Processing..." : "Approve"}
                     </button>
-                  ) : null}
 
-                  {status === "pending" ? (
                     <button
-                      type="button"
                       onClick={() =>
                         setRejectModal({
                           open: true,
-                          id: row.id,
+                          id: selectedRow.id,
                           remarks: "",
                         })
                       }
-                      disabled={actingId === row.id}
-                      className="rounded-full bg-red-100 px-3 py-1 text-[10px] font-black text-red-800 disabled:opacity-60"
+                      disabled={actingId === selectedRow.id}
+                      className="ta-enroll-action ta-action-reject"
+                      type="button"
                     >
                       Reject
                     </button>
-                  ) : null}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="rounded-3xl bg-[#F6F6F1] p-5 ring-1 ring-[#2A4F33]/10">
+                <h3 className="text-base font-black text-[#2A4F33]">
+                  Uploaded Documents
+                </h3>
+
+                <div className="mt-4 space-y-5">
+                  <DocumentGroup
+                    title="Birth Certificate"
+                    files={toArray(selectedRow.birthCertificate)}
+                    onPreview={openFilePreview}
+                  />
+                  <DocumentGroup
+                    title="Form 137/138"
+                    files={toArray(selectedRow.form137138)}
+                    onPreview={openFilePreview}
+                  />
+                  <DocumentGroup
+                    title="Diploma/TOR"
+                    files={toArray(selectedRow.diplomaTor)}
+                    onPreview={openFilePreview}
+                  />
+                  <DocumentGroup
+                    title="2X2 Picture with Name"
+                    files={toArray(selectedRow.picture2x2)}
+                    onPreview={openFilePreview}
+                  />
+                  <DocumentGroup
+                    title="Marriage Contract"
+                    files={toArray(selectedRow.marriageContract)}
+                    onPreview={openFilePreview}
+                  />
+                  <DocumentGroup
+                    title="Application Form"
+                    files={toArray(selectedRow.applicationForm)}
+                    onPreview={openFilePreview}
+                  />
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="px-5 py-12 text-center text-sm font-bold text-white/80">
-              No records.
             </div>
-          )}
-        </div>
-      </div>
+          ) : null}
+        </ModalShell>
 
-      <div className="mt-5 flex items-center justify-between px-2 text-base font-bold">
-        <div>
-          Page {page} / {totalPages}
-        </div>
+        <ModalShell
+          open={fileModal.open}
+          onClose={closeFilePreview}
+          title="File Preview"
+          maxWidth="max-w-5xl"
+        >
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="break-all text-sm font-semibold text-[#667085]">
+              {fileModal.fileName}
+            </p>
 
-        <div className="flex items-center gap-5">
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            disabled={page <= 1}
-            className="text-3xl leading-none text-white disabled:opacity-30"
-          >
-            ‹
-          </button>
+            {fileModal.openUrl ? (
+              <a
+                href={fileModal.openUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-2xl bg-[#2A4F33] px-4 py-2 text-sm font-black text-white"
+              >
+                Open
+              </a>
+            ) : null}
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={page >= totalPages}
-            className="font-black text-white disabled:opacity-30"
-          >
-            Next Page
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={page >= totalPages}
-            className="text-3xl leading-none text-white disabled:opacity-30"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-
-      <ModalShell
-        open={Boolean(selectedRow)}
-        onClose={() => setSelectedRow(null)}
-        title="Enrollment Details"
-        maxWidth="max-w-6xl"
-      >
-        {selectedRow ? (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl bg-[#f7f8f3] p-5 ring-1 ring-[#e2e8da]">
-              <h3 className="text-base font-black text-[#395345]">
-                Applicant Information
-              </h3>
-
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <InfoItem label="Full Name" value={selectedRow.fullName} />
-                <InfoItem label="Course" value={selectedRow.course} />
-                <InfoItem
-                  label="Personal Email"
-                  value={selectedRow.personalEmail}
-                />
-                <InfoItem label="Phone" value={selectedRow.phoneNumber} />
-                <InfoItem label="Birthdate" value={selectedRow.birthDate} />
-                <InfoItem label="Age" value={selectedRow.age} />
-                <InfoItem label="Gender" value={selectedRow.gender} />
-                <InfoItem label="Status" value={selectedRow.status} />
-                <InfoItem
-                  label="Complete Address"
-                  value={selectedRow.completeAddress}
-                />
-                <InfoItem
-                  label="Educational Attainment"
-                  value={
-                    selectedRow.otherEducationText
-                      ? `${formatList(selectedRow.educationAttainment)}${
-                          selectedRow.educationAttainment.includes("Others")
-                            ? ` (${selectedRow.otherEducationText})`
-                            : ""
-                        }`
-                      : formatList(selectedRow.educationAttainment)
+          <div className="min-h-[60vh] rounded-3xl bg-[#F6F6F1] p-4 ring-1 ring-[#2A4F33]/10">
+            {fileModal.loading ? (
+              <div className="flex min-h-[60vh] items-center justify-center px-6 text-center text-sm font-bold text-[#667085]">
+                Loading document preview...
+              </div>
+            ) : fileModal.isImage && fileModal.url && !fileModal.previewError ? (
+              <div className="flex min-h-[60vh] items-center justify-center">
+                <img
+                  src={fileModal.url}
+                  alt={fileModal.fileName}
+                  className="max-h-[70vh] max-w-full rounded-2xl object-contain"
+                  onError={() =>
+                    setFileModal((prev) => ({
+                      ...prev,
+                      previewError: true,
+                    }))
                   }
                 />
-                <InfoItem
-                  label="Employment Status"
-                  value={formatList(selectedRow.employmentStatus)}
-                />
-                <InfoItem
-                  label="Requested At"
-                  value={formatDate(selectedRow.createdAt)}
-                />
-                <InfoItem
-                  label="Approval Status"
-                  value={selectedRow.approvalStatus || "-"}
-                />
               </div>
-
-              {selectedRow.traineeEmail ||
-              selectedRow.tempPassword ||
-              selectedRow.remarks ? (
-                <div className="mt-5 rounded-xl bg-white p-4 ring-1 ring-[#e2e8da]">
-                  <p className="text-sm font-black text-[#395345]">
-                    Admin / Generated Account Info
-                  </p>
-
-                  <div className="mt-3 space-y-3">
-                    {selectedRow.traineeEmail ? (
-                      <CopyRow
-                        label="Generated Trainee Email"
-                        value={selectedRow.traineeEmail}
-                        onCopied={(ok) =>
-                          setMsg({
-                            type: ok ? "success" : "error",
-                            text: ok ? "Copied trainee email." : "Copy failed.",
-                          })
-                        }
-                      />
-                    ) : null}
-
-                    {selectedRow.tempPassword ? (
-                      <CopyRow
-                        label="Temporary Password"
-                        value={selectedRow.tempPassword}
-                        monospace
-                        onCopied={(ok) =>
-                          setMsg({
-                            type: ok ? "success" : "error",
-                            text: ok ? "Copied temp password." : "Copy failed.",
-                          })
-                        }
-                      />
-                    ) : null}
-
-                    {selectedRow.remarks ? (
-                      <InfoItem label="Remarks" value={selectedRow.remarks} />
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-
-              {selectedRow.approvalStatus === "pending" ? (
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <button
-                    onClick={() => approve(selectedRow.id)}
-                    disabled={actingId === selectedRow.id}
-                    className="rounded-xl bg-[#395345] px-4 py-2 text-sm font-black text-white disabled:opacity-60"
-                    type="button"
-                  >
-                    {actingId === selectedRow.id ? "Processing..." : "Approve"}
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      setRejectModal({
-                        open: true,
-                        id: selectedRow.id,
-                        remarks: "",
-                      })
-                    }
-                    disabled={actingId === selectedRow.id}
-                    className="rounded-xl bg-red-600 px-4 py-2 text-sm font-black text-white disabled:opacity-60"
-                    type="button"
-                  >
-                    Reject
-                  </button>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="rounded-2xl bg-[#f7f8f3] p-5 ring-1 ring-[#e2e8da]">
-              <h3 className="text-base font-black text-[#395345]">
-                Uploaded Documents
-              </h3>
-
-              <div className="mt-4 space-y-5">
-                <DocumentGroup
-                  title="Birth Certificate"
-                  files={toArray(selectedRow.birthCertificate)}
-                  onPreview={openFilePreview}
-                />
-                <DocumentGroup
-                  title="Form 137/138"
-                  files={toArray(selectedRow.form137138)}
-                  onPreview={openFilePreview}
-                />
-                <DocumentGroup
-                  title="Diploma/TOR"
-                  files={toArray(selectedRow.diplomaTor)}
-                  onPreview={openFilePreview}
-                />
-                <DocumentGroup
-                  title="2X2 Picture with Name"
-                  files={toArray(selectedRow.picture2x2)}
-                  onPreview={openFilePreview}
-                />
-                <DocumentGroup
-                  title="Marriage Contract"
-                  files={toArray(selectedRow.marriageContract)}
-                  onPreview={openFilePreview}
-                />
-                <DocumentGroup
-                  title="Application Form"
-                  files={toArray(selectedRow.applicationForm)}
-                  onPreview={openFilePreview}
-                />
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </ModalShell>
-
-      <ModalShell
-        open={fileModal.open}
-        onClose={closeFilePreview}
-        title="File Preview"
-        maxWidth="max-w-5xl"
-      >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="break-all text-sm font-semibold text-[#647166]">
-            {fileModal.fileName}
-          </p>
-
-          {fileModal.openUrl ? (
-            <a
-              href={fileModal.openUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-xl bg-[#395345] px-4 py-2 text-sm font-black text-white"
-            >
-              Open
-            </a>
-          ) : null}
-        </div>
-
-        <div className="min-h-[60vh] rounded-2xl bg-[#f7f8f3] p-4 ring-1 ring-[#e2e8da]">
-          {fileModal.loading ? (
-            <div className="flex min-h-[60vh] items-center justify-center px-6 text-center text-sm font-bold text-[#647166]">
-              Loading document preview...
-            </div>
-          ) : fileModal.isImage && fileModal.url && !fileModal.previewError ? (
-            <div className="flex min-h-[60vh] items-center justify-center">
-              <img
+            ) : fileModal.isPdf && fileModal.url && !fileModal.previewError ? (
+              <iframe
                 src={fileModal.url}
-                alt={fileModal.fileName}
-                className="max-h-[70vh] max-w-full rounded-xl object-contain"
+                title={fileModal.fileName}
+                className="h-[70vh] w-full rounded-2xl border border-[#2A4F33]/10"
                 onError={() =>
                   setFileModal((prev) => ({
                     ...prev,
@@ -1089,84 +1315,89 @@ export default function TrainingAdminEnrollments() {
                   }))
                 }
               />
-            </div>
-          ) : fileModal.isPdf && fileModal.url && !fileModal.previewError ? (
-            <iframe
-              src={fileModal.url}
-              title={fileModal.fileName}
-              className="h-[70vh] w-full rounded-xl border border-[#d7ddd0]"
-              onError={() =>
-                setFileModal((prev) => ({
-                  ...prev,
-                  previewError: true,
-                }))
-              }
-            />
-          ) : (
-            <div className="flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-[#647166]">
-              Preview is not available for this file type, the file could not be
-              loaded, or the stored file ID no longer exists in GridFS. Use the
-              Open button above or ask the applicant to re-upload the document.
-            </div>
-          )}
-        </div>
-      </ModalShell>
+            ) : (
+              <div className="flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-[#667085]">
+                Preview is not available for this file type, the file could not be
+                loaded, or the stored file ID no longer exists in GridFS. Use the
+                Open button above or ask the applicant to re-upload the document.
+              </div>
+            )}
+          </div>
+        </ModalShell>
 
-      <ModalShell
-        open={rejectModal.open}
-        onClose={() =>
-          setRejectModal({
-            open: false,
-            id: "",
-            remarks: "",
-          })
-        }
-        title="Reject Enrollment"
-        maxWidth="max-w-md"
-      >
-        <p className="text-sm text-[#647166]">
-          Add remarks for the rejection.
-        </p>
-
-        <textarea
-          value={rejectModal.remarks}
-          onChange={(e) =>
-            setRejectModal((prev) => ({
-              ...prev,
-              remarks: e.target.value,
-            }))
+        <ModalShell
+          open={rejectModal.open}
+          onClose={() =>
+            setRejectModal({
+              open: false,
+              id: "",
+              remarks: "",
+            })
           }
-          rows={5}
-          placeholder="Enter remarks..."
-          className="mt-4 w-full rounded-xl border border-[#c6ccb9] px-4 py-3 text-sm outline-none focus:border-[#395345]"
-        />
+          title="Reject Enrollment"
+          maxWidth="max-w-md"
+        >
+          <p className="text-sm text-[#667085]">
+            Add remarks for the rejection.
+          </p>
 
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            onClick={() =>
-              setRejectModal({
-                open: false,
-                id: "",
-                remarks: "",
-              })
+          <textarea
+            value={rejectModal.remarks}
+            onChange={(e) =>
+              setRejectModal((prev) => ({
+                ...prev,
+                remarks: e.target.value,
+              }))
             }
-            className="rounded-xl border border-[#c6ccb9] bg-white px-4 py-2 text-sm font-black text-[#395345]"
-            type="button"
-          >
-            Cancel
-          </button>
+            rows={5}
+            placeholder="Enter remarks..."
+            className="mt-4 w-full rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-[#2A4F33] focus:ring-4 focus:ring-[#2A4F33]/10"
+          />
 
-          <button
-            onClick={reject}
-            disabled={actingId === rejectModal.id}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-black text-white disabled:opacity-60"
-            type="button"
-          >
-            {actingId === rejectModal.id ? "Rejecting..." : "Confirm Reject"}
-          </button>
-        </div>
-      </ModalShell>
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              onClick={() =>
+                setRejectModal({
+                  open: false,
+                  id: "",
+                  remarks: "",
+                })
+              }
+              className="rounded-2xl border border-black/10 bg-white px-4 py-2 text-sm font-black text-[#2A4F33]"
+              type="button"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={reject}
+              disabled={actingId === rejectModal.id}
+              className="rounded-2xl bg-rose-600 px-4 py-2 text-sm font-black text-white disabled:opacity-60"
+              type="button"
+            >
+              {actingId === rejectModal.id ? "Rejecting..." : "Confirm Reject"}
+            </button>
+          </div>
+        </ModalShell>
+      </div>
     </TrainingAdminLayout>
+  );
+}
+
+
+function StatCard({ title, value, note }) {
+  return (
+    <article className="ta-enroll-card ta-enroll-stat">
+      <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-black/40">
+        {title}
+      </p>
+      <div className="mt-3 text-4xl font-extrabold leading-none text-[#2A4F33]">
+        {value}
+      </div>
+      {note ? (
+        <p className="mt-3 text-sm font-semibold text-black/45">{note}</p>
+      ) : null}
+    </article>
   );
 }
 

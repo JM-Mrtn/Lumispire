@@ -29,6 +29,7 @@ import {
 import {
   getMyTrainingCertificate,
   verifyTrainingCertificate,
+  searchTrainingCertificates,
 } from "../controllers/trainingCertificationController.js";
 import { trainingAssessmentSubmissionUpload } from "../middleware/trainingAssessmentSubmissionUpload.js";
 import { trainingProfilePhotoUpload } from "../middleware/trainingProfilePhotoUpload.js";
@@ -63,6 +64,7 @@ router.post("/attendance/proof", requireTrainee, trainingAttendanceProofUpload, 
 router.get("/progress", requireTrainee, getMyTrainingProgress);
 
 router.get("/certificate", requireTrainee, getMyTrainingCertificate);
+router.get("/certificate/search", searchTrainingCertificates);
 router.get("/certificate/verify", verifyTrainingCertificate);
 router.get("/certificate/verify/:verificationCode", verifyTrainingCertificate);
 

@@ -302,39 +302,167 @@ function getWithholdingTaxRule(result) {
   return result?.computed?.withholdingTaxRule || null;
 }
 
-function BrandLogo() {
-  return (
-    <div className="flex items-center gap-5">
-      <img
-        src="/logo.png"
-        alt="Manpower Logo"
-        className="h-16 w-16 rounded-full object-cover"
-        onError={(event) => {
-          event.currentTarget.style.display = "none";
-        }}
-      />
 
-      <h1 className="text-[28px] font-black uppercase tracking-wide text-[#315b42] sm:text-[34px]">
-        MANPOWER SERVICES
-      </h1>
-    </div>
+function SidebarIcon({ type }) {
+  const common = "h-4 w-4";
+
+  if (type === "applicants") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-8 0v2" />
+        <circle cx="12" cy="7" r="4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 8v6M23 11h-6" />
+      </svg>
+    );
+  }
+
+  if (type === "payroll") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h4M15 15h2" />
+      </svg>
+    );
+  }
+
+  if (type === "leave") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 2v4M16 2v4M3 10h18" />
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m8 15 2.4 2.4L16 12" />
+      </svg>
+    );
+  }
+
+  if (type === "billing") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6M9 11h6M9 15h3" />
+      </svg>
+    );
+  }
+
+  if (type === "logout") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m16 17 5-5-5-5M21 12H9" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="7" height="7" rx="2" />
+      <rect x="14" y="3" width="7" height="7" rx="2" />
+      <rect x="14" y="14" width="7" height="7" rx="2" />
+      <rect x="3" y="14" width="7" height="7" rx="2" />
+    </svg>
   );
 }
 
-function SidebarButton({ active = false, children, onClick }) {
+
+function RefreshIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 0 1-15.3 6.36L3 15" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 15v6h6" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12A9 9 0 0 1 18.3 5.64L21 9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 9V3h-6" />
+    </svg>
+  );
+}
+
+function OpenPayrollIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 15h4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 15h1" />
+    </svg>
+  );
+}
+
+function SidebarButton({ active = false, children, onClick, icon = "dashboard" }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full px-6 py-4 text-center text-[16px] font-black uppercase transition ${
+      className={`group flex min-h-[46px] w-full items-center gap-3 rounded-[23px] px-5 text-left text-[12px] font-black tracking-tight transition duration-300 ${
         active
-          ? "bg-[#d5ddd6] text-[#244b35]"
-          : "text-white hover:bg-white/10"
+          ? "bg-white text-[#071f14] shadow-[0_18px_38px_rgba(0,0,0,0.20)]"
+          : "text-white hover:translate-x-1 hover:bg-white/10"
       }`}
     >
-      {children}
+      <span
+        className={`grid h-7 w-7 shrink-0 place-items-center transition duration-300 ${
+          active ? "text-[#071f14]" : "text-white/85 group-hover:text-[#f4d484]"
+        }`}
+      >
+        <SidebarIcon type={icon} />
+      </span>
+      <span className="min-w-0 flex-1 leading-tight">{children}</span>
     </button>
   );
+}
+
+function PayrollStatCard({ title, value, note, tone = "green" }) {
+  const valueColor = tone === "red" ? "text-[#9d2f2f]" : tone === "gold" ? "text-[#bd6b00]" : "text-[#071f14]";
+
+  return (
+    <div className="group relative min-h-[132px] overflow-hidden rounded-3xl border border-white/80 bg-white p-6 shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(8,39,25,0.16)]">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-14 -right-12 h-36 w-36 rounded-full bg-[#f4d484]/20 blur-2xl transition group-hover:scale-110" />
+      <p className="relative text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
+        {title}
+      </p>
+      <p className={`relative mt-4 text-4xl font-black leading-none tracking-tight ${valueColor}`}>
+        {value}
+      </p>
+      {note ? (
+        <p className="relative mt-3 text-sm font-semibold text-[#071f14]/55">
+          {note}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function SectionCard({ eyebrow, title, children, className = "", right = null }) {
+  return (
+    <section className={`relative overflow-hidden rounded-3xl border border-white/80 bg-white shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 ${className}`}>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-16 h-44 w-44 rounded-full bg-[#f4d484]/20 blur-2xl" />
+      <div className="relative p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            {eyebrow ? (
+              <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-[#071f14]">
+                {title}
+              </h2>
+            ) : null}
+          </div>
+          {right}
+        </div>
+        <div className={title || eyebrow ? "mt-5" : ""}>{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function EmployeeInitials({ employee }) {
+  const name = getEmployeeName(employee).split(/\s+/).filter(Boolean);
+  const first = name[0]?.charAt(0) || "E";
+  const last = name.length > 1 ? name[name.length - 1].charAt(0) : "M";
+  return `${first}${last}`.toUpperCase();
 }
 
 function HalfPayrollTable({
@@ -971,304 +1099,359 @@ export default function ManpowerHrPayroll() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f3a1e] font-sans text-white">
-      <header className="border-b border-[#d7decf] bg-[#f7f9f5]">
-        <div className="flex h-[90px] items-center px-8">
-          <BrandLogo />
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
+        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+          <div className="text-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
+              Manpower Services HR
+            </p>
+            <h1 className="mt-3 text-[17px] font-black leading-tight tracking-tight text-white">
+              LTC Manpower Services
+            </h1>
+          </div>
 
-      <div className="grid min-h-[calc(100vh-90px)] lg:grid-cols-[265px_1fr]">
-        <aside className="flex bg-[#294f35] lg:min-h-[calc(100vh-90px)]">
-          <div className="flex w-full flex-col">
-            <div className="border-b border-white/15 px-6 py-8 text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#9ca59d] bg-white text-[28px] font-black text-[#315b42]">
-                HR
-              </div>
+          <nav className="mt-12 flex-1 space-y-4">
+            <SidebarButton icon="dashboard" onClick={() => navigate("/manpower-hr")}>
+              Dashboard
+            </SidebarButton>
 
-              <h2 className="mt-5 text-[17px] font-black uppercase leading-tight text-white">
-                Human Resources
-              </h2>
+            <SidebarButton
+              icon="applicants"
+              onClick={() => navigate("/manpower-hr-applications")}
+            >
+              Manage Applicants
+            </SidebarButton>
 
-              <p className="mt-2 break-all text-[11px] font-bold text-white">
-                {hrEmail}
-              </p>
-            </div>
+            <SidebarButton active icon="payroll" onClick={() => navigate("/manpower-hr-payroll")}>
+              Manage Payroll
+            </SidebarButton>
 
-            <nav className="border-t border-white/5">
-              <SidebarButton onClick={() => navigate("/manpower-hr")}>
-                Dashboard
-              </SidebarButton>
+            <SidebarButton icon="leave" onClick={() => navigate("/manpower-hr-leaves")}>
+              Manage File Leave
+            </SidebarButton>
 
-              <SidebarButton
-                onClick={() => navigate("/manpower-hr-applications")}
-              >
-                Manage Applicants
-              </SidebarButton>
+            <SidebarButton icon="billing" onClick={() => navigate("/manpower-hr-billing")}>
+              Manage Billing
+            </SidebarButton>
+          </nav>
 
-              <SidebarButton active onClick={() => navigate("/manpower-hr-payroll")}>
-                Manage Payroll
-              </SidebarButton>
-
-              <SidebarButton onClick={() => navigate("/manpower-hr-leaves")}>
-                Manage File Leave
-              </SidebarButton>
-
-              <SidebarButton onClick={() => navigate("/manpower-hr-billing")}>
-                Manage Billing
-              </SidebarButton>
-            </nav>
-
-            <div className="mt-auto px-6 py-8">
-              <button
-                type="button"
-                onClick={logout}
-                className="w-full rounded-full px-5 py-3 text-[16px] font-black uppercase text-white transition hover:bg-white/10"
-              >
-                Sign Out
-              </button>
-            </div>
+          <div className="border-t border-white/15 pt-7">
+            <button
+              type="button"
+              onClick={logout}
+              className="group flex min-h-[46px] w-full items-center gap-3 rounded-[23px] bg-white/10 px-5 text-left text-[12px] font-black capitalize tracking-tight text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#f4d484] hover:text-[#071f14]"
+            >
+              <span className="grid h-7 w-7 shrink-0 place-items-center text-white/90 transition duration-300 group-hover:text-[#071f14]">
+                <SidebarIcon type="logout" />
+              </span>
+              <span>Sign out</span>
+            </button>
+            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
+              © LTC Manpower Services
+            </p>
           </div>
         </aside>
 
-        <main className="bg-[#0f3a1e] px-6 py-6 lg:px-8">
-          <section>
-            <h1 className="text-[32px] font-black uppercase leading-tight text-white md:text-[38px]">
-              Manage Payroll
-            </h1>
-            <div className="mt-2 h-[4px] w-[310px] max-w-full bg-white/65" />
-          </section>
-
-          <section className="mt-8 rounded-lg bg-[#294f35] px-6 py-7">
-            <div className="grid gap-4 lg:grid-cols-[280px_280px_1fr_auto] lg:items-center">
-              <select
-                value={employeeFilter}
-                onChange={(event) => {
-                  setEmployeeFilter(event.target.value);
-                  setPage(1);
-                }}
-                className="h-[32px] rounded-full border border-white bg-white px-4 text-[13px] font-black text-[#294f35] outline-none"
-              >
-                <option value="">Type of Job</option>
-                {vacancies.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                type="text"
-                value={searchValue}
-                onChange={(event) => {
-                  setSearchValue(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search Employee"
-                className="h-[32px] rounded-full border border-white bg-white px-4 text-[13px] font-black text-[#294f35] outline-none placeholder:text-[#294f35]"
-              />
-
-              <div />
-
-              <button
-                type="button"
-                onClick={loadEmployees}
-                disabled={loadingEmployees}
-                className="h-[38px] min-w-[112px] rounded-md bg-white px-6 text-[13px] font-black text-[#294f35] transition hover:bg-[#e7eee3] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {loadingEmployees ? "Loading..." : "Refresh"}
-              </button>
-            </div>
-          </section>
-
-          <section className="mt-7 overflow-hidden rounded-lg bg-[#294f35]">
-            <div className="rounded-t-lg bg-white px-4 py-4 text-[#294f35]">
-              <h2 className="text-[18px] font-black">List of Employee</h2>
-            </div>
-
-            <div className="min-h-[380px]">
-              {pagedEmployees.length ? (
-                pagedEmployees.map((employee) => {
-                  const employeeId = employee._id || employee.id;
-                  const active = employee.active !== false;
-
-                  return (
-                    <div
-                      key={employeeId || employee.companyEmail}
-                      className="grid gap-4 border-b border-white/25 px-4 py-5 text-white md:grid-cols-[64px_1.35fr_1.45fr_0.8fr_0.75fr_1fr] md:items-center"
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[15px] font-black text-[#315b42]">
-                        {getEmployeeName(employee).charAt(0).toUpperCase()}
-                      </div>
-
-                      <p className="text-[16px] font-black">
-                        {getEmployeeName(employee)}
-                      </p>
-
-                      <p className="break-all text-[15px] font-black">
-                        {employee.companyEmail ||
-                          employee.email ||
-                          employee.personalEmail ||
-                          "traineeemail@tamsi.com"}
-                      </p>
-
-                      <p className="text-[16px] font-black">
-                        ₱{formatMoney(employee.dailyRate)}
-                      </p>
-
-                      <p className="text-[16px] font-black">
-                        {active ? "Active" : "Inactive"}
-                      </p>
-
-                      <div className="flex justify-start md:justify-end">
-                        <button
-                          type="button"
-                          onClick={() => openPayrollModal(employee)}
-                          className="min-w-[96px] rounded-full bg-white px-4 py-1 text-[11px] font-black text-[#294f35] transition hover:bg-[#e7eee3]"
-                        >
-                          Open Payroll
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="px-4 py-14 text-center text-[14px] font-semibold text-white/80">
-                  {loadingEmployees ? "Loading employees..." : "No employees found."}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <div className="mt-4 flex items-center justify-between text-white">
-            <p className="text-[16px] font-black">
-              Page {page} / {totalPages}
-            </p>
-
-            <div className="flex items-center gap-5">
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={page <= 1}
-                className="text-[28px] leading-none text-white transition hover:text-white/70 disabled:opacity-30"
-              >
-                ‹
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
-                disabled={page >= totalPages}
-                className="text-[16px] font-black text-white transition hover:text-white/70 disabled:opacity-30"
-              >
-                Next Page
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
-                disabled={page >= totalPages}
-                className="text-[28px] leading-none text-white transition hover:text-white/70 disabled:opacity-30"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
-
-      {selectedEmployee ? (
-        <div className="fixed inset-0 z-40 overflow-y-auto bg-black/50 p-3">
-          <div className="mx-auto max-w-[1500px] rounded-[24px] bg-[#f6f8f3] p-4 text-[#24352c] shadow-xl">
-            <div className="mb-4 flex items-start justify-between gap-4 rounded-2xl bg-white px-4 py-3">
+        <main className="min-w-0 px-5 py-6 lg:px-8">
+          <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
+            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
+            <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+            <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="text-xl font-black text-[#24352c]">
-                  Payroll - {selectedEmployee.lastName},{" "}
-                  {selectedEmployee.firstName}
-                </h2>
-
-                <p className="mt-1 text-xs text-[#5f6f61]">
-                  {selectedEmployee.vacancy} • {selectedEmployee.companyEmail}
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-[#f4d484]">
+                  Manpower Payroll Center
+                </p>
+                <h1 className="mt-3 max-w-3xl text-[38px] font-black leading-[0.98] tracking-[-0.055em] md:text-[56px]">
+                  Manage Payroll Records
+                </h1>
+                <p className="mt-4 max-w-2xl text-[15px] font-semibold leading-7 text-white/75">
+                  Select manpower employees, encode cutoff attendance, compute payroll deductions, and manage saved payroll cycles.
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() => setSelectedEmployee(null)}
-                className="rounded-full bg-[#eef3ea] px-3 py-2 text-xs font-black text-[#395345]"
+                onClick={loadEmployees}
+                disabled={loadingEmployees}
+                className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-white px-7 text-[13px] font-black uppercase tracking-[0.08em] text-[#071f14] shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#f4d484] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Close
+                {loadingEmployees ? "Refreshing..." : "Refresh Employees"}
               </button>
             </div>
+          </section>
 
-            {employeePayrollRows.length ? (
-              <div className="mb-4 rounded-2xl border border-[#d7decf] bg-white px-4 py-3 text-xs text-[#5f6f61]">
-                Saved payroll records found: {employeePayrollRows.length}
+          <section className="mt-7 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <PayrollStatCard
+              title="Employees"
+              value={employees.length}
+              note="Loaded payroll accounts"
+            />
+            <PayrollStatCard
+              title="Showing"
+              value={filteredEmployees.length}
+              note="Filtered employee records"
+            />
+            <PayrollStatCard
+              title="Active"
+              value={employees.filter((item) => item.active !== false).length}
+              note="Accounts ready for payroll"
+            />
+            <PayrollStatCard
+              title="Page"
+              value={`${page}/${totalPages}`}
+              note="Employee list page"
+              tone="gold"
+            />
+          </section>
+
+          <SectionCard
+            eyebrow="Payroll Tools"
+            title="Employee Payroll Selection"
+            className="mt-7"
+            right={
+              <div className="grid w-full gap-3 xl:w-auto xl:grid-cols-[230px_280px_auto]">
+                <select
+                  value={employeeFilter}
+                  onChange={(event) => {
+                    setEmployeeFilter(event.target.value);
+                    setPage(1);
+                  }}
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
+                >
+                  <option value="">All Jobs</option>
+                  {vacancies.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  value={searchValue}
+                  onChange={(event) => {
+                    setSearchValue(event.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Search employee, email, vacancy..."
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[13px] font-bold text-[#071f14] outline-none transition placeholder:text-[#071f14]/45 focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
+                />
+
+                <button
+                  type="button"
+                  onClick={loadEmployees}
+                  disabled={loadingEmployees}
+                  className="group inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#174a30] text-white shadow-[0_12px_26px_rgba(8,39,25,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#d7a84d] hover:text-[#071f14] disabled:cursor-not-allowed disabled:opacity-70"
+                  title={loadingEmployees ? "Loading employees" : "Refresh employee list"}
+                  aria-label={loadingEmployees ? "Loading employees" : "Refresh employee list"}
+                >
+                  <RefreshIcon className={`h-4 w-4 transition duration-300 ${loadingEmployees ? "animate-spin" : "group-hover:rotate-180"}`} />
+                </button>
               </div>
-            ) : null}
+            }
+          >
+            <div className="overflow-hidden rounded-3xl border border-[#d7e2da] bg-[#f8fbf9]">
+              {pagedEmployees.length ? (
+                <div className="divide-y divide-[#d7e2da]">
+                  {pagedEmployees.map((employee) => {
+                    const employeeId = employee._id || employee.id;
+                    const active = employee.active !== false;
 
-            <div className="grid gap-4 2xl:grid-cols-2">
-              <HalfPayrollTable
-                title="1st Half Payroll"
-                form={payrollForms.firstHalf}
-                result={payrollResults.firstHalf}
-                isEditing={editMode.firstHalf}
-                isLoading={loadingSelectedPayroll}
-                onEdit={() =>
-                  setEditMode((prev) => ({
-                    ...prev,
-                    firstHalf: true,
-                  }))
-                }
-                onTopLevelChange={(key, value) =>
-                  updatePayrollTopLevel("firstHalf", key, value)
-                }
-                onAttendanceChange={(key, value) =>
-                  updatePayrollField("firstHalf", "attendance", key, value)
-                }
-                onToggleAuto={(checked) =>
-                  updatePayrollField(
-                    "firstHalf",
-                    "adjustments",
-                    "allowAutoGovernmentDeductions",
-                    checked
-                  )
-                }
-                onSave={() => savePayroll("firstHalf")}
-              />
+                    return (
+                      <article
+                        key={employeeId || employee.companyEmail}
+                        className="grid gap-4 bg-white/70 px-5 py-4 transition duration-300 hover:bg-white hover:shadow-[0_16px_40px_rgba(8,39,25,0.08)] md:min-h-[92px] md:grid-cols-[52px_minmax(190px,1.15fr)_minmax(250px,1.35fr)_minmax(160px,0.85fr)_minmax(98px,0.45fr)_56px] md:items-center md:gap-5"
+                      >
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#082719] text-[14px] font-black text-[#f4d484] shadow-[0_12px_26px_rgba(8,39,25,0.18)]">
+                          <EmployeeInitials employee={employee} />
+                        </div>
 
-              <HalfPayrollTable
-                title="2nd Half Payroll"
-                form={payrollForms.secondHalf}
-                result={payrollResults.secondHalf}
-                isEditing={editMode.secondHalf}
-                isLoading={loadingSelectedPayroll}
-                onEdit={() =>
-                  setEditMode((prev) => ({
-                    ...prev,
-                    secondHalf: true,
-                  }))
-                }
-                onTopLevelChange={(key, value) =>
-                  updatePayrollTopLevel("secondHalf", key, value)
-                }
-                onAttendanceChange={(key, value) =>
-                  updatePayrollField("secondHalf", "attendance", key, value)
-                }
-                onToggleAuto={(checked) =>
-                  updatePayrollField(
-                    "secondHalf",
-                    "adjustments",
-                    "allowAutoGovernmentDeductions",
-                    checked
-                  )
-                }
-                onSave={() => savePayroll("secondHalf")}
-              />
+                        <div>
+                          <p className="line-clamp-2 text-[14px] font-black leading-5 text-[#071f14]">
+                            {getEmployeeName(employee)}
+                          </p>
+                          <p className="mt-1 text-[11px] font-black uppercase tracking-[0.16em] text-[#071f14]/35">
+                            Employee
+                          </p>
+                        </div>
+
+                        <p className="min-w-0 truncate text-[13px] font-extrabold text-[#071f14]/70">
+                          {employee.companyEmail ||
+                            employee.email ||
+                            employee.personalEmail ||
+                            "traineeemail@tamsi.com"}
+                        </p>
+
+                        <p className="min-w-0 text-[13px] font-black leading-5 text-[#071f14]">
+                          {employee.vacancy || employee.jobPosition || "Job"}
+                        </p>
+
+                        <span
+                          className={`inline-flex w-fit justify-center rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] md:mx-auto ${
+                            active
+                              ? "bg-[#e7f7ec] text-[#0f6b35]"
+                              : "bg-[#fee2e2] text-[#9d2f2f]"
+                          }`}
+                        >
+                          {active ? "Active" : "Inactive"}
+                        </span>
+
+                        <div className="flex justify-start md:justify-center">
+                          <button
+                            type="button"
+                            onClick={() => openPayrollModal(employee)}
+                            className="group inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#082719] text-white shadow-[0_10px_24px_rgba(8,39,25,0.16)] ring-1 ring-[#082719]/10 transition duration-300 hover:-translate-y-0.5 hover:bg-[#d7a84d] hover:text-[#071f14] focus:outline-none focus:ring-4 focus:ring-[#d7a84d]/25"
+                            title={`Open payroll for ${getEmployeeName(employee)}`}
+                            aria-label={`Open payroll for ${getEmployeeName(employee)}`}
+                          >
+                            <OpenPayrollIcon className="h-4 w-4 transition duration-300 group-hover:scale-110" />
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+
+                  <div className="flex flex-col gap-4 border-t border-[#d7e2da] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-[12px] font-bold text-[#071f14]/55">
+                      Showing <b className="text-[#071f14]">{filteredEmployees.length ? (page - 1) * itemsPerPage + 1 : 0}</b> to <b className="text-[#071f14]">{Math.min(page * itemsPerPage, filteredEmployees.length)}</b> of <b className="text-[#071f14]">{filteredEmployees.length}</b> employees
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                        disabled={page <= 1}
+                        className="rounded-full border border-[#d7e2da] bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] text-[#071f14] transition hover:-translate-y-0.5 hover:border-[#d7a84d] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
+                      >
+                        Prev
+                      </button>
+                      <span className="rounded-full bg-[#082719] px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] text-white">
+                        Page {page} of {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                        disabled={page >= totalPages}
+                        className="rounded-full border border-[#d7e2da] bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.08em] text-[#071f14] transition hover:-translate-y-0.5 hover:border-[#d7a84d] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-14 text-center text-[14px] font-bold text-[#071f14]/55">
+                  {loadingEmployees ? "Loading employees..." : "No employees found."}
+                </div>
+              )}
+            </div>
+          </SectionCard>
+        </main>
+      </div>
+
+      {selectedEmployee ? (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#071f14]/70 px-3 py-5 backdrop-blur-sm">
+          <div className="mx-auto max-w-[1500px] animate-[payrollModalIn_0.35s_ease-out] overflow-hidden rounded-[32px] bg-[#edf3ee] text-[#071f14] shadow-[0_35px_100px_rgba(0,0,0,0.35)] ring-1 ring-white/40">
+            <style>{`
+              @keyframes payrollModalIn {
+                from { opacity: 0; transform: translateY(24px) scale(0.98); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+              }
+            `}</style>
+
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] px-6 py-6 text-white md:px-8">
+              <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#f4d484]/20 blur-3xl" />
+              <div className="absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+              <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-[#f4d484]">
+                    Manpower HR Payroll Action
+                  </p>
+                  <h2 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">
+                    Payroll - {selectedEmployee.lastName}, {selectedEmployee.firstName}
+                  </h2>
+                  <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-white/75">
+                    {selectedEmployee.vacancy} • {selectedEmployee.companyEmail}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedEmployee(null)}
+                  className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-white px-6 text-[12px] font-black uppercase tracking-[0.08em] text-[#071f14] transition hover:-translate-y-0.5 hover:bg-[#f4d484]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 md:p-6">
+              {employeePayrollRows.length ? (
+                <div className="mb-5 rounded-2xl border border-[#d7e2da] bg-white px-5 py-4 text-sm font-bold text-[#174a30] shadow-[0_12px_28px_rgba(8,39,25,0.06)]">
+                  Saved payroll records found: {employeePayrollRows.length}
+                </div>
+              ) : null}
+
+              <div className="grid gap-5 2xl:grid-cols-2">
+                <HalfPayrollTable
+                  title="1st Half Payroll"
+                  form={payrollForms.firstHalf}
+                  result={payrollResults.firstHalf}
+                  isEditing={editMode.firstHalf}
+                  isLoading={loadingSelectedPayroll}
+                  onEdit={() =>
+                    setEditMode((prev) => ({
+                      ...prev,
+                      firstHalf: true,
+                    }))
+                  }
+                  onTopLevelChange={(key, value) =>
+                    updatePayrollTopLevel("firstHalf", key, value)
+                  }
+                  onAttendanceChange={(key, value) =>
+                    updatePayrollField("firstHalf", "attendance", key, value)
+                  }
+                  onToggleAuto={(checked) =>
+                    updatePayrollField(
+                      "firstHalf",
+                      "adjustments",
+                      "allowAutoGovernmentDeductions",
+                      checked
+                    )
+                  }
+                  onSave={() => savePayroll("firstHalf")}
+                />
+
+                <HalfPayrollTable
+                  title="2nd Half Payroll"
+                  form={payrollForms.secondHalf}
+                  result={payrollResults.secondHalf}
+                  isEditing={editMode.secondHalf}
+                  isLoading={loadingSelectedPayroll}
+                  onEdit={() =>
+                    setEditMode((prev) => ({
+                      ...prev,
+                      secondHalf: true,
+                    }))
+                  }
+                  onTopLevelChange={(key, value) =>
+                    updatePayrollTopLevel("secondHalf", key, value)
+                  }
+                  onAttendanceChange={(key, value) =>
+                    updatePayrollField("secondHalf", "attendance", key, value)
+                  }
+                  onToggleAuto={(checked) =>
+                    updatePayrollField(
+                      "secondHalf",
+                      "adjustments",
+                      "allowAutoGovernmentDeductions",
+                      checked
+                    )
+                  }
+                  onSave={() => savePayroll("secondHalf")}
+                />
+              </div>
             </div>
           </div>
         </div>

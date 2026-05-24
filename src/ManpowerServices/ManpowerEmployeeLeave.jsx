@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const LOGO_IMAGE = "/ManpowerLogo.png";
+const HERO_IMAGE = "/LTCBanner.png";
 
 const EMPLOYEE_LOGIN_ROUTE = "/manpower-employee-login";
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
@@ -33,16 +34,13 @@ const LEAVE_TYPES = [
   "Other",
 ];
 
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
 function HeaderNavLink({ to, children, active = false }) {
   return (
-    <Link
-      to={to}
-      className={`relative pb-1 transition hover:text-[#6f8a66] ${
-        active
-          ? "text-[#315b42] after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-full after:rounded-full after:bg-[#315b42]"
-          : "text-[#405549]"
-      }`}
-    >
+    <Link to={to} className={`mp-leave-nav-link ${active ? "active" : ""}`}>
       {children}
     </Link>
   );
@@ -50,10 +48,9 @@ function HeaderNavLink({ to, children, active = false }) {
 
 function FooterColumn({ title, children }) {
   return (
-    <div className="border-[#d8ded5] md:border-l md:pl-4">
-      <h4 className="text-[12px] font-black text-[#315b42]">{title}</h4>
-
-      <div className="mt-1 space-y-0.5 text-[10px] font-semibold leading-snug text-[#496252]">
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div className="mp-leave-footer-list" style={fontPontano}>
         {children}
       </div>
     </div>
@@ -114,36 +111,24 @@ function StatusBadge({ status }) {
 
   const className =
     value === "APPROVED"
-      ? "border-[#b9d8bb] bg-[#edf8ee] text-[#25633c]"
+      ? "is-approved"
       : value === "REJECTED"
-      ? "border-[#efc9c9] bg-[#fff2f2] text-[#912f2f]"
-      : "border-[#ead28d] bg-[#fff7df] text-[#7a5b0b]";
+      ? "is-rejected"
+      : "is-pending";
 
-  return (
-    <span
-      className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-wide ${className}`}
-    >
-      {value}
-    </span>
-  );
+  return <span className={`mp-leave-status ${className}`}>{value}</span>;
 }
 
 function SummaryCard({ label, value, tone = "default" }) {
-  const styles = {
-    default: "border-white/15 bg-white text-[#315b42]",
-    pending: "border-[#ead28d] bg-[#fff7df] text-[#7a5b0b]",
-    approved: "border-[#b9d8bb] bg-[#edf8ee] text-[#25633c]",
-    rejected: "border-[#efc9c9] bg-[#fff2f2] text-[#912f2f]",
-  };
-
   return (
-    <div className={`rounded-lg border p-5 shadow-sm ${styles[tone]}`}>
-      <p className="text-[11px] font-black uppercase tracking-[0.18em] opacity-80">
+    <article className={`mp-leave-summary-card is-${tone}`}>
+      <p className="mp-leave-summary-label" style={fontPoppins}>
         {label}
       </p>
-
-      <p className="mt-2 text-[34px] font-black leading-none">{value}</p>
-    </div>
+      <p className="mp-leave-summary-value" style={fontMontserrat}>
+        {value}
+      </p>
+    </article>
   );
 }
 
@@ -162,6 +147,11 @@ export default function ManpowerEmployeeLeave() {
     endDate: "",
     reason: "",
   });
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [historyStatusFilter, setHistoryStatusFilter] = useState("all");
+  const [historyTypeFilter, setHistoryTypeFilter] = useState("all");
+  const [historyDateFilter, setHistoryDateFilter] = useState("");
+  const [historySortOrder, setHistorySortOrder] = useState("newest");
 
   const fullName = useMemo(() => {
     return [
@@ -192,6 +182,61 @@ export default function ManpowerEmployeeLeave() {
       ).length,
     };
   }, [leaves]);
+
+  const filteredLeaves = useMemo(() => {
+    const selectedStatus = String(historyStatusFilter || "all").toUpperCase();
+    const selectedType = String(historyTypeFilter || "all");
+    const selectedDate = String(historyDateFilter || "");
+
+    const matches = leaves.filter((item) => {
+      const itemStatus = normalizeStatus(item.status);
+      const itemType = String(item.leaveType || "");
+
+      const matchesStatus =
+        selectedStatus === "ALL" || itemStatus === selectedStatus;
+
+      const matchesType = selectedType === "all" || itemType === selectedType;
+
+      const matchesDate = !selectedDate || (() => {
+        const start = item.startDate ? new Date(item.startDate) : null;
+        const end = item.endDate ? new Date(item.endDate) : null;
+        const selected = new Date(`${selectedDate}T00:00:00`);
+
+        if (Number.isNaN(selected.getTime())) return true;
+        if (!start || Number.isNaN(start.getTime())) return false;
+
+        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+
+        if (!end || Number.isNaN(end.getTime())) {
+          return startDay === selected.getTime();
+        }
+
+        const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+        return selected.getTime() >= startDay && selected.getTime() <= endDay;
+      })();
+
+      return matchesStatus && matchesType && matchesDate;
+    });
+
+    return [...matches].sort((a, b) => {
+      const getTime = (item) => {
+        const filed = item?.createdAt ? new Date(item.createdAt).getTime() : NaN;
+        if (Number.isFinite(filed)) return filed;
+
+        const start = item?.startDate ? new Date(item.startDate).getTime() : NaN;
+        return Number.isFinite(start) ? start : 0;
+      };
+
+      return historySortOrder === "oldest" ? getTime(a) - getTime(b) : getTime(b) - getTime(a);
+    });
+  }, [leaves, historyStatusFilter, historyTypeFilter, historyDateFilter, historySortOrder]);
+
+  function clearHistoryFilters() {
+    setHistoryStatusFilter("all");
+    setHistoryTypeFilter("all");
+    setHistoryDateFilter("");
+    setHistorySortOrder("newest");
+  }
 
   function logout() {
     clearEmployeeSession();
@@ -362,151 +407,1045 @@ export default function ManpowerEmployeeLeave() {
     }
   }
 
-  const inputClass =
-    "mt-2 w-full rounded-lg border border-white/20 bg-white px-4 py-3 text-sm font-semibold text-[#315b42] outline-none ring-0 placeholder:text-[#67776d] focus:border-[#d9e2d5]";
+  const inputClass = "mp-leave-input";
+
+  function goTo(path) {
+    setMobileOpen(false);
+    navigate(path);
+  }
 
   return (
-    <div className="min-h-screen bg-[#eef2ea] font-sans text-[#24372d]">
-      <header className="sticky top-0 z-50 border-b border-[#d5ddd2] bg-[#f7f9f5]/95 backdrop-blur">
-        <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link to={EMPLOYEE_HOME_ROUTE} className="flex items-center gap-3">
-            <img
-              src={LOGO_IMAGE}
-              alt="Manpower Logo"
-              className="h-12 w-12 shrink-0 rounded-full object-contain"
-            />
+    <div className="mp-leave-page" style={fontPontano}>
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-            <span className="text-[24px] font-black tracking-wide text-[#315b42] sm:text-[28px]">
-              MANPOWER
-            </span>
+        .mp-leave-page {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --green-600: #2f754c;
+          --footer-green: #082719;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --dark: #101828;
+          --muted: #667085;
+          --glass: rgba(255,255,255,.82);
+          --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+          --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+          --radius: 24px;
+          --ease: cubic-bezier(.22,1,.36,1);
+          min-height: 100vh;
+          color: var(--dark);
+          background:
+            radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+            radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+            linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+          line-height: 1.65;
+          letter-spacing: -.01em;
+          overflow-x: hidden;
+          font-family: "Inter", Arial, sans-serif;
+        }
+
+        .mp-leave-page * { box-sizing: border-box; }
+
+        .mp-leave-container {
+          width: min(1180px, 92%);
+          margin: auto;
+        }
+
+        .mp-leave-header {
+          position: sticky;
+          top: 0;
+          z-index: 50;
+          width: 100%;
+          background: var(--footer-green);
+          border-bottom: 1px solid rgba(255,255,255,.1);
+          box-shadow: 0 10px 34px rgba(7,31,20,.14);
+          margin: 0;
+        }
+
+        .mp-leave-header .mp-leave-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .mp-leave-nav {
+          min-height: 76px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .mp-leave-logo {
+          display: flex;
+          align-items: center;
+          gap: 13px;
+          color: white;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          text-align: left;
+          padding: 0;
+          text-decoration: none;
+        }
+
+        .mp-leave-logo-icon {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: linear-gradient(145deg,#fff,#e3f4ea);
+          color: var(--green-800);
+          font-weight: 900;
+          box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+          object-fit: cover;
+        }
+
+        .mp-leave-logo h1 {
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: -.04em;
+          margin: 0;
+        }
+
+        .mp-leave-logo p {
+          font-size: 11px;
+          color: rgba(255,255,255,.72);
+          margin: 3px 0 0;
+        }
+
+        .mp-leave-desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .mp-leave-nav-link {
+          color: rgba(255,255,255,.78);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          padding: 10px 14px;
+          border-radius: 999px;
+          transition: .25s var(--ease);
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          text-decoration: none;
+        }
+
+        .mp-leave-nav-link:hover,
+        .mp-leave-nav-link.active {
+          color: white;
+          background: rgba(255,255,255,.13);
+          transform: translateY(-1px);
+        }
+
+        .mp-leave-profile-link {
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 16px 35px rgba(215,168,77,.22);
+          min-width: 116px;
+          text-align: center;
+        }
+
+        .mp-leave-menu-button {
+          display: none;
+          color: white;
+          border: 0;
+          background: rgba(255,255,255,.1);
+          border-radius: 12px;
+          padding: 10px;
+          cursor: pointer;
+        }
+
+        .mp-leave-menu-button svg { width: 24px; height: 24px; }
+
+        .mp-leave-sidebar-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 60;
+          background: rgba(0,0,0,.42);
+        }
+
+        .mp-leave-sidebar-panel {
+          position: absolute;
+          right: 0;
+          top: 0;
+          height: 100%;
+          width: min(310px, 86vw);
+          background: white;
+          box-shadow: -20px 0 60px rgba(0,0,0,.25);
+          padding: 20px;
+        }
+
+        .mp-leave-sidebar-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid rgba(16,24,40,.1);
+          padding-bottom: 16px;
+          margin-bottom: 16px;
+        }
+
+        .mp-leave-sidebar-title {
+          color: var(--green-950);
+          font-weight: 900;
+          letter-spacing: .14em;
+          font-size: 12px;
+          margin: 0;
+        }
+
+        .mp-leave-sidebar-close {
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          border: 0;
+          background: #f2f4f7;
+          color: #101828;
+          cursor: pointer;
+          font-weight: 900;
+        }
+
+        .mp-leave-sidebar-link {
+          display: block;
+          width: 100%;
+          border: 0;
+          background: transparent;
+          color: #101828;
+          text-align: left;
+          border-radius: 14px;
+          padding: 13px 14px;
+          font-weight: 800;
+          margin-bottom: 8px;
+          cursor: pointer;
+        }
+
+        .mp-leave-sidebar-link:hover,
+        .mp-leave-sidebar-link.active {
+          background: var(--green-800);
+          color: white;
+        }
+
+        .mp-leave-hero {
+          position: relative;
+          overflow: hidden;
+          color: white;
+          isolation: isolate;
+          background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+          padding: 82px 0 78px;
+        }
+
+        .mp-leave-hero::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -3;
+          background:
+            linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.76) 100%),
+            url("${HERO_IMAGE}") center center / cover no-repeat;
+          background-blend-mode: multiply;
+          opacity: .96;
+          transform: scale(1.02);
+        }
+
+        .mp-leave-hero::after {
+          content: "";
+          position: absolute;
+          inset: -16% -10% -24% -10%;
+          z-index: -2;
+          background:
+            radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
+            radial-gradient(circle at 36% 92%, rgba(7,76,47,.46), transparent 30%),
+            radial-gradient(circle at 72% 18%, rgba(28,108,68,.28), transparent 30%),
+            radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
+            radial-gradient(circle at 90% 84%, rgba(22,108,66,.30), transparent 26%),
+            linear-gradient(135deg, rgba(3,24,15,.34), rgba(8,56,34,.08));
+          filter: blur(30px);
+          pointer-events: none;
+        }
+
+        .mp-leave-hero-content {
+          position: relative;
+          z-index: 2;
+          max-width: 900px;
+          margin: 0 auto;
+          text-align: center;
+          animation: mpLeaveReveal .8s var(--ease) both;
+        }
+
+        .mp-leave-eyebrow {
+          display: inline-flex;
+          color: var(--gold-soft);
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+          margin-bottom: 12px;
+        }
+
+        .mp-leave-hero h2 {
+          margin: 0;
+          color: white;
+          font-size: clamp(38px, 5.7vw, 66px);
+          line-height: 1.05;
+          font-weight: 900;
+          letter-spacing: -.055em;
+          text-shadow: 0 8px 26px rgba(0,0,0,.22);
+        }
+
+        .mp-leave-hero h2 span { color: var(--gold-soft); }
+
+        .mp-leave-hero p {
+          max-width: 760px;
+          margin: 18px auto 0;
+          color: rgba(255,255,255,.80);
+          font-size: 17px;
+          line-height: 1.8;
+        }
+
+        .mp-leave-hero-actions {
+          margin-top: 26px;
+          display: flex;
+          justify-content: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .mp-leave-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 48px;
+          padding: 0 24px;
+          border-radius: 999px;
+          border: 0;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 900;
+          text-decoration: none;
+          transition: .28s var(--ease);
+        }
+
+        .mp-leave-btn:hover { transform: translateY(-3px); }
+
+        .mp-leave-btn-primary {
+          color: #102418;
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 16px 35px rgba(215,168,77,.28);
+        }
+
+        .mp-leave-btn-soft {
+          color: white;
+          background: rgba(255,255,255,.1);
+          border: 1px solid rgba(255,255,255,.18);
+          backdrop-filter: blur(8px);
+        }
+
+        .mp-leave-section { padding: 84px 0; }
+
+        .mp-leave-section-title {
+          text-align: center;
+          margin-bottom: 34px;
+        }
+
+        .mp-leave-section-title span {
+          color: var(--green-700);
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .18em;
+        }
+
+        .mp-leave-section-title h3 {
+          margin: 10px 0 0;
+          color: var(--green-950);
+          font-size: clamp(32px,4vw,50px);
+          line-height: 1.08;
+          letter-spacing: -.055em;
+          font-weight: 900;
+        }
+
+        .mp-leave-section-title p {
+          max-width: 760px;
+          margin: 15px auto 0;
+          color: var(--muted);
+        }
+
+        .mp-leave-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 18px;
+          margin-bottom: 28px;
+        }
+
+        .mp-leave-summary-card,
+        .mp-leave-panel {
+          position: relative;
+          overflow: hidden;
+          border-radius: var(--radius);
+          background: var(--glass);
+          border: 1px solid rgba(255,255,255,.76);
+          box-shadow: var(--shadow-md);
+          backdrop-filter: blur(18px);
+          transition: .38s var(--ease);
+        }
+
+        .mp-leave-summary-card::before,
+        .mp-leave-panel::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 6px;
+          background: linear-gradient(90deg,var(--green-700),var(--gold));
+          z-index: 3;
+        }
+
+        .mp-leave-summary-card {
+          min-height: 150px;
+          padding: 28px;
+        }
+
+        .mp-leave-summary-card::after {
+          content: "";
+          position: absolute;
+          width: 150px;
+          height: 150px;
+          right: -70px;
+          bottom: -80px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(215,168,77,.22), transparent 58%);
+          transition: .38s var(--ease);
+        }
+
+        .mp-leave-summary-card:hover,
+        .mp-leave-panel:hover {
+          transform: translateY(-8px);
+          box-shadow: var(--shadow-lg);
+          border-color: rgba(215,168,77,.45);
+        }
+
+        .mp-leave-summary-card:hover::after { transform: translate(-12px, -12px) scale(1.12); }
+
+        .mp-leave-summary-label {
+          position: relative;
+          z-index: 1;
+          margin: 0;
+          color: rgba(7,31,20,.48);
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: .2em;
+          text-transform: uppercase;
+        }
+
+        .mp-leave-summary-value {
+          position: relative;
+          z-index: 1;
+          margin: 16px 0 0;
+          color: var(--green-950);
+          font-size: 46px;
+          line-height: .9;
+          font-weight: 900;
+          letter-spacing: -.055em;
+        }
+
+        .mp-leave-summary-card.is-pending::before { background: linear-gradient(90deg,#d7a84d,#f4d484); }
+        .mp-leave-summary-card.is-approved::before { background: linear-gradient(90deg,#17663b,#2f754c,#d7a84d); }
+        .mp-leave-summary-card.is-rejected::before { background: linear-gradient(90deg,#8b3232,#c96a6a,#f4d484); }
+
+        .mp-leave-message {
+          border-radius: 18px;
+          padding: 14px 18px;
+          margin-bottom: 18px;
+          font-size: 14px;
+          font-weight: 800;
+          box-shadow: 0 12px 26px rgba(8,39,25,.08);
+        }
+
+        .mp-leave-message.success {
+          border: 1px solid rgba(37,99,60,.2);
+          background: #edf8ee;
+          color: #25633c;
+        }
+
+        .mp-leave-message.error {
+          border: 1px solid rgba(145,47,47,.2);
+          background: #fff2f2;
+          color: #912f2f;
+        }
+
+        .mp-leave-main-grid {
+          display: grid;
+          grid-template-columns: .86fr 1.14fr;
+          gap: 24px;
+          align-items: start;
+        }
+
+        .mp-leave-panel-header {
+          position: relative;
+          padding: 30px 30px 22px;
+          border-bottom: 1px solid rgba(35,95,62,.1);
+        }
+
+        .mp-leave-panel-header h3 {
+          margin: 0;
+          color: var(--green-950);
+          font-size: clamp(24px,3vw,34px);
+          line-height: 1.1;
+          font-weight: 900;
+          letter-spacing: -.055em;
+        }
+
+        .mp-leave-panel-header p {
+          margin: 10px 0 0;
+          color: var(--muted);
+          font-size: 14px;
+          font-weight: 650;
+        }
+
+        .mp-leave-panel-body { padding: 28px 30px 30px; }
+
+        .mp-leave-form-grid {
+          display: grid;
+          gap: 18px;
+        }
+
+        .mp-leave-label {
+          display: block;
+          color: var(--green-950);
+          font-size: 13px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .04em;
+        }
+
+        .mp-leave-input {
+          margin-top: 8px;
+          width: 100%;
+          min-height: 52px;
+          border: 1px solid rgba(35,95,62,.16);
+          border-radius: 18px;
+          background: #fff;
+          padding: 0 16px;
+          color: var(--green-950);
+          font-size: 14px;
+          font-weight: 750;
+          outline: none;
+          box-shadow: 0 12px 24px rgba(8,39,25,.06);
+          transition: .28s var(--ease);
+        }
+
+        textarea.mp-leave-input {
+          min-height: 140px;
+          padding-top: 14px;
+          resize: none;
+        }
+
+        .mp-leave-input:focus {
+          border-color: rgba(215,168,77,.72);
+          box-shadow: 0 16px 34px rgba(8,39,25,.11);
+          transform: translateY(-1px);
+        }
+
+        .mp-leave-date-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .mp-leave-history-toolbar {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+          gap: 12px;
+          padding: 22px 22px 0;
+          align-items: end;
+        }
+
+        .mp-leave-filter-label {
+          display: block;
+          min-width: 0;
+          color: var(--green-950);
+          font-size: 11px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+        }
+
+        .mp-leave-filter-control {
+          margin-top: 7px;
+          width: 100%;
+          min-height: 46px;
+          border: 1px solid rgba(35,95,62,.16);
+          border-radius: 16px;
+          background: #fff;
+          padding: 0 14px;
+          color: var(--green-950);
+          font-size: 13px;
+          font-weight: 800;
+          outline: none;
+          box-shadow: 0 10px 20px rgba(8,39,25,.06);
+          transition: .28s var(--ease);
+        }
+
+        .mp-leave-filter-control:focus,
+        .mp-leave-filter-control:hover {
+          border-color: rgba(215,168,77,.72);
+          box-shadow: 0 14px 28px rgba(8,39,25,.10);
+          transform: translateY(-1px);
+        }
+
+        .mp-leave-clear-filter {
+          min-height: 46px;
+          padding: 0 18px;
+          border-radius: 999px;
+          border: 1px solid rgba(35,95,62,.16);
+          background: #fff7df;
+          color: var(--green-950);
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+          white-space: nowrap;
+          box-shadow: 0 10px 20px rgba(8,39,25,.06);
+          transition: .28s var(--ease);
+        }
+
+        .mp-leave-clear-filter:hover {
+          transform: translateY(-2px);
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 16px 32px rgba(8,39,25,.12);
+        }
+
+        .mp-leave-history-count {
+          margin: 16px 22px 0;
+          border-radius: 18px;
+          border: 1px solid rgba(35,95,62,.12);
+          background: #f7fbf8;
+          padding: 12px 16px;
+          color: #52695a;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .mp-leave-history-count strong {
+          color: var(--green-950);
+        }
+
+        .mp-leave-table-wrap {
+          overflow-x: auto;
+          padding: 22px;
+        }
+
+        .mp-leave-table {
+          width: 100%;
+          min-width: 760px;
+          border-collapse: separate;
+          border-spacing: 0;
+          overflow: hidden;
+          border-radius: 20px;
+          background: white;
+          box-shadow: 0 12px 26px rgba(8,39,25,.07);
+        }
+
+        .mp-leave-table thead {
+          background: #eef8f2;
+          color: var(--green-800);
+        }
+
+        .mp-leave-table th {
+          padding: 15px 16px;
+          text-align: left;
+          font-size: 12px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+        }
+
+        .mp-leave-table td {
+          padding: 15px 16px;
+          border-top: 1px solid #edf2ed;
+          color: #52695a;
+          font-size: 13px;
+          font-weight: 700;
+          vertical-align: top;
+        }
+
+        .mp-leave-table td:first-child {
+          color: var(--green-950);
+          font-weight: 900;
+        }
+
+        .mp-leave-table tbody tr {
+          transition: .25s var(--ease);
+        }
+
+        .mp-leave-table tbody tr:hover {
+          background: #f8fbf8;
+        }
+
+        .mp-leave-status {
+          display: inline-flex;
+          border-radius: 999px;
+          border: 1px solid transparent;
+          padding: 7px 12px;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .mp-leave-status.is-approved { border-color: #b9d8bb; background: #edf8ee; color: #25633c; }
+        .mp-leave-status.is-rejected { border-color: #efc9c9; background: #fff2f2; color: #912f2f; }
+        .mp-leave-status.is-pending { border-color: #ead28d; background: #fff7df; color: #7a5b0b; }
+
+        .mp-leave-loading-card,
+        .mp-leave-empty-row {
+          padding: 54px 20px !important;
+          text-align: center;
+          color: var(--muted) !important;
+          font-weight: 800 !important;
+        }
+
+        .mp-leave-footer {
+          width: 100%;
+          background: var(--footer-green);
+          color: white;
+          padding: 30px 0 12px;
+          margin: 0;
+        }
+
+        .mp-leave-footer .mp-leave-container {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-left: 32px;
+          padding-right: 32px;
+        }
+
+        .mp-leave-footer-grid {
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1.5fr .9fr 1fr 1.65fr .9fr;
+          gap: 22px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid rgba(255,255,255,.1);
+        }
+
+        .mp-leave-footer h4 {
+          color: white;
+          font-weight: 900;
+          font-size: 18px;
+          line-height: 1.2;
+          margin: 0 0 10px;
+        }
+
+        .mp-leave-footer h5 {
+          color: #f4d484;
+          font-size: 12px;
+          line-height: 1.2;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .14em;
+          margin: 0 0 10px;
+        }
+
+        .mp-leave-footer p,
+        .mp-leave-footer a {
+          display: block;
+          color: rgba(255,255,255,.68);
+          font-size: 13px;
+          line-height: 1.55;
+          margin: 5px 0;
+          text-decoration: none;
+        }
+
+        .mp-leave-footer a:hover { color: white; text-decoration: underline; }
+
+        .mp-leave-copyright {
+          width: 100%;
+          padding-top: 14px;
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          color: rgba(255,255,255,.52);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        @keyframes mpLeaveReveal {
+          from { opacity: 0; transform: translateY(34px) scale(.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .mp-leave-page *, .mp-leave-page *::before, .mp-leave-page *::after {
+            animation-duration: .001ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+            transition-duration: .001ms !important;
+          }
+        }
+
+        @media (max-width: 1100px) {
+          .mp-leave-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .mp-leave-main-grid { grid-template-columns: 1fr; }
+          .mp-leave-history-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .mp-leave-clear-filter { width: 100%; }
+          .mp-leave-footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 900px) {
+          .mp-leave-header .mp-leave-container { padding-left: 22px; padding-right: 22px; }
+          .mp-leave-nav { min-height: auto; padding: 18px 0; }
+          .mp-leave-desktop-nav { display: none; }
+          .mp-leave-menu-button { display: grid; place-items: center; }
+          .mp-leave-footer { padding: 28px 0 12px; }
+          .mp-leave-footer-grid { grid-template-columns: 1fr; gap: 18px; padding-bottom: 22px; }
+          .mp-leave-footer .mp-leave-container { padding-left: 22px; padding-right: 22px; }
+          .mp-leave-copyright { flex-direction: column; }
+        }
+
+        @media (max-width: 600px) {
+          .mp-leave-header .mp-leave-container,
+          .mp-leave-footer .mp-leave-container { padding-left: 16px; padding-right: 16px; }
+          .mp-leave-logo h1 { font-size: 14px; }
+          .mp-leave-logo p { font-size: 10px; }
+          .mp-leave-hero { padding: 70px 0 66px; }
+          .mp-leave-hero h2 { font-size: clamp(34px, 11vw, 46px); letter-spacing: -.045em; }
+          .mp-leave-hero p { font-size: 15px; }
+          .mp-leave-section { padding: 64px 0; }
+          .mp-leave-summary-grid { grid-template-columns: 1fr; }
+          .mp-leave-history-toolbar { grid-template-columns: 1fr; }
+          .mp-leave-date-grid { grid-template-columns: 1fr; }
+          .mp-leave-panel-header,
+          .mp-leave-panel-body { padding-left: 22px; padding-right: 22px; }
+          .mp-leave-btn { width: 100%; }
+        }
+      `}</style>
+
+      <header className="mp-leave-header">
+        <div className="mp-leave-container mp-leave-nav">
+          <Link to={EMPLOYEE_HOME_ROUTE} className="mp-leave-logo">
+            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-leave-logo-icon" />
+            <div>
+              <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
+              <p style={fontPontano}>Professional staffing and workforce solutions.</p>
+            </div>
           </Link>
 
-          <nav className="hidden items-center gap-9 text-[12px] font-black uppercase tracking-wide lg:flex">
+          <nav className="mp-leave-desktop-nav" style={fontPoppins}>
             <HeaderNavLink to={EMPLOYEE_HOME_ROUTE}>Home</HeaderNavLink>
-
-            <HeaderNavLink to={EMPLOYEE_PAYROLL_ROUTE}>
-              Payroll
-            </HeaderNavLink>
-
-            <HeaderNavLink to={EMPLOYEE_LEAVE_ROUTE} active>
-              Leave
-            </HeaderNavLink>
+            <HeaderNavLink to={EMPLOYEE_PAYROLL_ROUTE}>Payroll</HeaderNavLink>
+            <HeaderNavLink to={EMPLOYEE_LEAVE_ROUTE} active>Leave</HeaderNavLink>
+            <Link
+              to={EMPLOYEE_PROFILE_ROUTE}
+              className="mp-leave-nav-link mp-leave-profile-link"
+            >
+              Profile
+            </Link>
           </nav>
 
-          <Link
-            to={EMPLOYEE_PROFILE_ROUTE}
-            className="text-[12px] font-black uppercase tracking-wide text-[#405549] transition hover:text-[#6f8a66]"
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="mp-leave-menu-button"
+            aria-label="Open menu"
           >
-            Profile
-          </Link>
-        </div>
-
-        <div className="border-t border-[#e1e7de] bg-[#f7f9f5] px-4 py-3 lg:hidden">
-          <nav className="mx-auto flex max-w-7xl items-center justify-center gap-7 text-[11px] font-black uppercase tracking-wide">
-            <HeaderNavLink to={EMPLOYEE_HOME_ROUTE}>Home</HeaderNavLink>
-
-            <HeaderNavLink to={EMPLOYEE_PAYROLL_ROUTE}>
-              Payroll
-            </HeaderNavLink>
-
-            <HeaderNavLink to={EMPLOYEE_LEAVE_ROUTE} active>
-              Leave
-            </HeaderNavLink>
-          </nav>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </div>
       </header>
 
-      <main>
-        <section className="bg-[#0f3a1e]">
-          <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:px-8">
-            <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
-              <div>
-                <h1 className="text-[28px] font-black uppercase leading-none text-white sm:text-[34px]">
-                  File Leave Request
-                </h1>
-
-                <p className="mt-1 text-[13px] font-bold text-white">
-                  {displayName} • {displayEmail}
-                </p>
-
-                <div className="mt-3 h-[2px] w-[420px] max-w-full bg-white/45" />
-              </div>
-
-              <button
-                type="button"
-                onClick={loadLeaves}
-                disabled={leaveLoading}
-                className="h-[34px] min-w-[145px] rounded-full border-2 border-white bg-white px-6 text-[12px] font-black uppercase tracking-wide text-[#315b42] shadow-[0_2px_0_rgba(0,0,0,0.35)] transition hover:bg-[#e7eee3] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {leaveLoading ? "Refreshing..." : "Refresh"}
+      {mobileOpen ? (
+        <div className="mp-leave-sidebar-overlay">
+          <div style={{ position: "absolute", inset: 0 }} onClick={() => setMobileOpen(false)} />
+          <div className="mp-leave-sidebar-panel">
+            <div className="mp-leave-sidebar-top">
+              <p className="mp-leave-sidebar-title" style={fontPoppins}>MENU</p>
+              <button type="button" onClick={() => setMobileOpen(false)} className="mp-leave-sidebar-close" aria-label="Close menu">
+                ✕
               </button>
+            </div>
+            <div style={fontPoppins}>
+              <button type="button" onClick={() => goTo(EMPLOYEE_HOME_ROUTE)} className="mp-leave-sidebar-link">Home</button>
+              <button type="button" onClick={() => goTo(EMPLOYEE_PAYROLL_ROUTE)} className="mp-leave-sidebar-link">Payroll</button>
+              <button type="button" onClick={() => goTo(EMPLOYEE_LEAVE_ROUTE)} className="mp-leave-sidebar-link active">Leave</button>
+              <button type="button" onClick={() => goTo(EMPLOYEE_PROFILE_ROUTE)} className="mp-leave-sidebar-link">Profile</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <main>
+        <section className="mp-leave-section">
+          <div className="mp-leave-container">
+            <div className="mp-leave-section-title">
+              <span style={fontPoppins}>Leave Overview</span>
+              <h3 style={fontMontserrat}>Track your leave requests</h3>
+              <p style={fontPontano}>
+                
+              </p>
             </div>
 
             {loading ? (
-              <section className="mt-7 rounded-lg bg-[#294f35] p-7">
-                <div className="rounded-lg bg-white px-5 py-8 text-center text-[13px] font-semibold text-[#52695a]">
+              <div className="mp-leave-panel">
+                <div className="mp-leave-loading-card" style={fontPontano}>
                   Loading leave page...
                 </div>
-              </section>
+              </div>
             ) : (
-              <div className="mt-7 space-y-7">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <>
+                <div className="mp-leave-summary-grid">
                   <SummaryCard label="Total" value={summary.total} />
-                  <SummaryCard
-                    label="Pending"
-                    value={summary.pending}
-                    tone="pending"
-                  />
-                  <SummaryCard
-                    label="Approved"
-                    value={summary.approved}
-                    tone="approved"
-                  />
-                  <SummaryCard
-                    label="Rejected"
-                    value={summary.rejected}
-                    tone="rejected"
-                  />
+                  <SummaryCard label="Pending" value={summary.pending} tone="pending" />
+                  <SummaryCard label="Approved" value={summary.approved} tone="approved" />
+                  <SummaryCard label="Rejected" value={summary.rejected} tone="rejected" />
                 </div>
 
                 {message.success ? (
-                  <div className="rounded-lg border border-[#b9d8bb] bg-[#edf8ee] px-5 py-4 text-sm font-semibold text-[#25633c]">
+                  <div className="mp-leave-message success" style={fontPontano}>
                     {message.success}
                   </div>
                 ) : null}
 
                 {message.error ? (
-                  <div className="rounded-lg border border-[#efc9c9] bg-[#fff2f2] px-5 py-4 text-sm font-semibold text-[#912f2f]">
+                  <div className="mp-leave-message error" style={fontPontano}>
                     {message.error}
                   </div>
                 ) : null}
 
-                <div className="grid gap-7 lg:grid-cols-[0.85fr_1.15fr]">
-                  <form
-                    onSubmit={submitLeave}
-                    className="rounded-lg bg-[#294f35] p-5 shadow-[0_8px_20px_rgba(0,0,0,0.18)] sm:p-7"
-                  >
-                    <h2 className="text-[24px] font-black text-white">
-                      New Leave Request
-                    </h2>
+                <div className="mp-leave-main-grid">
+                  <form id="new-leave-request" onSubmit={submitLeave} className="mp-leave-panel">
+                    <div className="mp-leave-panel-header">
+                      <h3 style={fontMontserrat}>New Leave Request</h3>
+                      <p style={fontPontano}>Complete the form below. HR will review your request.</p>
+                    </div>
 
-                    <p className="mt-1 text-[13px] font-semibold text-white/80">
-                      Complete the form below. HR will review your request.
-                    </p>
+                    <div className="mp-leave-panel-body">
+                      <div className="mp-leave-form-grid">
+                        <label className="mp-leave-label" style={fontPoppins}>
+                          Leave Type
+                          <select
+                            value={form.leaveType}
+                            onChange={(event) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                leaveType: event.target.value,
+                              }))
+                            }
+                            className={inputClass}
+                          >
+                            {LEAVE_TYPES.map((type) => (
+                              <option key={type} value={type}>
+                                {type}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
 
-                    <div className="mt-6 grid gap-4">
-                      <label className="text-sm font-black text-white">
+                        <div className="mp-leave-date-grid">
+                          <label className="mp-leave-label" style={fontPoppins}>
+                            Start Date
+                            <input
+                              type="date"
+                              value={form.startDate}
+                              onChange={(event) =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  startDate: event.target.value,
+                                }))
+                              }
+                              className={inputClass}
+                              required
+                            />
+                          </label>
+
+                          <label className="mp-leave-label" style={fontPoppins}>
+                            End Date
+                            <input
+                              type="date"
+                              value={form.endDate}
+                              onChange={(event) =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  endDate: event.target.value,
+                                }))
+                              }
+                              className={inputClass}
+                              required
+                            />
+                          </label>
+                        </div>
+
+                        <label className="mp-leave-label" style={fontPoppins}>
+                          Reason
+                          <textarea
+                            value={form.reason}
+                            onChange={(event) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                reason: event.target.value,
+                              }))
+                            }
+                            rows={6}
+                            className={inputClass}
+                            placeholder="Write your reason for leave..."
+                            required
+                          />
+                        </label>
+
+                        <button
+                          type="submit"
+                          disabled={leaveLoading}
+                          className="mp-leave-btn mp-leave-btn-primary"
+                          style={fontMontserrat}
+                        >
+                          {leaveLoading ? "Submitting..." : "Submit Leave Request"}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+
+                  <section className="mp-leave-panel">
+                    <div className="mp-leave-panel-header">
+                      <h3 style={fontMontserrat}>My Leave History</h3>
+                      <p style={fontPontano}>Filter leave requests by status, type, date, and filed order.</p>
+                    </div>
+
+                    <div className="mp-leave-history-toolbar">
+                      <label className="mp-leave-filter-label" style={fontPoppins}>
+                        Status
+                        <select
+                          value={historyStatusFilter}
+                          onChange={(event) => setHistoryStatusFilter(event.target.value)}
+                          className="mp-leave-filter-control"
+                        >
+                          <option value="all">All Status</option>
+                          <option value="PENDING">Pending</option>
+                          <option value="APPROVED">Approved</option>
+                          <option value="REJECTED">Rejected</option>
+                        </select>
+                      </label>
+
+                      <label className="mp-leave-filter-label" style={fontPoppins}>
                         Leave Type
                         <select
-                          value={form.leaveType}
-                          onChange={(event) =>
-                            setForm((prev) => ({
-                              ...prev,
-                              leaveType: event.target.value,
-                            }))
-                          }
-                          className={inputClass}
+                          value={historyTypeFilter}
+                          onChange={(event) => setHistoryTypeFilter(event.target.value)}
+                          className="mp-leave-filter-control"
                         >
+                          <option value="all">All Types</option>
                           {LEAVE_TYPES.map((type) => (
                             <option key={type} value={type}>
                               {type}
@@ -515,145 +1454,90 @@ export default function ManpowerEmployeeLeave() {
                         </select>
                       </label>
 
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <label className="text-sm font-black text-white">
-                          Start Date
-                          <input
-                            type="date"
-                            value={form.startDate}
-                            onChange={(event) =>
-                              setForm((prev) => ({
-                                ...prev,
-                                startDate: event.target.value,
-                              }))
-                            }
-                            className={inputClass}
-                            required
-                          />
-                        </label>
-
-                        <label className="text-sm font-black text-white">
-                          End Date
-                          <input
-                            type="date"
-                            value={form.endDate}
-                            onChange={(event) =>
-                              setForm((prev) => ({
-                                ...prev,
-                                endDate: event.target.value,
-                              }))
-                            }
-                            className={inputClass}
-                            required
-                          />
-                        </label>
-                      </div>
-
-                      <label className="text-sm font-black text-white">
-                        Reason
-                        <textarea
-                          value={form.reason}
-                          onChange={(event) =>
-                            setForm((prev) => ({
-                              ...prev,
-                              reason: event.target.value,
-                            }))
-                          }
-                          rows={6}
-                          className={`${inputClass} resize-none`}
-                          placeholder="Write your reason for leave..."
-                          required
+                      <label className="mp-leave-filter-label" style={fontPoppins}>
+                        Date Covered
+                        <input
+                          type="date"
+                          value={historyDateFilter}
+                          onChange={(event) => setHistoryDateFilter(event.target.value)}
+                          className="mp-leave-filter-control"
                         />
                       </label>
 
+                      <label className="mp-leave-filter-label" style={fontPoppins}>
+                        Sort Filed
+                        <select
+                          value={historySortOrder}
+                          onChange={(event) => setHistorySortOrder(event.target.value)}
+                          className="mp-leave-filter-control"
+                        >
+                          <option value="newest">Newest First</option>
+                          <option value="oldest">Oldest First</option>
+                        </select>
+                      </label>
+
                       <button
-                        type="submit"
-                        disabled={leaveLoading}
-                        className="rounded-full bg-white px-6 py-3 text-sm font-black uppercase tracking-wide text-[#315b42] transition hover:bg-[#e7eee3] disabled:cursor-not-allowed disabled:opacity-70"
+                        type="button"
+                        onClick={clearHistoryFilters}
+                        className="mp-leave-clear-filter"
+                        style={fontMontserrat}
                       >
-                        {leaveLoading
-                          ? "Submitting..."
-                          : "Submit Leave Request"}
+                        Clear
                       </button>
                     </div>
-                  </form>
 
-                  <section className="overflow-hidden rounded-lg bg-[#294f35] shadow-[0_8px_20px_rgba(0,0,0,0.18)]">
-                    <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <h2 className="text-[24px] font-black text-white">
-                          My Leave History
-                        </h2>
-
-                        <p className="mt-1 text-[13px] font-semibold text-white/80">
-                          Track pending, approved, and rejected leave requests.
-                        </p>
-                      </div>
+                    <div className="mp-leave-history-count" style={fontPontano}>
+                      Showing <strong>{filteredLeaves.length}</strong> of <strong>{leaves.length}</strong> leave request{leaves.length === 1 ? "" : "s"}.
                     </div>
 
-                    <div className="overflow-x-auto p-4">
-                      <table className="min-w-full overflow-hidden rounded-lg text-left text-sm">
-                        <thead className="bg-[#f3f6f1] text-[#315b42]">
+                    <div className="mp-leave-table-wrap">
+                      <table className="mp-leave-table">
+                        <thead>
                           <tr>
-                            <th className="px-4 py-3 font-black">Type</th>
-                            <th className="px-4 py-3 font-black">Dates</th>
-                            <th className="px-4 py-3 font-black">Days</th>
-                            <th className="px-4 py-3 font-black">Status</th>
-                            <th className="px-4 py-3 font-black">HR Remarks</th>
-                            <th className="px-4 py-3 font-black">Filed</th>
+                            <th>Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>HR Remarks</th>
+                            <th>Filed</th>
                           </tr>
                         </thead>
 
-                        <tbody className="bg-white">
-                          {leaves.map((row) => (
-                            <tr
-                              key={row._id}
-                              className="border-t border-[#e7eee3] align-top"
-                            >
-                              <td className="px-4 py-3 font-black text-[#315b42]">
-                                {row.leaveType || "-"}
+                        <tbody>
+                          {filteredLeaves.map((row) => (
+                            <tr key={row._id}>
+                              <td>{row.leaveType || "-"}</td>
+                              <td>
+                                {formatDate(row.startDate)} - {formatDate(row.endDate)}
                               </td>
-
-                              <td className="px-4 py-3 font-semibold text-[#34483b]">
-                                {formatDate(row.startDate)} -{" "}
-                                {formatDate(row.endDate)}
-                              </td>
-
-                              <td className="px-4 py-3 font-semibold text-[#34483b]">
-                                {row.totalDays || 0}
-                              </td>
-
-                              <td className="px-4 py-3">
+                              <td>{row.totalDays || 0}</td>
+                              <td>
                                 <StatusBadge status={row.status} />
                               </td>
-
-                              <td className="max-w-[260px] px-4 py-3 font-semibold text-[#5f6f61]">
-                                {row.hrRemarks || "-"}
-                              </td>
-
-                              <td className="px-4 py-3 font-semibold text-[#5f6f61]">
-                                {formatDateTime(row.createdAt)}
-                              </td>
+                              <td>{row.hrRemarks || "-"}</td>
+                              <td>{formatDateTime(row.createdAt)}</td>
                             </tr>
                           ))}
 
                           {!leaveLoading && leaves.length === 0 ? (
                             <tr>
-                              <td
-                                colSpan={6}
-                                className="px-4 py-10 text-center font-semibold text-[#6b7a6d]"
-                              >
+                              <td colSpan={6} className="mp-leave-empty-row">
                                 No leave requests yet.
+                              </td>
+                            </tr>
+                          ) : null}
+
+                          {!leaveLoading && leaves.length > 0 && filteredLeaves.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="mp-leave-empty-row">
+                                No leave requests match the selected filters.
                               </td>
                             </tr>
                           ) : null}
 
                           {leaveLoading ? (
                             <tr>
-                              <td
-                                colSpan={6}
-                                className="px-4 py-10 text-center font-semibold text-[#6b7a6d]"
-                              >
+                              <td colSpan={6} className="mp-leave-empty-row">
                                 Loading leave requests...
                               </td>
                             </tr>
@@ -663,84 +1547,52 @@ export default function ManpowerEmployeeLeave() {
                     </div>
                   </section>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-[#d8ded5] bg-[#f7f9f5]">
-        <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
-          <div className="grid gap-2 md:grid-cols-[1fr_0.7fr_1.2fr_0.9fr_0.75fr] md:items-start">
-            <div>
-              <Link
-                to={EMPLOYEE_HOME_ROUTE}
-                className="flex items-center gap-2"
-              >
-                <img
-                  src={LOGO_IMAGE}
-                  alt="Manpower Logo"
-                  className="h-9 w-9 shrink-0 rounded-full object-contain"
-                />
-
-                <h3 className="text-[18px] font-black tracking-wide text-[#315b42]">
-                  MANPOWER
-                </h3>
-              </Link>
-            </div>
-
-            <FooterColumn title="Menu">
-              <Link
-                className="block hover:text-[#315b42]"
-                to={EMPLOYEE_HOME_ROUTE}
-              >
-                Home
-              </Link>
-
-              <Link
-                className="block hover:text-[#315b42]"
-                to={EMPLOYEE_PAYROLL_ROUTE}
-              >
-                Payroll
-              </Link>
-
-              <Link
-                className="block hover:text-[#315b42]"
-                to={EMPLOYEE_LEAVE_ROUTE}
-              >
-                Leave
-              </Link>
-
-              <Link
-                className="block hover:text-[#315b42]"
-                to={EMPLOYEE_PROFILE_ROUTE}
-              >
-                Profile
-              </Link>
-            </FooterColumn>
-
-            <FooterColumn title="Contact Information">
-              <p>ltc.tamis@gmail.com</p>
-              <p>lorengladisu@ltcmultiservices.com</p>
-              <p>09959808051 / 09516281271</p>
-            </FooterColumn>
-
-            <FooterColumn title="Address">
-              <p>2/F 544 Curie Street,</p>
-              <p>Palanan, Makati City</p>
-            </FooterColumn>
-
-            <FooterColumn title="Follow Us">
-              <p>Facebook</p>
-              <p>Email</p>
-              <p>LinkedIn</p>
-            </FooterColumn>
+      <footer className="mp-leave-footer">
+        <div className="mp-leave-container mp-leave-footer-grid">
+          <div>
+            <Link to={EMPLOYEE_HOME_ROUTE} className="mp-leave-logo">
+              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-leave-logo-icon" />
+              <div>
+                <h4 style={fontMontserrat}>LTC Manpower</h4>
+                <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
+              </div>
+            </Link>
           </div>
 
-          <div className="mt-1 flex flex-col gap-0.5 border-t border-[#d8ded5] pt-1 text-[9px] font-semibold text-[#4c6556] sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
-            <p>Developed by CRMS Tech Alliance</p>
-          </div>
+          <FooterColumn title="Menu">
+            <Link to={EMPLOYEE_HOME_ROUTE}>Home</Link>
+            <Link to={EMPLOYEE_PAYROLL_ROUTE}>Payroll</Link>
+            <Link to={EMPLOYEE_LEAVE_ROUTE}>Leave</Link>
+            <Link to={EMPLOYEE_PROFILE_ROUTE}>Profile</Link>
+          </FooterColumn>
+
+          <FooterColumn title="Contact Information">
+            <p>ltc.tamis@gmail.com</p>
+            <p>lorengladisu@ltcmultiservices.com</p>
+            <p>09959808051 / 09516281271</p>
+          </FooterColumn>
+
+          <FooterColumn title="Address">
+            <p>2/F 544 Curie Street,</p>
+            <p>Palanan, Makati City</p>
+          </FooterColumn>
+
+          <FooterColumn title="Follow Us">
+            <p>Facebook</p>
+            <p>Email</p>
+            <p>LinkedIn</p>
+          </FooterColumn>
+        </div>
+
+        <div className="mp-leave-container mp-leave-copyright">
+          <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+          <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
         </div>
       </footer>
     </div>

@@ -26,6 +26,668 @@ const EMPLOYEE_PROFILE_ROUTE = "/manpower-employee-profile";
 const COMPANY_NAME = "LTC Manpower Services";
 const COMPANY_ADDRESS = "2/F 544 Curie Street, Palanan, Makati City";
 
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
+const employeePayrollAssignmentStyles = `
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+  .ltc-trainee-home-page {
+    --green-950: #071f14;
+    --green-900: #0e3321;
+    --green-800: #174a30;
+    --green-700: #235f3e;
+    --footer-green: #082719;
+    --gold: #d7a84d;
+    --gold-soft: #f4d484;
+    --dark: #101828;
+    --muted: #667085;
+    --glass: rgba(255,255,255,.84);
+    --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+    --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+    --radius: 24px;
+    --ease: cubic-bezier(.22,1,.36,1);
+    min-height: 100vh;
+    color: var(--dark);
+    background:
+      radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+      radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+    line-height: 1.65;
+    letter-spacing: -.01em;
+    overflow-x: hidden;
+    font-family: "Inter", Arial, sans-serif;
+  }
+
+  .ltc-trainee-home-page * { box-sizing: border-box; }
+  .ltc-container { width: min(1180px, 92%); margin: auto; }
+
+  .ltc-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    background: var(--footer-green);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 10px 34px rgba(7,31,20,.14);
+    margin: 0;
+  }
+
+  .ltc-header .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-nav {
+    min-height: 76px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .ltc-logo {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: white;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    text-decoration: none;
+  }
+
+  .ltc-logo-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: white;
+    object-fit: cover;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+  }
+
+  .ltc-logo h1 {
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -.04em;
+    margin: 0;
+  }
+
+  .ltc-logo p {
+    font-size: 11px;
+    color: rgba(255,255,255,.72);
+    margin: 3px 0 0;
+  }
+
+  .ltc-desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .ltc-profile-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-nav-link {
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-radius: 999px;
+    transition: .25s var(--ease);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .ltc-nav-link:hover,
+  .ltc-nav-link.active {
+    color: white;
+    background: rgba(255,255,255,.13);
+    transform: translateY(-1px);
+  }
+
+  .ltc-profile-button {
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 14px 28px rgba(215,168,77,.18);
+  }
+
+  .ltc-menu-button {
+    display: none;
+    color: white;
+    border: 0;
+    background: rgba(255,255,255,.1);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  .ltc-menu-button svg { width: 24px; height: 24px; }
+
+  .ltc-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0,0,0,.42);
+  }
+
+  .ltc-sidebar-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: min(310px, 86vw);
+    background: white;
+    box-shadow: -20px 0 60px rgba(0,0,0,.25);
+    padding: 20px;
+  }
+
+  .ltc-sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(16,24,40,.1);
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .ltc-sidebar-title {
+    color: var(--green-950);
+    font-weight: 900;
+    letter-spacing: .14em;
+    font-size: 12px;
+  }
+
+  .ltc-sidebar-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 0;
+    background: #f2f4f7;
+    color: #101828;
+    cursor: pointer;
+  }
+
+  .ltc-sidebar-link {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #101828;
+    text-align: left;
+    border-radius: 14px;
+    padding: 13px 14px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .ltc-sidebar-link:hover,
+  .ltc-sidebar-link.active {
+    background: var(--green-800);
+    color: white;
+  }
+
+  .ltc-hero {
+    position: relative;
+    min-height: 360px;
+    overflow: hidden;
+    color: white;
+    background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+    display: flex;
+    align-items: center;
+  }
+
+  .ltc-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 12% 20%, rgba(244,212,132,.16), transparent 28%),
+      radial-gradient(circle at 90% 18%, rgba(35,95,62,.48), transparent 32%),
+      linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.90) 46%, rgba(12,64,39,.76) 100%);
+  }
+
+  .ltc-hero::after {
+    content: "";
+    position: absolute;
+    inset: -16% -10% -24% -10%;
+    z-index: 1;
+    background:
+      radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
+      radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
+      linear-gradient(135deg, rgba(3,24,15,.34), rgba(8,56,34,.08));
+    filter: blur(30px);
+    pointer-events: none;
+  }
+
+  .ltc-hero-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 76px 0 84px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: ltcAppleReveal .9s var(--ease) both;
+  }
+
+  .ltc-hero-title {
+    margin: 0 auto;
+    max-width: 940px;
+    font-size: clamp(42px, 6vw, 76px);
+    line-height: .98;
+    font-weight: 900;
+    letter-spacing: -.065em;
+    text-shadow: 0 8px 26px rgba(0,0,0,.22);
+  }
+
+  .ltc-hero-title span { color: var(--gold-soft); }
+
+  .ltc-hero-text {
+    max-width: 720px;
+    margin: 24px auto 0;
+    color: rgba(255,255,255,.80);
+    font-size: 18px;
+    line-height: 1.8;
+  }
+
+  .ltc-payroll-overview {
+    padding: 64px 0 84px;
+  }
+
+  .ltc-payroll-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px;
+    background: var(--glass);
+    border: 1px solid rgba(255,255,255,.82);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(18px);
+    padding: 28px;
+    animation: ltcAppleReveal .75s var(--ease) both;
+  }
+
+  .ltc-payroll-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+  }
+
+  .ltc-payroll-header-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 22px;
+    align-items: end;
+    padding-bottom: 22px;
+    border-bottom: 1px solid rgba(35,95,62,.12);
+  }
+
+  .ltc-payroll-title {
+    color: var(--green-950);
+    font-size: clamp(30px, 4vw, 46px);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -.055em;
+    margin: 0;
+  }
+
+  .ltc-payroll-subtitle {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .ltc-payroll-meta-row {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ltc-payroll-meta-row span {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: #eef4ef;
+    color: var(--green-800);
+    padding: 8px 13px;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .ltc-employee-card {
+    min-width: 260px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(8,39,25,.96), rgba(35,95,62,.9));
+    color: white;
+    padding: 22px;
+    box-shadow: 0 18px 45px rgba(8,39,25,.18);
+  }
+
+  .ltc-employee-label {
+    margin: 0;
+    color: var(--gold-soft);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  .ltc-employee-name {
+    margin: 7px 0 0;
+    font-size: 22px;
+    line-height: 1.15;
+    font-weight: 900;
+  }
+
+  .ltc-employee-email {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: rgba(255,255,255,.76);
+    word-break: break-word;
+  }
+
+  .ltc-payroll-tools {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: minmax(220px, 1.2fr) minmax(160px, .7fr) minmax(160px, .7fr) minmax(170px, .75fr) auto;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .ltc-payroll-search,
+  .ltc-payroll-filter {
+    width: 100%;
+    min-height: 54px;
+    border: 1px solid rgba(35,95,62,.18);
+    border-radius: 999px;
+    background: #fff;
+    padding: 0 22px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green-950);
+    outline: none;
+    transition: .28s var(--ease);
+    box-shadow: 0 12px 24px rgba(8,39,25,.06);
+  }
+
+  .ltc-payroll-search:focus,
+  .ltc-payroll-filter:focus {
+    border-color: rgba(215,168,77,.72);
+    box-shadow: 0 16px 34px rgba(8,39,25,.11);
+    transform: translateY(-1px);
+  }
+
+  .ltc-payroll-filter {
+    cursor: pointer;
+  }
+
+  .ltc-payroll-filter[type="date"] {
+    color-scheme: light;
+  }
+
+  .ltc-primary-button,
+  .ltc-outline-button {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0 22px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform .28s var(--ease), box-shadow .28s var(--ease), background .28s var(--ease), color .28s var(--ease);
+    text-decoration: none;
+  }
+
+  .ltc-primary-button {
+    border: 0;
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 16px 35px rgba(215,168,77,.24);
+  }
+
+  .ltc-outline-button {
+    border: 1px solid rgba(35,95,62,.18);
+    color: var(--green-950);
+    background: white;
+  }
+
+  .ltc-primary-button:hover,
+  .ltc-outline-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 45px rgba(8,39,25,.14);
+  }
+
+  .ltc-primary-button:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .ltc-payroll-list {
+    margin-top: 24px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, rgba(8,39,25,.96), rgba(35,95,62,.9));
+    box-shadow: var(--shadow-lg);
+    padding: 22px;
+    min-height: 430px;
+  }
+
+  .ltc-state-card {
+    border-radius: 22px;
+    background: white;
+    color: var(--muted);
+    padding: 42px 24px;
+    text-align: center;
+    font-weight: 800;
+    box-shadow: 0 14px 30px rgba(8,39,25,.10);
+  }
+
+  .ltc-state-card.error {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  .ltc-payroll-items {
+    display: grid;
+    gap: 14px;
+  }
+
+  .ltc-payroll-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    border-radius: 24px;
+    background: rgba(255,255,255,.94);
+    border: 1px solid rgba(255,255,255,.7);
+    padding: 20px;
+    box-shadow: 0 14px 30px rgba(8,39,25,.12);
+    transition: transform .32s var(--ease), box-shadow .32s var(--ease), border-color .32s var(--ease);
+  }
+
+  .ltc-payroll-item:hover {
+    transform: translateY(-5px);
+    border-color: rgba(215,168,77,.54);
+    box-shadow: 0 28px 60px rgba(8,39,25,.22);
+  }
+
+  .ltc-payroll-item-title {
+    color: var(--green-950);
+    font-size: 20px;
+    font-weight: 900;
+    margin: 0;
+  }
+
+  .ltc-payroll-item-text {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .ltc-payroll-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .ltc-footer {
+    width: 100%;
+    background: var(--footer-green);
+    color: white;
+    padding: 30px 0 12px;
+    margin: 0;
+  }
+
+  .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-footer-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.5fr .9fr 1fr 1.65fr .9fr;
+    gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .ltc-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-footer-brand img {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: white;
+    object-fit: contain;
+  }
+
+  .ltc-footer h4 {
+    color: white;
+    font-weight: 900;
+    font-size: 18px;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .ltc-footer h5 {
+    color: #f4d484;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin: 0 0 10px;
+  }
+
+  .ltc-footer p,
+  .ltc-footer a,
+  .ltc-footer-link {
+    display: block;
+    color: rgba(255,255,255,.68);
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 5px 0;
+    text-decoration: none;
+  }
+
+  .ltc-footer a:hover,
+  .ltc-footer-link:hover {
+    color: white;
+    text-decoration: underline;
+  }
+
+  .ltc-copyright {
+    width: 100%;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  @keyframes ltcAppleReveal {
+    from { opacity: 0; transform: translateY(34px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ltc-trainee-home-page *, .ltc-trainee-home-page *::before, .ltc-trainee-home-page *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: .001ms !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-header .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-nav { min-height: auto; padding: 18px 0; }
+    .ltc-desktop-nav, .ltc-profile-wrap { display: none; }
+    .ltc-menu-button { display: grid; place-items: center; }
+    .ltc-hero { min-height: 420px; }
+    .ltc-payroll-header-row, .ltc-payroll-tools, .ltc-payroll-item { grid-template-columns: 1fr; }
+    .ltc-employee-card { min-width: 0; }
+    .ltc-payroll-actions { justify-content: flex-start; }
+    .ltc-footer { padding: 28px 0 12px; }
+    .ltc-footer-grid { grid-template-columns: 1fr; gap: 18px; padding-bottom: 22px; }
+    .ltc-footer .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-copyright { flex-direction: column; }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-header .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-logo h1 { font-size: 14px; }
+    .ltc-logo p { font-size: 10px; }
+    .ltc-hero-title { font-size: clamp(38px, 12vw, 54px); letter-spacing: -.045em; }
+    .ltc-payroll-overview { padding: 42px 0 60px; }
+    .ltc-payroll-panel, .ltc-payroll-list { padding: 18px; border-radius: 24px; }
+    .ltc-primary-button, .ltc-outline-button { width: 100%; }
+    .ltc-footer .ltc-container { padding-left: 16px; padding-right: 16px; }
+  }
+`;
+
 const ATTENDANCE_FIELDS = [
   { key: "regularDays", label: "Regular Days", unit: "day/s" },
   { key: "regularHours", label: "Regular Hours", unit: "hour/s" },
@@ -80,11 +742,8 @@ function HeaderNavLink({ to, children, active = false }) {
   return (
     <Link
       to={to}
-      className={`relative pb-1 transition hover:text-[#6f8a66] ${
-        active
-          ? "text-[#315b42] after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-full after:rounded-full after:bg-[#315b42]"
-          : "text-[#405549]"
-      }`}
+      className={`ltc-nav-link ${active ? "active" : ""}`}
+      style={fontPoppins}
     >
       {children}
     </Link>
@@ -93,12 +752,9 @@ function HeaderNavLink({ to, children, active = false }) {
 
 function FooterColumn({ title, children }) {
   return (
-    <div className="border-[#d8ded5] md:border-l md:pl-4">
-      <h4 className="text-[12px] font-black text-[#315b42]">{title}</h4>
-
-      <div className="mt-1 space-y-0.5 text-[10px] font-semibold leading-snug text-[#496252]">
-        {children}
-      </div>
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
     </div>
   );
 }
@@ -963,6 +1619,57 @@ function buildSalarySlipHtml({ row, employee, employeeName, employeeEmail }) {
   `;
 }
 
+function getCutoffCycleValue(row) {
+  const computed = getComputed(row);
+  const rawValue = String(
+    computed?.payrollCycleLabel ||
+      computed?.payrollCycle ||
+      row?.payrollCycleLabel ||
+      row?.payrollCycle ||
+      row?.cutoffType ||
+      row?.cutoff ||
+      ""
+  ).toLowerCase();
+
+  if (
+    rawValue.includes("1st") ||
+    rawValue.includes("first") ||
+    rawValue === "1" ||
+    rawValue.includes("cycle 1") ||
+    rawValue.includes("cutoff 1")
+  ) {
+    return "first";
+  }
+
+  if (
+    rawValue.includes("2nd") ||
+    rawValue.includes("second") ||
+    rawValue === "2" ||
+    rawValue.includes("cycle 2") ||
+    rawValue.includes("cutoff 2")
+  ) {
+    return "second";
+  }
+
+  const cutoffStart = row?.cutoffStart ? new Date(row.cutoffStart) : null;
+
+  if (cutoffStart && !Number.isNaN(cutoffStart.getTime())) {
+    return cutoffStart.getDate() <= 15 ? "first" : "second";
+  }
+
+  return "unknown";
+}
+
+function getCutoffCycleLabel(row) {
+  const cycle = getCutoffCycleValue(row);
+
+  if (cycle === "first") return "1st Cutoff";
+  if (cycle === "second") return "2nd Cutoff";
+
+  const computed = getComputed(row);
+  return computed?.payrollCycleLabel || computed?.payrollCycle || "Cutoff";
+}
+
 function PayrollModal({
   row,
   employee,
@@ -1028,9 +1735,13 @@ export default function ManpowerEmployeePayroll() {
   const [rows, setRows] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [searchValue, setSearchValue] = useState("");
+  const [filterDate, setFilterDate] = useState("");
+  const [cutoffFilter, setCutoffFilter] = useState("all");
+  const [dateSort, setDateSort] = useState("newest");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const employeeName = useMemo(() => {
     const fullName = [
@@ -1105,19 +1816,27 @@ export default function ManpowerEmployeePayroll() {
 
   const filteredRows = useMemo(() => {
     const keyword = searchValue.trim().toLowerCase();
-    if (!keyword) return rows;
+    const selectedDate = filterDate ? new Date(`${filterDate}T00:00:00`) : null;
+    const selectedDateKey = selectedDate && !Number.isNaN(selectedDate.getTime())
+      ? formatDateKey(selectedDate)
+      : "";
 
-    return rows.filter((row) => {
+    const matchedRows = rows.filter((row) => {
       const computed = getComputed(row);
+      const displayDate = getDisplayDate(row);
+      const payrollDateKey = formatDateKey(displayDate);
+      const cutoffStartKey = formatDateKey(row?.cutoffStart);
+      const cutoffEndKey = formatDateKey(row?.cutoffEnd);
 
       const haystack = [
         formatDate(row?.cutoffStart),
         formatDate(row?.cutoffEnd),
-        formatDate(getDisplayDate(row)),
+        formatDate(displayDate),
         getPayrollDate(row),
         getCutoffPeriod(row),
         computed?.payrollCycle,
         computed?.payrollCycleLabel,
+        getCutoffCycleLabel(row),
         employeeName,
         employeeEmail,
       ]
@@ -1125,9 +1844,40 @@ export default function ManpowerEmployeePayroll() {
         .join(" ")
         .toLowerCase();
 
-      return haystack.includes(keyword);
+      const matchesKeyword = !keyword || haystack.includes(keyword);
+      const matchesDate =
+        !selectedDateKey ||
+        payrollDateKey === selectedDateKey ||
+        cutoffStartKey === selectedDateKey ||
+        cutoffEndKey === selectedDateKey;
+      const matchesCutoff =
+        cutoffFilter === "all" || getCutoffCycleValue(row) === cutoffFilter;
+
+      return matchesKeyword && matchesDate && matchesCutoff;
     });
-  }, [rows, searchValue, employeeName, employeeEmail]);
+
+    return [...matchedRows].sort((a, b) => {
+      const firstCycle = getCutoffCycleValue(a);
+      const secondCycle = getCutoffCycleValue(b);
+
+      if (cutoffFilter === "all" && firstCycle !== secondCycle) {
+        if (firstCycle === "first") return -1;
+        if (secondCycle === "first") return 1;
+        if (firstCycle === "second") return -1;
+        if (secondCycle === "second") return 1;
+      }
+
+      const firstDate = getDisplayDate(a) ? new Date(getDisplayDate(a)).getTime() : 0;
+      const secondDate = getDisplayDate(b) ? new Date(getDisplayDate(b)).getTime() : 0;
+      const dateDiff = dateSort === "oldest" ? firstDate - secondDate : secondDate - firstDate;
+
+      if (dateDiff !== 0) return dateDiff;
+
+      return dateSort === "oldest"
+        ? getRowTimestamp(a) - getRowTimestamp(b)
+        : getRowTimestamp(b) - getRowTimestamp(a);
+    });
+  }, [rows, searchValue, filterDate, cutoffFilter, dateSort, employeeName, employeeEmail]);
 
   function handleDownload(row) {
     const fileDate = formatDateKey(getDisplayDate(row)) || "payroll";
@@ -1143,228 +1893,303 @@ export default function ManpowerEmployeePayroll() {
   }
 
   return (
-    <div className="min-h-screen bg-[#eef2ea] font-sans text-[#24372d]">
-      <header className="sticky top-0 z-50 border-b border-[#d5ddd2] bg-[#f7f9f5]/95 backdrop-blur">
-        <div className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link to={EMPLOYEE_HOME_ROUTE} className="flex items-center gap-3">
-            <img
-              src={LOGO_IMAGE}
-              alt="Manpower Logo"
-              className="h-12 w-12 shrink-0 rounded-full object-contain"
-            />
+    <div className="ltc-trainee-home-page" style={fontPontano}>
+      <style>{employeePayrollAssignmentStyles}</style>
 
-            <span className="text-[24px] font-black tracking-wide text-[#315b42] sm:text-[28px]">
-              MANPOWER
-            </span>
-          </Link>
+      <header className="ltc-header">
+        <div className="ltc-container">
+          <div className="ltc-nav">
+            <Link to={EMPLOYEE_HOME_ROUTE} className="ltc-logo" aria-label="Manpower Employee Home">
+              <img
+                src={LOGO_IMAGE}
+                alt="Manpower Logo"
+                className="ltc-logo-icon"
+                onError={(event) => {
+                  event.currentTarget.src =
+                    "https://placehold.co/80x80/ffffff/45674b?text=M";
+                }}
+              />
+              <div>
+                <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
+                <p style={fontPontano}>Employee workforce portal.</p>
+              </div>
+            </Link>
 
-          <nav className="hidden items-center gap-9 text-[12px] font-black uppercase tracking-wide lg:flex">
-            <HeaderNavLink to={EMPLOYEE_HOME_ROUTE}>Home</HeaderNavLink>
+            <nav className="ltc-desktop-nav" aria-label="Employee navigation">
+              <HeaderNavLink to={EMPLOYEE_HOME_ROUTE}>Home</HeaderNavLink>
+              <HeaderNavLink to={EMPLOYEE_PAYROLL_ROUTE} active>
+                Payroll
+              </HeaderNavLink>
+              <HeaderNavLink to={EMPLOYEE_LEAVE_ROUTE}>Leave</HeaderNavLink>
+            </nav>
 
-            <HeaderNavLink to={EMPLOYEE_PAYROLL_ROUTE} active>
-              Payroll
-            </HeaderNavLink>
+            <div className="ltc-profile-wrap">
+              <Link
+                to={EMPLOYEE_PROFILE_ROUTE}
+                className="ltc-nav-link ltc-profile-button"
+                style={fontPoppins}
+              >
+                Profile
+              </Link>
+            </div>
 
-            <HeaderNavLink to={EMPLOYEE_LEAVE_ROUTE}>Leave</HeaderNavLink>
-          </nav>
-
-          <Link
-            to={EMPLOYEE_PROFILE_ROUTE}
-            className="text-[12px] font-black uppercase tracking-wide text-[#405549] transition hover:text-[#6f8a66]"
-          >
-            Profile
-          </Link>
-        </div>
-
-        <div className="border-t border-[#e1e7de] bg-[#f7f9f5] px-4 py-3 lg:hidden">
-          <nav className="mx-auto flex max-w-7xl items-center justify-center gap-7 text-[11px] font-black uppercase tracking-wide">
-            <HeaderNavLink to={EMPLOYEE_HOME_ROUTE}>Home</HeaderNavLink>
-
-            <HeaderNavLink to={EMPLOYEE_PAYROLL_ROUTE} active>
-              Payroll
-            </HeaderNavLink>
-
-            <HeaderNavLink to={EMPLOYEE_LEAVE_ROUTE}>Leave</HeaderNavLink>
-          </nav>
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="ltc-menu-button"
+              aria-label="Open menu"
+            >
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M4 7h16M4 12h16M4 17h16"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
+      {mobileOpen ? (
+        <div className="ltc-sidebar-overlay">
+          <div style={{ position: "absolute", inset: 0 }} onClick={() => setMobileOpen(false)} />
+
+          <div className="ltc-sidebar-panel">
+            <div className="ltc-sidebar-top">
+              <p className="ltc-sidebar-title" style={fontPoppins}>MENU</p>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="ltc-sidebar-close"
+                aria-label="Close menu"
+              >
+                ✕
+              </button>
+            </div>
+
+            <Link onClick={() => setMobileOpen(false)} to={EMPLOYEE_HOME_ROUTE} className="ltc-sidebar-link" style={fontPoppins}>
+              Home
+            </Link>
+            <Link onClick={() => setMobileOpen(false)} to={EMPLOYEE_PAYROLL_ROUTE} className="ltc-sidebar-link active" style={fontPoppins}>
+              Payroll
+            </Link>
+            <Link onClick={() => setMobileOpen(false)} to={EMPLOYEE_LEAVE_ROUTE} className="ltc-sidebar-link" style={fontPoppins}>
+              Leave
+            </Link>
+            <Link onClick={() => setMobileOpen(false)} to={EMPLOYEE_PROFILE_ROUTE} className="ltc-sidebar-link" style={fontPoppins}>
+              Profile
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       <main>
-        <section className="bg-[#0f3a1e] px-4 py-10 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-white/60">
-                  Payroll
-                </p>
+        <section className="ltc-hero">
+          <div className="ltc-container ltc-hero-content">
+            <h2 className="ltc-hero-title" style={fontMontserrat}>
+              Payroll <span>History</span>
+            </h2>
+            <p className="ltc-hero-text" style={fontPontano}>
+              View your salary slips, review cutoff periods, and download payroll records.
+            </p>
+          </div>
+        </section>
 
-                <h1 className="mt-3 text-3xl font-black uppercase leading-tight text-white sm:text-4xl">
-                  {employeeName}
-                </h1>
-
-                {employeeEmail ? (
-                  <p className="mt-1 text-sm font-bold text-white/80">
-                    {employeeEmail}
+        <section className="ltc-payroll-overview">
+          <div className="ltc-container">
+            <div className="ltc-payroll-panel">
+              <div className="ltc-payroll-header-row">
+                <div>
+                  <h1 className="ltc-payroll-title" style={fontMontserrat}>
+                    My Payroll
+                  </h1>
+                  <p className="ltc-payroll-subtitle" style={fontPoppins}>
                   </p>
-                ) : null}
 
-                <div className="mt-3 h-[2px] w-[420px] max-w-full bg-white/45" />
+                  <div className="ltc-payroll-meta-row">
+                    <span>Total Records: {rows.length}</span>
+                    <span>Showing: {filteredRows.length}</span>
+                    <span>Cutoff: {cutoffFilter === "first" ? "1st Cutoff" : cutoffFilter === "second" ? "2nd Cutoff" : "All Cutoffs"}</span>
+                  </div>
+                </div>
+
+                <div className="ltc-employee-card">
+                  <p className="ltc-employee-label" style={fontPoppins}>Employee</p>
+                  <h2 className="ltc-employee-name" style={fontMontserrat}>{employeeName}</h2>
+                  {employeeEmail ? (
+                    <p className="ltc-employee-email" style={fontPontano}>{employeeEmail}</p>
+                  ) : null}
+                </div>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="ltc-payroll-tools">
                 <input
                   type="text"
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder="Search payroll date"
-                  className="h-10 w-full rounded-full border border-white bg-white px-4 text-sm font-semibold text-[#315b42] outline-none placeholder:text-[#52695a] sm:w-[280px]"
+                  placeholder="Search payroll date or cutoff"
+                  className="ltc-payroll-search"
+                  style={fontPontano}
                 />
+
+                <input
+                  type="date"
+                  value={filterDate}
+                  onChange={(event) => setFilterDate(event.target.value)}
+                  className="ltc-payroll-filter"
+                  style={fontPoppins}
+                  aria-label="Filter salary slips by date"
+                />
+
+                <select
+                  value={cutoffFilter}
+                  onChange={(event) => setCutoffFilter(event.target.value)}
+                  className="ltc-payroll-filter"
+                  style={fontPoppins}
+                  aria-label="Sort salary slips by cutoff"
+                >
+                  <option value="all">All Cutoffs</option>
+                  <option value="first">1st Cutoff</option>
+                  <option value="second">2nd Cutoff</option>
+                </select>
+
+                <select
+                  value={dateSort}
+                  onChange={(event) => setDateSort(event.target.value)}
+                  className="ltc-payroll-filter"
+                  style={fontPoppins}
+                  aria-label="Sort salary slips by date"
+                >
+                  <option value="newest">Newest Date First</option>
+                  <option value="oldest">Oldest Date First</option>
+                </select>
 
                 <button
                   type="button"
                   onClick={() => loadPayroll(true)}
                   disabled={refreshing}
-                  className="h-10 rounded-full border-2 border-white bg-white px-6 text-xs font-black uppercase tracking-wide text-[#315b42] transition hover:bg-[#e7eee3] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="ltc-primary-button"
+                  style={fontMontserrat}
                 >
                   {refreshing ? "Refreshing..." : "Refresh"}
                 </button>
               </div>
+
+              <section className="ltc-payroll-list">
+                {loading ? (
+                  <div className="ltc-state-card" style={fontPoppins}>
+                    Loading payroll history...
+                  </div>
+                ) : null}
+
+                {!loading && error ? (
+                  <div className="ltc-state-card error" style={fontPoppins}>
+                    {error}
+                  </div>
+                ) : null}
+
+                {!loading && !error && filteredRows.length === 0 ? (
+                  <div className="ltc-state-card" style={fontPoppins}>
+                    No payroll history found.
+                  </div>
+                ) : null}
+
+                {!loading && !error && filteredRows.length > 0 ? (
+                  <div className="ltc-payroll-items">
+                    {filteredRows.map((row, index) => (
+                      <article
+                        key={row?._id || `${getRowKey(row)}-${index}`}
+                        className="ltc-payroll-item"
+                      >
+                        <div>
+                          <h2 className="ltc-payroll-item-title" style={fontMontserrat}>
+                            Salary Slip - {getPayrollDate(row)}
+                          </h2>
+
+                          <p className="ltc-payroll-item-text" style={fontPontano}>
+                            Cutoff: {getCutoffPeriod(row)}
+                          </p>
+
+                          <p className="ltc-payroll-item-text" style={fontPontano}>
+                            Cycle: {getCutoffCycleLabel(row)}
+                          </p>
+                        </div>
+
+                        <div className="ltc-payroll-actions">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRow(row)}
+                            className="ltc-primary-button"
+                            style={fontMontserrat}
+                          >
+                            View Salary Slip
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(row)}
+                            className="ltc-outline-button"
+                            style={fontMontserrat}
+                          >
+                            Download
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
             </div>
-
-            <section className="mt-8 min-h-[520px] rounded-3xl bg-[#294f35] p-5 shadow-xl sm:p-7">
-              {loading ? (
-                <div className="rounded-2xl bg-white px-5 py-10 text-center text-sm font-semibold text-[#52695a]">
-                  Loading payroll history...
-                </div>
-              ) : null}
-
-              {!loading && error ? (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-5 text-sm font-bold text-red-700">
-                  {error}
-                </div>
-              ) : null}
-
-              {!loading && !error && filteredRows.length === 0 ? (
-                <div className="rounded-2xl bg-white px-5 py-10 text-center text-sm font-semibold text-[#52695a]">
-                  No payroll history found.
-                </div>
-              ) : null}
-
-              {!loading && !error && filteredRows.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredRows.map((row, index) => (
-                    <div
-                      key={row?._id || `${getRowKey(row)}-${index}`}
-                      className="flex flex-col gap-4 rounded-2xl bg-[#f3f6f1] p-5 shadow-md sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <h2 className="text-xl font-black text-[#315b42]">
-                          Salary Slip - {getPayrollDate(row)}
-                        </h2>
-
-                        <p className="mt-1 text-sm font-semibold text-[#52695a]">
-                          Cutoff: {getCutoffPeriod(row)}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedRow(row)}
-                          className="rounded-xl bg-[#315b42] px-6 py-2 text-sm font-black text-white transition hover:bg-[#254934]"
-                        >
-                          View Salary Slip
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDownload(row)}
-                          className="rounded-xl border-2 border-[#315b42] px-6 py-2 text-sm font-black text-[#315b42] transition hover:bg-[#315b42] hover:text-white"
-                        >
-                          Download
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </section>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-[#d8ded5] bg-[#f7f9f5]">
-        <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
-          <div className="grid gap-2 md:grid-cols-[1fr_0.7fr_1.2fr_0.9fr_0.75fr] md:items-start">
-            <div>
-              <Link
-                to={EMPLOYEE_HOME_ROUTE}
-                className="flex items-center gap-2"
-              >
-                <img
-                  src={LOGO_IMAGE}
-                  alt="Manpower Logo"
-                  className="h-9 w-9 shrink-0 rounded-full object-contain"
-                />
-
-                <h3 className="text-[18px] font-black tracking-wide text-[#315b42]">
-                  MANPOWER
-                </h3>
-              </Link>
-            </div>
-
-            <FooterColumn title="Menu">
-              <Link
-                className="block hover:text-[#315b42]"
-                to={EMPLOYEE_HOME_ROUTE}
-              >
-                Home
-              </Link>
-
-              <Link
-                className="block hover:text-[#315b42]"
-                to={EMPLOYEE_PAYROLL_ROUTE}
-              >
-                Payroll
-              </Link>
-
-              <Link
-                className="block hover:text-[#315b42]"
-                to={EMPLOYEE_LEAVE_ROUTE}
-              >
-                Leave
-              </Link>
-
-              <Link
-                className="block hover:text-[#315b42]"
-                to={EMPLOYEE_PROFILE_ROUTE}
-              >
-                Profile
-              </Link>
-            </FooterColumn>
-
-            <FooterColumn title="Contact Information">
-              <p>ltc.tamis@gmail.com</p>
-              <p>lorengladisu@ltcmultiservices.com</p>
-              <p>09959808051 / 09516281271</p>
-            </FooterColumn>
-
-            <FooterColumn title="Address">
-              <p>2/F 544 Curie Street,</p>
-              <p>Palanan, Makati City</p>
-            </FooterColumn>
-
-            <FooterColumn title="Follow Us">
-              <p>Facebook</p>
-              <p>Email</p>
-              <p>LinkedIn</p>
-            </FooterColumn>
+      <footer className="ltc-footer">
+        <div className="ltc-container ltc-footer-grid">
+          <div>
+            <Link to={EMPLOYEE_HOME_ROUTE} className="ltc-footer-brand">
+              <img
+                src={LOGO_IMAGE}
+                alt="Manpower Logo"
+                onError={(event) => {
+                  event.currentTarget.src =
+                    "https://placehold.co/80x80/ffffff/4d6f55?text=M";
+                }}
+              />
+              <h4 style={fontMontserrat}>LTC Manpower</h4>
+            </Link>
           </div>
 
-          <div className="mt-1 flex flex-col gap-0.5 border-t border-[#d8ded5] pt-1 text-[9px] font-semibold text-[#4c6556] sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
-            <p>Developed by CRMS Tech Alliance</p>
-          </div>
+          <FooterColumn title="Menu">
+            <Link to={EMPLOYEE_HOME_ROUTE} style={fontPontano}>Home</Link>
+            <Link to={EMPLOYEE_PAYROLL_ROUTE} style={fontPontano}>Payroll</Link>
+            <Link to={EMPLOYEE_LEAVE_ROUTE} style={fontPontano}>Leave</Link>
+            <Link to={EMPLOYEE_PROFILE_ROUTE} style={fontPontano}>Profile</Link>
+          </FooterColumn>
+
+          <FooterColumn title="Contact Information">
+            <p style={fontPontano}>ltc.tamis@gmail.com</p>
+            <p style={fontPontano}>lorengladisu@ltcmultiservices.com</p>
+            <p style={fontPontano}>09959808051 / 09516281271</p>
+          </FooterColumn>
+
+          <FooterColumn title="Address">
+            <p style={fontPontano}>2/F 544 Curie Street,</p>
+            <p style={fontPontano}>Palanan, Makati City</p>
+          </FooterColumn>
+
+          <FooterColumn title="Follow Us">
+            <p style={fontPontano}>Facebook</p>
+            <p style={fontPontano}>Email</p>
+            <p style={fontPontano}>LinkedIn</p>
+          </FooterColumn>
+        </div>
+
+        <div className="ltc-container ltc-copyright">
+          <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+          <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
         </div>
       </footer>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import ProfessorLayout from "./ProfessorLayout";
 import {
   API_BASE,
   fetchJson,
@@ -126,30 +126,24 @@ function SummaryCard({ label, value }) {
 function ModalShell({ open, onClose, title, children, maxWidth = "max-w-6xl" }) {
   if (!open) return null;
 
+  const modalMaxWidth = maxWidth === "max-w-7xl" ? "1180px" : "1040px";
+
   return (
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 px-4 py-6"
-      onClick={onClose}
-    >
+    <div className="prof-modal-overlay" onClick={onClose}>
       <div
-        className={`w-full ${maxWidth} max-h-[90vh] overflow-hidden rounded-[28px] bg-white text-[#395345] shadow-2xl`}
+        className="prof-modal-box"
+        style={{ maxWidth: modalMaxWidth }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-[#e8ece2] px-6 py-4">
-          <h3 className="text-xl font-black">{title}</h3>
+        <div className="prof-modal-top">
+          <h3 className="prof-modal-title">{title}</h3>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-[#d7ddd0] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#395345]"
-          >
+          <button type="button" onClick={onClose} className="prof-modal-close">
             Close
           </button>
         </div>
 
-        <div className="max-h-[calc(90vh-80px)] overflow-y-auto p-6">
-          {children}
-        </div>
+        <div className="prof-modal-body">{children}</div>
       </div>
     </div>
   );
@@ -432,7 +426,6 @@ function PretestEvaluationModal({ open, onClose, trainee, progress }) {
 }
 
 export default function ProfessorProgress() {
-  const navigate = useNavigate();
   const storedProfessor = useMemo(() => getStoredProfessor(), []);
 
   const [allowedCourses] = useState(() =>
@@ -452,16 +445,7 @@ export default function ProfessorProgress() {
   const [selectedDetailTraineeId, setSelectedDetailTraineeId] = useState("");
   const [page, setPage] = useState(1);
 
-  const professorName = getProfessorName(storedProfessor);
-  const professorEmail = storedProfessor?.email || "traineemail@tamsi.com";
 
-  const menuItems = [
-    { label: "Dashboard", path: "/professor-dashboard" },
-    { label: "Manage Attendance", path: "/professor-attendance" },
-    { label: "Manage Assignment", path: "/professor-assessments" },
-    { label: "Manage Modules", path: "/professor-modules" },
-    { label: "Manage Progress", path: "/professor-progress" },
-  ];
 
   const courseOptions = useMemo(() => {
     if (!allowedCourses.length) return [];
@@ -712,267 +696,823 @@ export default function ProfessorProgress() {
     ? progressById[selectedDetailTraineeId] || null
     : null;
 
-  function handleLogout() {
-    localStorage.removeItem("professorToken");
-    localStorage.removeItem("professor");
-    localStorage.removeItem("professorUser");
-    localStorage.removeItem("storedProfessor");
 
-    navigate("/professor-login");
-  }
 
   return (
-    <div className="min-h-screen bg-[#12391f] font-sans text-white">
-      <header className="flex h-[88px] items-center bg-white px-6 shadow-sm md:px-10">
-        <div className="flex items-center gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#2d5238] bg-white text-sm font-black text-[#2d5238]">
-            LC
-          </div>
+    <ProfessorLayout
+      title="Manage Trainee Progress"
+      subtitle="Track trainee completion, review pre-test results, update competency checks, and issue certificates from one clean dashboard."
+      activePage="progress"
+      actions={
+        <button
+          type="button"
+          onClick={loadAll}
+          disabled={loading || !course}
+          className="inline-flex h-11 items-center justify-center rounded-full bg-[#082719] px-5 text-sm font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#071f14] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? "Refreshing..." : "Refresh"}
+        </button>
+      }
+    >
+      <div className="prof-progress-page">
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap");
 
-          <h1 className="text-xl font-black uppercase tracking-wide text-[#2d5238] md:text-3xl">
-            Training &amp; Assessment
-          </h1>
-        </div>
-      </header>
+        .prof-progress-page {
+          --green-950: #071f14;
+          --green-900: #082719;
+          --green-800: #12391f;
+          --green-700: #2d5038;
+          --green-600: #637967;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --paper: #f6f6f1;
+          --card: rgba(255,255,255,.96);
+          --muted: #667085;
+          --line: rgba(45,80,56,.16);
+          width: 100%;
+          color: #102418;
+          font-family: "Open Sans", Arial, sans-serif;
+        }
 
-      <div className="flex min-h-[calc(100vh-88px)] flex-col lg:flex-row">
-        <aside className="flex w-full flex-col bg-[#2d5038] lg:w-[267px]">
-          <div className="border-b border-white/15 px-6 py-8 text-center">
-            <div className="mx-auto h-[76px] w-[76px] rounded-full border-4 border-[#b7bbb6] bg-white shadow-sm" />
+        .prof-progress-page * { box-sizing: border-box; }
 
-            <h2 className="mt-5 text-base font-black uppercase leading-tight">
-              {professorName}
-            </h2>
+        .prof-top-header {
+          height: 86px;
+          display: flex;
+          align-items: center;
+          padding: 0 40px;
+          background: #ffffff;
+          box-shadow: 0 3px 16px rgba(0,0,0,.08);
+        }
 
-            <p className="mt-1 break-words text-xs font-semibold text-white/80">
-              {professorEmail}
-            </p>
-          </div>
+        .prof-top-brand {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+        }
 
-          <nav className="flex-1 py-6">
-            {menuItems.map((item) => {
-              const active = item.label === "Manage Progress";
+        .prof-top-logo {
+          width: 48px;
+          height: 48px;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          border-radius: 999px;
+          border: 2px solid var(--green-700);
+          background: #fff;
+          color: var(--green-700);
+          font-size: 13px;
+          font-weight: 900;
+        }
 
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => navigate(item.path)}
-                  className={`block w-full px-11 py-4 text-left text-sm font-black uppercase transition ${
-                    active
-                      ? "bg-[#d8e0da] text-[#1e3e2a]"
-                      : "text-white hover:bg-white/10"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
+        .prof-top-logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
 
-          <div className="px-20 pb-10">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm font-black uppercase text-white transition hover:text-[#d8e0da]"
-            >
-              Sign Out
-            </button>
-          </div>
-        </aside>
+        .prof-top-title {
+          margin: 0;
+          color: var(--green-700);
+          font-size: clamp(20px, 2.4vw, 30px);
+          line-height: 1;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .025em;
+        }
 
-        <main className="flex-1 bg-[#12391f] px-5 py-6 md:px-8 lg:px-8">
-          <section className="mx-auto max-w-[1040px]">
-            <div className="mb-7">
-              <h2 className="text-3xl font-black uppercase tracking-tight md:text-[34px]">
-                Manage Trainee Progress
-              </h2>
+        .prof-shell {
+          min-height: calc(100vh - 86px);
+          display: grid;
+          grid-template-columns: 264px minmax(0, 1fr);
+          background: var(--green-800);
+        }
 
-              <div className="mt-1 h-1 w-full max-w-[500px] bg-white/60" />
+        .prof-sidebar {
+          position: sticky;
+          top: 86px;
+          height: calc(100vh - 86px);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          background: var(--green-700);
+          color: #fff;
+        }
+
+        .prof-brand {
+          padding: 32px 24px 28px;
+          text-align: center;
+          border-bottom: 1px solid rgba(255,255,255,.15);
+        }
+
+        .prof-brand-logo {
+          display: block;
+          width: 74px;
+          height: 74px;
+          margin: 0 auto;
+          overflow: hidden;
+          border-radius: 999px;
+          border: 4px solid #b7bbb6;
+          background: white;
+          object-fit: cover;
+          box-shadow: 0 10px 20px rgba(0,0,0,.12);
+        }
+
+        .prof-brand-kicker,
+        .prof-brand-title,
+        .prof-user-label { display: none; }
+
+        .prof-user-card {
+          margin: 18px 0 0;
+          padding: 0;
+          text-align: center;
+          background: transparent;
+          border: 0;
+        }
+
+        .prof-user-name {
+          margin: 0;
+          color: #fff;
+          font-size: 16px;
+          line-height: 1.25;
+          font-weight: 900;
+          text-transform: uppercase;
+          overflow-wrap: anywhere;
+        }
+
+        .prof-user-email {
+          margin: 6px auto 0;
+          max-width: 210px;
+          color: rgba(255,255,255,.82);
+          font-size: 12px;
+          line-height: 1.35;
+          font-weight: 700;
+          overflow-wrap: anywhere;
+        }
+
+        .prof-nav {
+          flex: 1;
+          display: block;
+          margin: 0;
+          padding: 24px 0;
+        }
+
+        .prof-nav-btn {
+          width: 100%;
+          min-height: 52px;
+          display: block;
+          border: 0;
+          border-radius: 0;
+          padding: 0 48px;
+          background: transparent;
+          color: #fff;
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 900;
+          text-align: left;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: background .2s ease, color .2s ease;
+        }
+
+        .prof-nav-btn:hover {
+          background: rgba(255,255,255,.10);
+        }
+
+        .prof-nav-btn.active {
+          background: #d8e0da;
+          color: #1e3e2a;
+        }
+
+        .prof-nav-icon,
+        .prof-nav-svg { display: none; }
+
+        .prof-sidebar-footer {
+          padding: 0 48px 40px;
+          border-top: 0;
+        }
+
+        .prof-signout {
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 0;
+          border: 0;
+          background: transparent;
+          color: #fff;
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 900;
+          text-align: left;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: color .2s ease;
+        }
+
+        .prof-signout:hover { color: #d8e0da; }
+        .prof-copy { display: none; }
+
+        .prof-progress-content {
+          min-width: 0;
+          color: #102418;
+        }
+
+        .prof-page-head {
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 18px;
+          max-width: 1040px;
+          margin: 0 auto 20px;
+        }
+
+        .prof-eyebrow {
+          display: none;
+        }
+
+        .prof-title {
+          margin: 0;
+          color: #fff;
+          font-size: clamp(28px, 3.4vw, 34px);
+          line-height: 1.1;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: -.02em;
+        }
+
+        .prof-title::after {
+          content: "";
+          display: block;
+          width: min(430px, 100%);
+          height: 4px;
+          margin-top: 6px;
+          background: rgba(255,255,255,.60);
+        }
+
+        .prof-subtitle {
+          margin: 18px 0 0;
+          max-width: 760px;
+          color: rgba(255,255,255,.86);
+          font-size: 14px;
+          font-weight: 700;
+          line-height: 1.65;
+        }
+
+        .prof-alert {
+          margin: 0 0 18px;
+          border-radius: 14px;
+          padding: 14px 16px;
+          font-size: 13px;
+          font-weight: 800;
+          border: 1px solid rgba(255,255,255,.2);
+        }
+        .prof-alert.success { background: #effaf1; color: #1f7a3d; }
+        .prof-alert.error { background: #fff1f2; color: #b42318; }
+
+        .prof-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 20px;
+          margin-bottom: 24px;
+        }
+
+        .prof-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: 24px;
+          background: #fff;
+          border: 1px solid rgba(255,255,255,.80);
+          box-shadow: 0 18px 45px rgba(8,39,25,.10);
+          ring: 1px solid rgba(0,0,0,.05);
+        }
+
+        .prof-card::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 5px;
+          background: linear-gradient(90deg, var(--green-700), var(--gold));
+        }
+
+        .prof-stat {
+          min-height: 132px;
+          padding: 24px;
+        }
+        .prof-stat-label {
+          margin: 0;
+          color: rgba(16,24,40,.46);
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+        }
+        .prof-stat-value {
+          margin: 12px 0 0;
+          color: var(--green-950);
+          font-size: 32px;
+          line-height: 1;
+          font-weight: 900;
+        }
+        .prof-stat-note {
+          margin: 8px 0 0;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .prof-filter-card { padding: 24px; margin-bottom: 24px; }
+        .prof-filter-row {
+          display: grid;
+          grid-template-columns: minmax(190px, .7fr) minmax(280px, 1fr) auto;
+          gap: 14px;
+          align-items: end;
+        }
+        .prof-field label {
+          display: block;
+          margin-bottom: 8px;
+          color: var(--green-950);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+        }
+        .prof-input, .prof-select {
+          width: 100%;
+          height: 46px;
+          border: 1px solid rgba(45,80,56,.16);
+          border-radius: 999px;
+          background: rgba(246,246,241,.9);
+          color: var(--green-950);
+          padding: 0 18px;
+          font-size: 13px;
+          font-weight: 800;
+          outline: none;
+          font-family: inherit;
+          transition: .22s ease;
+        }
+        .prof-input:focus, .prof-select:focus {
+          background: #fff;
+          border-color: var(--green-700);
+          box-shadow: 0 0 0 4px rgba(45,80,56,.10);
+        }
+
+        .prof-btn {
+          min-height: 38px;
+          border: 0;
+          border-radius: 999px;
+          padding: 0 18px;
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: .22s ease;
+          white-space: nowrap;
+        }
+        .prof-btn:hover:not(:disabled) { transform: translateY(-2px); }
+        .prof-btn:disabled { opacity: .58; cursor: not-allowed; }
+        .prof-btn-green { background: var(--green-700); color: #fff; }
+        .prof-btn-gold { background: linear-gradient(135deg, #f4d484, #d7a84d); color: #102418; }
+        .prof-btn-light { background: #fff; color: var(--green-700); border: 1px solid rgba(45,80,56,.18); }
+
+        .prof-table-card { padding: 0; }
+        .prof-table-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          padding: 22px 24px 16px;
+        }
+        .prof-table-title p {
+          margin: 0;
+          color: rgba(16,24,40,.46);
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+        }
+        .prof-table-title h2 {
+          margin: 8px 0 0;
+          color: var(--green-950);
+          font-size: 26px;
+          font-weight: 900;
+          letter-spacing: -.025em;
+        }
+        .prof-table-wrap { overflow-x: auto; }
+        .prof-table { width: 100%; min-width: 960px; border-collapse: separate; border-spacing: 0; }
+        .prof-table th {
+          padding: 15px 18px;
+          background: #f8f7f2;
+          border-top: 1px solid var(--line);
+          border-bottom: 1px solid var(--line);
+          color: rgba(16,24,40,.52);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: .16em;
+          text-align: left;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        .prof-table td {
+          padding: 16px 18px;
+          border-bottom: 1px solid var(--line);
+          color: #25372c;
+          font-size: 13px;
+          font-weight: 700;
+          vertical-align: middle;
+        }
+        .prof-table tbody tr:hover { background: rgba(45,80,56,.04); }
+        .prof-avatar {
+          width: 42px;
+          height: 42px;
+          border-radius: 999px;
+          background: linear-gradient(145deg, #eef8f2, #fff);
+          border: 1px solid rgba(45,80,56,.14);
+          color: var(--green-700);
+          display: grid;
+          place-items: center;
+          font-size: 12px;
+          font-weight: 900;
+        }
+        .prof-name { color: var(--green-950); font-size: 14px; font-weight: 900; }
+        .prof-muted { margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+        .prof-progress-track { width: 100%; min-width: 120px; height: 10px; border-radius: 999px; background: #e9eee8; overflow: hidden; }
+        .prof-progress-bar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green-700), var(--gold)); }
+        .prof-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 28px;
+          min-width: 74px;
+          border-radius: 999px;
+          border: 1px solid rgba(45,80,56,.14);
+          background: #f6f8f4;
+          color: var(--green-700);
+          padding: 0 12px;
+          font-size: 11px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+        .prof-action-btn {
+          width: 78px;
+          height: 34px;
+          border: 1px solid rgba(45,80,56,.18);
+          border-radius: 999px;
+          background: #fff;
+          color: var(--green-700);
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: .2s ease;
+        }
+        .prof-action-btn:hover { background: var(--green-700); color: #fff; transform: translateY(-1px); }
+        .prof-empty, .prof-loading-row { padding: 42px 20px; color: var(--muted); text-align: center; font-size: 14px; font-weight: 700; }
+        .prof-skeleton { height: 14px; border-radius: 999px; background: linear-gradient(90deg, #edf1ec, #fff, #edf1ec); }
+        .prof-pagination {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 16px 24px;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 800;
+        }
+        .prof-page-actions { display: flex; gap: 8px; }
+
+        .prof-modal-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0,0,0,.58);
+          padding: 20px;
+        }
+        .prof-modal-box {
+          width: min(100%, 1040px);
+          max-height: 90vh;
+          overflow: hidden;
+          border-radius: 24px;
+          background: #fff;
+          box-shadow: 0 30px 90px rgba(0,0,0,.34);
+        }
+        .prof-modal-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          padding: 18px 24px;
+          border-bottom: 1px solid rgba(45,80,56,.12);
+          background: rgba(248,250,247,.92);
+        }
+        .prof-modal-title { margin: 0; color: var(--green-950); font-size: 20px; font-weight: 900; }
+        .prof-modal-close {
+          min-width: 92px;
+          height: 38px;
+          border-radius: 999px;
+          border: 1px solid rgba(45,80,56,.18);
+          background: #fff;
+          color: var(--green-700);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: .14em;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+        .prof-modal-close:hover { background: var(--green-700); color: #fff; }
+        .prof-modal-body { max-height: calc(90vh - 75px); overflow-y: auto; padding: 22px; color: #102418; }
+
+        .prof-detail-shell { display: grid; gap: 18px; }
+        .prof-detail-hero,
+        .prof-detail-card,
+        .prof-detail-panel,
+        .prof-competency-card,
+        .prof-remarks-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: 20px;
+          background: rgba(255,255,255,.96);
+          border: 1px solid rgba(16,24,40,.08);
+          box-shadow: 0 12px 30px rgba(8,39,25,.07);
+        }
+        .prof-detail-hero::before,
+        .prof-detail-panel::before,
+        .prof-detail-card::before,
+        .prof-competency-card::before,
+        .prof-remarks-card::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 5px;
+          background: linear-gradient(90deg, var(--green-700), var(--gold));
+        }
+        .prof-detail-hero { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 24px; align-items: stretch; }
+        .prof-detail-name { margin: 0; color: var(--green-950); font-size: clamp(24px, 3vw, 34px); line-height: 1.05; font-weight: 900; }
+        .prof-detail-email { margin: 8px 0 0; color: var(--muted); font-size: 14px; font-weight: 700; }
+        .prof-detail-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+        .prof-detail-action-card { border-radius: 18px; background: #f8faf7; border: 1px solid rgba(45,80,56,.12); padding: 18px; }
+        .prof-detail-small-title, .prof-detail-section-title { margin: 0; color: rgba(16,24,40,.52); font-size: 11px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+        .prof-detail-action-card p, .prof-detail-panel p { margin: 10px 0 0; color: var(--muted); font-size: 13px; font-weight: 700; line-height: 1.65; }
+        .prof-detail-action-btn, .prof-detail-view-btn { min-height: 40px; border: 0; border-radius: 999px; padding: 0 16px; background: var(--green-700); color: #fff; font-family: inherit; font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+        .prof-detail-action-btn { width: 100%; margin-top: 16px; }
+        .prof-detail-view-btn { min-width: 180px; }
+        .prof-detail-action-btn:disabled, .prof-detail-view-btn:disabled { opacity: .58; cursor: not-allowed; }
+        .prof-detail-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+        .prof-detail-card { min-height: 108px; padding: 24px 22px 18px; }
+        .prof-detail-card-value { margin: 12px 0 0; color: var(--green-950); font-size: 21px; line-height: 1.15; font-weight: 900; overflow-wrap: anywhere; }
+        .prof-detail-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 22px 24px; }
+        .prof-remaining { background: #fff8e8; border-color: rgba(215,168,77,.32); }
+        .prof-remaining .prof-detail-section-title { color: #8a6b00; }
+        .prof-remaining-list { margin-top: 10px; display: grid; gap: 6px; color: #6f5b17; font-size: 13px; font-weight: 700; }
+        .prof-competency-stack { display: grid; gap: 16px; }
+        .prof-competency-card { padding: 22px 24px 24px; }
+        .prof-competency-title { margin: 0; color: var(--green-950); font-size: 17px; font-weight: 900; }
+        .prof-competency-grid { margin-top: 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .prof-competency-item { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 12px; align-items: start; min-height: 58px; border-radius: 16px; background: #f8faf7; border: 1px solid rgba(45,80,56,.12); padding: 13px 14px; }
+        .prof-competency-check { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--green-700); }
+        .prof-competency-label { color: var(--green-950); font-size: 13px; font-weight: 800; line-height: 1.45; overflow-wrap: anywhere; }
+        .prof-competency-code { display: block; margin-top: 4px; color: rgba(16,24,40,.50); font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; overflow-wrap: anywhere; }
+        .prof-remarks-card { padding: 22px 24px 24px; }
+        .prof-remarks-area { margin-top: 12px; width: 100%; min-height: 96px; resize: vertical; border: 1px solid rgba(45,80,56,.16); border-radius: 18px; background: #f8faf7; color: var(--green-950); padding: 14px 16px; font-size: 13px; font-weight: 700; line-height: 1.6; outline: none; font-family: inherit; }
+        .prof-detail-empty { border-radius: 20px; background: rgba(255,255,255,.96); border: 1px solid rgba(16,24,40,.08); padding: 24px; color: var(--muted); font-size: 14px; font-weight: 700; text-align: center; }
+
+        @media (max-width: 1100px) {
+          .prof-shell { grid-template-columns: 1fr; }
+          .prof-sidebar { position: static; height: auto; }
+          .prof-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .prof-nav-btn { padding: 0 24px; }
+          .prof-sidebar-footer { padding: 16px 24px 28px; }
+          .prof-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .prof-filter-row { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 720px) {
+          .prof-top-header { height: auto; padding: 18px 20px; }
+          .prof-shell { min-height: auto; }
+          .prof-progress-content { padding: 20px 16px; }
+          .prof-page-head { flex-direction: column; align-items: stretch; }
+          .prof-stats-grid { grid-template-columns: 1fr; }
+          .prof-nav { grid-template-columns: 1fr; }
+          .prof-detail-hero, .prof-detail-panel { grid-template-columns: 1fr; }
+          .prof-detail-stat-grid { grid-template-columns: 1fr; }
+          .prof-detail-view-btn { width: 100%; min-width: 0; }
+          .prof-competency-grid { grid-template-columns: 1fr; }
+          .prof-modal-top { flex-direction: column; align-items: stretch; }
+          .prof-modal-close { width: 100%; }
+        }
+
+      `}</style>
+
+
+        <div className="prof-progress-content">
+          {msg.text ? (
+            <div className={`prof-alert ${msg.type === "success" ? "success" : "error"}`}>
+              {msg.text}
             </div>
+          ) : null}
 
-            {msg.text ? (
-              <div
-                className={`mb-5 rounded-xl px-4 py-3 text-sm font-bold ring-1 ${
-                  msg.type === "success"
-                    ? "bg-green-50 text-green-800 ring-green-200"
-                    : "bg-red-50 text-red-800 ring-red-200"
-                }`}
+          <section className="prof-stats-grid">
+            <article className="prof-card prof-stat">
+              <p className="prof-stat-label">Trainees</p>
+              <p className="prof-stat-value">{trainees.length}</p>
+              <p className="prof-stat-note">Loaded records</p>
+            </article>
+
+            <article className="prof-card prof-stat">
+              <p className="prof-stat-label">Visible</p>
+              <p className="prof-stat-value">{sortedTrainees.length}</p>
+              <p className="prof-stat-note">After search filter</p>
+            </article>
+
+            <article className="prof-card prof-stat">
+              <p className="prof-stat-label">Eligible</p>
+              <p className="prof-stat-value">
+                {Object.values(progressById).filter((item) => item?.isEligibleForCompletion).length}
+              </p>
+              <p className="prof-stat-note">Ready for completion</p>
+            </article>
+
+            <article className="prof-card prof-stat">
+              <p className="prof-stat-label">Courses</p>
+              <p className="prof-stat-value">{courseOptions.length || 0}</p>
+              <p className="prof-stat-note">Assigned course filters</p>
+            </article>
+          </section>
+
+          <section className="prof-card prof-filter-card">
+            <div className="prof-filter-row">
+              <div className="prof-field">
+                <label>Course</label>
+                <select
+                  value={course}
+                  onChange={(e) => setCourse(e.target.value)}
+                  disabled={courseOptions.length <= 1}
+                  className="prof-select"
+                >
+                  {!courseOptions.length ? (
+                    <option value="">No assigned course</option>
+                  ) : (
+                    courseOptions.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div className="prof-field">
+                <label>Search</label>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="prof-input"
+                  placeholder="Search trainee, email, course, status, or progress"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={loadAll}
+                disabled={loading || !course}
+                className="prof-btn prof-btn-gold"
               >
-                {msg.text}
+                {loading ? "Loading..." : "Update List"}
+              </button>
+            </div>
+          </section>
+
+          <section className="prof-card prof-table-card">
+            <div className="prof-table-head">
+              <div className="prof-table-title">
+                <p>Trainee Records</p>
+                <h2>Trainee Progress</h2>
               </div>
-            ) : null}
-
-            <div className="mb-9 rounded-lg bg-[#2d5038] px-5 py-4 shadow-sm">
-              <div className="grid gap-5 lg:grid-cols-[260px_1fr_auto] lg:items-end">
-                <div>
-                  <label className="text-base font-black uppercase text-white">
-                    Course
-                  </label>
-
-                  <select
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    disabled={courseOptions.length <= 1}
-                    className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none disabled:bg-white/80"
-                  >
-                    {!courseOptions.length ? (
-                      <option value="">No assigned course</option>
-                    ) : (
-                      courseOptions.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-base font-black uppercase text-white">
-                    Search
-                  </label>
-
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none"
-                    placeholder=""
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={loadAll}
-                  disabled={loading || !course}
-                  className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {loading ? "Loading..." : "Refresh"}
-                </button>
-              </div>
+              <span className="prof-pill">{sortedTrainees.length} Record{sortedTrainees.length === 1 ? "" : "s"}</span>
             </div>
 
-            <div className="overflow-hidden rounded-lg bg-[#2d5038] shadow-sm">
-              <div className="bg-white px-4 py-4">
-                <h3 className="text-lg font-black text-[#2d5038]">
-                  Trainee Progress
-                </h3>
-              </div>
+            <div className="prof-table-wrap">
+              <table className="prof-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "70px" }}>Photo</th>
+                    <th>Trainee</th>
+                    <th>Email</th>
+                    <th>Course</th>
+                    <th>Progress</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: "center", width: "120px" }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    [1, 2, 3].map((item) => (
+                      <tr key={item}>
+                        <td><div className="prof-avatar" /></td>
+                        <td><div className="prof-skeleton" /></td>
+                        <td><div className="prof-skeleton" /></td>
+                        <td><div className="prof-skeleton" /></td>
+                        <td><div className="prof-skeleton" /></td>
+                        <td><div className="prof-skeleton" /></td>
+                        <td><div className="prof-skeleton" /></td>
+                      </tr>
+                    ))
+                  ) : paginatedTrainees.length ? (
+                    paginatedTrainees.map((trainee) => {
+                      const traineeId = getTraineeId(trainee);
+                      const progress = progressById[traineeId];
+                      const progressPercent = Number(progress?.progressPercent || 0);
+                      const status =
+                        trainee?.certificateStatus === "issued"
+                          ? "Certificate Issued"
+                          : trainee?.trainingStatus || "Enrolled";
+                      const traineeName = getTraineeName(trainee);
 
-              <div className="min-h-[372px] divide-y divide-white/25">
-                {loading ? (
-                  [1, 2].map((item) => (
-                    <div
-                      key={item}
-                      className="grid gap-4 px-3 py-4 md:grid-cols-[64px_1.25fr_1.25fr_.85fr_.8fr_110px_90px] md:items-center"
-                    >
-                      <div className="h-11 w-11 rounded-full bg-white" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-5 rounded-full bg-[#bdf0a4]" />
-                      <div className="h-5 rounded-full bg-white" />
-                    </div>
-                  ))
-                ) : paginatedTrainees.length ? (
-                  paginatedTrainees.map((trainee) => {
-                    const traineeId = getTraineeId(trainee);
-                    const progress = progressById[traineeId];
-                    const progressPercent = Number(progress?.progressPercent || 0);
-                    const status =
-                      trainee?.certificateStatus === "issued"
-                        ? "Certificate Issued"
-                        : trainee?.trainingStatus || "Enrolled";
-
-                    return (
-                      <div
-                        key={traineeId}
-                        className="grid gap-4 px-3 py-4 text-sm font-black md:grid-cols-[64px_1.25fr_1.25fr_.85fr_.8fr_110px_90px] md:items-center"
-                      >
-                        <div className="h-11 w-11 rounded-full bg-white" />
-
-                        <div className="text-white">{getTraineeName(trainee)}</div>
-
-                        <div className="break-words text-white/90">
-                          {getTraineeEmail(trainee)}
-                        </div>
-
-                        <div className="text-white/90">
-                          {getTraineeCourse(trainee)}
-                        </div>
-
-                        <div className="text-white/90">Progress</div>
-
-                        <div>
-                          <span
-                            className={`inline-flex min-w-[92px] justify-center rounded-full px-3 py-1 text-[10px] font-black ${progressPillClass(
-                              progress
-                            )}`}
-                          >
-                            {progressPercent}%
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDetailTraineeId(traineeId)}
-                          className="inline-flex min-w-[84px] justify-center rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038] transition hover:bg-[#eef1e7]"
-                          title={status}
-                        >
-                          View
-                        </button>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="px-5 py-12 text-center text-sm font-bold text-white/80">
-                    No trainees found for the current course filter.
-                  </div>
-                )}
-              </div>
+                      return (
+                        <tr key={traineeId}>
+                          <td>
+                            <div className="prof-avatar">
+                              {traineeName
+                                .split(" ")
+                                .filter(Boolean)
+                                .slice(0, 2)
+                                .map((part) => part[0])
+                                .join("")
+                                .toUpperCase() || "T"}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="prof-name">{traineeName}</div>
+                          </td>
+                          <td>
+                            <div className="prof-muted">{getTraineeEmail(trainee)}</div>
+                          </td>
+                          <td>{getTraineeCourse(trainee)}</td>
+                          <td>
+                            <div className="flex items-center gap-3">
+                              <div className="prof-progress-track">
+                                <div
+                                  className="prof-progress-bar"
+                                  style={{ width: `${Math.max(0, Math.min(100, progressPercent))}%` }}
+                                />
+                              </div>
+                              <span className="prof-pill">{progressPercent}%</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="prof-pill">{status}</span>
+                          </td>
+                          <td style={{ textAlign: "center" }}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDetailTraineeId(traineeId)}
+                              className="prof-action-btn"
+                              title={status}
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="prof-empty">
+                        No trainees found for the current course filter.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
-            <div className="mt-5 flex items-center justify-between px-2 text-base font-bold">
-              <div>
-                Page {page} / {totalPages}
-              </div>
-
-              <div className="flex items-center gap-5">
+            <div className="prof-pagination">
+              <span>Page {page} of {totalPages}</span>
+              <div className="prof-page-actions">
                 <button
                   type="button"
                   onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   disabled={page <= 1}
-                  className="text-3xl leading-none text-white disabled:opacity-30"
-                  aria-label="Previous page"
+                  className="prof-btn prof-btn-light"
                 >
-                  ‹
+                  Previous
                 </button>
-
                 <button
                   type="button"
                   onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                   disabled={page >= totalPages}
-                  className="font-black text-white disabled:opacity-30"
+                  className="prof-btn prof-btn-green"
                 >
-                  Next Page
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
-                  className="text-3xl leading-none text-white disabled:opacity-30"
-                  aria-label="Next page"
-                >
-                  ›
+                  Next
                 </button>
               </div>
             </div>
           </section>
-        </main>
-      </div>
+        </div>
 
       <ModalShell
         open={Boolean(detailTrainee)}
@@ -1002,171 +1542,154 @@ export default function ProfessorProgress() {
               Array.isArray(pretest?.results) && pretest.results.length > 0;
 
             return (
-              <div className="space-y-6">
-                <div className="rounded-2xl bg-[#f7f8f3] p-5 ring-1 ring-[#e2e8da]">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <div className="text-2xl font-black text-[#395345]">
-                        {getTraineeName(trainee)}
-                      </div>
+              <div className="prof-detail-shell">
+                <section className="prof-detail-hero">
+                  <div>
+                    <h2 className="prof-detail-name">{getTraineeName(trainee)}</h2>
+                    <p className="prof-detail-email">{getTraineeEmail(trainee)}</p>
 
-                      <div className="mt-1 text-sm text-[#647166]">
-                        {getTraineeEmail(trainee)}
-                      </div>
+                    <div className="prof-detail-badges">
+                      <Badge tone={getProgressTone(progress)}>
+                        Progress {Number(progress?.progressPercent || 0)}%
+                      </Badge>
 
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Badge tone={getProgressTone(progress)}>
-                          Progress {Number(progress?.progressPercent || 0)}%
-                        </Badge>
+                      <Badge
+                        tone={
+                          trainee?.certificateStatus === "issued"
+                            ? "blue"
+                            : "default"
+                        }
+                      >
+                        {trainee?.certificateStatus === "issued"
+                          ? "Certificate Issued"
+                          : trainee?.trainingStatus || "Enrolled"}
+                      </Badge>
 
-                        <Badge
-                          tone={
-                            trainee?.certificateStatus === "issued"
-                              ? "blue"
-                              : "default"
-                          }
+                      <Badge tone={pretest?.completed ? "green" : "yellow"}>
+                        {pretest?.completed
+                          ? `Pre-test ${Number(pretest?.scorePercent || 0)}%`
+                          : "Pre-test Pending"}
+                      </Badge>
+
+                      {pretest?.completed ? (
+                        <span
+                          className={`rounded-full px-3 py-1 text-[11px] font-black ring-1 ${learningPathBadgeClass(
+                            pretest?.learningPathLevel
+                          )}`}
                         >
-                          {trainee?.certificateStatus === "issued"
-                            ? "Certificate Issued"
-                            : trainee?.trainingStatus || "Enrolled"}
-                        </Badge>
+                          {learningPathLabel(pretest?.learningPathLevel)}
+                        </span>
+                      ) : null}
 
-                        <Badge tone={pretest?.completed ? "green" : "yellow"}>
-                          {pretest?.completed
-                            ? `Pre-test ${Number(pretest?.scorePercent || 0)}%`
-                            : "Pre-test Pending"}
-                        </Badge>
-
-                        {pretest?.completed ? (
-                          <span
-                            className={`rounded-full px-3 py-1 text-[11px] font-black ring-1 ${learningPathBadgeClass(
-                              pretest?.learningPathLevel
-                            )}`}
-                          >
-                            {learningPathLabel(pretest?.learningPathLevel)}
-                          </span>
-                        ) : null}
-
-                        <Badge
-                          tone={
-                            progress?.isEligibleForCompletion
-                              ? "green"
-                              : "yellow"
-                          }
-                        >
-                          {progress?.isEligibleForCompletion
-                            ? "Eligible for Completion"
-                            : "Not Yet Complete"}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="w-full lg:max-w-[260px]">
-                      <div className="rounded-2xl bg-white p-4 ring-1 ring-[#e2e8da]">
-                        <div className="text-xs font-black uppercase tracking-[0.14em] text-[#6f7c71]">
-                          Completion Action
-                        </div>
-
-                        <div className="mt-3 text-sm leading-6 text-[#647166]">
-                          Mark this trainee as completed and issue the certificate
-                          once all requirements are satisfied.
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleMarkPassed(trainee)}
-                          disabled={passingId === traineeId}
-                          className="mt-4 w-full rounded-2xl bg-[#395345] px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-white disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {passingId === traineeId
-                            ? "Issuing..."
-                            : "Mark as Passed"}
-                        </button>
-                      </div>
+                      <Badge
+                        tone={
+                          progress?.isEligibleForCompletion
+                            ? "green"
+                            : "yellow"
+                        }
+                      >
+                        {progress?.isEligibleForCompletion
+                          ? "Eligible for Completion"
+                          : "Not Yet Complete"}
+                      </Badge>
                     </div>
                   </div>
-                </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  <SummaryCard
-                    label="Competencies"
-                    value={`${competencyCompleted} / ${competencyTotal}`}
-                  />
+                  <aside className="prof-detail-action-card">
+                    <p className="prof-detail-small-title">Completion Action</p>
+                    <p>
+                      Mark this trainee as completed and issue the certificate once all
+                      requirements are satisfied.
+                    </p>
 
-                  <SummaryCard
-                    label="Pre-Test Taken"
-                    value={formatDateTime(pretest?.lastTakenAt)}
-                  />
+                    <button
+                      type="button"
+                      onClick={() => handleMarkPassed(trainee)}
+                      disabled={passingId === traineeId}
+                      className="prof-detail-action-btn"
+                    >
+                      {passingId === traineeId ? "Issuing..." : "Mark as Passed"}
+                    </button>
+                  </aside>
+                </section>
 
-                  <SummaryCard
-                    label="Issued / Completed"
-                    value={formatDateTime(trainee?.passedAt || trainee?.completedAt)}
-                  />
-                </div>
+                <section className="prof-detail-stat-grid">
+                  <div className="prof-detail-card">
+                    <p className="prof-detail-small-title">Competencies</p>
+                    <p className="prof-detail-card-value">
+                      {competencyCompleted} / {competencyTotal}
+                    </p>
+                  </div>
+
+                  <div className="prof-detail-card">
+                    <p className="prof-detail-small-title">Pre-Test Taken</p>
+                    <p className="prof-detail-card-value">
+                      {formatDateTime(pretest?.lastTakenAt)}
+                    </p>
+                  </div>
+
+                  <div className="prof-detail-card">
+                    <p className="prof-detail-small-title">Issued / Completed</p>
+                    <p className="prof-detail-card-value">
+                      {formatDateTime(trainee?.passedAt || trainee?.completedAt)}
+                    </p>
+                  </div>
+                </section>
 
                 {pretest?.completed ? (
-                  <div className="rounded-2xl bg-[#f9fbf7] p-4 ring-1 ring-[#e2e8da]">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
-                        <div className="text-xs font-black uppercase tracking-[0.14em] text-[#6f7c71]">
-                          Pre-Test Evaluation
-                        </div>
-
-                        <div className="mt-2 text-sm text-[#647166]">
-                          {evaluation?.summary ||
-                            "Detailed pre-test evaluation is available for this trainee."}
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPretestTraineeId(traineeId)}
-                        disabled={!hasPretestDetails}
-                        className="rounded-2xl bg-[#395345] px-5 py-3 text-sm font-black uppercase tracking-[0.14em] text-white disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {hasPretestDetails
-                          ? "View Pre-Test Evaluation"
-                          : "No Detailed Results Yet"}
-                      </button>
+                  <section className="prof-detail-panel">
+                    <div>
+                      <p className="prof-detail-section-title">Pre-Test Evaluation</p>
+                      <p>
+                        {evaluation?.summary ||
+                          "Detailed pre-test evaluation is available for this trainee."}
+                      </p>
                     </div>
-                  </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPretestTraineeId(traineeId)}
+                      disabled={!hasPretestDetails}
+                      className="prof-detail-view-btn"
+                    >
+                      {hasPretestDetails
+                        ? "View Evaluation"
+                        : "No Detailed Results"}
+                    </button>
+                  </section>
                 ) : null}
 
                 {incompleteReasons.length ? (
-                  <div className="rounded-2xl bg-[#fff8e8] p-4 ring-1 ring-[#f0dfab]">
-                    <div className="text-xs font-black uppercase tracking-[0.14em] text-[#8a6b00]">
-                      Remaining Requirements
+                  <section className="prof-detail-panel prof-remaining">
+                    <div>
+                      <p className="prof-detail-section-title">Remaining Requirements</p>
+                      <div className="prof-remaining-list">
+                        {incompleteReasons.map((reason, index) => (
+                          <span key={`${traineeId}-reason-${index}`}>• {reason}</span>
+                        ))}
+                      </div>
                     </div>
-
-                    <div className="mt-2 space-y-1 text-sm text-[#6f5b17]">
-                      {incompleteReasons.map((reason, index) => (
-                        <div key={`${traineeId}-reason-${index}`}>• {reason}</div>
-                      ))}
-                    </div>
-                  </div>
+                  </section>
                 ) : null}
 
-                <div className="space-y-4">
+                <section className="prof-competency-stack">
                   {competencies.length ? (
                     competencies.map((group, groupIndex) => (
-                      <div
+                      <article
                         key={`${traineeId}-${group?.title || groupIndex}`}
-                        className="rounded-2xl bg-[#f9fbf7] p-4 ring-1 ring-[#e2e8da]"
+                        className="prof-competency-card"
                       >
-                        <div className="text-sm font-black text-[#395345]">
+                        <h3 className="prof-competency-title">
                           {group?.title || "Competencies"}
-                        </div>
+                        </h3>
 
-                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <div className="prof-competency-grid">
                           {(group?.items || []).map((item) => {
                             const checked = completedCodes.has(item.code);
                             const savingKey = `${traineeId}:${item.code}`;
 
                             return (
-                              <label
-                                key={item.code}
-                                className="flex items-start gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-[#e2e8da]"
-                              >
+                              <label key={item.code} className="prof-competency-item">
                                 <input
                                   type="checkbox"
                                   checked={checked}
@@ -1178,33 +1701,32 @@ export default function ProfessorProgress() {
                                     )
                                   }
                                   disabled={competencySavingId === savingKey}
-                                  className="mt-1 h-4 w-4"
+                                  className="prof-competency-check"
                                 />
 
-                                <div className="flex-1">
-                                  <div className="text-sm font-semibold text-[#395345]">
+                                <span>
+                                  <span className="prof-competency-label">
                                     {item.label}
-                                  </div>
-
-                                  <div className="mt-1 text-xs text-[#647166]">
+                                  </span>
+                                  <span className="prof-competency-code">
                                     {item.code}
-                                  </div>
-                                </div>
+                                  </span>
+                                </span>
                               </label>
                             );
                           })}
                         </div>
-                      </div>
+                      </article>
                     ))
                   ) : (
-                    <div className="rounded-2xl bg-[#f9fbf7] px-5 py-4 text-sm text-[#647166] ring-1 ring-[#e2e8da]">
+                    <div className="prof-detail-empty">
                       No competency checklist available for this trainee yet.
                     </div>
                   )}
-                </div>
+                </section>
 
-                <div className="rounded-2xl bg-[#f9fbf7] p-4 ring-1 ring-[#e2e8da]">
-                  <label className="text-xs font-black uppercase tracking-[0.14em] text-[#6f7c71]">
+                <section className="prof-remarks-card">
+                  <label className="prof-detail-section-title">
                     Professor Remarks / Completion Note
                   </label>
 
@@ -1218,9 +1740,9 @@ export default function ProfessorProgress() {
                       }))
                     }
                     placeholder="Add remarks, coaching notes, or completion note"
-                    className="mt-2 w-full rounded-xl border border-[#d7ddd0] bg-white px-4 py-3 text-sm outline-none focus:border-[#395345]"
+                    className="prof-remarks-area"
                   />
-                </div>
+                </section>
               </div>
             );
           })()
@@ -1233,6 +1755,7 @@ export default function ProfessorProgress() {
         trainee={selectedTrainee}
         progress={selectedProgress}
       />
-    </div>
+      </div>
+    </ProfessorLayout>
   );
 }

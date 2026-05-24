@@ -252,18 +252,18 @@ function flattenCompetencyRefs(groups = []) {
 
 function Field({ label, children, hint = "" }) {
   return (
-    <label className="block text-sm font-bold text-[#263d32]">
+    <label className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#235f3e]">
       {label}
       {children}
       {hint ? (
-        <p className="mt-1 text-xs font-medium text-[#758173]">{hint}</p>
+        <p className="mt-2 text-xs font-semibold normal-case tracking-normal text-[#071f14]/55">{hint}</p>
       ) : null}
     </label>
   );
 }
 
 function inputClass(extra = "") {
-  return `mt-2 w-full rounded-xl border border-[#c8ccbf] bg-white px-4 py-3 text-sm outline-none focus:border-[#395345] ${extra}`;
+  return `mt-2 w-full rounded-[18px] border border-[#dfe5dd] bg-white/95 px-4 py-3 text-sm font-normal leading-relaxed text-[#1f2d27] outline-none shadow-sm transition focus:border-[#235f3e] focus:ring-4 focus:ring-[#235f3e]/10 ${extra}`;
 }
 
 export default function TrainingAdminRoadmap() {
@@ -714,33 +714,256 @@ export default function TrainingAdminRoadmap() {
 
   return (
     <TrainingAdminLayout
-      active="roadmap"
+      active="competencies"
       title="Manage Training Competencies"
       subtitle="Configure competency groups, study content, and exam questions for each course."
       maxWidth="max-w-7xl"
     >
-      <section className="rounded-3xl bg-[#f7f8f3] p-6 shadow-sm ring-1 ring-black/5">
+      <div className="ta-roadmap-compact-buttons">
+        <style>{`
+          @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap");
+
+          .ta-roadmap-compact-buttons,
+          .ta-roadmap-compact-buttons * {
+            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+          }
+
+          .ta-roadmap-compact-buttons p,
+          .ta-roadmap-compact-buttons span,
+          .ta-roadmap-compact-buttons input,
+          .ta-roadmap-compact-buttons select,
+          .ta-roadmap-compact-buttons textarea {
+            letter-spacing: 0 !important;
+          }
+
+          .ta-roadmap-compact-buttons textarea {
+            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-weight: 400 !important;
+            line-height: 1.65 !important;
+            letter-spacing: 0 !important;
+            color: #1f2d27 !important;
+            resize: vertical;
+          }
+
+          .ta-roadmap-compact-buttons input,
+          .ta-roadmap-compact-buttons select {
+            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-weight: 600 !important;
+            letter-spacing: 0 !important;
+          }
+
+          .ta-roadmap-compact-buttons button {
+            min-height: 36px !important;
+            padding: 0 14px !important;
+            border-radius: 999px !important;
+            font-size: 12px !important;
+            line-height: 1 !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.02em !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            white-space: nowrap !important;
+            box-shadow: 0 8px 18px rgba(8, 39, 25, 0.10) !important;
+          }
+
+          .ta-roadmap-compact-buttons label {
+            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            letter-spacing: 0.08em !important;
+            font-weight: 700 !important;
+          }
+
+          .ta-roadmap-compact-buttons button:hover:not(:disabled) {
+            transform: translateY(-1px);
+          }
+
+          .ta-roadmap-compact-buttons button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55 !important;
+            transform: none !important;
+          }
+
+          .ta-roadmap-compact-buttons button.w-full {
+            width: 100% !important;
+          }
+
+          .ta-roadmap-compact-buttons .roadmap-button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+          }
+
+          .ta-roadmap-compact-buttons {
+            font-family: "Open Sans", Arial, Helvetica, sans-serif;
+          }
+
+          .ta-roadmap-competency-grid {
+            display: grid;
+            grid-template-columns: minmax(360px, 390px) minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+          }
+
+          .ta-roadmap-group-list {
+            width: 100%;
+            min-width: 0;
+          }
+
+          .ta-competency-group-card {
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.97);
+            padding: 16px;
+            box-shadow: 0 12px 30px rgba(8, 39, 25, 0.08);
+            border: 1px solid #dfe5dd;
+          }
+
+          .ta-group-title-button {
+            max-width: 100%;
+            min-width: 0;
+            min-height: 34px !important;
+            padding: 8px 13px !important;
+            border-radius: 999px !important;
+            background: #ffffff !important;
+            text-align: left !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: normal !important;
+            box-shadow: 0 8px 18px rgba(8, 39, 25, 0.06) !important;
+            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-size: 12px !important;
+            line-height: 1.25 !important;
+          }
+
+          .ta-roadmap-compact-buttons .ta-competency-item-btn {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            min-height: 60px !important;
+            padding: 11px 13px !important;
+            border-radius: 16px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            text-align: left !important;
+            white-space: normal !important;
+            overflow: hidden !important;
+            box-shadow: 0 8px 20px rgba(8, 39, 25, 0.07) !important;
+          }
+
+          .ta-roadmap-compact-buttons .ta-competency-code {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-size: 11px !important;
+            line-height: 1.25 !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.02em !important;
+          }
+
+          .ta-roadmap-compact-buttons .ta-competency-label {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin-top: 0 !important;
+            overflow: visible !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: normal !important;
+            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-size: 12px !important;
+            line-height: 1.35 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0 !important;
+          }
+
+          .ta-group-action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
+
+          .ta-group-action-row button {
+            min-height: 34px !important;
+            padding: 0 12px !important;
+            font-size: 11px !important;
+          }
+
+          .ta-editor-panel {
+            min-width: 0;
+          }
+
+          .ta-roadmap-compact-buttons input,
+          .ta-roadmap-compact-buttons select,
+          .ta-roadmap-compact-buttons textarea {
+            font-family: "Open Sans", Arial, Helvetica, sans-serif;
+          }
+
+          @media (max-width: 1024px) {
+            .ta-roadmap-competency-grid {
+              grid-template-columns: 1fr;
+            }
+          }
+
+          @media (max-width: 640px) {
+            .ta-roadmap-compact-buttons button {
+              width: 100%;
+              min-height: 36px !important;
+            }
+
+            .ta-roadmap-compact-buttons .ta-competency-item-btn {
+              min-height: 64px !important;
+              gap: 5px !important;
+            }
+
+            .ta-roadmap-compact-buttons .ta-competency-code {
+              white-space: normal !important;
+              overflow: visible !important;
+              text-overflow: clip !important;
+            }
+
+            .ta-group-action-row {
+              grid-template-columns: 1fr;
+            }
+          }
+        `}</style>
+
+      <section className="overflow-hidden rounded-[28px] border-t-4 border-[#d7a84d] bg-white/95 p-6 shadow-[0_18px_45px_rgba(8,39,25,.12)] ring-1 ring-black/5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#79836f]">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#9aa0a6]">
               Course Competency CRUD
             </p>
             <h1 className="mt-2 text-3xl font-extrabold">
               Competency Roadmap Manager
             </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#647166]">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#071f14]/60">
               Manage the roadmap one competency at a time. Each competency has
               its own study module, study points, checklist, and exam questions
               for trainees.
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="roadmap-button-row flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={() => loadRoadmap(selectedCourseId)}
               disabled={!selectedCourseId || loadingRoadmap}
-              className="rounded-2xl border border-[#c8ccbf] bg-white px-5 py-3 text-sm font-bold text-[#395345] disabled:opacity-60"
+              className="rounded-full border border-[#dfe5dd] bg-white px-5 py-3 text-sm font-extrabold text-[#071f14] shadow-sm disabled:opacity-60"
             >
               Refresh
             </button>
@@ -748,7 +971,7 @@ export default function TrainingAdminRoadmap() {
               type="button"
               onClick={saveRoadmap}
               disabled={!selectedCourseId || saving || loadingRoadmap}
-              className="rounded-2xl bg-[#395345] px-5 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white disabled:opacity-60"
+              className="rounded-full bg-[#235f3e] px-5 py-3 text-sm font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_14px_30px_rgba(35,95,62,.22)] disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save Roadmap"}
             </button>
@@ -767,8 +990,26 @@ export default function TrainingAdminRoadmap() {
           </div>
         ) : null}
 
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-[22px] bg-white p-5 shadow-sm ring-1 ring-[#dfe5dd]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#9aa0a6]">Active Courses</p>
+            <p className="mt-3 text-4xl font-extrabold text-[#071f14]">{activeCourses.length}</p>
+            <p className="mt-1 text-sm font-semibold text-[#071f14]/55">Available for roadmap setup</p>
+          </div>
+          <div className="rounded-[22px] bg-white p-5 shadow-sm ring-1 ring-[#dfe5dd]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#9aa0a6]">Groups</p>
+            <p className="mt-3 text-4xl font-extrabold text-[#071f14]">{roadmap.competencyGroups.length}</p>
+            <p className="mt-1 text-sm font-semibold text-[#071f14]/55">Competency groups</p>
+          </div>
+          <div className="rounded-[22px] bg-white p-5 shadow-sm ring-1 ring-[#dfe5dd]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#9aa0a6]">Competencies</p>
+            <p className="mt-3 text-4xl font-extrabold text-[#071f14]">{totalCompetencies}</p>
+            <p className="mt-1 text-sm font-semibold text-[#071f14]/55">Editable study modules</p>
+          </div>
+        </div>
+
         <div className="mt-6 grid gap-4 lg:grid-cols-[360px_1fr]">
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-[#e1e5da]">
+          <div className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-[#dfe5dd]">
             <Field label="Select Course">
               <select
                 value={selectedCourseId}
@@ -788,9 +1029,9 @@ export default function TrainingAdminRoadmap() {
               </select>
             </Field>
 
-            <div className="mt-5 grid gap-3 rounded-2xl bg-[#eef1e7] p-4 text-sm">
+            <div className="mt-5 grid gap-3 rounded-2xl bg-[#f8fbf9] p-4 text-sm">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6d7668]">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9aa0a6]">
                   Selected Course
                 </p>
                 <p className="mt-1 text-lg font-extrabold">
@@ -798,17 +1039,17 @@ export default function TrainingAdminRoadmap() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs font-bold uppercase tracking-[0.12em] text-[#6d7668]">
-                <div className="rounded-xl bg-white p-3">
+              <div className="grid grid-cols-2 gap-3 text-xs font-bold uppercase tracking-[0.12em] text-[#9aa0a6]">
+                <div className="rounded-[18px] bg-white p-4 shadow-sm ring-1 ring-[#dfe5dd]">
                   <p>Groups</p>
-                  <p className="mt-1 text-xl text-[#395345]">
+                  <p className="mt-1 text-xl text-[#235f3e]">
                     {roadmap.competencyGroups.length}
                   </p>
                 </div>
 
-                <div className="rounded-xl bg-white p-3">
+                <div className="rounded-[18px] bg-white p-4 shadow-sm ring-1 ring-[#dfe5dd]">
                   <p>Competencies</p>
-                  <p className="mt-1 text-xl text-[#395345]">
+                  <p className="mt-1 text-xl text-[#235f3e]">
                     {totalCompetencies}
                   </p>
                 </div>
@@ -819,17 +1060,17 @@ export default function TrainingAdminRoadmap() {
               type="button"
               onClick={resetRoadmap}
               disabled={!selectedCourseId || saving}
-              className="mt-4 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700 disabled:opacity-60"
+              className="mt-4 w-full rounded-full border border-[#f0c36a] bg-[#fff7df] px-4 py-3 text-sm font-extrabold text-[#8a5a00] disabled:opacity-60"
             >
               Reset to Default
             </button>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-[#e1e5da]">
+          <div className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-[#dfe5dd]">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-extrabold">Progress Weights</h2>
-                <p className="mt-1 text-sm text-[#647166]">
+                <p className="mt-1 text-sm text-[#071f14]/60">
                   Progress is now based only on competency completion and
                   pre-test completion. Attendance and certificate preview fields
                   were removed from this admin screen.
@@ -839,7 +1080,7 @@ export default function TrainingAdminRoadmap() {
               <button
                 type="button"
                 onClick={addGroup}
-                className="rounded-2xl bg-[#395345] px-5 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white"
+                className="rounded-full bg-[#235f3e] px-5 py-3 text-sm font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_14px_30px_rgba(35,95,62,.22)]"
               >
                 Add Group
               </button>
@@ -866,22 +1107,22 @@ export default function TrainingAdminRoadmap() {
         </div>
       </section>
 
-      <section className="mt-6 rounded-3xl bg-[#f7f8f3] p-6 shadow-sm ring-1 ring-black/5">
+      <section className="mt-6 overflow-hidden rounded-[28px] border-t-4 border-[#d7a84d] bg-white/95 p-6 shadow-[0_18px_45px_rgba(8,39,25,.12)] ring-1 ring-black/5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-2xl font-extrabold">Per-Competency Editor</h2>
-            <p className="mt-1 text-sm text-[#647166]">
+            <p className="mt-1 text-sm text-[#071f14]/60">
               Select a competency on the left, then edit only that competency on
               the right.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="roadmap-button-row flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => goToFlatIndex(currentFlatIndex - 1)}
               disabled={currentFlatIndex <= 0}
-              className="rounded-xl border border-[#c8ccbf] bg-white px-4 py-3 text-sm font-bold disabled:opacity-50"
+              className="rounded-full border border-[#dfe5dd] bg-white px-4 py-2.5 text-sm font-extrabold text-[#071f14] shadow-sm disabled:opacity-50"
             >
               Previous Competency
             </button>
@@ -892,7 +1133,7 @@ export default function TrainingAdminRoadmap() {
                 currentFlatIndex < 0 ||
                 currentFlatIndex >= competencyRefs.length - 1
               }
-              className="rounded-xl bg-[#395345] px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+              className="rounded-full bg-[#235f3e] px-4 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(35,95,62,.22)] disabled:opacity-50"
             >
               Next Competency
             </button>
@@ -900,32 +1141,32 @@ export default function TrainingAdminRoadmap() {
         </div>
 
         {loadingRoadmap ? (
-          <div className="mt-6 rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[#647166]">
+          <div className="mt-6 rounded-2xl bg-white p-6 text-center text-sm font-semibold text-[#071f14]/60">
             Loading roadmap...
           </div>
         ) : roadmap.competencyGroups.length === 0 ? (
           <div className="mt-6 rounded-2xl bg-white p-6 text-center">
-            <p className="text-sm font-semibold text-[#647166]">
+            <p className="text-sm font-semibold text-[#071f14]/60">
               No competency groups yet. Click Add Group.
             </p>
             <button
               type="button"
               onClick={addGroup}
-              className="mt-4 rounded-2xl bg-[#395345] px-5 py-3 text-sm font-bold text-white"
+              className="mt-4 rounded-full bg-[#235f3e] px-5 py-3 text-sm font-extrabold text-white shadow-sm"
             >
               Add First Group
             </button>
           </div>
         ) : (
-          <div className="mt-6 grid gap-5 lg:grid-cols-[360px_1fr]">
-            <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+          <div className="ta-roadmap-competency-grid mt-6">
+            <aside className="ta-roadmap-group-list space-y-4 lg:sticky lg:top-28 lg:self-start">
               {roadmap.competencyGroups.map((group, groupIndex) => {
                 const isGroupSelected = groupIndex === selectedGroupIndex;
 
                 return (
                   <div
                     key={`${group.title}-${groupIndex}`}
-                    className="rounded-2xl bg-white p-4 ring-1 ring-[#e1e5da]"
+                    className="ta-competency-group-card"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <button
@@ -934,14 +1175,14 @@ export default function TrainingAdminRoadmap() {
                           setSelectedGroupIndex(groupIndex);
                           setSelectedItemIndex(0);
                         }}
-                        className={`text-left text-sm font-extrabold ${
-                          isGroupSelected ? "text-[#395345]" : "text-[#647166]"
+                        className={`ta-group-title-button text-left text-sm font-extrabold ${
+                          isGroupSelected ? "text-[#235f3e]" : "text-[#071f14]/60"
                         }`}
                       >
                         {group.title || `Group ${groupIndex + 1}`}
                       </button>
 
-                      <span className="rounded-full bg-[#eef1e7] px-3 py-1 text-xs font-bold text-[#647166]">
+                      <span className="rounded-full bg-[#f8fbf9] px-3 py-1 text-xs font-bold text-[#071f14]/60">
                         {safeArray(group.items).length}
                       </span>
                     </div>
@@ -962,40 +1203,40 @@ export default function TrainingAdminRoadmap() {
                                 setSelectedItemIndex(itemIndex);
                                 setActiveEditorTab("study");
                               }}
-                              className={`w-full rounded-xl px-3 py-3 text-left text-sm transition ${
+                              className={`ta-competency-item-btn w-full rounded-xl px-3 py-3 text-left text-sm transition ${
                                 active
-                                  ? "bg-[#395345] text-white"
-                                  : "bg-[#f7f8f3] text-[#395345] hover:bg-[#eef1e7]"
+                                  ? "bg-[#235f3e] text-white"
+                                  : "bg-[#f8fbf9] text-[#235f3e] hover:bg-[#f8fbf9]"
                               }`}
                             >
-                              <span className="block text-xs font-bold uppercase tracking-[0.12em] opacity-80">
+                              <span className="ta-competency-code block text-xs font-bold uppercase tracking-[0.12em] opacity-80">
                                 {item.code || "No Code"}
                               </span>
-                              <span className="mt-1 block font-bold">
+                              <span className="ta-competency-label mt-1 block font-bold">
                                 {item.label || "Untitled competency"}
                               </span>
                             </button>
                           );
                         })
                       ) : (
-                        <p className="rounded-xl bg-[#f7f8f3] p-3 text-sm font-semibold text-[#647166]">
+                        <p className="rounded-xl bg-[#f8fbf9] p-3 text-sm font-semibold text-[#071f14]/60">
                           No competencies in this group.
                         </p>
                       )}
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="ta-group-action-row mt-3">
                       <button
                         type="button"
                         onClick={() => addCompetency(groupIndex)}
-                        className="rounded-xl border border-[#c8ccbf] px-3 py-2 text-xs font-bold"
+                        className="rounded-xl border border-[#dfe5dd] px-3 py-2 text-xs font-bold"
                       >
                         Add Skill
                       </button>
                       <button
                         type="button"
                         onClick={() => deleteGroup(groupIndex)}
-                        className="rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-700 ring-1 ring-red-200"
+                        className="rounded-full bg-[#fff7df] px-3 py-2 text-xs font-extrabold text-[#8a5a00] ring-1 ring-[#f0c36a]"
                       >
                         Delete Group
                       </button>
@@ -1005,20 +1246,20 @@ export default function TrainingAdminRoadmap() {
               })}
             </aside>
 
-            <div className="rounded-3xl bg-white p-5 ring-1 ring-[#e1e5da]">
+            <div className="ta-editor-panel rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-[#dfe5dd]">
               {!currentGroup ? (
-                <div className="rounded-2xl bg-[#f7f8f3] p-6 text-center text-sm font-semibold text-[#647166]">
+                <div className="rounded-2xl bg-[#f8fbf9] p-6 text-center text-sm font-semibold text-[#071f14]/60">
                   Select or add a competency group.
                 </div>
               ) : !currentItem ? (
-                <div className="rounded-2xl bg-[#f7f8f3] p-6 text-center">
-                  <p className="text-sm font-semibold text-[#647166]">
+                <div className="rounded-2xl bg-[#f8fbf9] p-6 text-center">
+                  <p className="text-sm font-semibold text-[#071f14]/60">
                     This group has no competencies yet.
                   </p>
                   <button
                     type="button"
                     onClick={() => addCompetency(selectedGroupIndex)}
-                    className="mt-4 rounded-2xl bg-[#395345] px-5 py-3 text-sm font-bold text-white"
+                    className="mt-4 rounded-full bg-[#235f3e] px-5 py-3 text-sm font-extrabold text-white shadow-sm"
                   >
                     Add Competency
                   </button>
@@ -1027,24 +1268,24 @@ export default function TrainingAdminRoadmap() {
                 <>
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6d7668]">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9aa0a6]">
                         Competency {currentFlatIndex + 1} of{" "}
                         {competencyRefs.length}
                       </p>
                       <h3 className="mt-2 text-2xl font-extrabold">
                         {currentItem.label || "Untitled competency"}
                       </h3>
-                      <p className="mt-1 text-sm text-[#647166]">
+                      <p className="mt-1 text-sm text-[#071f14]/60">
                         Group:{" "}
                         {currentGroup.title || `Group ${selectedGroupIndex + 1}`}
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="roadmap-button-row flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => addCompetency(selectedGroupIndex)}
-                        className="rounded-xl border border-[#c8ccbf] px-4 py-3 text-sm font-bold"
+                        className="rounded-xl border border-[#dfe5dd] px-4 py-3 text-sm font-bold"
                       >
                         Add Competency Here
                       </button>
@@ -1053,14 +1294,14 @@ export default function TrainingAdminRoadmap() {
                         onClick={() =>
                           deleteCompetency(selectedGroupIndex, selectedItemIndex)
                         }
-                        className="rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 ring-1 ring-red-200"
+                        className="rounded-full bg-[#fff7df] px-4 py-2.5 text-sm font-extrabold text-[#8a5a00] ring-1 ring-[#f0c36a]"
                       >
                         Delete This Competency
                       </button>
                     </div>
                   </div>
 
-                  <div className="mt-5 rounded-2xl bg-[#f7f8f3] p-4 ring-1 ring-[#e1e5da]">
+                  <div className="mt-5 rounded-2xl bg-[#f8fbf9] p-4 ring-1 ring-[#dfe5dd]">
                     <div className="grid gap-4 lg:grid-cols-[1fr_120px]">
                       <Field label="Group Title">
                         <input
@@ -1154,7 +1395,7 @@ export default function TrainingAdminRoadmap() {
                     />
                   </Field>
 
-                  <div className="mt-6 flex flex-wrap gap-2 border-b border-[#e1e5da] pb-3">
+                  <div className="mt-6 flex flex-wrap gap-2 border-b border-[#dfe5dd] pb-3">
                     {[
                       ["study", "Study Module"],
                       ["exam", "Exam Questions"],
@@ -1163,10 +1404,10 @@ export default function TrainingAdminRoadmap() {
                         key={key}
                         type="button"
                         onClick={() => setActiveEditorTab(key)}
-                        className={`rounded-xl px-4 py-2 text-sm font-bold ${
+                        className={`rounded-full px-4 py-2 text-sm font-extrabold ${
                           activeEditorTab === key
-                            ? "bg-[#395345] text-white"
-                            : "bg-[#eef1e7] text-[#395345]"
+                            ? "bg-[#235f3e] text-white"
+                            : "bg-[#f8fbf9] text-[#235f3e]"
                         }`}
                       >
                         {label}
@@ -1342,11 +1583,11 @@ export default function TrainingAdminRoadmap() {
                       </Field>
                     </div>
                   ) : (
-                    <div className="mt-5 rounded-2xl bg-[#f7f8f3] p-4 ring-1 ring-[#e1e5da]">
+                    <div className="mt-5 rounded-2xl bg-[#f8fbf9] p-4 ring-1 ring-[#dfe5dd]">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <h4 className="font-extrabold">Exam Questions</h4>
-                          <p className="mt-1 text-sm text-[#647166]">
+                          <p className="mt-1 text-sm text-[#071f14]/60">
                             These are the questions shown when the trainee takes
                             the exam for this competency.
                           </p>
@@ -1356,7 +1597,7 @@ export default function TrainingAdminRoadmap() {
                           onClick={() =>
                             addQuestion(selectedGroupIndex, selectedItemIndex)
                           }
-                          className="rounded-xl border border-[#c8ccbf] bg-white px-4 py-2 text-sm font-bold"
+                          className="rounded-xl border border-[#dfe5dd] bg-white px-4 py-2 text-sm font-bold"
                         >
                           Add Question
                         </button>
@@ -1459,7 +1700,7 @@ export default function TrainingAdminRoadmap() {
                           ))
                         ) : (
                           <div className="rounded-2xl bg-white p-5 text-center">
-                            <p className="text-sm font-semibold text-[#647166]">
+                            <p className="text-sm font-semibold text-[#071f14]/60">
                               No questions yet for this competency.
                             </p>
                             <button
@@ -1467,7 +1708,7 @@ export default function TrainingAdminRoadmap() {
                               onClick={() =>
                                 addQuestion(selectedGroupIndex, selectedItemIndex)
                               }
-                              className="mt-4 rounded-xl bg-[#395345] px-4 py-2 text-sm font-bold text-white"
+                              className="mt-4 rounded-full bg-[#235f3e] px-4 py-2 text-sm font-extrabold text-white shadow-sm"
                             >
                               Add First Question
                             </button>
@@ -1477,8 +1718,8 @@ export default function TrainingAdminRoadmap() {
                     </div>
                   )}
 
-                  <div className="mt-6 flex flex-col gap-3 rounded-2xl bg-[#eef1e7] p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm font-semibold text-[#647166]">
+                  <div className="mt-6 flex flex-col gap-3 rounded-2xl bg-[#f8fbf9] p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm font-semibold text-[#071f14]/60">
                       Save after editing this competency so trainees can see the
                       updated study module and exam.
                     </p>
@@ -1486,7 +1727,7 @@ export default function TrainingAdminRoadmap() {
                       type="button"
                       onClick={saveRoadmap}
                       disabled={!selectedCourseId || saving || loadingRoadmap}
-                      className="rounded-2xl bg-[#395345] px-5 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white disabled:opacity-60"
+                      className="rounded-full bg-[#235f3e] px-5 py-3 text-sm font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_14px_30px_rgba(35,95,62,.22)] disabled:opacity-60"
                     >
                       {saving ? "Saving..." : "Save Roadmap"}
                     </button>
@@ -1497,6 +1738,7 @@ export default function TrainingAdminRoadmap() {
           </div>
         )}
       </section>
+      </div>
     </TrainingAdminLayout>
   );
 }

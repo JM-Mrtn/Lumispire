@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import ProfessorLayout from "./ProfessorLayout";
 import {
   API_BASE,
   fetchJson,
@@ -75,9 +75,49 @@ function buildCalendarDays(date) {
   return [...blanks, ...days];
 }
 
-export default function ProfessorDashboard() {
-  const navigate = useNavigate();
+function StatCard({ title, value, note }) {
+  return (
+    <div className="group relative min-h-[132px] overflow-hidden rounded-3xl border border-white/80 bg-white p-6 shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(8,39,25,0.16)]">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-14 -right-12 h-36 w-36 rounded-full bg-[#f4d484]/20 blur-2xl transition group-hover:scale-110" />
+      <p className="relative text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
+        {title}
+      </p>
+      <p className="relative mt-4 text-4xl font-black leading-none tracking-tight text-[#071f14]">
+        {value}
+      </p>
+      {note ? (
+        <p className="relative mt-3 text-sm font-semibold text-[#071f14]/55">
+          {note}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
+function SectionCard({ eyebrow, title, children, className = "" }) {
+  return (
+    <section className={`relative overflow-hidden rounded-3xl border border-white/80 bg-white p-6 shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 ${className}`}>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-16 h-44 w-44 rounded-full bg-[#f4d484]/20 blur-2xl" />
+      <div className="relative">
+        {eyebrow ? (
+          <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
+            {eyebrow}
+          </p>
+        ) : null}
+        {title ? (
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-[#071f14]">
+            {title}
+          </h2>
+        ) : null}
+        <div className={title || eyebrow ? "mt-5" : ""}>{children}</div>
+      </div>
+    </section>
+  );
+}
+
+export default function ProfessorDashboard() {
   const storedProfessor = useMemo(() => getStoredProfessor(), []);
   const [professor] = useState(() => storedProfessor);
 
@@ -159,9 +199,6 @@ export default function ProfessorDashboard() {
     };
   }, [loadDashboard]);
 
-  const professorName = getProfessorName(professor);
-  const professorEmail = professor?.email || "traineemail@tamsi.com";
-
   const filteredStudents = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
@@ -172,11 +209,7 @@ export default function ProfessorDashboard() {
       const email = getStudentEmail(student).toLowerCase();
       const course = getStudentCourse(student).toLowerCase();
 
-      return (
-        name.includes(keyword) ||
-        email.includes(keyword) ||
-        course.includes(keyword)
-      );
+      return name.includes(keyword) || email.includes(keyword) || course.includes(keyword);
     });
   }, [search, students]);
 
@@ -195,256 +228,176 @@ export default function ProfessorDashboard() {
   const monthName = calendarDate.toLocaleString("default", { month: "long" });
   const today = calendarDate.getDate();
 
-  const menuItems = [
-    { label: "Dashboard", path: "/professor-dashboard" },
-    { label: "Manage Attendance", path: "/professor-attendance" },
-    { label: "Manage Assignment", path: "/professor-assessments" },
-    { label: "Manage Modules", path: "/professor-modules" },
-    { label: "Manage Progress", path: "/professor-progress" },
-  ];
-
-  const handleLogout = () => {
-    localStorage.removeItem("professorToken");
-    localStorage.removeItem("professor");
-    localStorage.removeItem("professorUser");
-    localStorage.removeItem("storedProfessor");
-    navigate("/professor-login");
-  };
-
   return (
-    <div className="min-h-screen bg-[#12391f] font-sans text-white">
-      <header className="flex h-[86px] items-center bg-white px-6 shadow-sm md:px-10">
-        <div className="flex items-center gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#2d5238] bg-white text-sm font-black text-[#2d5238]">
-            LC
-          </div>
-
-          <h1 className="text-xl font-black uppercase tracking-wide text-[#2d5238] md:text-3xl">
-            Training &amp; Assessment
-          </h1>
+    <ProfessorLayout
+      title="Professor Dashboard"
+      subtitle="Monitor assigned trainees, attendance activity, course notifications, and current training records."
+      activePage="dashboard"
+      actions={
+        <button
+          type="button"
+          onClick={loadDashboard}
+          className="inline-flex h-11 items-center justify-center rounded-full bg-[#082719] px-5 text-sm font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#071f14]"
+        >
+          Refresh
+        </button>
+      }
+    >
+      {msg ? (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+          {msg}
         </div>
-      </header>
+      ) : null}
 
-      <div className="flex min-h-[calc(100vh-86px)] flex-col lg:flex-row">
-        <aside className="flex w-full flex-col bg-[#2d5038] lg:w-[264px]">
-          <div className="border-b border-white/15 px-6 py-8 text-center">
-            <div className="mx-auto h-[74px] w-[74px] rounded-full border-4 border-[#b7bbb6] bg-white shadow-sm" />
+      <div className="grid gap-5 md:grid-cols-3">
+        <StatCard title="Total Trainees" value={stats.totalTrainees} note="Assigned learners" />
+        <StatCard title="Assessments" value={stats.activeAssessments} note="Active assessment records" />
+        <StatCard title="Attendance Today" value={stats.todayAttendance} note={todayLocalISO()} />
+      </div>
 
-            <h2 className="mt-5 text-base font-black uppercase leading-tight">
-              {professorName}
-            </h2>
 
-            <p className="mt-1 break-words text-xs font-semibold text-white/80">
-              {professorEmail}
-            </p>
-
-            {allowedCourses.length > 0 && (
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                {allowedCourses.map((course) => (
-                  <span
-                    key={course}
-                    className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white"
-                  >
-                    {course}
-                  </span>
-                ))}
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
+        <SectionCard eyebrow="Updates" title="Notifications">
+          <div className="grid gap-3">
+            {displayNotifications.map((item, index) => (
+              <div
+                key={item?._id || item?.id || index}
+                className="rounded-2xl border border-black/5 bg-[#f8fbf9] px-4 py-4 text-sm font-bold leading-6 text-[#071f14]/75 shadow-sm"
+              >
+                {loading ? "Loading..." : item?.message || item?.title || "No new notification"}
               </div>
-            )}
+            ))}
           </div>
+        </SectionCard>
 
-          <nav className="flex-1 py-6">
-            {menuItems.map((item) => {
-              const active = item.label === "Dashboard";
+        <SectionCard eyebrow="Calendar" title={`${monthName} ${calendarDate.getFullYear()}`}>
+          <div className="rounded-2xl border border-black/5 bg-[#f8fbf9] p-4">
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-black uppercase text-[#071f14]/45">
+              {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+                <div key={`${day}-${index}`}>{day}</div>
+              ))}
+            </div>
 
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => navigate(item.path)}
-                  className={`block w-full px-12 py-4 text-left text-sm font-black uppercase transition ${
-                    active
-                      ? "bg-[#d8e0da] text-[#1e3e2a]"
-                      : "text-white hover:bg-white/10"
+            <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs font-bold">
+              {calendarDays.map((day, index) => (
+                <div
+                  key={`${day || "blank"}-${index}`}
+                  className={`flex aspect-square items-center justify-center rounded-xl ${
+                    day === today
+                      ? "bg-[#082719] text-white shadow-sm"
+                      : day
+                      ? "bg-white text-[#071f14]/75 ring-1 ring-black/5"
+                      : "bg-transparent"
                   }`}
                 >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
+                  {day || ""}
+                </div>
+              ))}
+            </div>
 
-          <div className="px-12 pb-10">
+            <p className="mt-4 text-center text-xs font-bold text-[#071f14]/55">
+              Today: {todayLocalISO()}
+            </p>
+          </div>
+        </SectionCard>
+      </div>
+
+      <SectionCard eyebrow="Student Records" title="My Students" className="mt-6">
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <p className="max-w-md text-sm font-semibold leading-6 text-[#071f14]/60">
+            Search assigned trainees by name, email, or course.
+          </p>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search Student"
+              className="h-11 w-full rounded-full border border-black/10 bg-[#f8fbf9] px-5 text-sm font-bold text-[#071f14] outline-none transition placeholder:text-[#071f14]/35 focus:border-[#235f3e] focus:bg-white focus:ring-4 focus:ring-[#235f3e]/10 sm:w-[300px]"
+            />
+
             <button
               type="button"
-              onClick={handleLogout}
-              className="text-sm font-black uppercase text-white transition hover:text-[#d8e0da]"
+              onClick={loadDashboard}
+              className="inline-flex h-11 items-center justify-center rounded-full bg-[#082719] px-5 text-sm font-extrabold text-white transition hover:bg-[#071f14]"
             >
-              Sign Out
+              Refresh
             </button>
           </div>
-        </aside>
+        </div>
 
-        <main className="flex-1 bg-[#12391f] px-5 py-6 md:px-8 lg:px-8">
-          <section className="mx-auto max-w-[1040px]">
-            <div className="mb-5">
-              <h2 className="text-3xl font-black uppercase tracking-tight md:text-[34px]">
-                Professor Dashboard
-              </h2>
-              <div className="mt-1 h-1 w-full max-w-[430px] bg-white/60" />
-            </div>
+        <div className="overflow-hidden rounded-3xl border border-black/5 bg-white">
+          <div className="hidden grid-cols-[72px_1.2fr_1.3fr_1fr_120px_110px] gap-4 bg-[#f8fbf9] px-5 py-4 text-xs font-extrabold uppercase tracking-[0.18em] text-[#071f14]/45 lg:grid">
+            <span />
+            <span>Name</span>
+            <span>Email</span>
+            <span>Course</span>
+            <span>Status</span>
+            <span>Action</span>
+          </div>
 
-            {msg && (
-              <div className="mb-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-800 ring-1 ring-red-200">
-                {msg}
-              </div>
-            )}
-
-            <div className="grid gap-7 lg:grid-cols-2">
-              <div className="rounded-lg bg-[#637967] p-3 shadow-sm">
-                <h3 className="mb-4 text-base font-black uppercase">
-                  Notification
-                </h3>
-
-                <div className="space-y-6">
-                  {displayNotifications.map((item, index) => (
-                    <div
-                      key={item?._id || item?.id || index}
-                      className="flex min-h-[48px] items-center rounded-lg bg-[#c8d1c8] px-4 py-3 text-sm font-bold text-[#2d5038]"
-                    >
-                      {loading ? "Loading..." : item?.message || item?.title || "No new notification"}
-                    </div>
-                  ))}
+          <div className="divide-y divide-black/5">
+            {loading ? (
+              [1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="grid gap-4 px-5 py-5 lg:grid-cols-[72px_1.2fr_1.3fr_1fr_120px_110px] lg:items-center"
+                >
+                  <div className="h-11 w-11 rounded-full bg-[#f8fbf9] ring-1 ring-black/5" />
+                  <div className="h-4 rounded-full bg-[#f8fbf9]" />
+                  <div className="h-4 rounded-full bg-[#f8fbf9]" />
+                  <div className="h-4 rounded-full bg-[#f8fbf9]" />
+                  <div className="h-7 rounded-full bg-[#f8fbf9]" />
+                  <div className="h-8 rounded-full bg-[#f8fbf9]" />
                 </div>
-              </div>
-
-              <div className="rounded-lg bg-[#637967] p-6 shadow-sm">
-                <div className="flex h-full min-h-[250px] flex-col justify-center">
-                  <h3 className="mb-4 text-center text-base font-black uppercase">
-                    Calendar
-                  </h3>
-
-                  <div className="mx-auto w-full max-w-[330px] rounded-xl bg-white/10 p-4">
-                    <div className="mb-3 text-center text-sm font-black uppercase tracking-widest">
-                      {monthName} {calendarDate.getFullYear()}
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black uppercase text-white/80">
-                      {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-                        <div key={`${day}-${index}`}>{day}</div>
-                      ))}
-                    </div>
-
-                    <div className="mt-2 grid grid-cols-7 gap-1 text-center text-xs font-bold">
-                      {calendarDays.map((day, index) => (
-                        <div
-                          key={`${day || "blank"}-${index}`}
-                          className={`flex aspect-square items-center justify-center rounded-md ${
-                            day === today
-                              ? "bg-white text-[#2d5038]"
-                              : day
-                              ? "bg-white/10 text-white"
-                              : "bg-transparent"
-                          }`}
-                        >
-                          {day || ""}
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="mt-3 text-center text-xs font-bold text-white/80">
-                      Today: {todayLocalISO()}
-                    </p>
+              ))
+            ) : filteredStudents.length > 0 ? (
+              filteredStudents.map((student, index) => (
+                <div
+                  key={getStudentId(student, index)}
+                  className="grid gap-3 px-5 py-5 text-sm font-bold text-[#071f14] transition hover:bg-[#f8fbf9] lg:grid-cols-[72px_1.2fr_1.3fr_1fr_120px_110px] lg:items-center"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f8fbf9] text-xs font-black text-[#235f3e] ring-1 ring-black/5">
+                    {String(getStudentName(student)).slice(0, 2).toUpperCase()}
                   </div>
-                </div>
-              </div>
-            </div>
 
-            <div className="mt-7 overflow-hidden rounded-lg bg-[#2d5038] shadow-sm">
-              <div className="flex flex-col gap-3 bg-white px-4 py-3 md:flex-row md:items-center md:justify-between">
-                <h3 className="text-lg font-black text-[#2d5038]">
-                  My Students
-                </h3>
+                  <div className="min-w-0">
+                    <p className="truncate font-extrabold">{getStudentName(student)}</p>
+                  </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search Student"
-                    className="h-6 w-full rounded-full border border-[#9aa69a] px-4 text-xs font-bold text-[#2d5038] outline-none focus:border-[#12391f] sm:w-[265px]"
-                  />
+                  <div className="min-w-0 break-words text-[#071f14]/65">
+                    {getStudentEmail(student)}
+                  </div>
+
+                  <div className="min-w-0 text-[#071f14]/65">
+                    {getStudentCourse(student)}
+                  </div>
+
+                  <div>
+                    <span className="inline-flex min-h-8 min-w-[92px] items-center justify-center rounded-full border border-[#235f3e]/10 bg-[#eaf5ee] px-3 text-[11px] font-extrabold text-[#235f3e]">
+                      {getStudentStatus(student)}
+                    </span>
+                  </div>
 
                   <button
                     type="button"
-                    onClick={loadDashboard}
-                    className="h-6 rounded-full bg-[#12391f] px-8 text-xs font-black text-white transition hover:bg-[#2d5038]"
+                    disabled
+                    className="inline-flex h-9 min-w-[92px] cursor-not-allowed items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-extrabold text-[#071f14]/50 shadow-sm"
+                    title="Connect this button to your remove trainee endpoint if needed."
                   >
-                    Refresh
+                    Remove
                   </button>
                 </div>
+              ))
+            ) : (
+              <div className="px-5 py-12 text-center text-sm font-bold text-[#071f14]/55">
+                No enrolled trainees found.
               </div>
-
-              <div className="divide-y divide-white/20">
-                {loading ? (
-                  [1, 2].map((item) => (
-                    <div
-                      key={item}
-                      className="grid gap-4 px-3 py-4 md:grid-cols-[64px_1.3fr_1.3fr_1fr_100px_90px] md:items-center"
-                    >
-                      <div className="h-11 w-11 rounded-full bg-white" />
-                      <div className="h-4 rounded-full bg-white/40" />
-                      <div className="h-4 rounded-full bg-white/40" />
-                      <div className="h-4 rounded-full bg-white/40" />
-                      <div className="h-5 rounded-full bg-[#bdf0a4]" />
-                      <div className="h-5 rounded-full bg-white" />
-                    </div>
-                  ))
-                ) : filteredStudents.length > 0 ? (
-                  filteredStudents.map((student, index) => (
-                    <div
-                      key={getStudentId(student, index)}
-                      className="grid gap-4 px-3 py-4 text-sm font-black md:grid-cols-[64px_1.3fr_1.3fr_1fr_100px_90px] md:items-center"
-                    >
-                      <div className="h-11 w-11 rounded-full bg-white" />
-
-                      <div className="text-white">
-                        {getStudentName(student)}
-                      </div>
-
-                      <div className="break-words text-white/90">
-                        {getStudentEmail(student)}
-                      </div>
-
-                      <div className="text-white/90">
-                        {getStudentCourse(student)}
-                      </div>
-
-                      <div>
-                        <span className="inline-flex min-w-[84px] justify-center rounded-full bg-[#bdf0a4] px-3 py-1 text-[10px] font-black text-[#2d5038]">
-                          {getStudentStatus(student)}
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled
-                        className="inline-flex min-w-[84px] cursor-not-allowed justify-center rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038] opacity-95"
-                        title="Connect this button to your remove trainee endpoint if needed."
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <div className="px-5 py-10 text-center text-sm font-bold text-white/80">
-                    No enrolled trainees found.
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-    </div>
+            )}
+          </div>
+        </div>
+      </SectionCard>
+    </ProfessorLayout>
   );
 }

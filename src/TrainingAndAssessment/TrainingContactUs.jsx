@@ -1,11 +1,13 @@
 // src/TrainingAndAssessment/TrainingContactUs.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   TRAINING_CONTACT_INFO,
   TrainingPublicShell,
 } from "./TrainingPublicLayout";
 
 export default function TrainingContactUs() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -32,9 +34,12 @@ export default function TrainingContactUs() {
     <TrainingPublicShell
       active="contact"
       title="Contact Us"
-      subtitle="Reach TAMSI for enrollment, course, requirement, and training concerns."
+      subtitle="Reach our training and assessment team for inquiries and assistance."
     >
       <>
+        <style>{contactPageStyleFixes}</style>
+        <FloatingHomeIconButton onClick={() => navigate("/")} />
+
         <section className="bg-[#2e5038] px-5 py-10 text-white sm:px-8 lg:px-12">
           <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-2">
             <div className="rounded-2xl bg-[#2e5038] p-6 lg:border-r lg:border-white/15 lg:pr-10">
@@ -154,6 +159,52 @@ export default function TrainingContactUs() {
   );
 }
 
+const contactPageStyleFixes = `
+  .ltc-eyebrow,
+  .training-hero-badge,
+  .training-program-badge {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    color: transparent !important;
+  }
+
+  .ltc-eyebrow::before,
+  .ltc-eyebrow::after {
+    color: var(--gold-soft, #f6d77a) !important;
+  }
+`;
+
+function FloatingHomeIconButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Back to Home"
+      aria-label="Back to Home"
+      className="group fixed bottom-28 right-6 z-[80] flex h-[74px] w-[74px] items-center justify-center rounded-full border-2 border-white/80 bg-[#2e5038] text-white shadow-2xl transition duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-[#21442d] focus:outline-none focus:ring-4 focus:ring-white/30"
+    >
+      <span className="pointer-events-none absolute right-[86px] top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-full bg-[#123a20] px-4 py-2 text-xs font-extrabold uppercase tracking-wide text-white shadow-xl group-hover:block">
+        Back to Home
+      </span>
+
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-9 w-9"
+      >
+        <path d="m3 10.5 9-7 9 7" />
+        <path d="M5 10v10h14V10" />
+        <path d="M9 20v-6h6v6" />
+      </svg>
+    </button>
+  );
+}
+
 function SectionHeading({ title }) {
   return (
     <div>
@@ -239,3 +290,5 @@ function ClockIcon() {
     </svg>
   );
 }
+
+

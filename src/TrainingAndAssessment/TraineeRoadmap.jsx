@@ -21,6 +21,965 @@ const API_BASE = normalizeApiBase(
   import.meta.env.VITE_TRAINING_API_URL || import.meta.env.VITE_API_URL
 );
 
+const TRAINING_CONTACT_INFO = {
+  email1: "ltc.tamsi@gmail.com",
+  email2: "lorengladis@ltcmultiservices.com",
+  phone: "09959808051 / 09516281271",
+  addressLine1: "2/F 5441 Curie Street,",
+  addressLine2: "Palanan, Makati City",
+};
+
+const TRAINEE_NAV_ITEMS = [
+  { key: "home", label: "Home", path: "/trainee-home" },
+  { key: "roadmap", label: "Roadmap", path: "/trainee-roadmap" },
+  { key: "attendance", label: "Attendance", path: "/trainee-attendance" },
+  { key: "modules", label: "Modules", path: "/trainee-modules" },
+  { key: "assignment", label: "Assignment", path: "/trainee-assignment" },
+  { key: "progress", label: "Progress", path: "/trainee-progress" },
+];
+
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
+const pageStyles = `
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+  .ltc-trainee-home-page {
+    --green-950: #071f14;
+    --green-900: #0e3321;
+    --green-800: #174a30;
+    --green-700: #235f3e;
+    --footer-green: #082719;
+    --gold: #d7a84d;
+    --gold-soft: #f4d484;
+    --dark: #101828;
+    --muted: #667085;
+    --glass: rgba(255,255,255,.84);
+    --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+    --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+    --radius: 24px;
+    --ease: cubic-bezier(.22,1,.36,1);
+    min-height: 100vh;
+    color: var(--dark);
+    background:
+      radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+      radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+    line-height: 1.65;
+    letter-spacing: -.01em;
+    overflow-x: hidden;
+    font-family: "Inter", Arial, sans-serif;
+  }
+
+  .ltc-trainee-home-page * { box-sizing: border-box; }
+  .ltc-container { width: min(1180px, 92%); margin: auto; }
+
+  .ltc-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    background: var(--footer-green);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 10px 34px rgba(7,31,20,.14);
+    margin: 0;
+  }
+
+  .ltc-header .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-nav {
+    min-height: 76px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .ltc-logo {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: white;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+  }
+
+  .ltc-logo-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: white;
+    object-fit: cover;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+  }
+
+  .ltc-logo h1 {
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -.04em;
+    margin: 0;
+  }
+
+  .ltc-logo p {
+    font-size: 11px;
+    color: rgba(255,255,255,.72);
+    margin: 3px 0 0;
+  }
+
+  .ltc-desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .ltc-profile-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-nav-link {
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-radius: 999px;
+    transition: .25s var(--ease);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .ltc-nav-link:hover,
+  .ltc-nav-link.active {
+    color: white;
+    background: rgba(255,255,255,.13);
+    transform: translateY(-1px);
+  }
+
+  .ltc-profile-button {
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 14px 28px rgba(215,168,77,.18);
+  }
+
+  .ltc-profile-avatar {
+    width: 42px;
+    height: 42px;
+    overflow: hidden;
+    border-radius: 999px;
+    border: 0;
+    background: rgba(255,255,255,.9);
+    cursor: pointer;
+    padding: 0;
+    box-shadow: 0 0 0 4px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.14);
+  }
+
+  .ltc-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .ltc-menu-button {
+    display: none !important;
+    color: white;
+    border: 0;
+    background: rgba(255,255,255,.1);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  .ltc-menu-button svg { width: 24px; height: 24px; }
+
+  .ltc-hero {
+    position: relative;
+    overflow: hidden;
+    color: white;
+    isolation: isolate;
+    background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+    padding: 92px 0 86px;
+  }
+
+  .ltc-hero-slide {
+    position: absolute;
+    inset: 0;
+    z-index: -4;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .34;
+  }
+
+  .ltc-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    background: linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.76) 100%);
+  }
+
+  .ltc-hero::after {
+    content: "";
+    position: absolute;
+    inset: -16% -10% -24% -10%;
+    z-index: -2;
+    background:
+      radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
+      radial-gradient(circle at 36% 92%, rgba(7,76,47,.46), transparent 30%),
+      radial-gradient(circle at 72% 18%, rgba(28,108,68,.28), transparent 30%),
+      radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
+      radial-gradient(circle at 90% 84%, rgba(22,108,66,.30), transparent 26%);
+    filter: blur(30px);
+    pointer-events: none;
+  }
+
+  .ltc-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 980px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .ltc-eyebrow {
+    display: inline-flex;
+    color: var(--gold-soft);
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+  }
+
+  .ltc-hero-title {
+    margin: 18px 0 0;
+    color: white;
+    font-size: clamp(38px, 6vw, 76px);
+    line-height: 1.05;
+    font-weight: 900;
+    letter-spacing: -.055em;
+    text-shadow: 0 8px 26px rgba(0,0,0,.22);
+  }
+
+  .ltc-hero-title span { color: var(--gold-soft); }
+
+  .ltc-hero-text {
+    max-width: 760px;
+    margin: 18px auto 0;
+    color: rgba(255,255,255,.82);
+    font-size: 17px;
+    line-height: 1.8;
+  }
+
+  .ltc-section { padding: 74px 0; }
+
+  .ltc-home-shell {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid rgba(255,255,255,.76);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(18px);
+    padding: 34px;
+  }
+
+  .ltc-home-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+    z-index: 3;
+  }
+
+  .ltc-home-shell:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(215,168,77,.45);
+  }
+
+  .ltc-section-heading {
+    margin: 0;
+    color: var(--green-950);
+    font-size: clamp(28px,3vw,42px);
+    line-height: 1.08;
+    letter-spacing: -.05em;
+    font-weight: 900;
+  }
+
+  .ltc-section-line {
+    margin-top: 12px;
+    width: 180px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+  }
+
+  .ltc-section-intro {
+    max-width: 760px;
+    margin: 16px 0 0;
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .ltc-quick-grid {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .ltc-quick-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 238px;
+    border: 1px solid rgba(35,95,62,.12);
+    border-radius: 22px;
+    background: white;
+    padding: 24px 18px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 16px 34px rgba(8,39,25,.08);
+    transition: .25s var(--ease);
+  }
+
+  .ltc-quick-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+    opacity: .92;
+  }
+
+  .ltc-quick-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(215,168,77,.55);
+    box-shadow: 0 22px 44px rgba(8,39,25,.14);
+  }
+
+  .ltc-icon-frame {
+    display: grid;
+    place-items: center;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto;
+    border-radius: 26px;
+    color: var(--green-800);
+    background: rgba(35,95,62,.08);
+    box-shadow: inset 0 0 0 1px rgba(35,95,62,.08);
+  }
+
+  .ltc-icon-frame svg { width: 58px; height: 58px; }
+
+  .ltc-quick-title {
+    margin: 18px 0 0;
+    color: var(--green-950);
+    font-size: 19px;
+    line-height: 1.2;
+    font-weight: 900;
+    letter-spacing: -.03em;
+  }
+
+  .ltc-card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 130px;
+    min-height: 42px;
+    margin-top: 22px;
+    border-radius: 999px;
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 14px 28px rgba(215,168,77,.18);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    transition: .25s var(--ease);
+  }
+
+  .ltc-quick-card:hover .ltc-card-action {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg,#f7dc93,#c99634);
+  }
+
+  .ltc-footer {
+    width: 100%;
+    background: var(--footer-green);
+    color: white;
+    padding: 30px 0 12px;
+    margin: 0;
+  }
+
+  .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-footer-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+    gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .ltc-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-footer-brand img {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: white;
+  }
+
+  .ltc-footer h4 {
+    color: white;
+    font-weight: 900;
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .ltc-footer h5 {
+    color: #f4d484;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin: 0 0 10px;
+  }
+
+  .ltc-footer p,
+  .ltc-footer-link {
+    display: block;
+    color: rgba(255,255,255,.68);
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 5px 0;
+  }
+
+  .ltc-footer-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .ltc-footer-link:hover { color: white; text-decoration: underline; }
+  .ltc-socials { display: flex; gap: 8px; }
+  .ltc-socials span { width: 26px; height: 26px; border-radius: 999px; background: rgba(255,255,255,.13); }
+
+  .ltc-copyright {
+    width: 100%;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .ltc-sidebar-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.42); }
+  .ltc-sidebar-panel { position: absolute; right: 0; top: 0; height: 100%; width: min(310px,86vw); background: white; box-shadow: -20px 0 60px rgba(0,0,0,.25); padding: 20px; }
+  .ltc-sidebar-top { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(16,24,40,.1); padding-bottom: 16px; margin-bottom: 16px; }
+  .ltc-sidebar-title { color: var(--green-950); font-weight: 900; letter-spacing: .14em; font-size: 12px; margin: 0; }
+  .ltc-sidebar-close { width: 38px; height: 38px; border-radius: 12px; border: 0; background: #f2f4f7; color: #101828; cursor: pointer; }
+  .ltc-sidebar-link { display: block; width: 100%; border: 0; background: transparent; color: #101828; text-align: left; border-radius: 14px; padding: 13px 14px; font-weight: 800; margin-bottom: 8px; cursor: pointer; }
+  .ltc-sidebar-link:hover,
+  .ltc-sidebar-link.active { background: var(--green-800); color: white; }
+
+
+
+  @keyframes ltcFadeUp {
+    from { opacity: 0; transform: translateY(26px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes ltcFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes ltcFloatSoft {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes ltcPulseRing {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(215,168,77,.35), 0 18px 34px rgba(8,39,25,.14); }
+    50% { box-shadow: 0 0 0 10px rgba(215,168,77,0), 0 24px 44px rgba(8,39,25,.18); }
+  }
+
+  .ltc-hero-content,
+  .ltc-home-shell,
+  .roadmap-info-panel,
+  .roadmap-flow-panel,
+  .roadmap-mobile-card,
+  .roadmap-alert {
+    animation: ltcFadeUp .75s var(--ease) both;
+  }
+
+  .ltc-hero-content { animation-delay: .05s; }
+  .ltc-home-shell { animation-delay: .1s; }
+  .roadmap-info-panel { animation-delay: .18s; }
+  .roadmap-flow-panel { animation-delay: .26s; }
+
+  .ltc-hero-slide {
+    animation: ltcFadeIn .9s ease both;
+    transition: transform 8s ease, filter .6s ease;
+  }
+
+  .ltc-hero:hover .ltc-hero-slide {
+    transform: scale(1.04);
+    filter: saturate(1.08) brightness(1.03);
+  }
+
+  .ltc-eyebrow,
+  .ltc-section-line {
+    animation: ltcFadeUp .7s var(--ease) both;
+  }
+
+  .ltc-section-line {
+    transition: width .35s var(--ease), filter .35s var(--ease);
+  }
+
+  .ltc-home-shell:hover .ltc-section-line {
+    width: 240px;
+    filter: drop-shadow(0 8px 12px rgba(215,168,77,.22));
+  }
+
+  .roadmap-info-panel {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 24px;
+    min-height: 148px;
+    padding: 26px;
+    border-radius: 26px;
+    color: #45674b;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.96), rgba(248,250,244,.9)),
+      radial-gradient(circle at 14% 0%, rgba(215,168,77,.18), transparent 32%),
+      radial-gradient(circle at 100% 70%, rgba(35,95,62,.16), transparent 34%);
+    border: 1px solid rgba(69,103,75,.16);
+    box-shadow: 0 22px 54px rgba(8,39,25,.11);
+    transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease), background .28s var(--ease);
+  }
+
+  .roadmap-info-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 7px;
+    background: linear-gradient(180deg, var(--gold), var(--green-700));
+  }
+
+  .roadmap-info-panel::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -90px;
+    width: 230px;
+    height: 230px;
+    border-radius: 999px;
+    background: rgba(215,168,77,.14);
+    filter: blur(4px);
+    transition: transform .45s var(--ease), opacity .35s var(--ease);
+    pointer-events: none;
+  }
+
+  .roadmap-info-panel:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 30px 70px rgba(8,39,25,.17);
+    border-color: rgba(215,168,77,.55);
+  }
+
+  .roadmap-info-panel:hover::after {
+    transform: scale(1.1) translate(-12px, 12px);
+    opacity: .9;
+  }
+
+  .roadmap-info-content {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+  }
+
+  .roadmap-info-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 22px;
+    color: #f4d484;
+    background: linear-gradient(145deg, var(--green-900), var(--green-700));
+    box-shadow: 0 18px 32px rgba(8,39,25,.18), inset 0 0 0 1px rgba(255,255,255,.12);
+    transition: transform .28s var(--ease), box-shadow .28s var(--ease);
+  }
+
+  .roadmap-info-icon svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .roadmap-info-panel:hover .roadmap-info-icon {
+    transform: rotate(-4deg) scale(1.06);
+    box-shadow: 0 22px 38px rgba(8,39,25,.24), inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+
+  .roadmap-info-copy { min-width: 0; }
+
+  .roadmap-info-kicker {
+    display: inline-flex;
+    margin-bottom: 4px;
+    color: #9a6b19;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .roadmap-info-title {
+    margin: 0;
+    color: #2f5b39;
+    font-size: clamp(23px, 2.4vw, 32px);
+    line-height: 1.06;
+    font-weight: 900;
+    letter-spacing: -.045em;
+  }
+
+  .roadmap-info-text {
+    max-width: 720px;
+    margin: 9px 0 0;
+    color: rgba(69,103,75,.78);
+    font-size: 15px;
+    line-height: 1.75;
+    font-weight: 700;
+  }
+
+  .roadmap-info-actions {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(170px, 220px) minmax(190px, auto);
+    align-items: center;
+    gap: 14px;
+  }
+
+  .roadmap-next-card {
+    min-height: 86px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 22px;
+    padding: 16px 18px;
+    text-align: left;
+    background: rgba(255,255,255,.72);
+    border: 1px solid rgba(69,103,75,.15);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.78), 0 14px 28px rgba(8,39,25,.07);
+    transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease), background .25s var(--ease);
+  }
+
+  .roadmap-next-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(215,168,77,.5);
+    background: #fffdf7;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 18px 32px rgba(8,39,25,.11);
+  }
+
+  .roadmap-next-label {
+    color: #7b8678;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  .roadmap-next-title {
+    margin-top: 6px;
+    color: #45674b;
+    font-size: 15px;
+    line-height: 1.28;
+    font-weight: 900;
+    word-break: break-word;
+  }
+
+  .roadmap-refresh-button {
+    min-height: 58px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 0;
+    border-radius: 999px;
+    padding: 15px 24px;
+    color: white;
+    background: linear-gradient(135deg, #45674b, #274633);
+    box-shadow: 0 16px 34px rgba(8,39,25,.19);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    line-height: 1.25;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: normal;
+  }
+
+  .roadmap-refresh-button:disabled {
+    cursor: not-allowed;
+    opacity: .62;
+  }
+
+  .roadmap-refresh-icon {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: rgba(255,255,255,.16);
+    font-size: 16px;
+    line-height: 1;
+    transition: transform .35s var(--ease), background .25s var(--ease);
+  }
+
+  .roadmap-refresh-button:hover:not(:disabled) .roadmap-refresh-icon {
+    transform: rotate(180deg);
+    background: rgba(255,255,255,.24);
+  }
+
+  .roadmap-refresh-button,
+  .roadmap-action-button,
+  .ltc-nav-link,
+  .ltc-sidebar-link,
+  .ltc-profile-avatar,
+  .ltc-menu-button,
+  .ltc-sidebar-close,
+  .ltc-footer-link {
+    transition: transform .24s var(--ease), box-shadow .24s var(--ease), background .24s var(--ease), color .24s var(--ease), border-color .24s var(--ease), opacity .24s var(--ease);
+  }
+
+  .roadmap-refresh-button:hover:not(:disabled),
+  .roadmap-action-button:hover:not(:disabled) {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 18px 34px rgba(8,39,25,.2);
+  }
+
+  .roadmap-refresh-button:active:not(:disabled),
+  .roadmap-action-button:active:not(:disabled) {
+    transform: translateY(-1px) scale(.99);
+  }
+
+  .ltc-profile-avatar:hover,
+  .ltc-menu-button:hover,
+  .ltc-sidebar-close:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 16px 28px rgba(0,0,0,.16);
+  }
+
+  .ltc-footer-link:hover {
+    transform: translateX(4px);
+  }
+
+  .roadmap-step-row {
+    animation: ltcFadeUp .65s var(--ease) both;
+  }
+
+  .roadmap-step-card {
+    position: relative;
+    overflow: hidden;
+    animation: ltcFadeUp .62s var(--ease) both;
+    transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease), filter .28s var(--ease);
+  }
+
+  .roadmap-step-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: linear-gradient(90deg, var(--green-700), var(--gold));
+    opacity: .75;
+    transform: scaleX(.42);
+    transform-origin: left;
+    transition: transform .35s var(--ease), opacity .35s var(--ease);
+  }
+
+  .roadmap-step-card:not(:disabled):hover {
+    transform: translateY(-8px) scale(1.015);
+    border-color: rgba(215,168,77,.62) !important;
+    box-shadow: 0 30px 64px rgba(8,39,25,.18) !important;
+    filter: saturate(1.03);
+  }
+
+  .roadmap-step-card:not(:disabled):hover::before {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+
+  .roadmap-step-card h3,
+  .roadmap-mobile-card .roadmap-mobile-title {
+    transition: color .25s var(--ease), transform .25s var(--ease);
+  }
+
+  .roadmap-step-card:not(:disabled):hover h3,
+  .roadmap-mobile-card:hover .roadmap-mobile-title {
+    color: var(--green-900);
+    transform: translateY(-1px);
+  }
+
+  .roadmap-mini-stat {
+    transition: transform .24s var(--ease), background .24s var(--ease), box-shadow .24s var(--ease);
+  }
+
+  .roadmap-step-card:not(:disabled):hover .roadmap-mini-stat {
+    transform: translateY(-2px);
+    background: #fbfaf4;
+    box-shadow: inset 0 0 0 1px rgba(215,168,77,.24);
+  }
+
+  .roadmap-node {
+    transition: transform .28s var(--ease), box-shadow .28s var(--ease), filter .28s var(--ease);
+  }
+
+  .roadmap-step-row:hover .roadmap-node {
+    transform: scale(1.12) rotate(-3deg);
+    animation: ltcPulseRing 1.4s ease-in-out infinite;
+    filter: saturate(1.08);
+  }
+
+  .roadmap-connector-line {
+    transition: background .28s var(--ease), transform .28s var(--ease), box-shadow .28s var(--ease);
+  }
+
+  .roadmap-step-row:hover .roadmap-connector-line {
+    background: linear-gradient(90deg, var(--gold), var(--green-700));
+    transform: translateY(-50%) scaleX(1.12);
+    box-shadow: 0 0 16px rgba(215,168,77,.32);
+  }
+
+  .roadmap-mobile-card {
+    transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease), background .28s var(--ease);
+  }
+
+  .roadmap-mobile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 24px 44px rgba(8,39,25,.13);
+    border-color: rgba(215,168,77,.55) !important;
+  }
+
+  .roadmap-mobile-node {
+    transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+  }
+
+  .roadmap-mobile-card:hover .roadmap-mobile-node {
+    transform: scale(1.08);
+    box-shadow: 0 12px 24px rgba(8,39,25,.18);
+  }
+
+  .roadmap-status-pill {
+    transition: transform .22s var(--ease), box-shadow .22s var(--ease), filter .22s var(--ease);
+  }
+
+  .roadmap-step-card:hover .roadmap-status-pill,
+  .roadmap-mobile-card:hover .roadmap-status-pill {
+    transform: translateY(-1px);
+    filter: saturate(1.08);
+    box-shadow: 0 10px 18px rgba(8,39,25,.08);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ltc-trainee-home-page *,
+    .ltc-trainee-home-page *::before,
+    .ltc-trainee-home-page *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: .001ms !important;
+    }
+  }
+
+  @media (max-width: 1180px) {
+    .ltc-quick-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .ltc-footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 900px) {
+    .roadmap-info-panel { grid-template-columns: 1fr; align-items: stretch; padding: 24px; gap: 20px; }
+    .roadmap-info-actions { grid-template-columns: 1fr; }
+    .roadmap-refresh-button { width: 100%; }
+    .ltc-header .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-nav { min-height: auto; padding: 18px 0; }
+    .ltc-desktop-nav,
+    .ltc-profile-wrap { display: none; }
+    .ltc-menu-button { display: none !important; }
+    .ltc-hero { padding: 76px 0 74px; }
+    .ltc-section { padding: 58px 0; }
+    .ltc-home-shell { padding: 28px 22px; }
+    .ltc-quick-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .ltc-footer { padding: 28px 0 12px; }
+    .ltc-footer-grid { grid-template-columns: 1fr; gap: 18px; padding-bottom: 22px; }
+    .ltc-footer .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-copyright { flex-direction: column; }
+  }
+
+  @media (max-width: 600px) {
+    .roadmap-info-panel { padding: 22px 18px; border-radius: 22px; }
+    .roadmap-info-content { grid-template-columns: 1fr; text-align: left; gap: 14px; }
+    .roadmap-info-icon { width: 56px; height: 56px; border-radius: 18px; }
+    .roadmap-info-text { font-size: 14px; }
+    .roadmap-next-card { min-height: auto; }
+    .ltc-header .ltc-container,
+    .ltc-footer .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-logo h1 { font-size: 14px; }
+    .ltc-logo p { font-size: 10px; }
+    .ltc-hero-title { font-size: clamp(34px, 11vw, 46px); letter-spacing: -.045em; }
+    .ltc-hero-text { font-size: 15px; }
+    .ltc-home-shell { padding: 26px 18px; }
+    .ltc-quick-grid { grid-template-columns: 1fr; }
+  }
+`;
+
+
 const PASSING_SCORE = 7;
 const EXAM_QUESTION_COUNT = 10;
 
@@ -1570,7 +2529,7 @@ function RoadmapModal({ open, title, onClose, children }) {
 function StatusPill({ step }) {
   if (step.completed) {
     return (
-      <span className="rounded-full bg-green-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700 ring-1 ring-green-200">
+      <span className="roadmap-status-pill rounded-full bg-green-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700 ring-1 ring-green-200">
         Completed
       </span>
     );
@@ -1578,7 +2537,7 @@ function StatusPill({ step }) {
 
   if (!step.professorCompleted) {
     return (
-      <span className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-red-700 ring-1 ring-red-200">
+      <span className="roadmap-status-pill rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-red-700 ring-1 ring-red-200">
         Waiting Professor Check
       </span>
     );
@@ -1586,7 +2545,7 @@ function StatusPill({ step }) {
 
   if (step.examPassed) {
     return (
-      <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700 ring-1 ring-blue-200">
+      <span className="roadmap-status-pill rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700 ring-1 ring-blue-200">
         Exam Passed
       </span>
     );
@@ -1594,14 +2553,14 @@ function StatusPill({ step }) {
 
   if (step.locked) {
     return (
-      <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-700 ring-1 ring-gray-200">
+      <span className="roadmap-status-pill rounded-full bg-gray-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-700 ring-1 ring-gray-200">
         Locked
       </span>
     );
   }
 
   return (
-    <span className="rounded-full bg-yellow-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-yellow-700 ring-1 ring-yellow-200">
+    <span className="roadmap-status-pill rounded-full bg-yellow-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-yellow-700 ring-1 ring-yellow-200">
       Ready
     </span>
   );
@@ -1616,7 +2575,7 @@ function RoadmapStepCard({ step, onOpenStep, align = "left" }) {
       disabled={locked}
       onClick={() => onOpenStep(step)}
       className={[
-        "group w-full rounded-[24px] border bg-white p-5 text-left shadow-xl ring-1 transition duration-300",
+        "roadmap-step-card group w-full rounded-[24px] border bg-white p-5 text-left shadow-xl ring-1 transition duration-300",
         locked
           ? "cursor-not-allowed border-[#e1e6dc] ring-[#d9dfd2] opacity-70"
           : "border-[#d9dfd2] ring-[#d9dfd2] hover:-translate-y-1 hover:shadow-2xl",
@@ -1658,7 +2617,7 @@ function RoadmapStepCard({ step, onOpenStep, align = "left" }) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 text-center">
-        <div className="rounded-2xl bg-[#f7f8f3] px-3 py-2 ring-1 ring-[#e2e8da]">
+        <div className="roadmap-mini-stat rounded-2xl bg-[#f7f8f3] px-3 py-2 ring-1 ring-[#e2e8da]">
           <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#748175]">
             Score
           </div>
@@ -1667,7 +2626,7 @@ function RoadmapStepCard({ step, onOpenStep, align = "left" }) {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#f7f8f3] px-3 py-2 ring-1 ring-[#e2e8da]">
+        <div className="roadmap-mini-stat rounded-2xl bg-[#f7f8f3] px-3 py-2 ring-1 ring-[#e2e8da]">
           <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#748175]">
             Attempts
           </div>
@@ -1685,7 +2644,7 @@ function RoadmapStepCard({ step, onOpenStep, align = "left" }) {
       >
         <span
           className={[
-            "inline-flex items-center rounded-full px-5 py-2 text-xs font-extrabold uppercase tracking-[0.14em] transition",
+            "roadmap-action-button inline-flex items-center rounded-full px-5 py-2 text-xs font-extrabold uppercase tracking-[0.14em] transition",
             locked
               ? "bg-[#d7ddd0] text-[#657367]"
               : step.completed
@@ -1703,7 +2662,7 @@ function RoadmapStepCard({ step, onOpenStep, align = "left" }) {
 function DesktopRoadmap({ steps, onOpenStep }) {
   return (
     <div className="hidden lg:block">
-      <div className="rounded-[30px] bg-white p-6 shadow-xl ring-1 ring-[#d9dfd2]">
+      <div className="roadmap-flow-panel rounded-[30px] bg-white p-6 shadow-xl ring-1 ring-[#d9dfd2]">
         <div className="mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold text-[#45674b]">
@@ -1712,21 +2671,6 @@ function DesktopRoadmap({ steps, onOpenStep }) {
             <p className="mt-1 text-sm font-semibold text-[#647165]">
               Follow the path from top to bottom. No side scrolling needed.
             </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full bg-yellow-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-yellow-700 ring-1 ring-yellow-200">
-              Ready
-            </span>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700 ring-1 ring-blue-200">
-              Exam Passed
-            </span>
-            <span className="rounded-full bg-green-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-green-700 ring-1 ring-green-200">
-              Completed
-            </span>
-            <span className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-red-700 ring-1 ring-red-200">
-              Waiting Check
-            </span>
           </div>
         </div>
 
@@ -1748,7 +2692,8 @@ function DesktopRoadmap({ steps, onOpenStep }) {
               return (
                 <div
                   key={step.id}
-                  className="relative grid grid-cols-[1fr_96px_1fr] items-center gap-5"
+                  className="roadmap-step-row relative grid grid-cols-[1fr_96px_1fr] items-center gap-5"
+                  style={{ animationDelay: `${Math.min(step.index * 0.06, 0.48)}s` }}
                 >
                   <div className="min-w-0">
                     {isLeft ? (
@@ -1763,7 +2708,7 @@ function DesktopRoadmap({ steps, onOpenStep }) {
                   <div className="relative flex h-full min-h-[190px] items-center justify-center">
                     <div
                       className={[
-                        "relative z-10 flex h-14 w-14 items-center justify-center rounded-full text-sm font-extrabold shadow-xl ring-8 transition",
+                        "roadmap-node relative z-10 flex h-14 w-14 items-center justify-center rounded-full text-sm font-extrabold shadow-xl ring-8 transition",
                         circleClass,
                       ].join(" ")}
                     >
@@ -1772,7 +2717,7 @@ function DesktopRoadmap({ steps, onOpenStep }) {
 
                     <div
                       className={[
-                        "absolute top-1/2 h-[4px] w-[46px] -translate-y-1/2 rounded-full bg-[#8a936e]",
+                        "roadmap-connector-line absolute top-1/2 h-[4px] w-[46px] -translate-y-1/2 rounded-full bg-[#8a936e]",
                         isLeft ? "left-0" : "right-0",
                       ].join(" ")}
                     />
@@ -1803,8 +2748,9 @@ function MobileRoadmap({ steps, onOpenStep }) {
       {steps.map((step) => (
         <div
           key={step.id}
+          style={{ animationDelay: `${Math.min(step.index * 0.06, 0.48)}s` }}
           className={[
-            "relative rounded-[22px] border p-4 shadow-sm",
+            "roadmap-mobile-card relative rounded-[22px] border p-4 shadow-sm",
             step.completed
               ? "border-green-200 bg-green-50"
               : step.locked
@@ -1816,7 +2762,7 @@ function MobileRoadmap({ steps, onOpenStep }) {
             <div className="flex flex-col items-center">
               <div
                 className={[
-                  "flex h-12 w-12 items-center justify-center rounded-full text-sm font-extrabold",
+                  "roadmap-mobile-node flex h-12 w-12 items-center justify-center rounded-full text-sm font-extrabold",
                   step.completed
                     ? "bg-green-600 text-white"
                     : step.professorCompleted
@@ -1840,7 +2786,7 @@ function MobileRoadmap({ steps, onOpenStep }) {
                 </span>
               </div>
 
-              <div className="mt-3 text-lg font-extrabold text-[#45674b]">
+              <div className="roadmap-mobile-title mt-3 text-lg font-extrabold text-[#45674b]">
                 {step.title}
               </div>
 
@@ -1858,7 +2804,7 @@ function MobileRoadmap({ steps, onOpenStep }) {
                 disabled={step.locked}
                 onClick={() => onOpenStep(step)}
                 className={[
-                  "mt-4 rounded-2xl px-5 py-3 text-sm font-bold uppercase tracking-[0.14em]",
+                  "roadmap-action-button mt-4 rounded-2xl px-5 py-3 text-sm font-bold uppercase tracking-[0.14em]",
                   step.locked
                     ? "cursor-not-allowed bg-[#d7ddd0] text-[#657367]"
                     : step.completed
@@ -2517,315 +3463,91 @@ export default function TraineeRoadmap() {
   const isLastStudyPage = currentStudyPageIndex >= studyPages.length - 1;
 
   return (
-    <div className="min-h-screen bg-[#123a20] text-[#395345]">
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-[#d7ddcf] bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
-          <button
-            type="button"
-            onClick={() => goTo("/trainee-home")}
-            className="flex items-center gap-3"
-            aria-label="TAMSI Home"
-          >
-            <img
-              src="/TamsiLogo.png"
-              alt="TAMSI Logo"
-              className="h-12 w-12 object-contain"
-              onError={(e) => {
-                e.currentTarget.src =
-                  "https://placehold.co/80x80/d7ddd4/45674b?text=T";
-              }}
-            />
+    <div className="ltc-trainee-home-page">
+      <style>{pageStyles}</style>
 
-            <span className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b] sm:text-[28px]">
-              TAMSI
-            </span>
-          </button>
-
-          <nav className="hidden items-center gap-5 lg:flex xl:gap-7">
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-home")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Home
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-roadmap")}
-              className="border-b-2 border-[#45674b] pb-1 text-[11px] font-bold uppercase tracking-wide text-[#173d25] xl:text-[12px]"
-            >
-              Roadmap
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-attendance")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Attendance
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-modules")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Modules
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-assignment")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Assignment
-            </button>
-
-            <button
-              type="button"
-              onClick={() => goTo("/trainee-progress")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Progress
-            </button>
-          </nav>
-
-          <div className="hidden items-center gap-3 lg:flex">
-            <button
-              type="button"
-              onClick={goToProfile}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Profile
-            </button>
-
-            <button
-              type="button"
-              onClick={goToProfile}
-              className="h-10 w-10 overflow-hidden rounded-full bg-[#d8d8d8] ring-2 ring-[#45674b]/20"
-              aria-label="Profile"
-            >
-              {profilePhotoUrl ? (
-                <img
-                  src={profilePhotoUrl}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/80x80/d7ddd4/45674b?text=P";
-                  }}
-                />
-              ) : (
-                <img
-                  src="https://placehold.co/80x80/d7ddd4/45674b?text=P"
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                />
-              )}
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setMobileOpen((prev) => !prev)}
-            className="rounded-md border border-[#45674b]/20 bg-[#f7faf2] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#45674b] lg:hidden"
-          >
-            Menu
-          </button>
-        </div>
-
-        {mobileOpen && (
-          <div className="border-t border-[#d7ddcf] bg-white px-5 py-3 lg:hidden">
-            <div className="space-y-1 rounded-xl bg-[#f4f7ef] p-2">
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-home")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Home
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-roadmap")}
-                className="block w-full rounded-lg bg-white px-4 py-3 text-left text-sm font-bold text-[#173d25]"
-              >
-                Roadmap
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-attendance")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Attendance
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-modules")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Modules
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-assignment")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Assignment
-              </button>
-
-              <button
-                type="button"
-                onClick={() => goTo("/trainee-progress")}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                Progress
-              </button>
-
-              <button
-                type="button"
-                onClick={goToProfile}
-                className="flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                <span>Profile</span>
-
-                <span className="h-8 w-8 overflow-hidden rounded-full bg-[#d8d8d8]">
-                  {profilePhotoUrl ? (
-                    <img
-                      src={profilePhotoUrl}
-                      alt="Profile"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://placehold.co/80x80/d7ddd4/45674b?text=P";
-                      }}
-                    />
-                  ) : (
-                    <img
-                      src="https://placehold.co/80x80/d7ddd4/45674b?text=P"
-                      alt="Profile"
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={logout}
-                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-red-700 hover:bg-red-50"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
+      <Header
+        activeKey="roadmap"
+        goTo={goTo}
+        goToProfile={goToProfile}
+        profilePhotoUrl={profilePhotoUrl}
+        onOpenMenu={() => setMobileOpen(true)}
+      />
 
       <main>
-        {/* TRAINING BANNER */}
-        <section className="relative flex h-[260px] items-center justify-center overflow-hidden bg-[#d7ded3] px-5 text-center sm:h-[310px] md:h-[360px] lg:h-[390px]">
+        <section className="ltc-hero">
           <img
             src="/TrainingBanner.png"
             alt="TAMSI Training Banner"
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://placehold.co/1600x420/d7ddd4/45674b?text=TAMSI+Training+And+Assessment";
+            className="ltc-hero-slide"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
             }}
           />
 
-          <div className="absolute inset-0 bg-[#d7ded3]/55" />
-
-          <div className="relative z-10 mx-auto max-w-[1280px]">
-            <h1 className="font-['Montserrat',sans-serif] text-4xl font-extrabold leading-tight tracking-wide text-[#45674b] drop-shadow-sm sm:text-5xl md:text-6xl lg:text-7xl">
-              TAMSI Training And Assessment
-            </h1>
+          <div className="ltc-container ltc-hero-content">
+            <h2 className="ltc-hero-title" style={fontMontserrat}>
+              Competency <span>Roadmap</span>
+            </h2>
+            <p className="ltc-hero-text" style={fontPontano}>
+              {traineeDisplayName} • {traineeEmail}
+            </p>
           </div>
         </section>
 
-        {/* ROADMAP TITLE */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#486b4b] via-[#123a20] to-[#123a20] px-5 py-10 text-white sm:px-8 lg:px-12">
-          <div className="pointer-events-none absolute left-8 top-7 opacity-35">
-            <span className="absolute left-0 top-0 h-11 w-11 rounded-full bg-[#a8c39f]" />
-            <span className="absolute left-7 top-3 h-12 w-12 rounded-full bg-[#a8c39f]" />
-            <span className="absolute left-0 top-16 h-9 w-9 rounded-full bg-[#a8c39f]" />
-          </div>
+        <section className="ltc-section">
+          <div className="ltc-container">
+            <div className="ltc-home-shell">
+              <h2 className="ltc-section-heading" style={fontMontserrat}>
+                Competency-Based Roadmap
+              </h2>
+              <div className="ltc-section-line" />
+              <p className="ltc-section-intro" style={fontPoppins}>
+                Each step is based on your course competencies. Study the module, take the exam, and wait for the professor check. The next step unlocks only after both requirements are done.
+              </p>
 
-          <div className="pointer-events-none absolute right-20 top-7 opacity-35">
-            <span className="absolute left-0 top-0 h-12 w-12 rounded-full bg-[#a8c39f]" />
-            <span className="absolute left-7 top-9 h-14 w-14 rounded-full bg-[#a8c39f]" />
-            <span className="absolute left-20 top-20 h-8 w-8 rounded-full bg-[#a8c39f]" />
-          </div>
+              {msg.text ? (
+                <div
+                  className={[
+                    "roadmap-alert mt-6 rounded-xl px-4 py-3 text-sm font-semibold",
+                    msg.type === "success"
+                      ? "bg-green-50 text-green-800 ring-1 ring-green-200"
+                      : "bg-red-50 text-red-800 ring-1 ring-red-200",
+                  ].join(" ")}
+                >
+                  {msg.text}
+                </div>
+              ) : null}
 
-          <div className="relative mx-auto max-w-[1280px]">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h1 className="font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl md:text-5xl">
-                  Competency Roadmap
-                </h1>
+              <div className="roadmap-info-panel mt-6">
+                <div className="roadmap-info-content">
+                  <div className="roadmap-info-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M5 13.5 9.2 17.7 19 7.9"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
 
-                <div className="mt-4 h-[3px] max-w-[520px] rounded-full bg-white/45" />
-
-                <p className="mt-3 text-sm font-semibold text-white/85">
-                  {traineeDisplayName} • {traineeEmail}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:w-[560px]">
-                <RoadmapStat label="Course" value={course || "Not assigned"} />
-                <RoadmapStat
-                  label="Completed"
-                  value={`${completedCount}/${steps.length || 0}`}
-                />
-                <RoadmapStat label="Progress" value={`${progressPercent}%`} />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ROADMAP CONTENT */}
-        <section className="bg-[#2e5038] px-5 py-10 text-white sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[1280px]">
-            {msg.text ? (
-              <div
-                className={[
-                  "mb-6 rounded-xl px-4 py-3 text-sm font-semibold",
-                  msg.type === "success"
-                    ? "bg-green-50 text-green-800 ring-1 ring-green-200"
-                    : "bg-red-50 text-red-800 ring-1 ring-red-200",
-                ].join(" ")}
-              >
-                {msg.text}
-              </div>
-            ) : null}
-
-            <div className="mb-6 rounded-2xl bg-white p-5 text-[#45674b] shadow-xl">
-              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="font-['Montserrat',sans-serif] text-xl font-extrabold text-[#45674b]">
-                    Competency-Based Roadmap
-                  </h2>
-
-                  <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-[#45674b]/75">
-                    Each step is based on your course competencies. Study the
-                    module, take the exam, and wait for the professor check.
-                    The next step unlocks only after both requirements are done.
-                  </p>
+                  <div className="roadmap-info-copy">
+                    <span className="roadmap-info-kicker">Roadmap Overview</span>
+                    <h3 className="roadmap-info-title" style={fontMontserrat}>
+                      Your Training Path
+                    </h3>
+                    <p className="roadmap-info-text">
+                      Track your competency progress, open available study modules, and refresh professor checks when updates are made.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="rounded-2xl bg-[#f7f8f3] px-4 py-3 text-left ring-1 ring-[#e2e8da]">
-                    <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#748175]">
-                      Next Step
-                    </div>
-
-                    <div className="mt-1 max-w-[260px] text-sm font-extrabold text-[#45674b]">
+                <div className="roadmap-info-actions">
+                  <div className="roadmap-next-card">
+                    <div className="roadmap-next-label">Next Step</div>
+                    <div className="roadmap-next-title">
                       {nextOpenStep?.title ||
                         "All completed or waiting professor check"}
                     </div>
@@ -2835,148 +3557,51 @@ export default function TraineeRoadmap() {
                     type="button"
                     onClick={() => loadRoadmap({ silent: true })}
                     disabled={refreshing}
-                    className="rounded-full bg-[#45674b] px-6 py-3 text-xs font-extrabold uppercase tracking-wide text-white transition hover:bg-[#2f463a] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="roadmap-refresh-button"
                   >
-                    {refreshing ? "Refreshing..." : "Refresh Professor Check"}
+                    <span className="roadmap-refresh-icon" aria-hidden="true">
+                      ↻
+                    </span>
+                    <span>{refreshing ? "Refreshing..." : "Refresh Professor Check"}</span>
                   </button>
                 </div>
               </div>
-            </div>
 
-            {loading ? (
-              <div className="rounded-xl bg-white px-5 py-5 text-sm font-semibold text-[#45674b] shadow-xl">
-                Loading competency roadmap...
+              <div className="mt-6">
+                {loading ? (
+                  <div className="rounded-xl bg-white px-5 py-5 text-sm font-semibold text-[#45674b] shadow-xl ring-1 ring-[#e2e8da]">
+                    Loading competency roadmap...
+                  </div>
+                ) : !course ? (
+                  <div className="rounded-xl bg-white px-5 py-5 text-sm font-semibold text-red-700 shadow-xl ring-1 ring-red-100">
+                    No course assigned to this trainee account yet.
+                  </div>
+                ) : !steps.length ? (
+                  <div className="rounded-xl bg-white px-5 py-5 text-sm font-semibold text-[#45674b] shadow-xl ring-1 ring-[#e2e8da]">
+                    No competency roadmap found for this course yet.
+                  </div>
+                ) : (
+                  <>
+                    <DesktopRoadmap steps={steps} onOpenStep={openStep} />
+                    <MobileRoadmap steps={steps} onOpenStep={openStep} />
+                  </>
+                )}
               </div>
-            ) : !course ? (
-              <div className="rounded-xl bg-white px-5 py-5 text-sm font-semibold text-red-700 shadow-xl">
-                No course assigned to this trainee account yet.
-              </div>
-            ) : !steps.length ? (
-              <div className="rounded-xl bg-white px-5 py-5 text-sm font-semibold text-[#45674b] shadow-xl">
-                No competency roadmap found for this course yet.
-              </div>
-            ) : (
-              <>
-                <DesktopRoadmap steps={steps} onOpenStep={openStep} />
-                <MobileRoadmap steps={steps} onOpenStep={openStep} />
-              </>
-            )}
+            </div>
           </div>
         </section>
-
-        <div className="h-[55px] bg-[#123a20]" />
       </main>
 
-      {/* FOOTER */}
-      <footer className="bg-white text-[#4d6f55]">
-        <div className="mx-auto max-w-[1440px] px-5 py-3 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.05fr_1.05fr_1.3fr_1fr_0.65fr]">
-            <div className="border-[#d6ded2] md:border-r md:pr-5">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/TamsiLogo.png"
-                  alt="TAMSI Logo"
-                  className="h-10 w-10 object-contain"
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/80x80/ffffff/4d6f55?text=T";
-                  }}
-                />
+      <Footer goTo={goTo} />
 
-                <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
-                  TAMSI
-                </h2>
-              </div>
-            </div>
-
-            <div className="border-[#d6ded2] md:border-r md:px-5">
-              <h3 className="text-xs font-extrabold text-[#45674b]">Menu</h3>
-
-              <div className="mt-1 grid grid-cols-2 gap-x-5 gap-y-0.5 text-[11px] font-semibold text-[#6b776d]">
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-home")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Home
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-roadmap")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Roadmap
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-attendance")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Attendance
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-modules")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Modules
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-assignment")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Assignment
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo("/trainee-progress")}
-                  className="text-left hover:text-[#173d25]"
-                >
-                  Progress
-                </button>
-              </div>
-            </div>
-
-            <div className="border-[#d6ded2] md:border-r md:px-5">
-              <h3 className="text-xs font-extrabold text-[#45674b]">
-                Contact Information
-              </h3>
-
-              <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>ltc.tamsi@gmail.com</p>
-                <p>lorengladis@ltcmultiservices.com</p>
-                <p>09959808051 / 09516281271</p>
-              </div>
-            </div>
-
-            <div className="border-[#d6ded2] md:border-r md:px-5">
-              <h3 className="text-xs font-extrabold text-[#45674b]">Address</h3>
-
-              <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>2/F 5441 Curie Street,</p>
-                <p>Palanan, Makati City</p>
-              </div>
-            </div>
-
-            <div className="md:pl-5">
-              <h3 className="text-xs font-extrabold text-[#45674b]">
-                Follow Us
-              </h3>
-            </div>
-          </div>
-
-          <div className="mt-2 flex flex-col gap-1 border-t border-[#d6ded2] pt-2 text-[9px] font-bold text-[#7b897e] sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
-            <p>Developed by CRMS Tech Alliance</p>
-          </div>
-        </div>
-      </footer>
+      {mobileOpen ? (
+        <MobileMenu
+          activeKey="roadmap"
+          onClose={() => setMobileOpen(false)}
+          goTo={goTo}
+          goToProfile={goToProfile}
+        />
+      ) : null}
 
       <RoadmapModal
         open={Boolean(selectedStep)}
@@ -3377,3 +4002,220 @@ export default function TraineeRoadmap() {
     </div>
   );
 }
+
+function Header({ activeKey = "home", goTo, goToProfile, profilePhotoUrl, onOpenMenu }) {
+  return (
+    <header className="ltc-header">
+      <div className="ltc-container">
+        <div className="ltc-nav">
+          <button
+            type="button"
+            onClick={() => goTo("/trainee-home")}
+            className="ltc-logo"
+            aria-label="TAMSI Trainee Home"
+          >
+            <img
+              src="/TamsiLogo.png"
+              alt="TAMSI Logo"
+              className="ltc-logo-icon"
+              onError={(event) => {
+                event.currentTarget.src =
+                  "https://placehold.co/80x80/ffffff/45674b?text=T";
+              }}
+            />
+            <div>
+              <h1 style={fontMontserrat}>TRAINING & ASSESSMENT</h1>
+            </div>
+          </button>
+
+          <nav className="ltc-desktop-nav" aria-label="Trainee navigation">
+            {TRAINEE_NAV_ITEMS.map((item) => (
+              <HeaderNavButton
+                key={item.key}
+                label={item.label}
+                active={item.key === activeKey}
+                onClick={() => goTo(item.path)}
+              />
+            ))}
+          </nav>
+
+          <div className="ltc-profile-wrap">
+            <HeaderNavButton
+              label="Profile"
+              className="ltc-profile-button"
+              onClick={goToProfile}
+            />
+            <button
+              type="button"
+              onClick={goToProfile}
+              className="ltc-profile-avatar"
+              aria-label="Profile"
+            >
+              <ProfileImage profilePhotoUrl={profilePhotoUrl} />
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function HeaderNavButton({ label, active = false, onClick, className = "" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`ltc-nav-link ${active ? "active" : ""} ${className}`}
+      style={fontPoppins}
+    >
+      {label}
+    </button>
+  );
+}
+
+function ProfileImage({ profilePhotoUrl }) {
+  if (profilePhotoUrl) {
+    return (
+      <img
+        src={profilePhotoUrl}
+        alt="Profile"
+        onError={(e) => {
+          e.currentTarget.src =
+            "https://placehold.co/80x80/d7ddd4/45674b?text=P";
+        }}
+      />
+    );
+  }
+
+  return (
+    <img
+      src="https://placehold.co/80x80/d7ddd4/45674b?text=P"
+      alt="Profile"
+    />
+  );
+}
+
+function Footer({ goTo }) {
+  return (
+    <footer className="ltc-footer">
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <div className="ltc-footer-brand">
+            <img
+              src="/TamsiLogo.png"
+              alt="TAMSI Logo"
+              onError={(event) => {
+                event.currentTarget.src =
+                  "https://placehold.co/80x80/ffffff/4d6f55?text=T";
+              }}
+            />
+            <h4 style={fontMontserrat}>TAMSI</h4>
+          </div>
+        </div>
+
+        <FooterColumn title="Menu">
+          {TRAINEE_NAV_ITEMS.map((item) => (
+            <FooterLink key={item.key} onClick={() => goTo(item.path)}>
+              {item.label}
+            </FooterLink>
+          ))}
+        </FooterColumn>
+
+        <FooterColumn title="Contact Information">
+          <FooterText>{TRAINING_CONTACT_INFO.email1}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.email2}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.phone}</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Address">
+          <FooterText>{TRAINING_CONTACT_INFO.addressLine1}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.addressLine2}</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Follow Us">
+          <div className="ltc-socials">
+            <span />
+            <span />
+            <span />
+          </div>
+        </FooterColumn>
+      </div>
+
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
+      </div>
+    </footer>
+  );
+}
+
+function FooterColumn({ title, children }) {
+  return (
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function FooterLink({ children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="ltc-footer-link"
+      style={fontPontano}
+    >
+      {children}
+    </button>
+  );
+}
+
+function FooterText({ children }) {
+  return <p style={fontPontano}>{children}</p>;
+}
+
+function MobileMenu({ activeKey = "home", onClose, goTo, goToProfile }) {
+  return (
+    <div className="ltc-sidebar-overlay">
+      <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
+
+      <div className="ltc-sidebar-panel">
+        <div className="ltc-sidebar-top">
+          <p className="ltc-sidebar-title" style={fontPoppins}>MENU</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="ltc-sidebar-close"
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        </div>
+
+        {TRAINEE_NAV_ITEMS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => goTo(item.path)}
+            className={`ltc-sidebar-link ${item.key === activeKey ? "active" : ""}`}
+            style={fontPoppins}
+          >
+            {item.label}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          onClick={goToProfile}
+          className="ltc-sidebar-link"
+          style={fontPoppins}
+        >
+          Profile
+        </button>
+      </div>
+    </div>
+  );
+}
+

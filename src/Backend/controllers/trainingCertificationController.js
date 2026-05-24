@@ -136,6 +136,69 @@ async function ensureCertificateSerialNo(certificate, issuedAt = null) {
   return generated;
 }
 
+
+function escapeRegex(value = "") {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeCertificateSearchText(value = "") {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeCertificateNoPart(value = "") {
+  return String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9-]/g, "")
+    .toUpperCase();
+}
+
+function buildCertificateNumberCondition(part = "", position = "first") {
+  const clean = normalizeCertificateNoPart(part);
+  if (!clean) return null;
+
+  const escaped = escapeRegex(clean);
+  const pattern = position === "last" ? `${escaped}$` : `^${escaped}`;
+
+  return {
+    $or: [
+      { certificateNo: new RegExp(pattern, "i") },
+      { serialNo: new RegExp(pattern, "i") },
+    ],
+  };
+}
+
+function buildCertificateSearchQuery(params = {}) {
+  const firstName = normalizeCertificateSearchText(params.firstName);
+  const lastName = normalizeCertificateSearchText(params.lastName);
+  const firstFour = normalizeCertificateNoPart(params.firstFour);
+  const lastFour = normalizeCertificateNoPart(params.lastFour);
+  const verificationCode = normalizeCertificateSearchText(
+    params.verificationCode || params.code
+  ).toUpperCase();
+
+  const andConditions = [{ status: "issued" }];
+
+  if (firstName) {
+    andConditions.push({ traineeName: new RegExp(escapeRegex(firstName), "i") });
+  }
+
+  if (lastName) {
+    andConditions.push({ traineeName: new RegExp(escapeRegex(lastName), "i") });
+  }
+
+  if (verificationCode) {
+    andConditions.push({ verificationCode });
+  }
+
+  const firstCondition = buildCertificateNumberCondition(firstFour, "first");
+  if (firstCondition) andConditions.push(firstCondition);
+
+  const lastCondition = buildCertificateNumberCondition(lastFour, "last");
+  if (lastCondition) andConditions.push(lastCondition);
+
+  return andConditions;
+}
+
 function buildVerificationCode() {
   return crypto.randomBytes(8).toString("hex").toUpperCase();
 }
@@ -571,6 +634,60 @@ export async function getMyTrainingCertificate(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to load certificate.",
+    });
+  }
+}
+
+
+export async function searchTrainingCertificates(req, res) {
+  try {
+    const searchValues = {
+      firstName: req.query?.firstName,
+      lastName: req.query?.lastName,
+      firstFour: req.query?.firstFour,
+      lastFour: req.query?.lastFour,
+      verificationCode: req.query?.verificationCode || req.query?.code,
+    };
+
+    const hasSearchValue = Object.values(searchValues).some((value) =>
+      normalizeCertificateSearchText(value)
+    );
+
+    if (!hasSearchValue) {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: "Please provide a name or certificate number filter.",
+        certificates: [],
+      });
+    }
+
+    const andConditions = buildCertificateSearchQuery(searchValues);
+
+    const certificates = await TrainingCertificate.find({ $and: andConditions })
+      .sort({ issuedAt: -1, createdAt: -1 })
+      .limit(25);
+
+    for (const certificate of certificates) {
+      await ensureCertificateSerialNo(certificate, certificate.issuedAt || new Date());
+    }
+
+    return res.status(200).json({
+      success: true,
+      valid: certificates.length > 0,
+      count: certificates.length,
+      certificates: certificates.map(mapCertificateResponse),
+      message: certificates.length
+        ? "Certificate record found."
+        : "No matching certificate record was found.",
+    });
+  } catch (error) {
+    console.error("searchTrainingCertificates error:", error);
+    return res.status(500).json({
+      success: false,
+      valid: false,
+      message: "Failed to search certificates.",
+      certificates: [],
     });
   }
 }

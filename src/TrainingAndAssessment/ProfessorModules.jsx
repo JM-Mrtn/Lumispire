@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildTrainingFileUrl } from "./trainingFileUrl";
+import ProfessorLayout from "./ProfessorLayout";
 
 function normalizeApiBase(raw) {
   if (!raw) return "http://localhost:5000/api";
@@ -214,6 +215,55 @@ function ModuleModal({ open, onClose, title, children, maxWidth = "max-w-6xl" })
         </div>
       </div>
     </div>
+  );
+}
+
+function DashboardStatCard({ title, value, note }) {
+  return (
+    <article className="group relative min-h-[118px] overflow-hidden rounded-[24px] border border-white/80 bg-white p-5 shadow-[0_16px_40px_rgba(8,39,25,0.10)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_65px_rgba(8,39,25,0.16)]">
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-14 h-40 w-40 rounded-full bg-[#f4d484]/20 blur-2xl transition duration-300 group-hover:scale-110" />
+      <p className="relative text-xs font-black uppercase tracking-[0.22em] text-[#071f14]/45">{title}</p>
+      <p className="relative mt-4 text-4xl font-black leading-none tracking-tight text-[#071f14]">{value}</p>
+      {note ? <p className="relative mt-3 text-sm font-semibold leading-5 text-[#071f14]/55">{note}</p> : null}
+    </article>
+  );
+}
+
+function DashboardSection({ eyebrow, title, description, children, className = "" }) {
+  return (
+    <section className={`relative overflow-hidden rounded-[28px] border border-white/80 bg-white p-6 shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 ${className}`}>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-20 -right-20 h-52 w-52 rounded-full bg-[#f4d484]/20 blur-2xl" />
+      <div className="relative">
+        {eyebrow ? <p className="text-xs font-black uppercase tracking-[0.24em] text-[#071f14]/45">{eyebrow}</p> : null}
+        {title ? <h2 className="mt-2 text-2xl font-black tracking-tight text-[#071f14]">{title}</h2> : null}
+        {description ? <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-[#071f14]/55">{description}</p> : null}
+        <div className={title || eyebrow || description ? "mt-5" : ""}>{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function DashboardButton({ children, onClick, disabled, variant = "primary", className = "", type = "button" }) {
+  const styles =
+    variant === "gold"
+      ? "bg-[#f4d484] text-[#071f14] shadow-[0_14px_30px_rgba(215,168,77,0.22)] hover:bg-[#efd075]"
+      : variant === "outline"
+      ? "border border-[#dbe4dc] bg-white text-[#071f14]/75 hover:border-[#235f3e]/45 hover:text-[#071f14]"
+      : variant === "danger"
+      ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+      : "bg-[#235f3e] text-white shadow-[0_14px_30px_rgba(8,39,25,0.22)] hover:bg-[#174a30]";
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex h-10 min-w-[96px] items-center justify-center rounded-full px-4 text-[11px] font-black uppercase tracking-[0.12em] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 ${styles} ${className}`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -752,248 +802,289 @@ export default function ProfessorModules() {
   }
 
   return (
-    <div className="min-h-screen bg-[#12391f] font-sans text-white">
-      <header className="flex h-[76px] items-center bg-white px-6 shadow-sm md:px-10">
-        <div className="flex items-center gap-5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#2d5238] bg-white text-xs font-black text-[#2d5238]">
-            LC
-          </div>
+    <ProfessorLayout
+      title="Manage Trainee Modules"
+      subtitle="Upload, review, update, and organize learning modules for your assigned courses."
+      activePage="modules"
+    >
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap");
 
-          <h1 className="text-xl font-black uppercase tracking-wide text-[#2d5238] md:text-2xl">
-            Training &amp; Assessment
-          </h1>
+        .professor-modules-page,
+        .professor-modules-page button,
+        .professor-modules-page input,
+        .professor-modules-page select,
+        .professor-modules-page textarea {
+          font-family: "Open Sans", Arial, sans-serif;
+        }
+
+        .pm-table-card {
+          width: 100%;
+          overflow: hidden;
+          border-radius: 22px;
+          border: 1px solid #dbe4dc;
+          background: rgba(255,255,255,0.92);
+        }
+
+        .pm-module-grid {
+          display: grid;
+          grid-template-columns: minmax(260px, 1.45fr) 170px 160px 90px 110px;
+          column-gap: 22px;
+          align-items: center;
+        }
+
+        .pm-table-head {
+          padding: 16px 22px;
+          background: #f7f8f3;
+          border-bottom: 1px solid #dbe4dc;
+          color: rgba(7,31,20,.48);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+        }
+
+        .pm-table-row {
+          min-height: 96px;
+          padding: 18px 22px;
+          border-bottom: 1px solid #e4ebe4;
+          color: rgba(7,31,20,.72);
+          font-size: 14px;
+          font-weight: 700;
+          transition: background .2s ease;
+        }
+
+        .pm-table-row:last-child {
+          border-bottom: 0;
+        }
+
+        .pm-table-row:hover {
+          background: rgba(247,248,243,.72);
+        }
+
+        .pm-action-cell {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .pm-action-button {
+          width: 78px !important;
+          min-width: 78px !important;
+          height: 34px !important;
+          padding: 0 12px !important;
+          border-radius: 999px !important;
+          font-size: 10px !important;
+          letter-spacing: .12em !important;
+          box-shadow: 0 8px 18px rgba(8,39,25,.08) !important;
+        }
+
+        @media (max-width: 1023px) {
+          .pm-module-grid {
+            grid-template-columns: 1fr;
+            row-gap: 12px;
+          }
+
+          .pm-table-head {
+            display: none;
+          }
+
+          .pm-table-row {
+            padding: 18px;
+          }
+
+          .pm-action-cell {
+            justify-content: flex-start;
+          }
+        }
+      `}</style>
+
+      <div className="professor-modules-page space-y-6">
+        {msg.text ? (
+          <div
+            className={`rounded-[22px] px-5 py-4 text-sm font-bold shadow-[0_14px_32px_rgba(8,39,25,0.08)] ring-1 ${
+              msg.type === "success"
+                ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                : "bg-rose-50 text-rose-800 ring-rose-200"
+            }`}
+          >
+            {msg.text}
+          </div>
+        ) : null}
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <DashboardStatCard title="Total Modules" value={modules.length} note="Uploaded records" />
+          <DashboardStatCard title="Visible Results" value={sortedModules.length} note="After search filter" />
+          <DashboardStatCard title="Assigned Courses" value={courseOptions.length} note="Professor access" />
+          <DashboardStatCard
+            title="Module Files"
+            value={modules.reduce((total, item) => total + getModuleFiles(item).length, 0)}
+            note="Attached materials"
+          />
         </div>
-      </header>
 
-      <div className="flex min-h-[calc(100vh-76px)] flex-col lg:flex-row">
-        <aside className="flex w-full flex-col bg-[#2d5038] lg:w-[228px]">
-          <div className="border-b border-white/15 px-6 py-8 text-center">
-            <div className="mx-auto h-[66px] w-[66px] rounded-full border-4 border-[#b7bbb6] bg-white shadow-sm" />
-
-            <h2 className="mt-5 text-sm font-black uppercase leading-tight">
-              {professorName}
-            </h2>
-
-            <p className="mt-1 break-words text-[11px] font-semibold text-white/80">
-              {professorEmail}
-            </p>
-          </div>
-
-          <nav className="flex-1 py-6">
-            {menuItems.map((item) => {
-              const active = item.label === "Manage Modules";
-
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => navigate(item.path)}
-                  className={`block w-full px-9 py-4 text-left text-sm font-black uppercase transition ${
-                    active
-                      ? "bg-[#d8e0da] text-[#1e3e2a]"
-                      : "text-white hover:bg-white/10"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="px-16 pb-10">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm font-black uppercase text-white transition hover:text-[#d8e0da]"
-            >
-              Sign Out
-            </button>
-          </div>
-        </aside>
-
-        <main className="flex-1 bg-[#12391f] px-5 py-5 md:px-7 lg:px-7">
-          <section className="mx-auto max-w-[856px] xl:max-w-[880px]">
-            <div className="mb-7">
-              <h2 className="text-2xl font-black uppercase tracking-tight md:text-[28px]">
-                Manage Trainee Modules
-              </h2>
-              <div className="mt-1 h-1 w-full max-w-[402px] bg-white/60" />
-            </div>
-
-            {msg.text ? (
-              <div
-                className={`mb-5 rounded-xl px-4 py-3 text-sm font-bold ring-1 ${
-                  msg.type === "success"
-                    ? "bg-green-50 text-green-800 ring-green-200"
-                    : "bg-red-50 text-red-800 ring-red-200"
-                }`}
+        <DashboardSection
+          eyebrow="Search Records"
+          title="Module Queue"
+          description="Filter by course, search module details, refresh records, or upload a new training module."
+        >
+          <div className="grid gap-4 lg:grid-cols-[minmax(220px,300px)_1fr_auto_auto] lg:items-end">
+            <label className="block">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-[#071f14]/60">Course</span>
+              <select
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                disabled={courseOptions.length <= 1}
+                className="mt-2 h-12 w-full rounded-full border border-[#dbe4dc] bg-[#fbfcfa] px-5 text-sm font-bold text-[#071f14] outline-none transition focus:border-[#235f3e] focus:bg-white focus:shadow-[0_0_0_4px_rgba(35,95,62,0.10)] disabled:opacity-60"
               >
-                {msg.text}
-              </div>
-            ) : null}
+                {!courseOptions.length ? (
+                  <option value="">No assigned course</option>
+                ) : (
+                  courseOptions.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
 
-            <div className="mb-8 rounded-lg bg-[#2d5038] px-4 py-4 shadow-sm">
-              <div className="grid gap-5 lg:grid-cols-[240px_1fr_auto_auto] lg:items-end">
-                <div>
-                  <label className="text-sm font-black uppercase text-white">
-                    Course
-                  </label>
+            <label className="block">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-[#071f14]/60">Search</span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="mt-2 h-12 w-full rounded-full border border-[#dbe4dc] bg-[#fbfcfa] px-5 text-sm font-bold text-[#071f14] outline-none transition placeholder:text-[#071f14]/38 focus:border-[#235f3e] focus:bg-white focus:shadow-[0_0_0_4px_rgba(35,95,62,0.10)]"
+                placeholder="Search module title, description, course, or file name"
+              />
+            </label>
 
-                  <select
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    disabled={courseOptions.length <= 1}
-                    className="mt-1 h-7 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none disabled:bg-white/80"
-                  >
-                    {!courseOptions.length ? (
-                      <option value="">No assigned course</option>
-                    ) : (
-                      courseOptions.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
+            <DashboardButton onClick={() => loadModules(course)} disabled={loading || !course}>
+              {loading ? "Loading..." : "Refresh"}
+            </DashboardButton>
 
-                <div>
-                  <label className="text-sm font-black uppercase text-white">
-                    Search
-                  </label>
+            <DashboardButton
+              variant="gold"
+              onClick={openCreateModal}
+              disabled={!courseOptions.length || !course}
+            >
+              Create Module
+            </DashboardButton>
+          </div>
+        </DashboardSection>
 
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="mt-1 h-7 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => loadModules(course)}
-                  disabled={loading || !course}
-                  className="h-7 rounded-md bg-white px-8 text-[11px] font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {loading ? "Loading..." : "Refresh"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={openCreateModal}
-                  disabled={!courseOptions.length || !course}
-                  className="h-7 rounded-md bg-white px-8 text-[11px] font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Create Module
-                </button>
-              </div>
+        <DashboardSection
+          eyebrow="Module Records"
+          title="Training Modules"
+          description="View learning material details, attached files, upload dates, and manage module records."
+        >
+          <div className="pm-table-card">
+            <div className="pm-table-head pm-module-grid hidden lg:grid">
+              <span>Module</span>
+              <span>Uploaded</span>
+              <span>Course</span>
+              <span>Files</span>
+              <span>Actions</span>
             </div>
 
-            <div className="overflow-hidden rounded-lg bg-[#2d5038] shadow-sm">
-              <div className="bg-white px-4 py-4">
-                <h3 className="text-base font-black text-[#2d5038]">
-                  Trainee Modules
-                </h3>
-              </div>
+            <div className="divide-y divide-[#e4ebe4]">
+              {loading ? (
+                [1, 2, 3].map((item) => (
+                  <div key={item} className="pm-table-row pm-module-grid">
+                    <div className="h-5 rounded-full bg-[#e7eee8]" />
+                    <div className="h-5 rounded-full bg-[#e7eee8]" />
+                    <div className="h-5 rounded-full bg-[#e7eee8]" />
+                    <div className="h-5 rounded-full bg-[#e7eee8]" />
+                    <div className="h-9 rounded-full bg-[#e7eee8]" />
+                  </div>
+                ))
+              ) : paginatedModules.length ? (
+                paginatedModules.map((module) => {
+                  const moduleId = getModuleId(module);
+                  const fileCount = getModuleFiles(module).length;
 
-              <div className="min-h-[316px] divide-y divide-white/25">
-                {loading ? (
-                  [1, 2].map((item) => (
-                    <div
-                      key={item}
-                      className="grid gap-4 px-2 py-4 md:grid-cols-[84px_1.3fr_1fr_1fr_92px_80px] md:items-center"
-                    >
-                      <div className="h-10 w-10 rounded-full bg-white" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-4 rounded-full bg-white/35" />
-                      <div className="h-5 rounded-full bg-[#bdf0a4]" />
-                      <div className="h-5 rounded-full bg-white" />
-                    </div>
-                  ))
-                ) : paginatedModules.length ? (
-                  paginatedModules.map((module) => (
-                    <div
-                      key={getModuleId(module)}
-                      className="grid gap-4 px-2 py-4 text-sm font-black md:grid-cols-[84px_1.3fr_1fr_1fr_92px_80px] md:items-center"
-                    >
-                      <div className="h-10 w-10 rounded-full bg-white" />
-
-                      <div className="text-white">
-                        {module.title || "Title of Module"}
+                  return (
+                    <div key={moduleId} className="pm-table-row pm-module-grid">
+                      <div className="min-w-0">
+                        <p className="break-words text-base font-black leading-6 text-[#071f14]">
+                          {module.title || "Title of Module"}
+                        </p>
+                        <p className="mt-1 line-clamp-2 break-words text-xs font-semibold leading-5 text-[#071f14]/50">
+                          {module.description || "No description provided."}
+                        </p>
                       </div>
 
-                      <div className="text-white/90">
+                      <div className="leading-5">
+                        <span className="lg:hidden text-[11px] font-black uppercase tracking-[0.14em] text-[#071f14]/40">Uploaded: </span>
                         {formatDateTime(module.createdAt)}
                       </div>
 
-                      <div className="text-white/90">{module.course || "Course"}</div>
+                      <div className="break-words">
+                        <span className="lg:hidden text-[11px] font-black uppercase tracking-[0.14em] text-[#071f14]/40">Course: </span>
+                        {module.course || "Course"}
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => deleteModule(getModuleId(module))}
-                        disabled={deletingId === getModuleId(module)}
-                        className="inline-flex min-w-[72px] justify-center rounded-full bg-[#bdf0a4] px-3 py-1 text-[10px] font-black text-[#2d5038] transition hover:bg-[#a9e790] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {deletingId === getModuleId(module) ? "..." : "Remove"}
-                      </button>
+                      <div>
+                        <span className="lg:hidden text-[11px] font-black uppercase tracking-[0.14em] text-[#071f14]/40">Files: </span>
+                        {fileCount} file{fileCount === 1 ? "" : "s"}
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setSelectedModule(module)}
-                        className="inline-flex min-w-[72px] justify-center rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038] transition hover:bg-[#eef1e7]"
-                      >
-                        View
-                      </button>
+                      <div className="pm-action-cell">
+                        <DashboardButton
+                          variant="outline"
+                          onClick={() => setSelectedModule(module)}
+                          className="pm-action-button"
+                        >
+                          View
+                        </DashboardButton>
+
+                        <DashboardButton
+                          variant="danger"
+                          onClick={() => deleteModule(moduleId)}
+                          disabled={deletingId === moduleId}
+                          className="pm-action-button"
+                        >
+                          {deletingId === moduleId ? "..." : "Remove"}
+                        </DashboardButton>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="px-5 py-12 text-center text-sm font-bold text-white/80">
-                    No modules found for this course.
-                  </div>
-                )}
-              </div>
+                  );
+                })
+              ) : (
+                <div className="px-5 py-12 text-center text-sm font-bold text-[#071f14]/55">
+                  No modules found for this course.
+                </div>
+              )}
             </div>
+          </div>
 
-            <div className="mt-4 flex items-center justify-between text-base font-bold">
-              <div>
-                Page {page} / {totalPages}
-              </div>
+          <div className="mt-5 flex flex-col gap-3 text-sm font-bold text-[#071f14]/60 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Page {page} / {totalPages}
+            </span>
 
-              <div className="flex items-center gap-5">
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page <= 1}
-                  className="text-3xl leading-none text-white disabled:opacity-30"
-                  aria-label="Previous page"
-                >
-                  ‹
-                </button>
+            <div className="flex gap-2">
+              <DashboardButton
+                variant="outline"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page <= 1}
+              >
+                Previous
+              </DashboardButton>
 
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
-                  className="font-black text-white disabled:opacity-30"
-                >
-                  Next Page
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={page >= totalPages}
-                  className="text-3xl leading-none text-white disabled:opacity-30"
-                  aria-label="Next page"
-                >
-                  ›
-                </button>
-              </div>
+              <DashboardButton
+                variant="outline"
+                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={page >= totalPages}
+              >
+                Next
+              </DashboardButton>
             </div>
-          </section>
-        </main>
+          </div>
+        </DashboardSection>
       </div>
 
       <ModuleModal
@@ -1464,6 +1555,6 @@ export default function ProfessorModules() {
           </div>
         ) : null}
       </ModuleModal>
-    </div>
+    </ProfessorLayout>
   );
 }

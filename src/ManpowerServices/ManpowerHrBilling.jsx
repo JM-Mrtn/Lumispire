@@ -498,57 +498,178 @@ function downloadAllBillings(groups, monthKey) {
   doc.save(`all-billings-${monthKey}.pdf`);
 }
 
-function BrandLogo() {
-  return (
-    <div className="flex items-center gap-5">
-      <img
-        src="/logo.png"
-        alt="Manpower Logo"
-        className="h-16 w-16 rounded-full object-cover"
-        onError={(event) => {
-          event.currentTarget.style.display = "none";
-        }}
-      />
 
-      <h1 className="text-[28px] font-black uppercase tracking-wide text-[#315b42] sm:text-[34px]">
-        MANPOWER SERVICES
-      </h1>
-    </div>
+function SidebarIcon({ type }) {
+  const common = "h-4 w-4";
+
+  if (type === "applicants") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-8 0v2" />
+        <circle cx="12" cy="7" r="4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 8v6M23 11h-6" />
+      </svg>
+    );
+  }
+
+  if (type === "payroll") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h4M15 15h2" />
+      </svg>
+    );
+  }
+
+  if (type === "leave") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 2v4M16 2v4M3 10h18" />
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m8 15 2.4 2.4L16 12" />
+      </svg>
+    );
+  }
+
+  if (type === "billing") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6M9 11h6M9 15h3" />
+      </svg>
+    );
+  }
+
+  if (type === "logout") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m16 17 5-5-5-5M21 12H9" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="7" height="7" rx="2" />
+      <rect x="14" y="3" width="7" height="7" rx="2" />
+      <rect x="14" y="14" width="7" height="7" rx="2" />
+      <rect x="3" y="14" width="7" height="7" rx="2" />
+    </svg>
   );
 }
 
-function SidebarButton({ active = false, children, onClick }) {
+function RefreshIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 0 1-15.3 6.36L3 15" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 15v6h6" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12A9 9 0 0 1 18.3 5.64L21 9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 9V3h-6" />
+    </svg>
+  );
+}
+
+function ExportIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m7 10 5 5 5-5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 21h14" />
+    </svg>
+  );
+}
+
+function ViewIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function SidebarButton({ active = false, children, onClick, icon = "dashboard" }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full px-6 py-4 text-center text-[16px] font-black uppercase transition ${
+      className={`group flex min-h-[46px] w-full items-center gap-3 rounded-[23px] px-5 text-left text-[12px] font-black tracking-tight transition duration-300 ${
         active
-          ? "bg-[#d5ddd6] text-[#244b35]"
-          : "text-white hover:bg-white/10"
+          ? "bg-white text-[#071f14] shadow-[0_18px_38px_rgba(0,0,0,0.20)]"
+          : "text-white hover:translate-x-1 hover:bg-white/10"
       }`}
     >
-      {children}
+      <span
+        className={`grid h-7 w-7 shrink-0 place-items-center transition duration-300 ${
+          active ? "text-[#071f14]" : "text-white/85 group-hover:text-[#f4d484]"
+        }`}
+      >
+        <SidebarIcon type={icon} />
+      </span>
+      <span className="min-w-0 flex-1 leading-tight">{children}</span>
     </button>
   );
 }
 
-function DashboardSummaryCard({ label, value }) {
+function BillingStatCard({ title, value, note, tone = "green" }) {
+  const valueColor = tone === "red" ? "text-[#9d2f2f]" : tone === "gold" ? "text-[#bd6b00]" : "text-[#071f14]";
+
   return (
-    <div className="rounded-lg border-[3px] border-[#718575] bg-[#456650] px-4 py-4 text-white shadow-sm">
-      <p className="text-[13px] font-black uppercase leading-tight">{label}</p>
-      <p className="mt-3 text-center text-[22px] font-black leading-none">
-        {value}
-      </p>
+    <div className="group relative flex min-h-[112px] min-w-0 flex-col justify-between overflow-hidden rounded-[24px] border border-white/80 bg-white px-5 py-5 shadow-[0_14px_35px_rgba(8,39,25,0.09)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(8,39,25,0.14)]">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-14 h-32 w-32 rounded-full bg-[#f4d484]/18 blur-2xl transition duration-300 group-hover:scale-110" />
+      <div className="relative min-w-0">
+        <p className="truncate text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#071f14]/45">
+          {title}
+        </p>
+        <p className={`mt-3 truncate text-[clamp(1.65rem,2.4vw,2.35rem)] font-black leading-none tracking-tight ${valueColor}`}>
+          {value}
+        </p>
+        {note ? (
+          <p className="mt-2 truncate text-[12px] font-semibold text-[#071f14]/55">
+            {note}
+          </p>
+        ) : null}
+      </div>
     </div>
+  );
+}
+
+function SectionCard({ eyebrow, title, children, className = "", right = null }) {
+  return (
+    <section className={`relative overflow-hidden rounded-3xl border border-white/80 bg-white shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 ${className}`}>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-16 h-44 w-44 rounded-full bg-[#f4d484]/20 blur-2xl" />
+      <div className="relative p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            {eyebrow ? (
+              <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-[#071f14]">
+                {title}
+              </h2>
+            ) : null}
+          </div>
+          {right}
+        </div>
+        <div className={title || eyebrow ? "mt-5" : ""}>{children}</div>
+      </div>
+    </section>
   );
 }
 
 function BillingAmountRow({ label, value }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border-[3px] border-[#718575] bg-[#637a68] px-5 py-3 text-white">
-      <p className="text-[15px] font-black uppercase">{label}</p>
-      <p className="text-[17px] font-black">{formatPeso(value)}</p>
+    <div className="group flex items-center justify-between gap-4 rounded-2xl border border-[#d7e2da] bg-white px-5 py-4 text-[#071f14] shadow-[0_10px_24px_rgba(8,39,25,0.06)] transition duration-300 hover:-translate-y-0.5 hover:border-[#d7a84d] hover:shadow-[0_18px_40px_rgba(8,39,25,0.11)]">
+      <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#071f14]/50">
+        {label}
+      </p>
+      <p className="text-[18px] font-black text-[#071f14]">₱{formatPeso(value)}</p>
     </div>
   );
 }
@@ -557,120 +678,100 @@ function VacancyBillingModal({ group, onClose, onDownload }) {
   if (!group) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4">
-      <div className="mx-auto max-w-6xl rounded-[24px] bg-[#f6f8f3] p-5 text-[#24352c] shadow-2xl">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-white px-4 py-4">
-          <div>
-            <h2 className="text-2xl font-black text-[#24352c]">
-              {group.vacancy} Billing Details
-            </h2>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
+      <div className="mx-auto max-w-6xl animate-[billingModalPop_0.35s_ease-out] overflow-hidden rounded-[32px] border border-white/80 bg-[#edf3ee] text-[#071f14] shadow-[0_34px_90px_rgba(0,0,0,0.32)]">
+        <style>{`
+          @keyframes billingModalPop {
+            from { opacity: 0; transform: translateY(20px) scale(.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+        `}</style>
 
-            <p className="mt-1 text-sm font-semibold text-[#5f6f61]">
-              {formatMonthDisplay(group.monthKey)} • Employees:{" "}
-              {group.employeeCount} • Payroll entries: {group.payrollEntryCount}
-            </p>
-          </div>
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] px-6 py-6 text-white">
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[#f4d484]/20 blur-3xl" />
+          <div className="absolute -bottom-24 left-1/4 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.28em] text-[#f4d484]">
+                Billing Details
+              </p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">
+                {group.vacancy}
+              </h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-white/75">
+                {formatMonthDisplay(group.monthKey)} • Employees: {group.employeeCount} • Payroll entries: {group.payrollEntryCount}
+              </p>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={onDownload}
-              className="rounded-xl bg-[#395345] px-4 py-3 text-sm font-black text-white"
-            >
-              Download Billing PDF
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={onDownload}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#f4d484] px-5 text-[12px] font-black uppercase tracking-[0.08em] text-[#071f14] shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:bg-white"
+              >
+                <ExportIcon />
+                Download PDF
+              </button>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl bg-[#eef3ea] px-4 py-3 text-sm font-black text-[#395345]"
-            >
-              Close
-            </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex h-12 items-center justify-center rounded-full bg-white/12 px-5 text-[12px] font-black uppercase tracking-[0.08em] text-white ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-white hover:text-[#071f14]"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="mb-4 grid gap-4 md:grid-cols-3">
-          <DashboardSummaryCard
-            label="Total Services"
-            value={formatPeso(group.totalServicesRendered)}
-          />
+        <div className="p-5 sm:p-6">
+          <section className="grid gap-5 md:grid-cols-3">
+            <BillingStatCard title="Total Services" value={`₱${formatPeso(group.totalServicesRendered)}`} note="Gross services rendered" />
+            <BillingStatCard title="12% VAT" value={`₱${formatPeso(group.vatAmount)}`} note="Value added tax" tone="gold" />
+            <BillingStatCard title="Total Billing" value={`₱${formatPeso(group.totalBilling)}`} note="Final billing amount" />
+          </section>
 
-          <DashboardSummaryCard label="12% VAT" value={formatPeso(group.vatAmount)} />
+          <SectionCard eyebrow="Payroll Entries" title="Included Payroll Records" className="mt-6">
+            <div className="overflow-hidden rounded-3xl border border-[#d7e2da] bg-[#f8fbf9]">
+              <div className="hidden grid-cols-[1.2fr_1.4fr_1fr_.8fr_.8fr_1fr] gap-4 border-b border-[#d7e2da] bg-[#eef4ef] px-5 py-4 text-[11px] font-black uppercase tracking-[0.14em] text-[#071f14]/50 lg:grid">
+                <span>Employee</span>
+                <span>Company Email</span>
+                <span>Cutoff</span>
+                <span className="text-right">Gross</span>
+                <span className="text-right">Net</span>
+                <span className="text-right">Services</span>
+              </div>
 
-          <DashboardSummaryCard
-            label="Total Billing"
-            value={formatPeso(group.totalBilling)}
-          />
-        </div>
-
-        <div className="overflow-hidden rounded-[24px] border border-[#d7decf] bg-white shadow-sm">
-          <div className="border-b border-[#eef2ea] bg-[#f7faf5] px-5 py-4">
-            <h3 className="text-xl font-black text-[#24352c]">
-              Included Payroll Entries
-            </h3>
-          </div>
-
-          <div className="max-h-[65vh] overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead className="sticky top-0 bg-[#f8faf6] text-[#395345]">
-                <tr>
-                  <th className="px-4 py-3 text-left font-black">Employee</th>
-                  <th className="px-4 py-3 text-left font-black">
-                    Company Email
-                  </th>
-                  <th className="px-4 py-3 text-left font-black">Cutoff</th>
-                  <th className="px-4 py-3 text-right font-black">Gross Pay</th>
-                  <th className="px-4 py-3 text-right font-black">Net Pay</th>
-                  <th className="px-4 py-3 text-right font-black">
-                    Services Amount
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
+              <div className="max-h-[55vh] overflow-auto divide-y divide-[#d7e2da]">
                 {group.rows.map((row, index) => (
-                  <tr
+                  <article
                     key={`${row.employeeId}-${index}-${row.cutoffLabel}`}
-                    className="border-t border-[#eef2ea]"
+                    className="grid gap-3 bg-white/70 px-5 py-4 text-[13px] font-bold transition duration-300 hover:bg-white lg:grid-cols-[1.2fr_1.4fr_1fr_.8fr_.8fr_1fr] lg:items-center lg:gap-4"
                   >
-                    <td className="px-4 py-3">{row.employeeName}</td>
-                    <td className="px-4 py-3">{row.companyEmail}</td>
-                    <td className="px-4 py-3">{row.cutoffLabel}</td>
-                    <td className="px-4 py-3 text-right">
-                      {formatPeso(row.grossPay)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {formatPeso(row.netPay)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-black text-[#24352c]">
-                      {formatPeso(row.servicesAmount)}
-                    </td>
-                  </tr>
+                    <p className="font-black text-[#071f14]">{row.employeeName}</p>
+                    <p className="break-all text-[#071f14]/65">{row.companyEmail}</p>
+                    <p className="text-[#071f14]/70">{row.cutoffLabel}</p>
+                    <p className="lg:text-right">₱{formatPeso(row.grossPay)}</p>
+                    <p className="lg:text-right">₱{formatPeso(row.netPay)}</p>
+                    <p className="font-black text-[#174a30] lg:text-right">₱{formatPeso(row.servicesAmount)}</p>
+                  </article>
                 ))}
 
-                {!group.rows.length && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-[#6b7a6d]"
-                    >
-                      No payroll entries found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                {!group.rows.length ? (
+                  <div className="px-5 py-12 text-center text-sm font-bold text-[#071f14]/55">
+                    No payroll entries found.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </SectionCard>
+
+          <div className="mt-6 rounded-3xl border border-[#d7e2da] bg-white p-5 text-sm font-semibold leading-7 text-[#071f14]/65 shadow-[0_14px_30px_rgba(8,39,25,0.07)]">
+            <p className="font-black text-[#071f14]">Billing Basis</p>
+            <p className="mt-2">
+              This billing uses the saved payroll <strong>gross pay</strong> totals for the selected month and vacancy, then adds 12% VAT.
+            </p>
           </div>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-[#d9e3d5] bg-[#fbfdf9] p-5 text-sm text-[#5f6f61]">
-          <p className="font-black text-[#24352c]">Billing Basis</p>
-
-          <p className="mt-2 leading-7">
-            This billing uses the saved payroll <strong>gross pay</strong>{" "}
-            totals for the selected month and vacancy, then adds 12% VAT.
-          </p>
         </div>
       </div>
     </div>
@@ -818,219 +919,224 @@ export default function ManpowerHrBilling() {
   }, [billingGroups]);
 
   return (
-    <div className="min-h-screen bg-[#0f3a1e] font-sans text-white">
-      <header className="border-b border-[#d7decf] bg-[#f7f9f5]">
-        <div className="flex h-[90px] items-center px-8">
-          <BrandLogo />
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
+        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+          <div className="text-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
+              Manpower Services HR
+            </p>
+            <h1 className="mt-3 text-[17px] font-black leading-tight tracking-tight text-white">
+              LTC Manpower Services
+            </h1>
+          </div>
 
-      <div className="grid min-h-[calc(100vh-90px)] lg:grid-cols-[265px_1fr]">
-        <aside className="flex bg-[#294f35] lg:min-h-[calc(100vh-90px)]">
-          <div className="flex w-full flex-col">
-            <div className="border-b border-white/15 px-6 py-8 text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#9ca59d] bg-white text-[28px] font-black text-[#315b42]">
-                HR
-              </div>
+          <nav className="mt-12 flex-1 space-y-4">
+            <SidebarButton icon="dashboard" onClick={() => navigate("/manpower-hr")}>
+              Dashboard
+            </SidebarButton>
 
-              <h2 className="mt-5 text-[17px] font-black uppercase leading-tight text-white">
-                Human Resources
-              </h2>
+            <SidebarButton icon="applicants" onClick={() => navigate("/manpower-hr-applications")}>
+              Manage Applicants
+            </SidebarButton>
 
-              <p className="mt-2 break-all text-[11px] font-bold text-white">
-                {hrEmail}
-              </p>
-            </div>
+            <SidebarButton icon="payroll" onClick={() => navigate("/manpower-hr-payroll")}>
+              Manage Payroll
+            </SidebarButton>
 
-            <nav className="border-t border-white/5">
-              <SidebarButton onClick={() => navigate("/manpower-hr")}>
-                Dashboard
-              </SidebarButton>
+            <SidebarButton icon="leave" onClick={() => navigate("/manpower-hr-leaves")}>
+              Manage File Leave
+            </SidebarButton>
 
-              <SidebarButton
-                onClick={() => navigate("/manpower-hr-applications")}
-              >
-                Manage Applicants
-              </SidebarButton>
+            <SidebarButton active icon="billing" onClick={() => navigate("/manpower-hr-billing")}>
+              Manage Billing
+            </SidebarButton>
+          </nav>
 
-              <SidebarButton onClick={() => navigate("/manpower-hr-payroll")}>
-                Manage Payroll
-              </SidebarButton>
-
-              <SidebarButton onClick={() => navigate("/manpower-hr-leaves")}>
-                Manage File Leave
-              </SidebarButton>
-
-              <SidebarButton active onClick={() => navigate("/manpower-hr-billing")}>
-                Manage Billing
-              </SidebarButton>
-            </nav>
-
-            <div className="mt-auto px-6 py-8">
-              <button
-                type="button"
-                onClick={logout}
-                className="w-full rounded-full px-5 py-3 text-[16px] font-black uppercase text-white transition hover:bg-white/10"
-              >
-                Sign Out
-              </button>
-            </div>
+          <div className="border-t border-white/15 pt-7">
+            <button
+              type="button"
+              onClick={logout}
+              className="group flex min-h-[46px] w-full items-center gap-3 rounded-[23px] bg-white/10 px-5 text-left text-[12px] font-black capitalize tracking-tight text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#f4d484] hover:text-[#071f14]"
+            >
+              <span className="grid h-7 w-7 shrink-0 place-items-center text-white/90 transition duration-300 group-hover:text-[#071f14]">
+                <SidebarIcon type="logout" />
+              </span>
+              <span>Sign out</span>
+            </button>
+            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
+              © LTC Manpower Services
+            </p>
           </div>
         </aside>
 
-        <main className="bg-[#0f3a1e] px-6 py-6 lg:px-8">
-          <section>
-            <h1 className="text-[32px] font-black uppercase leading-tight text-white md:text-[38px]">
-              Manage Billing
-            </h1>
-            <div className="mt-2 h-[4px] w-[330px] max-w-full bg-white/65" />
+        <main className="min-w-0 px-5 py-6 lg:px-8">
+          <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
+            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
+            <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+            <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-[#f4d484]">
+                  Manpower Billing Center
+                </p>
+                <h1 className="mt-3 max-w-3xl text-[38px] font-black leading-[0.98] tracking-[-0.055em] md:text-[56px]">
+                  Manage Billing Records
+                </h1>
+                <p className="mt-4 max-w-2xl text-[15px] font-semibold leading-7 text-white/75">
+                  Review monthly manpower billing, compute services rendered, export billing summaries, and inspect vacancy payroll records.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadAllPayrollRows}
+                disabled={loadingBilling}
+                className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-white px-7 text-[13px] font-black uppercase tracking-[0.08em] text-[#071f14] shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#f4d484] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {loadingBilling ? "Refreshing..." : "Refresh Billing"}
+              </button>
+            </div>
           </section>
 
-          <section className="mt-8 rounded-lg bg-[#294f35] px-6 py-6">
-            <div className="grid gap-5 lg:grid-cols-[280px_280px_1fr_120px_170px] lg:items-end">
-              <label className="block">
-                <span className="mb-2 block text-[15px] font-black uppercase text-white">
-                  All Job Offers
-                </span>
+          <section className="mt-6 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+            <BillingStatCard title="Vacancies" value={formatCount(billingGroups.length)} note="Billing groups found" />
+            <BillingStatCard title="Employees" value={formatCount(overallTotals.employeeCount)} note="Included employees" />
+            <BillingStatCard title="Payroll Entries" value={formatCount(overallTotals.payrollEntryCount)} note="Saved payroll rows" />
+            <BillingStatCard title="Total Services" value={`₱${formatPeso(overallTotals.totalServicesRendered)}`} note="Gross services amount" tone="gold" />
+            <BillingStatCard title="Total Billing" value={`₱${formatPeso(overallTotals.totalBilling)}`} note="With 12% VAT" />
+          </section>
 
+          <SectionCard
+            eyebrow="Billing Tools"
+            title="Monthly Billing Filters"
+            className="mt-7"
+            right={
+              <div className="grid w-full gap-3 xl:w-auto xl:grid-cols-[240px_180px_auto_auto]">
                 <select
                   value={vacancyFilter}
                   onChange={(event) => setVacancyFilter(event.target.value)}
-                  className="h-[32px] w-full rounded-full border border-white bg-white px-4 text-[13px] font-black text-[#294f35] outline-none"
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
                 >
                   <option value="">All Job Offers</option>
-
                   {vacancies.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
                   ))}
                 </select>
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-[15px] font-black uppercase text-white">
-                  Date
-                </span>
 
                 <input
                   type="month"
                   value={billingMonth}
                   onChange={(event) => setBillingMonth(event.target.value)}
-                  className="h-[32px] w-full rounded-full border border-white bg-white px-4 text-[13px] font-black text-[#294f35] outline-none"
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
                 />
-              </label>
 
-              <div />
+                <button
+                  type="button"
+                  onClick={loadAllPayrollRows}
+                  disabled={loadingBilling}
+                  className="group inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#174a30] text-white shadow-[0_12px_26px_rgba(8,39,25,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#d7a84d] hover:text-[#071f14] disabled:cursor-not-allowed disabled:opacity-70"
+                  title={loadingBilling ? "Loading billing records" : "Refresh billing records"}
+                  aria-label={loadingBilling ? "Loading billing records" : "Refresh billing records"}
+                >
+                  <RefreshIcon className={`h-4 w-4 transition duration-300 ${loadingBilling ? "animate-spin" : "group-hover:rotate-180"}`} />
+                </button>
 
-              <button
-                type="button"
-                onClick={loadAllPayrollRows}
-                disabled={loadingBilling}
-                className="h-[36px] rounded-md bg-white px-5 text-[13px] font-black text-[#294f35] transition hover:bg-[#e7eee3] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {loadingBilling ? "Loading..." : "Refresh"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => downloadAllBillings(billingGroups, billingMonth)}
-                disabled={!billingGroups.length}
-                className="h-[36px] rounded-md bg-white px-5 text-[13px] font-black text-[#294f35] transition hover:bg-[#e7eee3] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                Export Billing
-              </button>
+                <button
+                  type="button"
+                  onClick={() => downloadAllBillings(billingGroups, billingMonth)}
+                  disabled={!billingGroups.length}
+                  className="group inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#082719] text-white shadow-[0_12px_26px_rgba(8,39,25,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#d7a84d] hover:text-[#071f14] disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Export all billing"
+                  aria-label="Export all billing"
+                >
+                  <ExportIcon className="h-4 w-4 transition duration-300 group-hover:scale-110" />
+                </button>
+              </div>
+            }
+          >
+            <div className="rounded-3xl border border-[#d7e2da] bg-[#f8fbf9] px-5 py-4 text-[13px] font-bold text-[#071f14]/60">
+              Showing billing records for <span className="font-black text-[#071f14]">{formatMonthDisplay(billingMonth)}</span>
+              {vacancyFilter ? (
+                <span> • Vacancy: <span className="font-black text-[#071f14]">{vacancyFilter}</span></span>
+              ) : (
+                <span> • All job offers</span>
+              )}
             </div>
-          </section>
+          </SectionCard>
 
-          <section className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
-            <DashboardSummaryCard
-              label="Vacancies"
-              value={formatCount(billingGroups.length)}
-            />
-
-            <DashboardSummaryCard
-              label="Employees"
-              value={formatCount(overallTotals.employeeCount)}
-            />
-
-            <DashboardSummaryCard
-              label="Payroll Entries"
-              value={formatCount(overallTotals.payrollEntryCount)}
-            />
-
-            <DashboardSummaryCard
-              label="Total Services"
-              value={formatPeso(overallTotals.totalServicesRendered)}
-            />
-
-            <DashboardSummaryCard
-              label="Total Billing"
-              value={formatPeso(overallTotals.totalBilling)}
-            />
-          </section>
-
-          <section className="mt-10 space-y-6">
+          <SectionCard eyebrow="Billing Records" title="Vacancy Billing List" className="mt-7">
             {loadingBilling ? (
-              <div className="rounded-lg bg-[#294f35] px-6 py-14 text-center text-[14px] font-semibold text-white/80">
+              <div className="rounded-3xl border border-[#d7e2da] bg-[#f8fbf9] px-6 py-14 text-center text-[14px] font-semibold text-[#071f14]/60">
                 Loading billing records...
               </div>
             ) : null}
 
             {!loadingBilling && !billingGroups.length ? (
-              <div className="rounded-lg bg-[#294f35] px-6 py-14 text-center text-[14px] font-semibold text-white/80">
+              <div className="rounded-3xl border border-[#d7e2da] bg-[#f8fbf9] px-6 py-14 text-center text-[14px] font-semibold text-[#071f14]/60">
                 No billing records found for {formatMonthDisplay(billingMonth)}.
               </div>
             ) : null}
 
-            {!loadingBilling &&
-              billingGroups.map((group) => (
-                <article
-                  key={`${group.vacancy}-${group.monthKey}`}
-                  className="overflow-hidden rounded-lg bg-[#294f35]"
-                >
-                  <div className="flex flex-col gap-4 rounded-t-lg bg-white px-4 py-4 text-[#294f35] lg:flex-row lg:items-center lg:justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedBillingGroup(group)}
-                      className="text-left text-[21px] font-black transition hover:text-[#1d3f2a]"
-                    >
-                      {group.vacancy}
-                    </button>
+            {!loadingBilling && billingGroups.length ? (
+              <div className="overflow-hidden rounded-3xl border border-[#d7e2da] bg-[#f8fbf9]">
+                <div className="hidden grid-cols-[1.4fr_.8fr_.8fr_1fr_1fr_56px] gap-4 border-b border-[#d7e2da] bg-[#eef4ef] px-5 py-4 text-[11px] font-black uppercase tracking-[0.14em] text-[#071f14]/50 lg:grid">
+                  <span>Vacancy</span>
+                  <span>Employees</span>
+                  <span>Payroll Rows</span>
+                  <span>Total Services</span>
+                  <span>Total Billing</span>
+                  <span className="text-center">View</span>
+                </div>
 
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <span className="inline-flex h-[24px] min-w-[205px] items-center justify-center rounded-full border border-[#294f35] px-5 text-[14px] font-black text-[#294f35]">
+                <div className="divide-y divide-[#d7e2da]">
+                  {billingGroups.map((group) => (
+                    <article
+                      key={`${group.vacancy}-${group.monthKey}`}
+                      className="grid gap-4 bg-white/70 px-5 py-4 transition duration-300 hover:bg-white hover:shadow-[0_16px_40px_rgba(8,39,25,0.08)] lg:grid-cols-[1.4fr_.8fr_.8fr_1fr_1fr_56px] lg:items-center"
+                    >
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBillingGroup(group)}
+                          className="text-left text-[15px] font-black leading-5 text-[#071f14] transition hover:text-[#174a30]"
+                        >
+                          {group.vacancy}
+                        </button>
+                        <p className="mt-1 text-[11px] font-black uppercase tracking-[0.16em] text-[#071f14]/35">
+                          {formatMonthDisplay(group.monthKey)}
+                        </p>
+                      </div>
+
+                      <span className="inline-flex w-fit rounded-full bg-[#eef4ef] px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#174a30]">
                         {group.employeeCount} employees
                       </span>
 
-                      <span className="inline-flex h-[24px] min-w-[205px] items-center justify-center rounded-full border border-[#294f35] px-5 text-[14px] font-black text-[#294f35]">
-                        {group.payrollEntryCount} payroll entries
+                      <span className="inline-flex w-fit rounded-full bg-[#eef4ef] px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#174a30]">
+                        {group.payrollEntryCount} entries
                       </span>
-                    </div>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setSelectedBillingGroup(group)}
-                    className="block w-full px-5 py-6 text-left transition hover:bg-white/5"
-                  >
-                    <div className="space-y-8">
-                      <BillingAmountRow
-                        label="Total Services Rendered"
-                        value={group.totalServicesRendered}
-                      />
+                      <p className="text-[14px] font-black text-[#071f14]">₱{formatPeso(group.totalServicesRendered)}</p>
+                      <p className="text-[14px] font-black text-[#174a30]">₱{formatPeso(group.totalBilling)}</p>
 
-                      <BillingAmountRow label="12% VAT" value={group.vatAmount} />
-
-                      <BillingAmountRow
-                        label="Total Billing"
-                        value={group.totalBilling}
-                      />
-                    </div>
-                  </button>
-                </article>
-              ))}
-          </section>
+                      <div className="flex justify-start lg:justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBillingGroup(group)}
+                          className="group inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#082719] text-white shadow-[0_10px_24px_rgba(8,39,25,0.16)] ring-1 ring-[#082719]/10 transition duration-300 hover:-translate-y-0.5 hover:bg-[#d7a84d] hover:text-[#071f14] focus:outline-none focus:ring-4 focus:ring-[#d7a84d]/25"
+                          title={`View billing for ${group.vacancy}`}
+                          aria-label={`View billing for ${group.vacancy}`}
+                        >
+                          <ViewIcon className="h-4 w-4 transition duration-300 group-hover:scale-110" />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </SectionCard>
         </main>
       </div>
 

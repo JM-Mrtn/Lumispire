@@ -159,6 +159,9 @@ export default function TrainingAdminRegisterRfid() {
     (trainee) => String(trainee._id) === String(selectedTraineeId)
   );
 
+  const registeredCount = trainees.filter((trainee) => trainee?.rfidUid).length;
+  const unregisteredCount = trainees.length - registeredCount;
+
   function handleSelectTrainee(trainee) {
     setSelectedTraineeId(trainee._id);
     setMessage(
@@ -237,224 +240,271 @@ export default function TrainingAdminRegisterRfid() {
     }
   }
 
+  const statCards = [
+    { label: "All Trainees", value: trainees.length, note: "Available trainee records" },
+    { label: "Registered RFID", value: registeredCount, note: "With assigned card UID" },
+    { label: "Unregistered", value: unregisteredCount, note: "Waiting for card assignment" },
+    { label: "Visible Records", value: filteredTrainees.length, note: "Matching current filters" },
+  ];
+
   return (
     <TrainingAdminLayout
       active="rfid"
-      title="Register Trainee RFID"
-      subtitle="Select a trainee, tap the RFID card, then register or remove the UID."
+      title="Register RFID"
+      subtitle="Select a trainee, capture the RFID card UID, then register or remove card assignments."
     >
-      <div className="mb-5 rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 ring-1 ring-blue-200">
-        {message}
-      </div>
-
-      <div className="mb-7 rounded-lg bg-[#2d5038] px-5 py-4 shadow-sm">
-        <div className="grid gap-5 lg:grid-cols-[1fr_220px_1fr_auto_auto] lg:items-end">
-          <div>
-            <label className="text-base font-black uppercase text-white">
-              Search
-            </label>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none"
-              placeholder="Search by name, email, course, or UID"
-            />
-          </div>
-
-          <div>
-            <label className="text-base font-black uppercase text-white">
-              Course
-            </label>
-            <select
-              value={courseFilter}
-              onChange={(e) => setCourseFilter(e.target.value)}
-              className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none"
+      <div className="space-y-6">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {statCards.map((card) => (
+            <article
+              key={card.label}
+              className="relative overflow-hidden rounded-[24px] border border-white/70 bg-white/90 p-6 shadow-[0_18px_45px_rgba(8,39,25,.10)] before:absolute before:inset-x-0 before:top-0 before:h-[5px] before:bg-gradient-to-r before:from-[#235f3e] before:to-[#f4d484]"
             >
-              {courseOptions.map((course) => (
-                <option key={course} value={course}>
-                  {course}
-                </option>
-              ))}
-            </select>
-          </div>
+              <p className="text-[12px] font-extrabold uppercase tracking-[0.24em] text-[#8b9198]">
+                {card.label}
+              </p>
+              <h3 className="mt-4 text-4xl font-extrabold leading-none text-[#071f14]">
+                {card.value}
+              </h3>
+              <p className="mt-4 text-sm font-semibold text-[#071f14]/55">
+                {card.note}
+              </p>
+            </article>
+          ))}
+        </section>
 
-          <div>
-            <label className="text-base font-black uppercase text-white">
-              Captured UID
-            </label>
-            <input
-              value={uid}
-              onChange={(e) => setUid(normalizeUid(e.target.value))}
-              className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 font-mono text-sm font-bold text-[#2d5038] outline-none"
-              placeholder="Tap card or type UID"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchTrainees}
-            disabled={loading}
-            className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:opacity-60"
-          >
-            {loading ? "Loading..." : "Refresh"}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleRegister}
-            disabled={submitting}
-            className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:opacity-60"
-          >
-            {submitting ? "Registering..." : "Register RFID"}
-          </button>
+        <div className="rounded-[24px] border border-[#235f3e]/15 bg-[#f8fbf9] px-5 py-4 text-sm font-extrabold text-[#235f3e] shadow-[0_12px_28px_rgba(8,39,25,.08)]">
+          {message}
         </div>
 
-        {selectedTrainee ? (
-          <div className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-white">
-            Selected: {selectedTrainee.fullName || "-"} •{" "}
-            {selectedTrainee.email || "-"} • Course:{" "}
-            {selectedTrainee.course || "No Course"} • Current RFID:{" "}
-            {selectedTrainee.rfidUid || "None"}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="overflow-hidden rounded-lg bg-[#2d5038] shadow-sm">
-        <div className="bg-white px-4 py-4">
-          <h3 className="text-lg font-black text-[#2d5038]">
-            Trainee RFID List
-          </h3>
-        </div>
-
-        <div className="overflow-x-auto">
-          <div className="min-w-[1050px]">
-            <div className="grid gap-4 border-b border-white/20 px-3 py-3 text-xs font-black uppercase tracking-wide text-white/80 md:grid-cols-[56px_1.15fr_1.25fr_1fr_92px_1fr_160px] md:items-center">
-              <div />
-              <div>Name</div>
-              <div>Email</div>
-              <div>Course</div>
-              <div>Status</div>
-              <div>RFID UID</div>
-              <div>Action</div>
+        <section className="relative overflow-hidden rounded-[26px] border border-white/75 bg-white/90 px-6 py-5 shadow-[0_16px_38px_rgba(8,39,25,.09)] before:absolute before:inset-x-0 before:top-0 before:h-[5px] before:bg-gradient-to-r before:from-[#235f3e] before:to-[#f4d484] sm:px-7 lg:px-8">
+          <div className="grid gap-5 xl:grid-cols-[230px_minmax(0,1fr)] xl:items-end">
+            <div className="max-w-[230px]">
+              <p className="text-[12px] font-extrabold uppercase tracking-[0.24em] text-[#8b9198]">
+                Search Records
+              </p>
+              <h2 className="mt-2 text-[26px] font-extrabold leading-none text-[#235f3e]">
+                RFID Queue
+              </h2>
+              <p className="mt-2 text-[13px] font-semibold leading-5 text-[#071f14]/55">
+                Search trainees, filter by course, capture the UID, then refresh the latest RFID list.
+              </p>
             </div>
 
-            <div className="min-h-[372px] divide-y divide-white/25">
-              {loading ? (
-                [1, 2].map((item) => (
-                  <div
-                    key={item}
-                    className="grid gap-4 px-3 py-4 md:grid-cols-[56px_1.15fr_1.25fr_1fr_92px_1fr_160px] md:items-center"
-                  >
-                    <div className="h-11 w-11 rounded-full bg-white" />
-                    <div className="h-4 rounded-full bg-white/35" />
-                    <div className="h-4 rounded-full bg-white/35" />
-                    <div className="h-4 rounded-full bg-white/35" />
-                    <div className="h-5 rounded-full bg-[#bdf0a4]" />
-                    <div className="h-4 rounded-full bg-white/35" />
-                    <div className="h-5 rounded-full bg-white" />
-                  </div>
-                ))
-              ) : paginatedTrainees.length ? (
-                paginatedTrainees.map((trainee) => (
-                  <div
-                    key={trainee._id}
-                    className="grid gap-4 px-3 py-4 text-sm font-black md:grid-cols-[56px_1.15fr_1.25fr_1fr_92px_1fr_160px] md:items-center"
-                  >
-                    <div className="h-11 w-11 rounded-full bg-white" />
+            <div className="grid w-full gap-3 md:grid-cols-2 xl:grid-cols-[minmax(170px,1fr)_145px_minmax(170px,1fr)_auto_auto] xl:items-end">
+              <label className="block">
+                <span className="mb-2 block text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#235f3e]">
+                  Search
+                </span>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-11 w-full rounded-[15px] border border-[#071f14]/10 bg-[#fbfbf8] px-4 text-sm font-bold text-[#071f14] outline-none transition focus:border-[#235f3e] focus:bg-white focus:ring-4 focus:ring-[#235f3e]/10"
+                  placeholder="Search name, email, course, or UID"
+                />
+              </label>
 
-                    <div className="text-white">
-                      {trainee.fullName || "Full name of the trainee"}
-                    </div>
+              <label className="block">
+                <span className="mb-2 block text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#235f3e]">
+                  Course
+                </span>
+                <select
+                  value={courseFilter}
+                  onChange={(e) => setCourseFilter(e.target.value)}
+                  className="h-11 w-full rounded-[15px] border border-[#071f14]/10 bg-[#fbfbf8] px-4 text-sm font-bold text-[#071f14] outline-none transition focus:border-[#235f3e] focus:bg-white focus:ring-4 focus:ring-[#235f3e]/10"
+                >
+                  {courseOptions.map((course) => (
+                    <option key={course} value={course}>
+                      {course}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-                    <div className="break-words text-white/90">
-                      {trainee.email || "traineeemail@tamsi.com"}
-                    </div>
+              <label className="block">
+                <span className="mb-2 block text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#235f3e]">
+                  Captured UID
+                </span>
+                <input
+                  value={uid}
+                  onChange={(e) => setUid(normalizeUid(e.target.value))}
+                  className="h-11 w-full rounded-[15px] border border-[#071f14]/10 bg-[#fbfbf8] px-4 font-mono text-sm font-bold text-[#071f14] outline-none transition focus:border-[#235f3e] focus:bg-white focus:ring-4 focus:ring-[#235f3e]/10"
+                  placeholder="Tap card or type UID"
+                />
+              </label>
 
-                    <div>
-                      <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-[10px] font-black text-white ring-1 ring-white/25">
-                        {trainee.course || "No Course"}
-                      </span>
-                    </div>
+              <button
+                type="button"
+                onClick={fetchTrainees}
+                disabled={loading}
+                className="h-11 w-full rounded-[15px] bg-[#235f3e] px-4 text-sm font-extrabold text-white shadow-[0_10px_20px_rgba(8,39,25,.16)] transition hover:-translate-y-0.5 hover:bg-[#174a30] disabled:cursor-not-allowed disabled:opacity-60 md:col-span-1 xl:w-[108px] xl:justify-self-start"
+              >
+                {loading ? "Loading..." : "Refresh"}
+              </button>
 
-                    <div>
-                      <span
-                        className={`inline-flex min-w-[84px] justify-center rounded-full px-3 py-1 text-[10px] font-black ${
-                          trainee.active !== false
-                            ? "bg-[#bdf0a4] text-[#2d5038]"
-                            : "bg-white text-[#2d5038]"
+              <button
+                type="button"
+                onClick={handleRegister}
+                disabled={submitting}
+                className="h-11 w-full rounded-[15px] bg-gradient-to-r from-[#f4d484] to-[#d7a84d] px-4 text-sm font-extrabold leading-tight text-[#071f14] shadow-[0_10px_20px_rgba(215,168,77,.20)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 md:col-span-1 xl:w-[118px] xl:justify-self-start"
+              >
+                {submitting ? "Registering..." : "Register RFID"}
+              </button>
+            </div>
+          </div>
+
+          {selectedTrainee ? (
+            <div className="mt-5 rounded-[20px] border border-[#235f3e]/12 bg-[#f8fbf9] px-5 py-4 text-sm font-bold leading-6 text-[#071f14]/70">
+              <span className="font-extrabold text-[#235f3e]">Selected:</span>{" "}
+              {selectedTrainee.fullName || "-"} • {selectedTrainee.email || "-"} • Course:{" "}
+              {selectedTrainee.course || "No Course"} • Current RFID:{" "}
+              {selectedTrainee.rfidUid || "None"}
+            </div>
+          ) : null}
+        </section>
+
+        <section className="relative overflow-hidden rounded-[28px] border border-white/75 bg-white/90 shadow-[0_18px_45px_rgba(8,39,25,.10)] before:absolute before:inset-x-0 before:top-0 before:h-[5px] before:bg-gradient-to-r before:from-[#235f3e] before:to-[#f4d484]">
+          <div className="px-6 pb-5 pt-8">
+            <p className="text-[12px] font-extrabold uppercase tracking-[0.24em] text-[#8b9198]">
+              RFID Requests
+            </p>
+            <h3 className="mt-3 text-3xl font-extrabold text-[#235f3e]">
+              Trainee RFID List
+            </h3>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-[1080px] w-full border-collapse">
+              <thead>
+                <tr className="border-y border-[#071f14]/10 bg-[#f8fbf9] text-left text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#667085]">
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Course</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">RFID UID</th>
+                  <th className="w-[220px] px-5 py-4 text-center">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-[#071f14]/8">
+                {loading ? (
+                  [1, 2, 3].map((item) => (
+                    <tr key={item}>
+                      <td className="px-6 py-5"><div className="h-4 w-40 rounded-full bg-[#071f14]/10" /></td>
+                      <td className="px-6 py-5"><div className="h-4 w-52 rounded-full bg-[#071f14]/10" /></td>
+                      <td className="px-6 py-5"><div className="h-7 w-32 rounded-full bg-[#235f3e]/10" /></td>
+                      <td className="px-6 py-5"><div className="h-7 w-24 rounded-full bg-[#f4d484]/45" /></td>
+                      <td className="px-6 py-5"><div className="h-4 w-36 rounded-full bg-[#071f14]/10" /></td>
+                      <td className="px-5 py-4"><div className="mx-auto h-9 w-44 rounded-full bg-[#071f14]/10" /></td>
+                    </tr>
+                  ))
+                ) : paginatedTrainees.length ? (
+                  paginatedTrainees.map((trainee) => {
+                    const isSelected = String(selectedTraineeId) === String(trainee._id);
+
+                    return (
+                      <tr
+                        key={trainee._id}
+                        className={`text-sm font-bold text-[#071f14] transition hover:bg-[#f8fbf9] ${
+                          isSelected ? "bg-[#f8fbf9]" : "bg-white/60"
                         }`}
                       >
-                        {trainee.active !== false ? "Active" : "Inactive"}
-                      </span>
-                    </div>
+                        <td className="px-6 py-4 align-middle">
+                          <div className="font-extrabold text-[#071f14]">
+                            {trainee.fullName || "Full name of the trainee"}
+                          </div>
+                        </td>
 
-                    <div className="font-mono text-white/90">
-                      {trainee.rfidUid || "-"}
-                    </div>
+                        <td className="break-words px-6 py-4 align-middle text-[#071f14]/70">
+                          {trainee.email || "traineeemail@tamsi.com"}
+                        </td>
 
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectTrainee(trainee)}
-                        className="rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038]"
-                      >
-                        Select
-                      </button>
+                        <td className="px-6 py-4 align-middle">
+                          <span className="inline-flex rounded-full bg-[#235f3e]/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#235f3e]">
+                            {trainee.course || "No Course"}
+                          </span>
+                        </td>
 
-                      {trainee.rfidUid ? (
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(trainee._id)}
-                          className="rounded-full bg-[#bdf0a4] px-3 py-1 text-[10px] font-black text-[#2d5038]"
-                        >
-                          Remove
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="px-5 py-12 text-center text-sm font-bold text-white/80">
-                  No trainees found.
-                </div>
-              )}
-            </div>
+                        <td className="px-6 py-4 align-middle">
+                          <span
+                            className={`inline-flex min-w-[92px] justify-center rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide ${
+                              trainee.active !== false
+                                ? "bg-[#235f3e]/10 text-[#235f3e]"
+                                : "bg-[#f4d484]/40 text-[#8a5b00]"
+                            }`}
+                          >
+                            {trainee.active !== false ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4 align-middle font-mono text-[#071f14]/70">
+                          {trainee.rfidUid || "-"}
+                        </td>
+
+                        <td className="w-[220px] px-5 py-4 align-middle">
+                          <div className="mx-auto flex w-full max-w-[190px] flex-wrap items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectTrainee(trainee)}
+                              className={`inline-flex h-9 w-[88px] items-center justify-center rounded-full text-[11px] font-extrabold transition hover:-translate-y-0.5 ${
+                                isSelected
+                                  ? "bg-gradient-to-r from-[#f4d484] to-[#d7a84d] text-[#071f14] shadow-[0_10px_24px_rgba(215,168,77,.22)]"
+                                  : "border border-[#235f3e]/18 bg-white text-[#235f3e] shadow-[0_8px_18px_rgba(8,39,25,.08)] hover:bg-[#f8fbf9]"
+                              }`}
+                            >
+                              {isSelected ? "Selected" : "Select"}
+                            </button>
+
+                            {trainee.rfidUid ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRemove(trainee._id)}
+                                className="inline-flex h-9 w-[88px] items-center justify-center rounded-full border border-[#d7a84d]/45 bg-[#fff4d7] text-[11px] font-extrabold text-[#8a5b00] shadow-[0_8px_18px_rgba(215,168,77,.12)] transition hover:-translate-y-0.5 hover:bg-[#f4d484]/45"
+                              >
+                                Remove
+                              </button>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-14 text-center text-sm font-bold text-[#071f14]/55">
+                      No trainees found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div className="mt-5 flex items-center justify-between px-2 text-base font-bold">
-        <div>
-          Page {page} / {totalPages}
-        </div>
+        <div className="flex flex-col gap-3 rounded-[22px] border border-white/70 bg-white/85 px-5 py-4 text-sm font-bold text-[#071f14]/70 shadow-[0_12px_28px_rgba(8,39,25,.07)] sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            Page <span className="font-extrabold text-[#235f3e]">{page}</span> / {totalPages}
+          </div>
 
-        <div className="flex items-center gap-5">
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            disabled={page <= 1}
-            className="text-3xl leading-none text-white disabled:opacity-30"
-          >
-            ‹
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page <= 1}
+              className="h-10 rounded-full border border-[#071f14]/10 bg-white px-5 text-sm font-extrabold text-[#235f3e] transition hover:bg-[#f8fbf9] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={page >= totalPages}
-            className="font-black text-white disabled:opacity-30"
-          >
-            Next Page
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={page >= totalPages}
-            className="text-3xl leading-none text-white disabled:opacity-30"
-          >
-            ›
-          </button>
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={page >= totalPages}
+              className="h-10 rounded-full bg-[#235f3e] px-5 text-sm font-extrabold text-white transition hover:bg-[#174a30] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next Page
+            </button>
+          </div>
         </div>
       </div>
     </TrainingAdminLayout>

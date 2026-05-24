@@ -136,12 +136,12 @@ function BrandLogo() {
   return (
     <div className="flex items-center gap-3">
       <img
-        src="/logo.png"
+        src="/ManpowerLogo.png"
         alt="Manpower Logo"
         className="h-10 w-10 rounded-full object-cover"
       />
       <h1 className="text-[22px] font-black tracking-wide text-[#2f5a45] md:text-[28px]">
-        MANPOWER
+        LTC MANPOWER
       </h1>
     </div>
   );
@@ -151,14 +151,465 @@ function FooterLogo() {
   return (
     <div className="flex items-center gap-3">
       <img
-        src="/logo.png"
+        src="/ManpowerLogo.png"
         alt="Lumispire Logo"
         className="h-9 w-9 rounded-full object-cover"
       />
-      <p className="text-2xl font-black tracking-wide text-white">LUMISPIRE</p>
+      <p className="text-2xl font-black tracking-wide text-white">LTC MANPOWER</p>
     </div>
   );
 }
+
+
+const manpowerApplyEnrollmentStyles = `
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+  .ltc-enrollment-page {
+    --green-950: #071f14;
+    --green-900: #0e3321;
+    --green-800: #174a30;
+    --green-700: #235f3e;
+    --green-600: #2f754c;
+    --footer-green: #082719;
+    --gold: #d7a84d;
+    --gold-soft: #f4d484;
+    --white: #ffffff;
+    --dark: #101828;
+    --muted: #667085;
+    --glass: rgba(255,255,255,.84);
+    --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+    --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+    --radius: 24px;
+    --ease: cubic-bezier(.22,1,.36,1);
+    min-height: 100vh;
+    color: var(--dark);
+    background:
+      radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+      radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%) !important;
+    line-height: 1.65;
+    letter-spacing: -.01em;
+    overflow-x: hidden;
+    font-family: "Inter", Arial, sans-serif;
+  }
+
+  .ltc-enrollment-page * { box-sizing: border-box; }
+
+
+  .ltc-enrollment-page .mp-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    background: var(--footer-green) !important;
+    border-bottom: 1px solid rgba(255,255,255,.1) !important;
+    box-shadow: 0 10px 34px rgba(7,31,20,.14) !important;
+    margin: 0 !important;
+  }
+
+  .ltc-enrollment-page .mp-header .mp-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+
+  .ltc-enrollment-page .mp-nav {
+    min-height: 76px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 24px !important;
+  }
+
+  .ltc-enrollment-page .mp-logo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 13px !important;
+    color: white !important;
+    border: 0 !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    padding: 0 !important;
+    text-decoration: none !important;
+    flex-shrink: 0 !important;
+  }
+
+  .ltc-enrollment-page .mp-logo-icon {
+    width: 42px !important;
+    height: 42px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 50% !important;
+    background: linear-gradient(145deg,#fff,#e3f4ea) !important;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12) !important;
+    object-fit: cover !important;
+  }
+
+  .ltc-enrollment-page .mp-logo h1 {
+    color: white !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: -.04em !important;
+    margin: 0 !important;
+  }
+
+  .ltc-enrollment-page .mp-logo p {
+    font-size: 11px !important;
+    color: rgba(255,255,255,.72) !important;
+    margin: 3px 0 0 !important;
+  }
+
+  .ltc-enrollment-page .mp-desktop-nav {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-left: auto !important;
+  }
+
+  .ltc-enrollment-page .mp-nav-link {
+    color: rgba(255,255,255,.78) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    padding: 10px 14px !important;
+    border-radius: 999px !important;
+    transition: .25s var(--ease) !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+  }
+
+  .ltc-enrollment-page .mp-nav-link:hover,
+  .ltc-enrollment-page .mp-nav-link.active {
+    color: white !important;
+    background: rgba(255,255,255,.13) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .ltc-enrollment-page .mp-sign-in {
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+    box-shadow: 0 16px 35px rgba(215,168,77,.22) !important;
+  }
+
+  .ltc-enrollment-page .mp-sign-in:hover {
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f8dc8c,#d7a84d) !important;
+  }
+
+  .ltc-enrollment-page main > section:first-child {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .ltc-enrollment-page main > section:first-child > div {
+    position: relative;
+    min-height: 420px !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+    color: white !important;
+    isolation: isolate;
+    background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%) !important;
+  }
+
+  .ltc-enrollment-page main > section:first-child > div::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 12% 20%, rgba(244,212,132,.16), transparent 28%),
+      radial-gradient(circle at 90% 18%, rgba(35,95,62,.48), transparent 32%),
+      linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.90) 46%, rgba(12,64,39,.76) 100%);
+  }
+
+  .ltc-enrollment-page main > section:first-child > div::after {
+    content: "";
+    position: absolute;
+    inset: -16% -10% -24% -10%;
+    z-index: 1;
+    background:
+      radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
+      radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
+      linear-gradient(135deg, rgba(3,24,15,.34), rgba(8,56,34,.08));
+    filter: blur(30px);
+    pointer-events: none;
+  }
+
+  .ltc-enrollment-page main > section:first-child > div > div {
+    position: relative;
+    z-index: 2;
+    width: min(1180px, 92%);
+    margin: 0 auto;
+    min-height: 420px !important;
+    padding: 76px 0 84px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .ltc-enrollment-page main > section:first-child h2 {
+    margin: 0 auto !important;
+    max-width: 940px;
+    color: white !important;
+    font-size: clamp(42px, 6vw, 76px) !important;
+    line-height: .98 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.065em !important;
+    text-shadow: 0 8px 26px rgba(0,0,0,.22);
+    font-family: "Inter", Arial, sans-serif !important;
+  }
+
+  .ltc-enrollment-page main > section:first-child h2::after {
+    content: " Now";
+    color: var(--gold-soft);
+  }
+
+  .ltc-enrollment-page main > section:first-child p {
+    max-width: 720px;
+    margin: 24px auto 0 !important;
+    color: rgba(255,255,255,.80) !important;
+    font-size: 18px !important;
+    line-height: 1.8 !important;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) {
+    width: min(1180px, 92%) !important;
+    max-width: 1180px !important;
+    margin: -68px auto 0 !important;
+    padding: 0 0 84px !important;
+    position: relative;
+    z-index: 4;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) > div {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px !important;
+    background: var(--glass) !important;
+    border: 1px solid rgba(255,255,255,.82) !important;
+    box-shadow: var(--shadow-lg) !important;
+    backdrop-filter: blur(18px);
+    padding: 30px !important;
+    animation: ltcEnrollmentReveal .75s var(--ease) both;
+  }
+
+  .ltc-enrollment-page main > section:nth-child(2) > div::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 7px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+  }
+
+  .ltc-enrollment-page form > section {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    background: rgba(255,255,255,.78);
+    border: 1px solid rgba(35,95,62,.12);
+    box-shadow: 0 12px 28px rgba(8,39,25,.06);
+    padding: 26px;
+  }
+
+  .ltc-enrollment-page form > section h3 {
+    margin: 0 !important;
+    color: var(--green-950) !important;
+    font-size: clamp(28px, 4vw, 42px) !important;
+    line-height: 1.08 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.055em !important;
+    font-family: "Inter", Arial, sans-serif !important;
+  }
+
+  .ltc-enrollment-page form > section h3::before {
+    content: "MANPOWER APPLICATION";
+    display: block;
+    margin-bottom: 10px;
+    color: var(--green-700);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+  }
+
+  .ltc-enrollment-page form > section:nth-of-type(2) h3::before {
+    content: "REQUIREMENTS";
+  }
+
+  .ltc-enrollment-page form label {
+    color: #506656 !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .ltc-enrollment-page input,
+  .ltc-enrollment-page select,
+  .ltc-enrollment-page textarea {
+    min-height: 54px;
+    border: 1px solid rgba(35,95,62,.18) !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+    padding: 0 18px !important;
+    color: var(--green-950) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    outline: none !important;
+    transition: .28s var(--ease) !important;
+    box-shadow: 0 10px 22px rgba(8,39,25,.05) !important;
+  }
+
+  .ltc-enrollment-page textarea {
+    padding-top: 14px !important;
+    min-height: 106px;
+  }
+
+  .ltc-enrollment-page input[type="file"] {
+    padding: 13px 16px 13px 48px !important;
+    min-height: 54px;
+  }
+
+  .ltc-enrollment-page .mp-file-field {
+    position: relative;
+    margin-top: 8px;
+  }
+
+  .ltc-enrollment-page .mp-attachment-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    width: 19px;
+    height: 19px;
+    transform: translateY(-50%);
+    color: var(--green-700);
+    pointer-events: none;
+    z-index: 2;
+    opacity: .9;
+    transition: transform .28s var(--ease), color .28s var(--ease);
+  }
+
+  .ltc-enrollment-page .mp-file-field:focus-within .mp-attachment-icon,
+  .ltc-enrollment-page .mp-file-field:hover .mp-attachment-icon {
+    color: var(--gold);
+    transform: translateY(-50%) rotate(-8deg) scale(1.06);
+  }
+
+  .ltc-enrollment-page input:focus,
+  .ltc-enrollment-page select:focus,
+  .ltc-enrollment-page textarea:focus {
+    border-color: rgba(215,168,77,.72) !important;
+    box-shadow: 0 16px 34px rgba(8,39,25,.10) !important;
+    transform: translateY(-1px);
+  }
+
+  .ltc-enrollment-page form > div[class*="h-[2px]"] {
+    height: 0 !important;
+    background: transparent !important;
+  }
+
+  .ltc-enrollment-page button[type="submit"],
+  .ltc-enrollment-page form button[type="button"] {
+    min-height: 50px;
+    min-width: 190px;
+    border: 0 !important;
+    border-radius: 999px !important;
+    padding: 0 24px !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    transition: .28s var(--ease) !important;
+  }
+
+  .ltc-enrollment-page button[type="submit"] {
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+    box-shadow: 0 16px 35px rgba(215,168,77,.28) !important;
+  }
+
+  .ltc-enrollment-page form button[type="button"] {
+    color: var(--green-950) !important;
+    background: white !important;
+    border: 1px solid rgba(35,95,62,.16) !important;
+  }
+
+  .ltc-enrollment-page button[type="submit"]:hover,
+  .ltc-enrollment-page form button[type="button"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 45px rgba(8,39,25,.14);
+  }
+
+  .ltc-enrollment-page footer {
+    width: 100%;
+    background: var(--footer-green) !important;
+    color: white !important;
+    padding: 30px 0 12px !important;
+    margin: 0 !important;
+  }
+
+  .ltc-enrollment-page footer > div:first-child,
+  .ltc-enrollment-page footer > div:last-child {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+
+  .ltc-enrollment-page footer h3 {
+    color: #f4d484 !important;
+    font-size: 12px !important;
+    line-height: 1.2;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin: 0 0 10px !important;
+  }
+
+  .ltc-enrollment-page footer p {
+    color: rgba(255,255,255,.68) !important;
+    font-size: 13px !important;
+    line-height: 1.55;
+    margin: 5px 0 !important;
+  }
+
+  @keyframes ltcEnrollmentReveal {
+    from { opacity: 0; transform: translateY(34px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-enrollment-page .mp-header .mp-container { padding-left: 22px !important; padding-right: 22px !important; }
+    .ltc-enrollment-page .mp-desktop-nav { display: none !important; }
+    .ltc-enrollment-page main > section:first-child > div,
+    .ltc-enrollment-page main > section:first-child > div > div { min-height: 360px !important; }
+    .ltc-enrollment-page main > section:nth-child(2) { margin-top: -46px !important; }
+    .ltc-enrollment-page main > section:nth-child(2) > div { padding: 20px !important; border-radius: 26px !important; }
+    .ltc-enrollment-page form > section { padding: 20px; }
+    .ltc-enrollment-page footer > div:first-child { grid-template-columns: 1fr !important; }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-enrollment-page .mp-header .mp-container { padding-left: 16px !important; padding-right: 16px !important; }
+    .ltc-enrollment-page .mp-logo h1 { font-size: 14px !important; }
+    .ltc-enrollment-page .mp-logo p { font-size: 10px !important; }
+    .ltc-enrollment-page main > section:first-child h2 { font-size: clamp(38px, 12vw, 54px) !important; }
+    .ltc-enrollment-page main > section:first-child p { font-size: 15px !important; }
+    .ltc-enrollment-page button[type="submit"], .ltc-enrollment-page form button[type="button"] { width: 100%; }
+    .ltc-enrollment-page footer > div:first-child,
+    .ltc-enrollment-page footer > div:last-child { padding-left: 16px !important; padding-right: 16px !important; }
+  }
+`;
 
 export default function ManpowerApplyPage() {
   const [jobs, setJobs] = useState([]);
@@ -569,32 +1020,38 @@ export default function ManpowerApplyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#efefed] text-[#24372d]">
-      <header className="border-b border-[#d7ddd5] bg-[#f7f7f5]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
-          <BrandLogo />
+    <div className="ltc-enrollment-page min-h-screen bg-[#efefed] text-[#24372d]">
+      <style>{manpowerApplyEnrollmentStyles}</style>
+      <header className="mp-header">
+        <div className="mp-container mp-nav">
+          <Link to="/manpower-services" className="mp-logo">
+            <img src="/ManpowerLogo.png" alt="Manpower Logo" className="mp-logo-icon" />
+            <div>
+              <h1>LTC MANPOWER SERVICES</h1>
+              <p>Professional staffing and workforce solutions.</p>
+            </div>
+          </Link>
 
-          <nav className="hidden items-center gap-6 text-[11px] font-bold uppercase tracking-wide text-[#647467] lg:flex">
-            <Link to="/manpower-services" className="hover:text-[#2f5a45]">
+          <nav className="mp-desktop-nav">
+            <Link to="/manpower-services" className="mp-nav-link">
               Home
             </Link>
-            <Link to="/manpower-positions" className="hover:text-[#2f5a45]">
+            <Link to="/manpower-positions" className="mp-nav-link active">
               Job Offer
             </Link>
-            <Link to="/manpower-requirements" className="hover:text-[#2f5a45]">
+            <Link to="/manpower-requirements" className="mp-nav-link">
               Requirements
             </Link>
-            <Link to="/manpower-services" className="hover:text-[#2f5a45]">
+            <Link to="/manpower-contact" className="mp-nav-link">
+              Contact
+            </Link>
+            <Link to="/manpower-faqs" className="mp-nav-link">
               FAQs
             </Link>
+            <Link to="/manpower-employee-login" className="mp-nav-link mp-sign-in">
+              Sign In
+            </Link>
           </nav>
-
-          <Link
-            to="/manpower-employee-login"
-            className="text-[11px] font-bold uppercase tracking-wide text-[#647467] hover:text-[#2f5a45]"
-          >
-            Sign In
-          </Link>
         </div>
       </header>
 
@@ -873,17 +1330,32 @@ export default function ManpowerApplyPage() {
                         ) : null}
                       </div>
 
-                      <input
-                        type="file"
-                        accept={field.accept}
-                        onChange={(e) =>
-                          updateFile(field.key, e.target.files?.[0] || null)
-                        }
-                        onBlur={() =>
-                          setTouched((prev) => ({ ...prev, [field.key]: true }))
-                        }
-                        className={fileInputClass(field.key)}
-                      />
+                      <div className="mp-file-field">
+                        <svg
+                          className="mp-attachment-icon"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                        </svg>
+
+                        <input
+                          type="file"
+                          accept={field.accept}
+                          onChange={(e) =>
+                            updateFile(field.key, e.target.files?.[0] || null)
+                          }
+                          onBlur={() =>
+                            setTouched((prev) => ({ ...prev, [field.key]: true }))
+                          }
+                          className={fileInputClass(field.key)}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

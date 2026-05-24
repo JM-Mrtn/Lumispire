@@ -104,6 +104,17 @@ function BatchStatusPill({ batch }) {
   );
 }
 
+
+function BatchStatCard({ title, value, note }) {
+  return (
+    <article className="ta-batch-card ta-batch-stat">
+      <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-black/40">{title}</p>
+      <strong className="mt-3 block text-4xl font-black tracking-tight text-[#082719]">{value}</strong>
+      {note ? <span className="mt-3 block text-sm font-semibold text-black/45">{note}</span> : null}
+    </article>
+  );
+}
+
 export default function TrainingAdminBatches() {
   const navigate = useNavigate();
   const adminToken = getAdminToken();
@@ -317,71 +328,549 @@ export default function TrainingAdminBatches() {
     }
   }
 
+  const batchStats = useMemo(() => {
+    const open = batches.filter((batch) => (batch.status || "open") === "open").length;
+    const closed = batches.filter((batch) => batch.status === "closed").length;
+    const archived = batches.filter((batch) => batch.status === "archived").length;
+
+    return {
+      total: batches.length,
+      open,
+      closed,
+      archived,
+      visible: filteredBatches.length,
+    };
+  }, [batches, filteredBatches]);
+
   return (
     <TrainingAdminLayout active="batches" title="Manage Training Batches" subtitle="Create enrollment windows and manage current or past training batches.">
-      {msg.text ? (
-        <div className={`mb-5 rounded-xl px-4 py-3 text-sm font-bold ring-1 ${msg.type === "success" ? "bg-green-50 text-green-800 ring-green-200" : "bg-red-50 text-red-800 ring-red-200"}`}>{msg.text}</div>
-      ) : null}
+      <style>{`
+        .ta-batches {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --muted: #667085;
+          --card: rgba(255, 255, 255, 0.86);
+          --ease: cubic-bezier(.22, 1, .36, 1);
+          color: #102418;
+        }
 
-      <div className="mb-7 rounded-lg bg-[#2d5038] px-5 py-4 shadow-sm">
-        <div className="grid gap-5 lg:grid-cols-[1fr_220px_160px_auto_auto] lg:items-end">
-          <div>
-            <label className="text-base font-black uppercase text-white">Search</label>
-            <input value={search} onChange={(e) => setSearch(e.target.value)} className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none" placeholder="Search batch" />
+        .ta-batch-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.78);
+          background: var(--card);
+          box-shadow: 0 18px 45px rgba(8, 39, 25, 0.10);
+          backdrop-filter: blur(18px);
+        }
+
+        .ta-batch-card::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto 0;
+          height: 5px;
+          background: linear-gradient(90deg, var(--green-700), var(--gold));
+        }
+
+        .ta-batch-card::after {
+          content: "";
+          position: absolute;
+          right: -78px;
+          bottom: -82px;
+          width: 170px;
+          height: 170px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(215, 168, 77, 0.20), transparent 62%);
+          pointer-events: none;
+        }
+
+        .ta-batch-stat {
+          min-height: 118px;
+          padding: 24px;
+          transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+        }
+
+        .ta-batch-stat:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 22px 50px rgba(8, 39, 25, 0.14);
+        }
+
+        .ta-batch-pill {
+          min-height: 42px;
+          border-radius: 999px;
+          padding: 0 18px;
+          font-size: 12px;
+          font-weight: 900;
+          transition: transform .2s var(--ease), background .2s var(--ease), color .2s var(--ease);
+        }
+
+        .ta-batch-pill:hover:not(:disabled) {
+          transform: translateY(-1px);
+        }
+
+
+
+        .ta-batch-filter-card {
+          padding: 24px;
+        }
+
+        .ta-batch-filter-head {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 18px;
+        }
+
+        .ta-batch-filter-copy {
+          max-width: 680px;
+        }
+
+        .ta-batch-filter-copy h2 {
+          margin-top: 8px;
+          color: var(--green-900);
+          font-size: clamp(24px, 2.6vw, 34px);
+          line-height: 1.05;
+          font-weight: 900;
+          letter-spacing: -0.04em;
+        }
+
+        .ta-batch-filter-copy p:last-child {
+          max-width: 560px;
+          margin-top: 8px;
+          color: rgba(16, 24, 40, 0.52);
+          font-size: 14px;
+          line-height: 1.55;
+          font-weight: 700;
+        }
+
+        .ta-batch-filter-count {
+          flex: 0 0 auto;
+          border-radius: 999px;
+          background: rgba(244, 212, 132, 0.35);
+          border: 1px solid rgba(215, 168, 77, 0.36);
+          color: var(--green-900);
+          padding: 9px 14px;
+          font-size: 11px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+        }
+
+        .ta-batch-filter-controls {
+          position: relative;
+          z-index: 1;
+          margin-top: 22px;
+          display: grid;
+          grid-template-columns: minmax(280px, 1fr) 220px 170px 124px 160px;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .ta-batch-control {
+          height: 48px;
+          width: 100%;
+          border-radius: 999px;
+          border: 1px solid rgba(8, 39, 25, 0.12);
+          background: rgba(255, 255, 255, 0.78);
+          color: var(--green-900);
+          padding: 0 18px;
+          font-size: 13px;
+          font-weight: 800;
+          outline: none;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+          transition: border .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
+        }
+
+        .ta-batch-control::placeholder {
+          color: rgba(35, 95, 62, 0.52);
+        }
+
+        .ta-batch-control:focus {
+          border-color: rgba(35, 95, 62, 0.42);
+          background: #fff;
+          box-shadow: 0 0 0 4px rgba(35, 95, 62, 0.10);
+        }
+
+        .ta-batch-filter-button {
+          height: 48px;
+          width: 100%;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid transparent;
+          font-size: 12px;
+          font-weight: 900;
+          white-space: nowrap;
+          transition: transform .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease), opacity .2s var(--ease);
+        }
+
+        .ta-batch-filter-button:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 16px 30px rgba(8, 39, 25, 0.14);
+        }
+
+        .ta-batch-refresh {
+          background: var(--green-800);
+          color: #fff;
+          box-shadow: 0 12px 24px rgba(8, 39, 25, 0.14);
+        }
+
+        .ta-batch-create {
+          background: linear-gradient(135deg, var(--gold-soft), var(--gold));
+          color: #102418;
+          box-shadow: 0 12px 24px rgba(215, 168, 77, 0.22);
+        }
+
+        .ta-batch-table-scroll {
+          overflow-x: auto;
+          scrollbar-width: thin;
+        }
+
+        .ta-batch-table {
+          min-width: 1120px;
+        }
+
+        .ta-batch-row {
+          display: grid;
+          grid-template-columns: 72px 1.35fr 1fr .8fr 1.3fr 112px 210px;
+          gap: 18px;
+          align-items: center;
+        }
+
+        .ta-batch-data-row {
+          border-top: 1px solid rgba(16, 24, 40, 0.08);
+          transition: background .22s var(--ease);
+        }
+
+        .ta-batch-data-row:hover {
+          background: rgba(246, 246, 241, 0.82);
+        }
+
+        .ta-batch-thumb {
+          width: 48px;
+          height: 48px;
+          border-radius: 18px;
+          display: grid;
+          place-items: center;
+          background: linear-gradient(145deg, #eef8f2, #fff);
+          color: var(--green-800);
+          box-shadow: inset 0 0 0 1px rgba(35, 95, 62, .12), 0 10px 20px rgba(8, 39, 25, .08);
+        }
+
+        .ta-batch-action-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 64px);
+          gap: 8px;
+          justify-content: center;
+        }
+
+        .ta-batch-action {
+          width: 64px;
+          height: 36px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 900;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid transparent;
+          transition: transform .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease), color .2s var(--ease);
+        }
+
+        .ta-batch-action:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 12px 26px rgba(8, 39, 25, 0.12);
+        }
+
+        .ta-action-edit {
+          background: #ffffff;
+          color: #082719;
+          border-color: rgba(8, 39, 25, 0.14);
+          box-shadow: 0 8px 18px rgba(8, 39, 25, 0.08);
+        }
+
+        .ta-action-open {
+          background: #e9f5ee;
+          color: #174a30;
+          border-color: rgba(35, 95, 62, 0.24);
+        }
+
+        .ta-action-close {
+          background: #fff6dc;
+          color: #6f4a00;
+          border-color: rgba(215, 168, 77, 0.48);
+        }
+
+        .ta-action-remove {
+          background: #fff1f3;
+          color: #b42318;
+          border-color: rgba(244, 63, 94, 0.24);
+        }
+
+        .ta-batch-action:disabled {
+          cursor: not-allowed;
+          opacity: .62;
+          transform: none;
+          box-shadow: none;
+        }
+
+        @media (max-width: 1200px) {
+          .ta-batch-filter-controls {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .ta-batch-filter-card {
+            padding: 20px;
+          }
+
+          .ta-batch-filter-head {
+            flex-direction: column;
+          }
+
+          .ta-batch-filter-controls {
+            grid-template-columns: 1fr;
+          }
+
+          .ta-batch-filter-count {
+            width: 100%;
+            text-align: center;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .ta-batch-stat {
+            min-height: 102px;
+            padding: 20px;
+          }
+        }
+      `}</style>
+
+      <div className="ta-batches">
+        {msg.text ? (
+          <div
+            className={`mb-5 rounded-2xl border px-4 py-3 text-sm font-bold ${
+              msg.type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-rose-200 bg-rose-50 text-rose-800"
+            }`}
+          >
+            {msg.text}
           </div>
-          <div>
-            <label className="text-base font-black uppercase text-white">Course</label>
-            <select value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)} className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none">
-              <option value="All">All</option>
-              {courses.map((course) => <option key={course._id} value={course.name}>{course.name}</option>)}
+        ) : null}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <BatchStatCard title="All Batches" value={batchStats.total} note="Created batch records" />
+          <BatchStatCard title="Open" value={batchStats.open} note="Available or scheduled windows" />
+          <BatchStatCard title="Closed" value={batchStats.closed} note="Enrollment ended" />
+          <BatchStatCard title="Visible" value={batchStats.visible} note="Current search results" />
+        </div>
+
+        <section className="ta-batch-card ta-batch-filter-card mt-6">
+          <div className="ta-batch-filter-head">
+            <div className="ta-batch-filter-copy">
+              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-black/40">
+                Search Records
+              </p>
+              <h2>Batch Queue</h2>
+              <p>
+                Search batches, filter by course or view, then refresh the latest training batch list.
+              </p>
+            </div>
+
+            <span className="ta-batch-filter-count">
+              {filteredBatches.length} Result{filteredBatches.length === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          <div className="ta-batch-filter-controls">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="ta-batch-control"
+              placeholder="Search batch name, code, course, or status"
+            />
+
+            <select
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className="ta-batch-control"
+            >
+              <option value="All">All Courses</option>
+              {courses.map((course) => (
+                <option key={course._id} value={course.name}>
+                  {course.name}
+                </option>
+              ))}
             </select>
-          </div>
-          <div>
-            <label className="text-base font-black uppercase text-white">View</label>
-            <select value={view} onChange={(e) => setView(e.target.value)} className="mt-1 h-8 w-full rounded-lg border-0 bg-white px-4 text-sm font-bold text-[#2d5038] outline-none">
+
+            <select
+              value={view}
+              onChange={(e) => setView(e.target.value)}
+              className="ta-batch-control"
+            >
               <option value="current">Current</option>
               <option value="past">Past</option>
               <option value="all">All</option>
             </select>
+
+            <button
+              type="button"
+              onClick={loadBatches}
+              disabled={loading}
+              className="ta-batch-filter-button ta-batch-refresh disabled:opacity-60"
+            >
+              {loading ? "Loading..." : "Refresh"}
+            </button>
+
+            <button
+              type="button"
+              onClick={openCreate}
+              disabled={!activeCourses.length}
+              className="ta-batch-filter-button ta-batch-create disabled:opacity-60"
+            >
+              Create Batch
+            </button>
           </div>
-          <button type="button" onClick={loadBatches} disabled={loading} className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:opacity-60">{loading ? "Loading..." : "Refresh"}</button>
-          <button type="button" onClick={openCreate} disabled={!activeCourses.length} className="h-8 rounded-md bg-white px-8 text-xs font-black text-[#2d5038] transition hover:bg-[#eef1e7] disabled:opacity-60">Create Batch</button>
-        </div>
-      </div>
+        </section>
 
-      <div className="overflow-hidden rounded-lg bg-[#2d5038] shadow-sm">
-        <div className="bg-white px-4 py-4"><h3 className="text-lg font-black text-[#2d5038]">Training Batches</h3></div>
-        <div className="min-h-[372px] divide-y divide-white/25">
-          {loading ? (
-            [1, 2].map((item) => <div key={item} className="grid gap-4 px-3 py-4 md:grid-cols-[64px_1.3fr_1fr_.8fr_1fr_100px_170px] md:items-center"><div className="h-11 w-11 rounded-full bg-white" /><div className="h-4 rounded-full bg-white/35" /><div className="h-4 rounded-full bg-white/35" /><div className="h-4 rounded-full bg-white/35" /><div className="h-4 rounded-full bg-white/35" /><div className="h-5 rounded-full bg-[#bdf0a4]" /><div className="h-5 rounded-full bg-white" /></div>)
-          ) : paginatedBatches.length ? (
-            paginatedBatches.map((batch) => (
-              <div key={batch._id} className="grid gap-4 px-3 py-4 text-sm font-black md:grid-cols-[64px_1.3fr_1fr_.8fr_1fr_100px_170px] md:items-center">
-                <div className="h-11 w-11 rounded-full bg-white" />
-                <div className="text-white"><div>{batch.batchName}</div><div className="text-xs text-white/70">{batch.batchCode || "-"}</div></div>
-                <div className="text-white/90">{batch.course}</div>
-                <div className="text-white/90">{batch.traineeCount || 0} / {batch.maxTrainees || 0}</div>
-                <div className="text-white/90">{formatDateTime(batch.enrollmentCloseAt)}</div>
-                <BatchStatusPill batch={batch} />
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => startEdit(batch)} className="rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038]">Edit</button>
-                  {batch.status === "open" ? <button type="button" onClick={() => updateStatus(batch, "closed")} disabled={actingId === batch._id} className="rounded-full bg-red-100 px-3 py-1 text-[10px] font-black text-red-800 disabled:opacity-60">Close</button> : <button type="button" onClick={() => updateStatus(batch, "open")} disabled={actingId === batch._id} className="rounded-full bg-[#bdf0a4] px-3 py-1 text-[10px] font-black text-[#2d5038] disabled:opacity-60">Open</button>}
-                  <button type="button" onClick={() => deleteBatch(batch)} disabled={actingId === batch._id} className="rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2d5038] disabled:opacity-60">Remove</button>
-                </div>
+        <section className="ta-batch-card mt-6">
+          <div className="flex flex-col gap-3 px-5 pb-4 pt-6 md:flex-row md:items-center md:justify-between md:px-6">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-black/40">
+                Training Batches
+              </p>
+              <h3 className="mt-2 text-3xl font-extrabold text-[#2A4F33]">
+                Batch Records
+              </h3>
+              <p className="mt-1 text-sm font-semibold text-black/45">
+                Showing {filteredBatches.length} batch{filteredBatches.length === 1 ? "" : "es"}.
+              </p>
+            </div>
+
+            <span className="inline-flex w-fit rounded-full bg-[#E9F1D9] px-4 py-2 text-xs font-extrabold uppercase tracking-wide text-[#2F5E3A]">
+              Page {page} of {totalPages}
+            </span>
+          </div>
+
+          <div className="ta-batch-table-scroll">
+            <div className="ta-batch-table px-5 pb-5 md:px-6">
+              <div className="ta-batch-row rounded-2xl bg-[#F6F6F1] px-4 py-4 text-xs font-extrabold uppercase tracking-[0.18em] text-black/45">
+                <div>Icon</div>
+                <div>Batch</div>
+                <div>Course</div>
+                <div>Trainees</div>
+                <div>Enrollment Closes</div>
+                <div>Status</div>
+                <div className="text-center">Actions</div>
               </div>
-            ))
-          ) : (
-            <div className="px-5 py-12 text-center text-sm font-bold text-white/80">No batches found.</div>
-          )}
-        </div>
-      </div>
 
-      <div className="mt-5 flex items-center justify-between px-2 text-base font-bold">
-        <div>Page {page} / {totalPages}</div>
-        <div className="flex items-center gap-5">
-          <button type="button" onClick={() => setPage((prev) => Math.max(1, prev - 1))} disabled={page <= 1} className="text-3xl leading-none text-white disabled:opacity-30">‹</button>
-          <button type="button" onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} disabled={page >= totalPages} className="font-black text-white disabled:opacity-30">Next Page</button>
-          <button type="button" onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} disabled={page >= totalPages} className="text-3xl leading-none text-white disabled:opacity-30">›</button>
+              <div className="mt-3 overflow-hidden rounded-2xl border border-black/5 bg-white">
+                {loading ? (
+                  [1, 2].map((item) => (
+                    <div key={item} className="ta-batch-row ta-batch-data-row px-4 py-5">
+                      <div className="h-12 w-12 rounded-[18px] bg-black/10" />
+                      <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-6 rounded-full bg-black/10" />
+                      <div className="h-8 rounded-full bg-black/10" />
+                    </div>
+                  ))
+                ) : paginatedBatches.length ? (
+                  paginatedBatches.map((batch) => (
+                    <div key={batch._id} className="ta-batch-row ta-batch-data-row px-4 py-5 text-sm font-bold text-[#102418]">
+                      <div>
+                        <div className="ta-batch-thumb">
+                          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3M4 11h16M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="truncate text-base font-extrabold text-[#082719]">{batch.batchName}</div>
+                        <div className="mt-1 text-xs font-bold text-black/45">{batch.batchCode || "-"}</div>
+                      </div>
+
+                      <div className="text-black/65">{batch.course}</div>
+                      <div className="text-black/65">{batch.traineeCount || 0} / {batch.maxTrainees || 0}</div>
+                      <div className="text-black/65">{formatDateTime(batch.enrollmentCloseAt)}</div>
+                      <div><BatchStatusPill batch={batch} /></div>
+
+                      <div className="ta-batch-action-grid">
+                        <button type="button" onClick={() => startEdit(batch)} className="ta-batch-action ta-action-edit">
+                          Edit
+                        </button>
+                        {batch.status === "open" ? (
+                          <button
+                            type="button"
+                            onClick={() => updateStatus(batch, "closed")}
+                            disabled={actingId === batch._id}
+                            className="ta-batch-action ta-action-close"
+                          >
+                            Close
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => updateStatus(batch, "open")}
+                            disabled={actingId === batch._id}
+                            className="ta-batch-action ta-action-open"
+                          >
+                            Open
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => deleteBatch(batch)}
+                          disabled={actingId === batch._id}
+                          className="ta-batch-action ta-action-remove"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-5 py-12 text-center text-sm font-bold text-black/45">
+                    No batches found.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-5 flex items-center justify-between px-2 text-sm font-bold text-white/80">
+          <div>Page {page} / {totalPages}</div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page <= 1}
+              className="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20 disabled:opacity-30"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={page >= totalPages}
+              className="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20 disabled:opacity-30"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 

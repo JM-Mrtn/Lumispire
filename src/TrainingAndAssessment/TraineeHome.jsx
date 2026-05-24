@@ -44,6 +44,523 @@ const TRAINEE_NAV_ITEMS = [
   { key: "progress", label: "Progress", path: "/trainee-progress" },
 ];
 
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
+const pageStyles = `
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+  .ltc-trainee-home-page {
+    --green-950: #071f14;
+    --green-900: #0e3321;
+    --green-800: #174a30;
+    --green-700: #235f3e;
+    --footer-green: #082719;
+    --gold: #d7a84d;
+    --gold-soft: #f4d484;
+    --dark: #101828;
+    --muted: #667085;
+    --glass: rgba(255,255,255,.84);
+    --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+    --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+    --radius: 24px;
+    --ease: cubic-bezier(.22,1,.36,1);
+    min-height: 100vh;
+    color: var(--dark);
+    background:
+      radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+      radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+    line-height: 1.65;
+    letter-spacing: -.01em;
+    overflow-x: hidden;
+    font-family: "Inter", Arial, sans-serif;
+  }
+
+  .ltc-trainee-home-page * { box-sizing: border-box; }
+  .ltc-container { width: min(1180px, 92%); margin: auto; }
+
+  .ltc-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    background: var(--footer-green);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 10px 34px rgba(7,31,20,.14);
+    margin: 0;
+  }
+
+  .ltc-header .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-nav {
+    min-height: 76px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .ltc-logo {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: white;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+  }
+
+  .ltc-logo-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: white;
+    object-fit: cover;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+  }
+
+  .ltc-logo h1 {
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -.04em;
+    margin: 0;
+  }
+
+  .ltc-logo p {
+    font-size: 11px;
+    color: rgba(255,255,255,.72);
+    margin: 3px 0 0;
+  }
+
+  .ltc-desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .ltc-profile-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-nav-link {
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-radius: 999px;
+    transition: .25s var(--ease);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .ltc-nav-link:hover,
+  .ltc-nav-link.active {
+    color: white;
+    background: rgba(255,255,255,.13);
+    transform: translateY(-1px);
+  }
+
+  .ltc-profile-button {
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 14px 28px rgba(215,168,77,.18);
+  }
+
+  .ltc-profile-avatar {
+    width: 42px;
+    height: 42px;
+    overflow: hidden;
+    border-radius: 999px;
+    border: 0;
+    background: rgba(255,255,255,.9);
+    cursor: pointer;
+    padding: 0;
+    box-shadow: 0 0 0 4px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.14);
+  }
+
+  .ltc-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .ltc-menu-button {
+    display: none;
+    color: white;
+    border: 0;
+    background: rgba(255,255,255,.1);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  .ltc-menu-button svg { width: 24px; height: 24px; }
+
+  .ltc-hero {
+    position: relative;
+    overflow: hidden;
+    color: white;
+    isolation: isolate;
+    background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
+    padding: 92px 0 86px;
+  }
+
+  .ltc-hero-slide {
+    position: absolute;
+    inset: 0;
+    z-index: -4;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .34;
+  }
+
+  .ltc-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    background: linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.76) 100%);
+  }
+
+  .ltc-hero::after {
+    content: "";
+    position: absolute;
+    inset: -16% -10% -24% -10%;
+    z-index: -2;
+    background:
+      radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
+      radial-gradient(circle at 36% 92%, rgba(7,76,47,.46), transparent 30%),
+      radial-gradient(circle at 72% 18%, rgba(28,108,68,.28), transparent 30%),
+      radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
+      radial-gradient(circle at 90% 84%, rgba(22,108,66,.30), transparent 26%);
+    filter: blur(30px);
+    pointer-events: none;
+  }
+
+  .ltc-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 980px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .ltc-eyebrow {
+    display: inline-flex;
+    color: var(--gold-soft);
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+  }
+
+  .ltc-hero-title {
+    margin: 18px 0 0;
+    color: white;
+    font-size: clamp(38px, 6vw, 76px);
+    line-height: 1.05;
+    font-weight: 900;
+    letter-spacing: -.055em;
+    text-shadow: 0 8px 26px rgba(0,0,0,.22);
+  }
+
+  .ltc-hero-title span { color: var(--gold-soft); }
+
+  .ltc-hero-text {
+    max-width: 760px;
+    margin: 18px auto 0;
+    color: rgba(255,255,255,.82);
+    font-size: 17px;
+    line-height: 1.8;
+  }
+
+  .ltc-section { padding: 74px 0; }
+
+  .ltc-home-shell {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid rgba(255,255,255,.76);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(18px);
+    padding: 34px;
+  }
+
+  .ltc-home-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+    z-index: 3;
+  }
+
+  .ltc-home-shell:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(215,168,77,.45);
+  }
+
+  .ltc-section-heading {
+    margin: 0;
+    color: var(--green-950);
+    font-size: clamp(28px,3vw,42px);
+    line-height: 1.08;
+    letter-spacing: -.05em;
+    font-weight: 900;
+  }
+
+  .ltc-section-line {
+    margin-top: 12px;
+    width: 180px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+  }
+
+  .ltc-section-intro {
+    max-width: 760px;
+    margin: 16px 0 0;
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .ltc-quick-grid {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .ltc-quick-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 238px;
+    border: 1px solid rgba(35,95,62,.12);
+    border-radius: 22px;
+    background: white;
+    padding: 24px 18px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 16px 34px rgba(8,39,25,.08);
+    transition: .25s var(--ease);
+  }
+
+  .ltc-quick-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+    opacity: .92;
+  }
+
+  .ltc-quick-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(215,168,77,.55);
+    box-shadow: 0 22px 44px rgba(8,39,25,.14);
+  }
+
+  .ltc-icon-frame {
+    display: grid;
+    place-items: center;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto;
+    border-radius: 26px;
+    color: var(--green-800);
+    background: rgba(35,95,62,.08);
+    box-shadow: inset 0 0 0 1px rgba(35,95,62,.08);
+  }
+
+  .ltc-icon-frame svg { width: 58px; height: 58px; }
+
+  .ltc-quick-title {
+    margin: 18px 0 0;
+    color: var(--green-950);
+    font-size: 19px;
+    line-height: 1.2;
+    font-weight: 900;
+    letter-spacing: -.03em;
+  }
+
+  .ltc-card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 130px;
+    min-height: 42px;
+    margin-top: 22px;
+    border-radius: 999px;
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 14px 28px rgba(215,168,77,.18);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    transition: .25s var(--ease);
+  }
+
+  .ltc-quick-card:hover .ltc-card-action {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg,#f7dc93,#c99634);
+  }
+
+  .ltc-footer {
+    width: 100%;
+    background: var(--footer-green);
+    color: white;
+    padding: 30px 0 12px;
+    margin: 0;
+  }
+
+  .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-footer-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+    gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .ltc-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-footer-brand img {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: white;
+  }
+
+  .ltc-footer h4 {
+    color: white;
+    font-weight: 900;
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .ltc-footer h5 {
+    color: #f4d484;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin: 0 0 10px;
+  }
+
+  .ltc-footer p,
+  .ltc-footer-link {
+    display: block;
+    color: rgba(255,255,255,.68);
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 5px 0;
+  }
+
+  .ltc-footer-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .ltc-footer-link:hover { color: white; text-decoration: underline; }
+  .ltc-socials { display: flex; gap: 8px; }
+  .ltc-socials span { width: 26px; height: 26px; border-radius: 999px; background: rgba(255,255,255,.13); }
+
+  .ltc-copyright {
+    width: 100%;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .ltc-sidebar-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.42); }
+  .ltc-sidebar-panel { position: absolute; right: 0; top: 0; height: 100%; width: min(310px,86vw); background: white; box-shadow: -20px 0 60px rgba(0,0,0,.25); padding: 20px; }
+  .ltc-sidebar-top { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(16,24,40,.1); padding-bottom: 16px; margin-bottom: 16px; }
+  .ltc-sidebar-title { color: var(--green-950); font-weight: 900; letter-spacing: .14em; font-size: 12px; margin: 0; }
+  .ltc-sidebar-close { width: 38px; height: 38px; border-radius: 12px; border: 0; background: #f2f4f7; color: #101828; cursor: pointer; }
+  .ltc-sidebar-link { display: block; width: 100%; border: 0; background: transparent; color: #101828; text-align: left; border-radius: 14px; padding: 13px 14px; font-weight: 800; margin-bottom: 8px; cursor: pointer; }
+  .ltc-sidebar-link:hover,
+  .ltc-sidebar-link.active { background: var(--green-800); color: white; }
+
+  @media (max-width: 1180px) {
+    .ltc-quick-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .ltc-footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-header .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-nav { min-height: auto; padding: 18px 0; }
+    .ltc-desktop-nav,
+    .ltc-profile-wrap { display: none; }
+    .ltc-menu-button { display: grid; place-items: center; }
+    .ltc-hero { padding: 76px 0 74px; }
+    .ltc-section { padding: 58px 0; }
+    .ltc-home-shell { padding: 28px 22px; }
+    .ltc-quick-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .ltc-footer { padding: 28px 0 12px; }
+    .ltc-footer-grid { grid-template-columns: 1fr; gap: 18px; padding-bottom: 22px; }
+    .ltc-footer .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-copyright { flex-direction: column; }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-header .ltc-container,
+    .ltc-footer .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-logo h1 { font-size: 14px; }
+    .ltc-logo p { font-size: 10px; }
+    .ltc-hero-title { font-size: clamp(34px, 11vw, 46px); letter-spacing: -.045em; }
+    .ltc-hero-text { font-size: 15px; }
+    .ltc-home-shell { padding: 26px 18px; }
+    .ltc-quick-grid { grid-template-columns: 1fr; }
+  }
+`;
+
 function getToken() {
   return localStorage.getItem("trainingToken") || "";
 }
@@ -199,60 +716,110 @@ const TraineeHome = () => {
   const profilePhotoUrl = buildFileUrl(user?.profilePhoto);
 
   const quickCards = [
-    {
-      title: "Roadmap",
-      action: "View",
-      route: "/trainee-roadmap",
-    },
-    {
-      title: "Attendance",
-      action: "Submit",
-      route: "/trainee-attendance",
-    },
-    {
-      title: "Modules",
-      action: "View",
-      route: "/trainee-modules",
-    },
-    {
-      title: "Assignment",
-      action: "Answer",
-      route: "/trainee-assignment",
-    },
-    {
-      title: "Progress",
-      action: "View",
-      route: "/trainee-progress",
-    },
+    { title: "Roadmap", action: "View", route: "/trainee-roadmap" },
+    { title: "Attendance", action: "Submit", route: "/trainee-attendance" },
+    { title: "Modules", action: "View", route: "/trainee-modules" },
+    { title: "Assignment", action: "Answer", route: "/trainee-assignment" },
+    { title: "Progress", action: "View", route: "/trainee-progress" },
   ];
 
   return (
-    <div className="min-h-screen bg-[#123a20] text-[#395345]">
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-[#d7ddcf] bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
+    <div className="ltc-trainee-home-page">
+      <style>{pageStyles}</style>
+
+      <Header
+        goTo={goTo}
+        goToProfile={goToProfile}
+        profilePhotoUrl={profilePhotoUrl}
+        onOpenMenu={() => setMobileOpen(true)}
+      />
+
+      <main>
+        <section className="ltc-hero">
+          <img
+            src="/TrainingBanner.png"
+            alt="TAMSI Training Banner"
+            className="ltc-hero-slide"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+
+          <div className="ltc-container ltc-hero-content">
+            <h2 className="ltc-hero-title" style={fontMontserrat}>
+              TAMSI Training <span>And Assessment</span>
+            </h2>
+            <p className="ltc-hero-text" style={fontPontano}>
+              Welcome to your trainee dashboard. View your roadmap, submit attendance, access modules, answer assignments, and check your progress.
+            </p>
+          </div>
+        </section>
+
+        <section className="ltc-section">
+          <div className="ltc-container">
+            <div className="ltc-home-shell">
+              <h2 className="ltc-section-heading" style={fontMontserrat}>
+                Welcome to Training &amp; Assessment
+              </h2>
+              <div className="ltc-section-line" />
+              <p className="ltc-section-intro" style={fontPoppins}>
+                Choose one of the trainee actions below to continue your training workflow.
+              </p>
+
+              <div className="ltc-quick-grid">
+                {quickCards.map((item) => (
+                  <QuickCard
+                    key={item.title}
+                    title={item.title}
+                    action={item.action}
+                    onClick={() => goTo(item.route)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer goTo={goTo} />
+
+      {mobileOpen ? (
+        <MobileMenu
+          onClose={() => setMobileOpen(false)}
+          goTo={goTo}
+          goToProfile={goToProfile}
+        />
+      ) : null}
+    </div>
+  );
+};
+
+function Header({ goTo, goToProfile, profilePhotoUrl, onOpenMenu }) {
+  return (
+    <header className="ltc-header">
+      <div className="ltc-container">
+        <div className="ltc-nav">
           <button
             type="button"
             onClick={() => goTo("/trainee-home")}
-            className="flex items-center gap-3"
+            className="ltc-logo"
             aria-label="TAMSI Trainee Home"
           >
             <img
               src="/TamsiLogo.png"
               alt="TAMSI Logo"
-              className="h-12 w-12 object-contain"
-              onError={(e) => {
-                e.currentTarget.src =
-                  "https://placehold.co/80x80/d7ddd4/45674b?text=T";
+              className="ltc-logo-icon"
+              onError={(event) => {
+                event.currentTarget.src =
+                  "https://placehold.co/80x80/ffffff/45674b?text=T";
               }}
             />
-
-            <span className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b] sm:text-[28px]">
-              TAMSI
-            </span>
+            <div>
+              <h1 style={fontMontserrat}>TRAINING & ASSESSMENT</h1>
+            </div>
           </button>
 
-          <nav className="hidden items-center gap-5 lg:flex xl:gap-7">
+          <nav className="ltc-desktop-nav" aria-label="Trainee navigation">
             {TRAINEE_NAV_ITEMS.map((item) => (
               <HeaderNavButton
                 key={item.key}
@@ -263,19 +830,16 @@ const TraineeHome = () => {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="ltc-profile-wrap">
+            <HeaderNavButton
+              label="Profile"
+              className="ltc-profile-button"
+              onClick={goToProfile}
+            />
             <button
               type="button"
               onClick={goToProfile}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] xl:text-[12px]"
-            >
-              Profile
-            </button>
-
-            <button
-              type="button"
-              onClick={goToProfile}
-              className="h-10 w-10 overflow-hidden rounded-full bg-[#d8d8d8] ring-2 ring-[#45674b]/20"
+              className="ltc-profile-avatar"
               aria-label="Profile"
             >
               <ProfileImage profilePhotoUrl={profilePhotoUrl} />
@@ -284,175 +848,49 @@ const TraineeHome = () => {
 
           <button
             type="button"
-            onClick={() => setMobileOpen((prev) => !prev)}
-            className="rounded-md border border-[#45674b]/20 bg-[#f7faf2] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#45674b] lg:hidden"
+            onClick={onOpenMenu}
+            className="ltc-menu-button"
+            aria-label="Open menu"
           >
-            Menu
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
         </div>
-
-        {mobileOpen ? (
-          <div className="border-t border-[#d7ddcf] bg-white px-5 py-3 lg:hidden">
-            <div className="space-y-1 rounded-xl bg-[#f4f7ef] p-2">
-              {TRAINEE_NAV_ITEMS.map((item) => (
-                <MobileHeaderButton
-                  key={item.key}
-                  label={item.label}
-                  active={item.key === "home"}
-                  onClick={() => goTo(item.path)}
-                />
-              ))}
-
-              <button
-                type="button"
-                onClick={goToProfile}
-                className="flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
-              >
-                <span>Profile</span>
-
-                <span className="h-8 w-8 overflow-hidden rounded-full bg-[#d8d8d8]">
-                  <ProfileImage profilePhotoUrl={profilePhotoUrl} />
-                </span>
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </header>
-
-      <main>
-        {/* TRAINING BANNER */}
-        <section className="relative flex h-[260px] items-center justify-center overflow-hidden bg-[#d7ded3] px-5 text-center sm:h-[310px] md:h-[360px] lg:h-[390px]">
-          <img
-            src="/TrainingBanner.png"
-            alt="TAMSI Training Banner"
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://placehold.co/1600x420/d7ddd4/45674b?text=TAMSI+Training+And+Assessment";
-            }}
-          />
-
-          <div className="absolute inset-0 bg-[#d7ded3]/55" />
-
-          <div className="relative z-10 mx-auto max-w-[1280px]">
-            <h1 className="font-['Montserrat',sans-serif] text-4xl font-extrabold leading-tight tracking-wide text-[#45674b] drop-shadow-sm sm:text-5xl md:text-6xl lg:text-7xl">
-              TAMSI Training And Assessment
-            </h1>
-          </div>
-        </section>
-
-        {/* TITLE SECTION */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#486b4b] via-[#123a20] to-[#123a20] px-5 py-10 text-white sm:px-8 lg:px-12">
-          <DecorativeCircles position="left" />
-          <DecorativeCircles position="right" />
-
-          <div className="relative z-20 mx-auto max-w-[1280px]">
-            <h2 className="text-center font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl md:text-5xl">
-              Welcome to Training &amp; Assessment
-            </h2>
-
-            <div className="mx-auto mt-4 h-[3px] max-w-[760px] rounded-full bg-white/45" />
-          </div>
-        </section>
-
-        {/* QUICK CARDS */}
-        <section className="bg-[#2e5038] px-5 py-12 text-white sm:px-8 lg:px-12">
-          <div className="mx-auto grid max-w-[1250px] grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {quickCards.map((item) => (
-              <button
-                key={item.title}
-                type="button"
-                onClick={() => goTo(item.route)}
-                className="group mx-auto flex w-full max-w-[205px] flex-col items-center rounded-lg bg-white px-5 py-7 text-center shadow-xl transition duration-300 hover:-translate-y-1.5 hover:shadow-2xl"
-              >
-                <PaperIcon />
-
-                <h3 className="mt-3 font-['Montserrat',sans-serif] text-[19px] font-extrabold text-[#45674b]">
-                  {item.title}
-                </h3>
-
-                <span className="mt-6 flex h-[32px] w-full max-w-[150px] items-center justify-center rounded-full border-[3px] border-[#45674b] bg-white font-['Montserrat',sans-serif] text-[12px] font-extrabold uppercase text-[#45674b] transition group-hover:bg-[#45674b] group-hover:text-white">
-                  {item.action}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      </main>
-
-      {/* FOOTER */}
-      <footer className="bg-white text-[#4d6f55]">
-        <div className="mx-auto max-w-[1440px] px-5 py-3 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.05fr_1.05fr_1.3fr_1fr_0.65fr]">
-            <div className="border-[#d6ded2] md:border-r md:pr-5">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/TamsiLogo.png"
-                  alt="TAMSI Logo"
-                  className="h-10 w-10 object-contain"
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/80x80/ffffff/4d6f55?text=T";
-                  }}
-                />
-
-                <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
-                  TAMSI
-                </h2>
-              </div>
-            </div>
-
-            <div className="border-[#d6ded2] md:border-r md:px-5">
-              <h3 className="text-xs font-extrabold text-[#45674b]">Menu</h3>
-
-              <div className="mt-1 grid grid-cols-2 gap-x-5 gap-y-0.5 text-[11px] font-semibold text-[#6b776d]">
-                {TRAINEE_NAV_ITEMS.map((item) => (
-                  <FooterButton
-                    key={item.key}
-                    label={item.label}
-                    onClick={() => goTo(item.path)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="border-[#d6ded2] md:border-r md:px-5">
-              <h3 className="text-xs font-extrabold text-[#45674b]">
-                Contact Information
-              </h3>
-
-              <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>{TRAINING_CONTACT_INFO.email1}</p>
-                <p>{TRAINING_CONTACT_INFO.email2}</p>
-                <p>{TRAINING_CONTACT_INFO.phone}</p>
-              </div>
-            </div>
-
-            <div className="border-[#d6ded2] md:border-r md:px-5">
-              <h3 className="text-xs font-extrabold text-[#45674b]">Address</h3>
-
-              <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
-                <p>{TRAINING_CONTACT_INFO.addressLine1}</p>
-                <p>{TRAINING_CONTACT_INFO.addressLine2}</p>
-              </div>
-            </div>
-
-            <div className="md:pl-5">
-              <h3 className="text-xs font-extrabold text-[#45674b]">
-                Follow Us
-              </h3>
-            </div>
-          </div>
-
-          <div className="mt-2 flex flex-col gap-1 border-t border-[#d6ded2] pt-2 text-[9px] font-bold text-[#7b897e] sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</p>
-            <p>Developed by CRMS Tech Alliance</p>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </header>
   );
-};
+}
+
+function HeaderNavButton({ label, active = false, onClick, className = "" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`ltc-nav-link ${active ? "active" : ""} ${className}`}
+      style={fontPoppins}
+    >
+      {label}
+    </button>
+  );
+}
+
+function QuickCard({ title, action, onClick }) {
+  return (
+    <button type="button" onClick={onClick} className="ltc-quick-card">
+      <span className="ltc-icon-frame">
+        <PaperIcon />
+      </span>
+      <h3 className="ltc-quick-title" style={fontMontserrat}>{title}</h3>
+      <span className="ltc-card-action" style={fontPoppins}>{action}</span>
+    </button>
+  );
+}
 
 function ProfileImage({ profilePhotoUrl }) {
   if (profilePhotoUrl) {
@@ -460,7 +898,6 @@ function ProfileImage({ profilePhotoUrl }) {
       <img
         src={profilePhotoUrl}
         alt="Profile"
-        className="h-full w-full object-cover"
         onError={(e) => {
           e.currentTarget.src =
             "https://placehold.co/80x80/d7ddd4/45674b?text=P";
@@ -473,70 +910,129 @@ function ProfileImage({ profilePhotoUrl }) {
     <img
       src="https://placehold.co/80x80/d7ddd4/45674b?text=P"
       alt="Profile"
-      className="h-full w-full object-cover"
     />
   );
 }
 
-function HeaderNavButton({ label, active = false, onClick }) {
+function Footer({ goTo }) {
+  return (
+    <footer className="ltc-footer">
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <div className="ltc-footer-brand">
+            <img
+              src="/TamsiLogo.png"
+              alt="TAMSI Logo"
+              onError={(event) => {
+                event.currentTarget.src =
+                  "https://placehold.co/80x80/ffffff/4d6f55?text=T";
+              }}
+            />
+            <h4 style={fontMontserrat}>TAMSI</h4>
+          </div>
+        </div>
+
+        <FooterColumn title="Menu">
+          {TRAINEE_NAV_ITEMS.map((item) => (
+            <FooterLink key={item.key} onClick={() => goTo(item.path)}>
+              {item.label}
+            </FooterLink>
+          ))}
+        </FooterColumn>
+
+        <FooterColumn title="Contact Information">
+          <FooterText>{TRAINING_CONTACT_INFO.email1}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.email2}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.phone}</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Address">
+          <FooterText>{TRAINING_CONTACT_INFO.addressLine1}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.addressLine2}</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Follow Us">
+          <div className="ltc-socials">
+            <span />
+            <span />
+            <span />
+          </div>
+        </FooterColumn>
+      </div>
+
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
+      </div>
+    </footer>
+  );
+}
+
+function FooterColumn({ title, children }) {
+  return (
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function FooterLink({ children, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={[
-        "text-[11px] font-bold uppercase tracking-wide transition xl:text-[12px]",
-        active
-          ? "border-b-2 border-[#45674b] pb-1 text-[#173d25]"
-          : "text-[#58705d] hover:text-[#173d25]",
-      ].join(" ")}
+      className="ltc-footer-link"
+      style={fontPontano}
     >
-      {label}
+      {children}
     </button>
   );
 }
 
-function MobileHeaderButton({ label, active = false, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "block w-full rounded-lg px-4 py-3 text-left text-sm",
-        active
-          ? "bg-white font-bold text-[#173d25]"
-          : "font-semibold text-[#45674b] hover:bg-white",
-      ].join(" ")}
-    >
-      {label}
-    </button>
-  );
+function FooterText({ children }) {
+  return <p style={fontPontano}>{children}</p>;
 }
 
-function FooterButton({ label, onClick }) {
+function MobileMenu({ onClose, goTo, goToProfile }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="text-left hover:text-[#173d25]"
-    >
-      {label}
-    </button>
-  );
-}
+    <div className="ltc-sidebar-overlay">
+      <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
 
-function DecorativeCircles({ position }) {
-  const isLeft = position === "left";
+      <div className="ltc-sidebar-panel">
+        <div className="ltc-sidebar-top">
+          <p className="ltc-sidebar-title" style={fontPoppins}>MENU</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="ltc-sidebar-close"
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        </div>
 
-  return (
-    <div
-      className={[
-        "pointer-events-none absolute top-7 z-10 opacity-35",
-        isLeft ? "left-8" : "right-20",
-      ].join(" ")}
-    >
-      <span className="absolute left-0 top-0 h-11 w-11 rounded-full bg-[#a8c39f]" />
-      <span className="absolute left-7 top-3 h-12 w-12 rounded-full bg-[#a8c39f]" />
-      <span className="absolute left-0 top-16 h-9 w-9 rounded-full bg-[#a8c39f]" />
+        {TRAINEE_NAV_ITEMS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => goTo(item.path)}
+            className={`ltc-sidebar-link ${item.key === "home" ? "active" : ""}`}
+            style={fontPoppins}
+          >
+            {item.label}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          onClick={goToProfile}
+          className="ltc-sidebar-link"
+          style={fontPoppins}
+        >
+          Profile
+        </button>
+      </div>
     </div>
   );
 }
@@ -545,9 +1041,9 @@ function PaperIcon() {
   return (
     <svg
       viewBox="0 0 90 90"
-      className="h-20 w-20 text-[#8a936e]"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <path
         d="M28 18H58L68 28V68C68 70.2 66.2 72 64 72H28C25.8 72 24 70.2 24 68V22C24 19.8 25.8 18 28 18Z"
@@ -555,66 +1051,14 @@ function PaperIcon() {
         strokeWidth="3"
         strokeLinejoin="round"
       />
-
-      <path
-        d="M58 18V29H68"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M19 25H53L61 33V75"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-        opacity="0.75"
-      />
-
-      <path
-        d="M34 36H55"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M34 46H55"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M34 56H50"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M29 36L31 38L34 34"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M29 46L31 48L34 44"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M29 56L31 58L34 54"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M58 18V29H68" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M19 25H53L61 33V75" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" opacity="0.75" />
+      <path d="M34 36H55" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M34 46H55" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M34 56H50" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M29 36L31 38L34 34" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M29 46L31 48L34 44" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M29 56L31 58L34 54" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

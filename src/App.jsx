@@ -66,6 +66,7 @@ import TrainingRequirements from "./TrainingAndAssessment/TrainingRequirements";
 import TrainingContactUs from "./TrainingAndAssessment/TrainingContactUs";
 import TrainingSubmit from "./TrainingAndAssessment/TrainingSubmit";
 import TrainingFaqs from "./TrainingAndAssessment/TrainingFaqs";
+import TrainingCertificateValidation from "./TrainingAndAssessment/TrainingCertificateValidation";
 
 /* ===================== TRAINEE ===================== */
 import TraineeLogIn from "./TrainingAndAssessment/TraineeLogIn";
@@ -91,7 +92,6 @@ import TrainingAdminRoadmap from "./TrainingAndAssessment/TrainingAdminRoadmap";
 import TrainingAdminRegisterRfid from "./TrainingAndAssessment/TrainingAdminRegisterRfid";
 
 /* ===================== PROFESSOR ===================== */
-import ProfessorLandingPage from "./TrainingAndAssessment/ProfessorLandingPage";
 import ProfessorLogin from "./TrainingAndAssessment/ProfessorLogin";
 import ProfessorDashboard from "./TrainingAndAssessment/ProfessorDashboard";
 import ProfessorAttendance from "./TrainingAndAssessment/ProfessorAttendance";
@@ -469,6 +469,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="/training-contact-us" element={<TrainingContactUs />} />
         <Route path="/training-submit" element={<TrainingSubmit />} />
         <Route path="/training-faqs" element={<TrainingFaqs />} />
+        <Route path="/training-certificate-validation" element={<TrainingCertificateValidation />} />
 
         {/* ===== Compatibility redirects for old trainee/public links ===== */}
         <Route
@@ -638,7 +639,6 @@ createRoot(document.getElementById("root")).render(
         />
 
         {/* ===================== PROFESSOR ROUTES ===================== */}
-        <Route path="/professor" element={<ProfessorLandingPage />} />
         <Route path="/professor-login" element={<ProfessorLogin />} />
 
         <Route
@@ -856,7 +856,7 @@ createRoot(document.getElementById("root")).render(
         />
 
         <Route path="/manpower-exam/:applicationId" element={<ManpowerExam />} />
-
+        
         {/* ===================== CATCH-ALL ===================== */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

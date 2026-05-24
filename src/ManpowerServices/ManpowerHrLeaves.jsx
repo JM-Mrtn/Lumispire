@@ -163,6 +163,175 @@ function StatusBadge({ status }) {
   );
 }
 
+
+
+function HrSidebarIcon({ type }) {
+  const common = "h-4 w-4";
+
+  if (type === "applicants") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-8 0v2" />
+        <circle cx="12" cy="7" r="4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 8v6M23 11h-6" />
+      </svg>
+    );
+  }
+
+  if (type === "payroll") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h4M15 15h2" />
+      </svg>
+    );
+  }
+
+  if (type === "leave") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 2v4M16 2v4M3 10h18" />
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m8 15 2.4 2.4L16 12" />
+      </svg>
+    );
+  }
+
+  if (type === "billing") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6M9 11h6M9 15h3" />
+      </svg>
+    );
+  }
+
+  if (type === "logout") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m16 17 5-5-5-5M21 12H9" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="7" height="7" rx="2" />
+      <rect x="14" y="3" width="7" height="7" rx="2" />
+      <rect x="14" y="14" width="7" height="7" rx="2" />
+      <rect x="3" y="14" width="7" height="7" rx="2" />
+    </svg>
+  );
+}
+
+function RefreshIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 0 1-15.3 6.36L3 15" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 15v6h6" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12A9 9 0 0 1 18.3 5.64L21 9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 9V3h-6" />
+    </svg>
+  );
+}
+
+function ReviewIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14 2v6h6M9 15l2 2 4-4" />
+    </svg>
+  );
+}
+
+function HrSidebarButton({ active = false, children, onClick, icon = "dashboard" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group flex min-h-[46px] w-full items-center gap-3 rounded-[23px] px-5 text-left text-[12px] font-black tracking-tight transition duration-300 ${
+        active
+          ? "bg-white text-[#071f14] shadow-[0_18px_38px_rgba(0,0,0,0.20)]"
+          : "text-white hover:translate-x-1 hover:bg-white/10"
+      }`}
+    >
+      <span
+        className={`grid h-7 w-7 shrink-0 place-items-center transition duration-300 ${
+          active ? "text-[#071f14]" : "text-white/85 group-hover:text-[#f4d484]"
+        }`}
+      >
+        <HrSidebarIcon type={icon} />
+      </span>
+      <span className="min-w-0 flex-1 leading-tight">{children}</span>
+    </button>
+  );
+}
+
+function LeaveStatCard({ title, value, note, tone = "green", onClick }) {
+  const valueColor =
+    tone === "red"
+      ? "text-[#9d2f2f]"
+      : tone === "gold"
+      ? "text-[#bd6b00]"
+      : "text-[#071f14]";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative min-h-[132px] overflow-hidden rounded-3xl border border-white/80 bg-white p-6 text-left shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(8,39,25,0.16)]"
+    >
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-14 -right-12 h-36 w-36 rounded-full bg-[#f4d484]/20 blur-2xl transition group-hover:scale-110" />
+      <p className="relative text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
+        {title}
+      </p>
+      <p className={`relative mt-4 text-4xl font-black leading-none tracking-tight ${valueColor}`}>
+        {value}
+      </p>
+      {note ? (
+        <p className="relative mt-3 text-sm font-semibold text-[#071f14]/55">
+          {note}
+        </p>
+      ) : null}
+    </button>
+  );
+}
+
+function HrSectionCard({ eyebrow, title, children, className = "", right = null }) {
+  return (
+    <section className={`relative overflow-hidden rounded-3xl border border-white/80 bg-white shadow-[0_18px_45px_rgba(8,39,25,0.10)] ring-1 ring-black/5 ${className}`}>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
+      <div className="absolute -bottom-16 -right-16 h-44 w-44 rounded-full bg-[#f4d484]/20 blur-2xl" />
+      <div className="relative p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            {eyebrow ? (
+              <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-[#071f14]/45">
+                {eyebrow}
+              </p>
+            ) : null}
+            {title ? (
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-[#071f14]">
+                {title}
+              </h2>
+            ) : null}
+          </div>
+          {right}
+        </div>
+        <div className={title || eyebrow ? "mt-5" : ""}>{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function EmployeeInitials({ row }) {
+  const names = getEmployeeName(row).split(/\s+/).filter(Boolean);
+  const first = names[0]?.charAt(0) || "E";
+  const last = names.length > 1 ? names[names.length - 1].charAt(0) : "L";
+  return `${first}${last}`.toUpperCase();
+}
 export default function ManpowerHrLeaves() {
   const navigate = useNavigate();
 
@@ -375,322 +544,337 @@ export default function ManpowerHrLeaves() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f3a1e] font-sans text-white">
-      <header className="border-b border-[#d7decf] bg-[#f7f9f5]">
-        <div className="flex h-[90px] items-center px-8">
-          <BrandLogo />
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+      <style>{`
+        @keyframes hrLeaveFadeUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes hrLeaveModalIn {
+          from { opacity: 0; transform: translateY(24px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
 
-      <div className="grid min-h-[calc(100vh-90px)] lg:grid-cols-[265px_1fr]">
-        <aside className="flex bg-[#294f35] lg:min-h-[calc(100vh-90px)]">
-          <div className="flex w-full flex-col">
-            <div className="border-b border-white/15 px-6 py-8 text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#9ca59d] bg-white text-[28px] font-black text-[#315b42]">
-                HR
-              </div>
+      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
+        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+          <div className="text-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
+              Manpower Services HR
+            </p>
+            <h1 className="mt-3 text-[17px] font-black leading-tight tracking-tight text-white">
+              LTC Manpower Services
+            </h1>
+          </div>
 
-              <h2 className="mt-5 text-[17px] font-black uppercase leading-tight text-white">
-                Human Resources
-              </h2>
+          <nav className="mt-12 flex-1 space-y-4">
+            <HrSidebarButton icon="dashboard" onClick={() => navigate("/manpower-hr")}>
+              Dashboard
+            </HrSidebarButton>
+            <HrSidebarButton icon="applicants" onClick={() => navigate("/manpower-hr-applications")}>
+              Manage Applicants
+            </HrSidebarButton>
+            <HrSidebarButton icon="payroll" onClick={() => navigate("/manpower-hr-payroll")}>
+              Manage Payroll
+            </HrSidebarButton>
+            <HrSidebarButton active icon="leave" onClick={() => navigate("/manpower-hr-leaves")}>
+              Manage File Leave
+            </HrSidebarButton>
+            <HrSidebarButton icon="billing" onClick={() => navigate("/manpower-hr-billing")}>
+              Manage Billing
+            </HrSidebarButton>
+          </nav>
 
-              <p className="mt-2 break-all text-[11px] font-bold text-white">
-                {hrEmail}
-              </p>
-            </div>
-
-            <nav className="border-t border-white/5">
-              <SidebarButton onClick={() => navigate("/manpower-hr")}>
-                Dashboard
-              </SidebarButton>
-
-              <SidebarButton
-                onClick={() => navigate("/manpower-hr-applications")}
-              >
-                Manage Applicants
-              </SidebarButton>
-
-              <SidebarButton onClick={() => navigate("/manpower-hr-payroll")}>
-                Manage Payroll
-              </SidebarButton>
-
-              <SidebarButton active onClick={() => navigate("/manpower-hr-leaves")}>
-                Manage File Leave
-              </SidebarButton>
-
-              <SidebarButton onClick={() => navigate("/manpower-hr-billing")}>
-                Manage Billing
-              </SidebarButton>
-            </nav>
-
-            <div className="mt-auto px-6 py-8">
-              <button
-                type="button"
-                onClick={logout}
-                className="w-full rounded-full px-5 py-3 text-[16px] font-black uppercase text-white transition hover:bg-white/10"
-              >
-                Sign Out
-              </button>
-            </div>
+          <div className="border-t border-white/15 pt-7">
+            <button
+              type="button"
+              onClick={logout}
+              className="group flex min-h-[52px] w-full items-center gap-4 rounded-[26px] bg-white/10 px-6 text-left text-[13px] font-black capitalize tracking-tight text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#f4d484] hover:text-[#071f14]"
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center text-white/90 transition duration-300 group-hover:text-[#071f14]">
+                <HrSidebarIcon type="logout" />
+              </span>
+              <span>Sign out</span>
+            </button>
+            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
+              © LTC Manpower Services
+            </p>
           </div>
         </aside>
 
-        <main className="bg-[#0f3a1e] px-6 py-6 lg:px-8">
-          <section>
-            <h1 className="text-[32px] font-black uppercase leading-tight text-white md:text-[38px]">
-              Manage File Leave
-            </h1>
-            <div className="mt-2 h-[4px] w-[345px] max-w-full bg-white/65" />
+        <main className="min-w-0 px-5 py-6 lg:px-8">
+          <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
+            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
+            <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+            <div className="relative flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-[#f4d484]">
+                  Manpower HR Center
+                </p>
+                <h1 className="mt-3 max-w-3xl text-[38px] font-black leading-[0.98] tracking-[-0.055em] md:text-[56px]">
+                  File Leave Management
+                </h1>
+                <p className="mt-4 max-w-2xl text-[15px] font-semibold leading-7 text-white/75">
+                  Review employee leave requests, monitor approval status, and process HR actions in one professional dashboard.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadLeaves}
+                disabled={loading}
+                className="inline-flex min-h-[52px] items-center justify-center gap-3 rounded-full bg-white px-7 text-[13px] font-black uppercase tracking-[0.08em] text-[#071f14] shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#f4d484] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <RefreshIcon />
+                {loading ? "Refreshing..." : "Refresh Requests"}
+              </button>
+            </div>
           </section>
 
-          <section className="mt-6 grid max-w-[760px] gap-7 sm:grid-cols-3">
-            <SummaryCard
+          <section className="mt-7 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <LeaveStatCard
               title="Total Leave"
               value={summary.total}
+              note="All filed leave requests"
               onClick={() => setStatusFilter("")}
             />
-
-            <SummaryCard
-              title="Pending Approval"
+            <LeaveStatCard
+              title="Pending"
               value={summary.pending}
+              note="Requests awaiting review"
+              tone="gold"
               onClick={() => setStatusFilter("PENDING")}
             />
-
-            <SummaryCard
-              title="Total Rejected"
+            <LeaveStatCard
+              title="Approved"
+              value={summary.approved}
+              note="Requests already approved"
+              onClick={() => setStatusFilter("APPROVED")}
+            />
+            <LeaveStatCard
+              title="Rejected"
               value={summary.rejected}
+              note="Requests marked rejected"
+              tone="red"
               onClick={() => setStatusFilter("REJECTED")}
             />
           </section>
 
-          <section className="mt-12 overflow-hidden rounded-lg bg-[#294f35]">
-            <div className="flex flex-col gap-4 rounded-t-lg bg-white px-4 py-4 text-[#294f35] lg:flex-row lg:items-center lg:justify-between">
-              <h2 className="text-[18px] font-black">List of Employee</h2>
+          <HrSectionCard
+            eyebrow="Leave Records"
+            title="List of Employee Leave Requests"
+            className="mt-7"
+            right={
+              <div className="flex w-full flex-col gap-3 xl:w-auto xl:items-end">
+                <div className="grid w-full gap-3 sm:grid-cols-2 xl:w-auto xl:grid-cols-[300px_170px_auto]">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search employee, email, leave type..."
+                    className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[13px] font-bold text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
+                  />
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search Employee"
-                  className="h-[26px] w-full rounded-full border border-[#aab5aa] bg-white px-4 text-[13px] font-semibold text-[#294f35] outline-none sm:w-[270px]"
-                />
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                    className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
+                    aria-label="Filter leave requests by status"
+                  >
+                    <option value="">All Status</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
 
-                <button
-                  type="button"
-                  onClick={loadLeaves}
-                  disabled={loading}
-                  className="h-[26px] min-w-[110px] rounded-full bg-[#174322] px-5 text-[12px] font-black text-white transition hover:bg-[#0f3319] disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {loading ? "Loading..." : "Refresh"}
-                </button>
+                  <button
+                    type="button"
+                    onClick={loadLeaves}
+                    disabled={loading}
+                    title="Refresh leave requests"
+                    aria-label="Refresh leave requests"
+                    className="grid h-12 w-12 place-items-center rounded-full bg-[#174a30] text-white shadow-[0_14px_28px_rgba(8,39,25,0.16)] transition hover:-translate-y-0.5 hover:bg-[#082719] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <RefreshIcon />
+                  </button>
+                </div>
+
+                <p className="text-[12px] font-black uppercase tracking-[0.12em] text-[#071f14]/45">
+                  Showing {filteredLeaves.length} of {leaves.length} requests
+                </p>
               </div>
-            </div>
-
+            }
+          >
             {message.success ? (
-              <div className="border-b border-white/10 bg-[#203f2b] px-4 py-2 text-[12px] font-semibold text-white/85">
+              <div className="mb-5 rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] px-5 py-3 text-[13px] font-bold text-[#174a30]">
                 {message.success}
               </div>
             ) : null}
 
             {message.error ? (
-              <div className="border-b border-red-300/30 bg-[#4b2424] px-4 py-2 text-[12px] font-semibold text-red-100">
+              <div className="mb-5 rounded-2xl border border-[#efc9c9] bg-[#fff2f2] px-5 py-3 text-[13px] font-bold text-[#912f2f]">
                 {message.error}
               </div>
             ) : null}
 
-            <div className="min-h-[380px]">
+            <div className="overflow-hidden rounded-3xl border border-[#d7e2da] bg-[#f8fbf9]">
               {filteredLeaves.length ? (
-                filteredLeaves.map((leave) => (
-                  <div
-                    key={leave._id}
-                    className="grid gap-4 border-b border-white/25 px-4 py-5 text-white md:grid-cols-[64px_1.25fr_1.45fr_0.8fr_1fr_0.75fr_0.75fr] md:items-center"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[15px] font-black text-[#315b42]">
-                      {getEmployeeName(leave).charAt(0).toUpperCase()}
-                    </div>
+                <div className="divide-y divide-[#d7e2da]">
+                  {filteredLeaves.map((leave) => (
+                    <article
+                      key={leave._id}
+                      className="grid gap-4 bg-white/70 px-5 py-5 transition duration-300 hover:bg-white hover:shadow-[0_16px_40px_rgba(8,39,25,0.08)] md:grid-cols-[58px_1.15fr_1.45fr_0.9fr_0.9fr_0.65fr_58px] md:items-center"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#082719] text-[14px] font-black text-[#f4d484] shadow-[0_12px_26px_rgba(8,39,25,0.18)]">
+                        <EmployeeInitials row={leave} />
+                      </div>
 
-                    <p className="text-[16px] font-black">
-                      {getEmployeeName(leave)}
-                    </p>
+                      <div>
+                        <p className="text-[15px] font-black leading-snug text-[#071f14]">
+                          {getEmployeeName(leave)}
+                        </p>
+                        <p className="mt-1 text-[11px] font-black uppercase tracking-[0.16em] text-[#071f14]/35">
+                          {leave.leaveType || "Leave"}
+                        </p>
+                      </div>
 
-                    <p className="break-all text-[15px] font-black">
-                      {leave.companyEmail ||
-                        leave.email ||
-                        "traineeemail@tamsi.com"}
-                    </p>
+                      <p className="break-all text-[13px] font-extrabold text-[#071f14]/70">
+                        {leave.companyEmail || leave.email || "traineeemail@tamsi.com"}
+                      </p>
 
-                    <p className="text-[16px] font-black">
-                      {leave.vacancy || leave.job || "Job"}
-                    </p>
+                      <p className="text-[13px] font-black text-[#071f14]">
+                        {leave.vacancy || leave.job || "Job"}
+                      </p>
 
-                    <p className="text-[16px] font-black">
-                      {leave.deploymentSite || leave.deployment || "-"}
-                    </p>
+                      <div>
+                        <p className="text-[12px] font-black text-[#071f14]">
+                          {formatDate(leave.startDate)}
+                        </p>
+                        <p className="mt-1 text-[11px] font-bold text-[#071f14]/50">
+                          to {formatDate(leave.endDate)}
+                        </p>
+                      </div>
 
-                    <div>
                       <StatusBadge status={leave.status} />
-                    </div>
 
-                    <div className="flex justify-start md:justify-end">
-                      <button
-                        type="button"
-                        onClick={() => openReviewModal(leave)}
-                        className="min-w-[86px] rounded-full bg-white px-4 py-1 text-[11px] font-black text-[#294f35] transition hover:bg-[#e7eee3]"
-                      >
-                        View
-                      </button>
-                    </div>
-                  </div>
-                ))
+                      <div className="flex justify-start md:justify-end">
+                        <button
+                          type="button"
+                          onClick={() => openReviewModal(leave)}
+                          title="Review leave request"
+                          aria-label="Review leave request"
+                          className="grid h-12 w-12 place-items-center rounded-full bg-[#082719] text-white shadow-[0_12px_26px_rgba(8,39,25,0.16)] transition hover:-translate-y-1 hover:bg-[#d7a84d] hover:text-[#071f14]"
+                        >
+                          <ReviewIcon />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
               ) : (
-                <div className="px-4 py-14 text-center text-[14px] font-semibold text-white/80">
+                <div className="px-4 py-14 text-center text-[14px] font-bold text-[#071f14]/55">
                   {loading ? "Loading leave requests..." : "No leave requests found."}
                 </div>
               )}
             </div>
-          </section>
+          </HrSectionCard>
         </main>
       </div>
 
       {selectedLeave ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
-          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[24px] bg-white p-6 text-[#24352c] shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-2xl font-black text-[#24352c]">
-                  Review Leave Request
-                </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
+          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[30px] bg-white text-[#071f14] shadow-[0_30px_90px_rgba(0,0,0,0.35)]" style={{ animation: "hrLeaveModalIn 0.32s ease-out both" }}>
+            <div className="relative overflow-hidden bg-[#082719] px-6 py-6 text-white">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(244,212,132,0.24),transparent_34%),linear-gradient(135deg,rgba(35,95,62,0.96),rgba(8,39,25,1))]" />
+              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
+                    Manpower HR Action
+                  </p>
+                  <h3 className="mt-2 text-3xl font-black tracking-tight text-white">
+                    Review Leave Request
+                  </h3>
+                  <p className="mt-2 text-sm font-semibold text-white/70">
+                    {getEmployeeName(selectedLeave)} · {selectedLeave.leaveType || "Leave"}
+                  </p>
+                </div>
 
-                <p className="mt-1 text-sm font-semibold text-[#6b7a6d]">
-                  {getEmployeeName(selectedLeave)} ·{" "}
-                  {selectedLeave.leaveType || "Leave"}
-                </p>
+                <button
+                  type="button"
+                  onClick={closeReviewModal}
+                  className="rounded-full bg-white px-5 py-2 text-sm font-black text-[#082719] transition hover:-translate-y-0.5 hover:bg-[#f4d484]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="grid gap-4 rounded-[24px] border border-[#d7e2da] bg-[#f8fbf9] p-5 text-sm text-[#395345] md:grid-cols-2">
+                <p><span className="font-black text-[#071f14]">Employee:</span> {getEmployeeName(selectedLeave)}</p>
+                <p><span className="font-black text-[#071f14]">Email:</span> {selectedLeave.companyEmail || selectedLeave.email || "-"}</p>
+                <p><span className="font-black text-[#071f14]">Contact:</span> {selectedLeave.contactNo || "-"}</p>
+                <p><span className="font-black text-[#071f14]">Job:</span> {selectedLeave.vacancy || selectedLeave.job || "-"}</p>
+                <p><span className="font-black text-[#071f14]">Deployment:</span> {selectedLeave.deploymentSite || selectedLeave.deployment || "-"}</p>
+                <p><span className="font-black text-[#071f14]">Leave Type:</span> {selectedLeave.leaveType || "-"}</p>
+                <p><span className="font-black text-[#071f14]">Status:</span> <StatusBadge status={selectedLeave.status} /></p>
+                <p><span className="font-black text-[#071f14]">Dates:</span> {formatDate(selectedLeave.startDate)} - {formatDate(selectedLeave.endDate)}</p>
+                <p><span className="font-black text-[#071f14]">Total Days:</span> {selectedLeave.totalDays || 0}</p>
+                <p><span className="font-black text-[#071f14]">Filed:</span> {formatDateTime(selectedLeave.createdAt)}</p>
+                <p className="md:col-span-2"><span className="font-black text-[#071f14]">Reason:</span> {selectedLeave.reason || "-"}</p>
+
+                {selectedLeave.reviewedBy ? (
+                  <p><span className="font-black text-[#071f14]">Reviewed By:</span> {selectedLeave.reviewedBy}</p>
+                ) : null}
+
+                {selectedLeave.reviewedAt ? (
+                  <p><span className="font-black text-[#071f14]">Reviewed At:</span> {formatDateTime(selectedLeave.reviewedAt)}</p>
+                ) : null}
               </div>
 
-              <button
-                type="button"
-                onClick={closeReviewModal}
-                className="rounded-full bg-[#eef3ea] px-4 py-2 text-sm font-black text-[#395345]"
-              >
-                Close
-              </button>
-            </div>
+              <label className="mt-5 block text-sm font-black text-[#071f14]">
+                HR Remarks
+                <textarea
+                  value={hrRemarks}
+                  onChange={(event) => setHrRemarks(event.target.value)}
+                  rows={4}
+                  className="mt-2 w-full rounded-[18px] border border-[#d7e2da] bg-white px-4 py-3 text-sm font-semibold text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:shadow-[0_14px_30px_rgba(8,39,25,0.10)]"
+                  placeholder="Add approval or rejection remarks..."
+                />
+              </label>
 
-            <div className="mt-5 grid gap-4 rounded-2xl bg-[#f7faf5] p-4 text-sm text-[#395345] md:grid-cols-2">
-              <p>
-                <span className="font-black">Employee:</span>{" "}
-                {getEmployeeName(selectedLeave)}
-              </p>
-
-              <p>
-                <span className="font-black">Email:</span>{" "}
-                {selectedLeave.companyEmail || "-"}
-              </p>
-
-              <p>
-                <span className="font-black">Contact:</span>{" "}
-                {selectedLeave.contactNo || "-"}
-              </p>
-
-              <p>
-                <span className="font-black">Job:</span>{" "}
-                {selectedLeave.vacancy || selectedLeave.job || "-"}
-              </p>
-
-              <p>
-                <span className="font-black">Deployment:</span>{" "}
-                {selectedLeave.deploymentSite || selectedLeave.deployment || "-"}
-              </p>
-
-              <p>
-                <span className="font-black">Leave Type:</span>{" "}
-                {selectedLeave.leaveType || "-"}
-              </p>
-
-              <p>
-                <span className="font-black">Status:</span>{" "}
-                <StatusBadge status={selectedLeave.status} />
-              </p>
-
-              <p>
-                <span className="font-black">Dates:</span>{" "}
-                {formatDate(selectedLeave.startDate)} -{" "}
-                {formatDate(selectedLeave.endDate)}
-              </p>
-
-              <p>
-                <span className="font-black">Total Days:</span>{" "}
-                {selectedLeave.totalDays || 0}
-              </p>
-
-              <p>
-                <span className="font-black">Filed:</span>{" "}
-                {formatDateTime(selectedLeave.createdAt)}
-              </p>
-
-              <p className="md:col-span-2">
-                <span className="font-black">Reason:</span>{" "}
-                {selectedLeave.reason || "-"}
-              </p>
-
-              {selectedLeave.reviewedBy ? (
-                <p>
-                  <span className="font-black">Reviewed By:</span>{" "}
-                  {selectedLeave.reviewedBy}
-                </p>
+              {message.error ? (
+                <div className="mt-4 rounded-[18px] border border-[#efc9c9] bg-[#fff2f2] px-4 py-3 text-sm font-bold text-[#912f2f]">
+                  {message.error}
+                </div>
               ) : null}
 
-              {selectedLeave.reviewedAt ? (
-                <p>
-                  <span className="font-black">Reviewed At:</span>{" "}
-                  {formatDateTime(selectedLeave.reviewedAt)}
-                </p>
-              ) : null}
-            </div>
+              <div className="mt-6 flex flex-col gap-3 md:flex-row md:justify-end">
+                <button
+                  type="button"
+                  disabled={actionLoading || normalizeStatus(selectedLeave.status) !== "PENDING"}
+                  onClick={() => reviewLeave("reject")}
+                  className="rounded-full bg-[#fff1f1] px-6 py-3 text-sm font-black text-[#9d2f2f] transition hover:-translate-y-0.5 hover:bg-[#fee2e2] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                >
+                  {actionLoading ? "Saving..." : "Reject"}
+                </button>
 
-            <label className="mt-5 block text-sm font-black text-[#395345]">
-              HR Remarks
-              <textarea
-                value={hrRemarks}
-                onChange={(event) => setHrRemarks(event.target.value)}
-                rows={4}
-                className="mt-2 w-full rounded-[14px] border border-[#cbd8c5] bg-white px-4 py-3 text-sm outline-none focus:border-[#395345]"
-                placeholder="Add approval or rejection remarks..."
-              />
-            </label>
-
-            {message.error ? (
-              <div className="mt-4 rounded-[14px] border border-[#efc9c9] bg-[#fff2f2] px-4 py-3 text-sm font-semibold text-[#912f2f]">
-                {message.error}
+                <button
+                  type="button"
+                  disabled={actionLoading || normalizeStatus(selectedLeave.status) !== "PENDING"}
+                  onClick={() => reviewLeave("approve")}
+                  className="rounded-full bg-[#174a30] px-6 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-[#082719] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                >
+                  {actionLoading ? "Saving..." : "Approve"}
+                </button>
               </div>
-            ) : null}
 
-            <div className="mt-6 flex flex-col gap-3 md:flex-row md:justify-end">
-              <button
-                type="button"
-                disabled={actionLoading || normalizeStatus(selectedLeave.status) !== "PENDING"}
-                onClick={() => reviewLeave("reject")}
-                className="rounded-full bg-[#eae1e1] px-6 py-3 text-sm font-black text-[#7c3232] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {actionLoading ? "Saving..." : "Reject"}
-              </button>
-
-              <button
-                type="button"
-                disabled={actionLoading || normalizeStatus(selectedLeave.status) !== "PENDING"}
-                onClick={() => reviewLeave("approve")}
-                className="rounded-full bg-[#395345] px-6 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {actionLoading ? "Saving..." : "Approve"}
-              </button>
+              {normalizeStatus(selectedLeave.status) !== "PENDING" ? (
+                <p className="mt-3 text-right text-xs font-semibold text-[#7a5b0b]">
+                  This leave request was already reviewed.
+                </p>
+              ) : null}
             </div>
-
-            {normalizeStatus(selectedLeave.status) !== "PENDING" ? (
-              <p className="mt-3 text-right text-xs font-semibold text-[#7a5b0b]">
-                This leave request was already reviewed.
-              </p>
-            ) : null}
           </div>
         </div>
       ) : null}
