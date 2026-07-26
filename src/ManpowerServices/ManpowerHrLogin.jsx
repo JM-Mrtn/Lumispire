@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const BACKGROUND_IMAGES = ["/TrainingAds.png", "/LTCBanner.png", "/TrainingAssessment.png"];
+const BACKGROUND_IMAGES = ["/ManpowerBanner.png"];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -39,10 +39,25 @@ export default function ManpowerHrLogin() {
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [bgIndex, setBgIndex] = useState(0);
+  const [rememberUsername, setRememberUsername] = useState(() =>
+    Boolean(localStorage.getItem("manpowerHrRememberedUsername"))
+  );
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const [sessionNotice] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("reason") === "session-expired"
+      ? "Your session expired. Please sign in again."
+      : "";
+  });
 
   const API_BASE = useMemo(() => normalizeApiBase(import.meta.env.VITE_API_URL), []);
 
   useEffect(() => {
+    const rememberedUsername = localStorage.getItem("manpowerHrRememberedUsername") || "";
+    if (rememberedUsername) {
+      setLoginForm((prev) => ({ ...prev, username: rememberedUsername }));
+    }
+
     if (getHrToken()) {
       navigate("/manpower-hr", { replace: true });
     }
@@ -77,7 +92,12 @@ export default function ManpowerHrLogin() {
       }
 
       saveHrSession(data.token, data.hrUser);
-      setLoginForm({ username: "", password: "" });
+      if (rememberUsername) {
+        localStorage.setItem("manpowerHrRememberedUsername", loginForm.username.trim());
+      } else {
+        localStorage.removeItem("manpowerHrRememberedUsername");
+      }
+      setLoginForm((prev) => ({ username: rememberUsername ? prev.username : "", password: "" }));
       navigate("/manpower-hr", { replace: true });
     } catch (error) {
       setLoginError(error?.message || "Login failed.");
@@ -87,7 +107,7 @@ export default function ManpowerHrLogin() {
   }
 
   const goToMainHome = () => navigate("/");
-  const goToManpowerHome = () => navigate("/manpower");
+  const goToManpowerHome = () => navigate("/manpower-services");
 
   const UserIcon = () => (
     <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
@@ -141,11 +161,11 @@ export default function ManpowerHrLogin() {
   );
 
   return (
-    <div className="ltc-hotel-login-page" style={fontPontano}>
+    <div className="manpower-hr-login-page" style={fontPontano}>
       <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-        .ltc-hotel-login-page {
+        .manpower-hr-login-page {
           --green-950: #071f14;
           --green-900: #0e3321;
           --green-800: #174a30;
@@ -173,7 +193,7 @@ export default function ManpowerHrLogin() {
           font-family: "Inter", Arial, sans-serif;
         }
 
-        .ltc-hotel-login-page * {
+        .manpower-hr-login-page * {
           box-sizing: border-box;
         }
 
@@ -720,6 +740,48 @@ export default function ManpowerHrLogin() {
           line-height: 1.4;
         }
 
+
+
+        .ltc-login-options {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .ltc-password-help {
+          color: var(--green-800);
+          font-size: 12px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+
+        .ltc-password-help:hover {
+          text-decoration: underline;
+        }
+        .ltc-remember-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #475467;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .ltc-remember-row input {
+          width: 16px;
+          height: 16px;
+          accent-color: var(--green-800);
+        }
+
+        .ltc-caps-warning {
+          margin: -4px 0 0;
+          color: #9d2f2f;
+          font-size: 12px;
+          font-weight: 800;
+        }
         @media (max-width: 1000px) {
           .ltc-login-main {
             grid-template-columns: 1fr;
@@ -943,6 +1005,12 @@ export default function ManpowerHrLogin() {
               </div>
             ) : null}
 
+            {sessionNotice && !loginError ? (
+              <div className="ltc-error-alert success" style={fontPoppins}>
+                {sessionNotice}
+              </div>
+            ) : null}
+
             <form className="ltc-login-form" onSubmit={handleLogin}>
               <div className="ltc-field-wrap">
                 <div className="ltc-input-shell">
@@ -988,6 +1056,9 @@ export default function ManpowerHrLogin() {
                       setLoginError("");
                     }}
                     autoComplete="current-password"
+                    onKeyDown={(event) => setCapsLockOn(event.getModifierState("CapsLock"))}
+                    onKeyUp={(event) => setCapsLockOn(event.getModifierState("CapsLock"))}
+                    onBlur={() => setCapsLockOn(false)}
                     disabled={loading}
                     className="ltc-input has-eye"
                     style={fontPoppins}
@@ -1004,6 +1075,25 @@ export default function ManpowerHrLogin() {
                     <EyeIcon open={showPw} />
                   </button>
                 </div>
+              </div>
+
+              {capsLockOn ? (
+                <p className="ltc-caps-warning" style={fontPoppins}>
+                  Caps Lock is on.
+                </p>
+              ) : null}
+
+              <div className="ltc-login-options">
+                <label className="ltc-remember-row" style={fontPoppins}>
+                  <input
+                    type="checkbox"
+                    checked={rememberUsername}
+                    onChange={(event) => setRememberUsername(event.target.checked)}
+                    disabled={loading}
+                  />
+                  <span>Remember username on this device</span>
+                </label>
+                <a href="mailto:ltc.tamsi@gmail.com?subject=HR%20Portal%20Password%20Assistance" className="ltc-password-help" style={fontPoppins}>Need password help?</a>
               </div>
 
               <button

@@ -9,27 +9,33 @@ const MANPOWER_HOME_ROUTE = "/manpower-services";
 const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const fontPontano = { fontFamily: "'Inter', sans-serif" };
+const fontPoppins = { fontFamily: "'Inter', sans-serif" };
+
+const FALLBACK_HIGHLIGHT_IMAGES = [
+  "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1200&q=82",
+  "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=82",
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=82",
+];
 
 const FALLBACK_HIGHLIGHTS = [
   {
     _id: "fallback-1",
-    title: "Manpower Highlight 1",
-    subtitle: "Reliable staffing support for business operations.",
-    imageUrl: "/manpower-highlight-1.jpg",
+    title: "Reliable Staffing Support",
+    subtitle: "Dependable workforce solutions that help businesses operate with confidence.",
+    imageUrl: FALLBACK_HIGHLIGHT_IMAGES[0],
   },
   {
     _id: "fallback-2",
-    title: "Manpower Highlight 2",
-    subtitle: "Connecting companies with skilled workers.",
-    imageUrl: "/manpower-highlight-2.jpg",
+    title: "Skilled People, Better Results",
+    subtitle: "Connecting companies with qualified workers who are ready to contribute.",
+    imageUrl: FALLBACK_HIGHLIGHT_IMAGES[1],
   },
   {
     _id: "fallback-3",
-    title: "Manpower Highlight 3",
-    subtitle: "Professional workforce assistance you can trust.",
-    imageUrl: "/manpower-highlight-3.jpg",
+    title: "Professional Workforce Assistance",
+    subtitle: "Responsive manpower support built around the needs of every client.",
+    imageUrl: FALLBACK_HIGHLIGHT_IMAGES[2],
   },
 ];
 
@@ -247,8 +253,9 @@ function HighlightCard({ highlight, index }) {
             src={imageSrc}
             alt={highlight?.title || `Manpower highlight ${index + 1}`}
             onError={(event) => {
+              event.currentTarget.onerror = null;
               event.currentTarget.src =
-                "https://placehold.co/900x600/235F3E/FFFFFF?text=Manpower+Highlight";
+                FALLBACK_HIGHLIGHT_IMAGES[index % FALLBACK_HIGHLIGHT_IMAGES.length] || HERO_IMAGE;
             }}
           />
         ) : (
@@ -362,7 +369,7 @@ export default function ManpowerServicesPage() {
   return (
     <div className="ltc-about ltc-manpower-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
 
         .ltc-about {
           --green-950: #071f14;
@@ -1257,6 +1264,255 @@ export default function ManpowerServicesPage() {
             padding: 26px;
           }
         }
+
+
+        /* ===== Unified LTC Manpower public-page design ===== */
+        .ltc-manpower-page {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --green-600: #2f754c;
+          --footer-green: #082719;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --dark: #101828;
+          --muted: #667085;
+          --glass: rgba(255,255,255,.86);
+          --shadow-sm: 0 10px 28px rgba(8,39,25,.08);
+          --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+          --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+          --ease: cubic-bezier(.22,1,.36,1);
+          min-height: 100vh;
+          color: var(--dark);
+          background:
+            radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+            radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+            linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+          font-family: "Inter", Arial, sans-serif !important;
+          line-height: 1.65;
+          letter-spacing: -.01em;
+        }
+
+        .ltc-manpower-page *, .ltc-manpower-page *::before, .ltc-manpower-page *::after { box-sizing: border-box; }
+        .ltc-manpower-page h1,
+        .ltc-manpower-page h2,
+        .ltc-manpower-page h3,
+        .ltc-manpower-page h4,
+        .ltc-manpower-page h5 { font-family: "Montserrat", "Inter", Arial, sans-serif !important; }
+
+        .ltc-container { width: min(1180px,92%) !important; margin-inline: auto !important; }
+
+        .ltc-header {
+          position: sticky !important;
+          top: 0;
+          z-index: 50;
+          width: 100%;
+          margin: 0 !important;
+          background: rgba(8,39,25,.97) !important;
+          border-bottom: 1px solid rgba(255,255,255,.10) !important;
+          box-shadow: 0 10px 34px rgba(7,31,20,.18) !important;
+          backdrop-filter: blur(16px);
+        }
+
+        .ltc-header .ltc-container,
+        .ltc-footer .ltc-container {
+          width: 100% !important;
+          max-width: none !important;
+          margin: 0 !important;
+          padding-inline: 32px !important;
+        }
+
+        .ltc-nav {
+          min-height: 76px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          gap: 20px !important;
+        }
+
+        .ltc-logo {
+          display: flex !important;
+          align-items: center !important;
+          gap: 13px !important;
+          color: #fff !important;
+          text-decoration: none !important;
+        }
+        .ltc-logo-icon {
+          width: 42px !important;
+          height: 42px !important;
+          flex: 0 0 42px;
+          border-radius: 50% !important;
+          object-fit: cover !important;
+          background: linear-gradient(145deg,#fff,#e3f4ea) !important;
+          box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.14) !important;
+        }
+        .ltc-logo h1 {
+          margin: 0 !important;
+          color: #fff !important;
+          font-size: 18px !important;
+          font-weight: 900 !important;
+          line-height: 1 !important;
+          letter-spacing: -.04em !important;
+          text-transform: uppercase !important;
+        }
+        .ltc-logo p { margin: 4px 0 0 !important; color: rgba(255,255,255,.70) !important; font-size: 11px !important; }
+
+        .ltc-desktop-nav { display: flex !important; align-items: center !important; gap: 8px !important; margin-left: auto; }
+        .ltc-nav-link {
+          color: rgba(255,255,255,.78) !important;
+          background: transparent !important;
+          padding: 10px 14px !important;
+          border: 0 !important;
+          border-radius: 999px !important;
+          font-family: "Inter", Arial, sans-serif !important;
+          font-size: 12px !important;
+          font-weight: 800 !important;
+          line-height: 1.2 !important;
+          letter-spacing: .08em !important;
+          text-transform: uppercase !important;
+          text-decoration: none !important;
+          white-space: nowrap;
+          transition: .25s var(--ease) !important;
+        }
+        .ltc-nav-link:hover,
+        .ltc-nav-link.active { color: #fff !important; background: rgba(255,255,255,.13) !important; transform: translateY(-1px); }
+        .ltc-sign-in {
+          color: #102418 !important;
+          background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+          box-shadow: 0 16px 35px rgba(215,168,77,.22) !important;
+        }
+
+        .ltc-menu-button {
+          display: none;
+          width: 44px;
+          height: 44px;
+          place-items: center;
+          padding: 0 !important;
+          border: 1px solid rgba(255,255,255,.12) !important;
+          border-radius: 14px !important;
+          color: #fff !important;
+          background: rgba(255,255,255,.10) !important;
+        }
+        .ltc-menu-button svg { width: 24px; height: 24px; }
+
+        .ltc-sidebar-overlay { position: fixed !important; inset: 0 !important; z-index: 80 !important; background: rgba(0,0,0,.48) !important; backdrop-filter: blur(5px); }
+        .ltc-sidebar-panel { position: absolute !important; top: 0 !important; right: 0 !important; width: min(320px,88vw) !important; height: 100% !important; padding: 22px !important; background: #fff !important; box-shadow: -24px 0 70px rgba(0,0,0,.28) !important; }
+        .ltc-sidebar-top { display: flex !important; align-items: center !important; justify-content: space-between !important; margin-bottom: 16px !important; padding-bottom: 16px !important; border-bottom: 1px solid rgba(16,24,40,.10) !important; }
+        .ltc-sidebar-title { margin: 0 !important; color: var(--green-950) !important; font-size: 12px !important; font-weight: 900 !important; letter-spacing: .14em !important; }
+        .ltc-sidebar-close { width: 40px !important; height: 40px !important; border: 0 !important; border-radius: 13px !important; color: #101828 !important; background: #f2f4f7 !important; }
+        .ltc-sidebar-close svg { width: 20px; height: 20px; }
+        .ltc-sidebar-link { display: block !important; width: 100% !important; margin: 0 0 8px !important; padding: 13px 14px !important; border: 0 !important; border-radius: 14px !important; color: #101828 !important; background: transparent !important; font-family: "Inter", Arial, sans-serif !important; font-size: 13px !important; font-weight: 800 !important; text-align: left !important; text-transform: uppercase; }
+        .ltc-sidebar-link:hover,
+        .ltc-sidebar-link.active { color: #fff !important; background: var(--green-800) !important; }
+
+        .ltc-about-hero {
+          position: relative !important;
+          min-height: 540px !important;
+          display: flex !important;
+          align-items: center !important;
+          overflow: hidden !important;
+          color: #fff !important;
+          background-color: #082719 !important;
+        }
+        .ltc-about-hero-content { width: min(960px,100%) !important; padding-block: 88px 100px !important; }
+        .ltc-about-hero h2 { max-width: 940px; margin: 12px 0 0 !important; color: #fff !important; font-size: clamp(42px,6vw,76px) !important; font-weight: 900 !important; line-height: .98 !important; letter-spacing: -.065em !important; text-shadow: 0 8px 26px rgba(0,0,0,.22); }
+        .ltc-about-hero p { max-width: 700px; margin-top: 24px !important; color: rgba(255,255,255,.80) !important; font-size: 18px !important; line-height: 1.8 !important; }
+        .ltc-eyebrow { color: var(--gold-soft) !important; font-family: "Inter", Arial, sans-serif !important; font-size: 12px !important; font-weight: 900 !important; letter-spacing: .18em !important; text-transform: uppercase !important; }
+
+        .ltc-btn,
+        .ltc-card-link {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          min-height: 50px !important;
+          padding: 0 24px !important;
+          border-radius: 999px !important;
+          font-family: "Inter", Arial, sans-serif !important;
+          font-size: 13px !important;
+          font-weight: 900 !important;
+          text-decoration: none !important;
+          transition: transform .28s var(--ease), box-shadow .28s var(--ease) !important;
+        }
+        .ltc-btn-primary { border: 0 !important; color: #102418 !important; background: linear-gradient(135deg,#f4d484,#d7a84d) !important; box-shadow: 0 16px 35px rgba(215,168,77,.26) !important; }
+        .ltc-btn-outline { color: var(--green-950) !important; background: #fff !important; border: 1px solid rgba(35,95,62,.16) !important; box-shadow: var(--shadow-sm) !important; }
+        .ltc-btn:hover { transform: translateY(-3px) !important; }
+
+        .ltc-section { padding-block: 84px !important; }
+        .ltc-section-title { margin-bottom: 36px !important; text-align: center !important; }
+        .ltc-section-title span { color: var(--green-700) !important; font-size: 12px !important; font-weight: 900 !important; letter-spacing: .18em !important; text-transform: uppercase !important; }
+        .ltc-section-title h2,
+        .ltc-section-title h3 { margin: 10px 0 0 !important; color: var(--green-950) !important; font-size: clamp(32px,4vw,50px) !important; line-height: 1.08 !important; letter-spacing: -.055em !important; font-weight: 900 !important; }
+        .ltc-section-title p { max-width: 720px; margin: 15px auto 0 !important; color: var(--muted) !important; }
+
+        .ltc-card {
+          border: 1px solid rgba(35,95,62,.12) !important;
+          border-radius: 26px !important;
+          background: rgba(255,255,255,.94) !important;
+          box-shadow: var(--shadow-md) !important;
+          transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease) !important;
+        }
+        .ltc-card:hover { transform: translateY(-6px) !important; border-color: rgba(215,168,77,.42) !important; box-shadow: var(--shadow-lg) !important; }
+
+        .ltc-highlight-card {
+          border: 1px solid rgba(255,255,255,.18) !important;
+          border-radius: 26px !important;
+          background: rgba(255,255,255,.12) !important;
+          box-shadow: 0 26px 70px rgba(0,0,0,.22) !important;
+        }
+        .ltc-highlight-card:hover {
+          transform: translateY(-6px) !important;
+          border-color: rgba(244,212,132,.45) !important;
+          box-shadow: 0 34px 90px rgba(0,0,0,.30) !important;
+        }
+        .ltc-highlight-content h4 { color: #fff !important; }
+        .ltc-highlight-content > p:not(.ltc-highlight-label) { color: rgba(255,255,255,.78) !important; }
+
+        .ltc-cta-box {
+          border: 1px solid rgba(255,255,255,.16) !important;
+          border-radius: 32px !important;
+          color: #fff !important;
+          background:
+            linear-gradient(135deg,rgba(14,51,33,.96),rgba(47,117,76,.88)),
+            url("https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1500&q=82") center / cover no-repeat !important;
+          box-shadow: var(--shadow-lg) !important;
+        }
+        .ltc-cta-box h3 { color: #fff !important; }
+        .ltc-cta-box p { color: rgba(255,255,255,.78) !important; }
+
+        .ltc-footer { width: 100% !important; margin: 0 !important; padding: 30px 0 12px !important; color: #fff !important; background: var(--footer-green) !important; }
+        .ltc-footer-grid { width: 100%; display: grid !important; grid-template-columns: 1.5fr .9fr 1fr 1.4fr .8fr !important; gap: 22px !important; padding-bottom: 24px !important; border-bottom: 1px solid rgba(255,255,255,.10) !important; }
+        .ltc-footer h4 { margin: 0 0 10px !important; color: #fff !important; font-size: 18px !important; font-weight: 900 !important; }
+        .ltc-footer h5 { margin: 0 0 10px !important; color: var(--gold-soft) !important; font-size: 12px !important; font-weight: 900 !important; letter-spacing: .14em !important; text-transform: uppercase !important; }
+        .ltc-footer p,
+        .ltc-footer a,
+        .ltc-footer-link { display: block; margin: 5px 0 !important; color: rgba(255,255,255,.68) !important; font-size: 13px !important; line-height: 1.55 !important; text-decoration: none !important; }
+        .ltc-footer a:hover,
+        .ltc-footer-link:hover { color: #fff !important; text-decoration: underline !important; }
+        .ltc-copyright { width: 100%; display: flex !important; justify-content: space-between !important; gap: 12px !important; padding-top: 14px !important; color: rgba(255,255,255,.52) !important; font-size: 12px !important; line-height: 1.4 !important; }
+
+        @media (max-width: 1000px) {
+          .ltc-header .ltc-container,
+          .ltc-footer .ltc-container { padding-inline: 22px !important; }
+          .ltc-desktop-nav,
+          .ltc-header-signin { display: none !important; }
+          .ltc-menu-button { display: grid !important; }
+          .ltc-footer-grid { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 700px) {
+          .ltc-header .ltc-container,
+          .ltc-footer .ltc-container { padding-inline: 16px !important; }
+          .ltc-logo h1 { font-size: 14px !important; }
+          .ltc-logo p { display: none !important; }
+          .ltc-about-hero h2 { font-size: clamp(38px,12vw,54px) !important; letter-spacing: -.045em !important; }
+          .ltc-about-hero p { font-size: 16px !important; }
+          .ltc-section { padding-block: 62px !important; }
+          .ltc-hero-actions,
+          .ltc-btn { width: 100%; }
+          .ltc-footer-grid { grid-template-columns: 1fr !important; gap: 18px !important; }
+          .ltc-copyright { flex-direction: column !important; }
+        }
+
       `}</style>
 
       <header className="ltc-header">
@@ -1264,8 +1520,8 @@ export default function ManpowerServicesPage() {
           <Link to={MANPOWER_HOME_ROUTE} className="ltc-logo">
             <img src={LOGO_IMAGE} alt="Manpower Logo" className="ltc-logo-icon" />
             <div>
-              <h1 style={fontMontserrat}>LTC Manpower Services</h1>
-              <p style={fontPontano}>Reliable staffing and workforce solutions.</p>
+              <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
+              <p style={fontPontano}>Professional staffing and workforce solutions.</p>
             </div>
           </Link>
 
@@ -1500,10 +1756,13 @@ export default function ManpowerServicesPage() {
       <footer className="ltc-footer">
         <div className="ltc-container ltc-footer-grid">
           <div>
-            <h4 style={fontMontserrat}>LTC Manpower Services</h4>
-            <p style={fontPontano}>
-              Quality staffing solutions and workforce support for companies and applicants.
-            </p>
+            <Link to={MANPOWER_HOME_ROUTE} className="ltc-logo">
+              <img src={LOGO_IMAGE} alt="Manpower Logo" className="ltc-logo-icon" />
+              <div>
+                <h4 style={fontMontserrat}>LTC Manpower</h4>
+                <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
+              </div>
+            </Link>
           </div>
 
           <div>
@@ -1517,16 +1776,23 @@ export default function ManpowerServicesPage() {
           </div>
 
           <div>
-            <h5 style={fontMontserrat}>Contact</h5>
-            <p style={fontPontano}>ltc.tamis@gmail.com</p>
-            <p style={fontPontano}>lorengladisu@ltcmultiservices.com</p>
-            <p style={fontPontano}>09959808051 / 09516281271</p>
+            <h5 style={fontMontserrat}>Contact Information</h5>
+            <p style={fontPontano}><a href="mailto:ltc.tamsi@gmail.com">ltc.tamsi@gmail.com</a></p>
+            <p style={fontPontano}><a href="mailto:lorengladius@ltcmultiservices.com">lorengladius@ltcmultiservices.com</a></p>
+            <p style={fontPontano}><a href="tel:+639516281271">+639516281271</a></p>
+            <p style={fontPontano}><a href="tel:+639959808051">+639959808051</a></p>
           </div>
 
           <div>
             <h5 style={fontMontserrat}>Address</h5>
-            <p style={fontPontano}>2/F 544 Curie Street, Palanan, Makati City.</p>
-            <p style={fontPontano}>Light Tower Center, 1730 Dian Street, Palanan, Makati City.</p>
+            <p style={fontPontano}>2/F 5441 Currie Street,</p>
+            <p style={fontPontano}>Palanan, Makati City</p>
+          </div>
+
+          <div>
+            <h5 style={fontMontserrat}>Follow Us</h5>
+            <p style={fontPontano}><a href={"https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"} target="_blank" rel="noopener noreferrer">Facebook</a></p>
+            <p style={fontPontano}><a href="mailto:lorengladius@ltcmultiservices.com">Email</a></p>
           </div>
         </div>
 

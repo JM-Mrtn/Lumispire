@@ -2,11 +2,16 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ActionButton,
+  AdminModal,
   AdminShell,
+  ErrorState,
   FieldLabel,
+  InlineNotice,
   StatusPill,
+  Toast,
   compactInputClassName,
   inputClassName,
+  recordAdminActivity,
 } from "./ManpowerAdminShell";
 
 function normalizeApiBase(raw) {
@@ -38,6 +43,8 @@ function getAdminToken() {
 function clearAdminSession() {
   localStorage.removeItem("manpowerAdminToken");
   localStorage.removeItem("manpowerAdminUser");
+  localStorage.removeItem("manpowerAdmin");
+  localStorage.removeItem("manpowerToken");
 }
 
 function adminHeaders(extra = {}) {
@@ -172,7 +179,15 @@ export default function ManpowerAdminJobs() {
   const [jobs, setJobs] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [notice, setNotice] = useState(null);
+  const [formError, setFormError] = useState("");
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [editingJob, setEditingJob] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -199,10 +214,14 @@ export default function ManpowerAdminJobs() {
   }
 
   useEffect(() => {
-    return () => {
-      revokePreviewUrl();
-    };
+    return () => { revokePreviewUrl(); };
   }, []);
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = window.setTimeout(() => setNotice(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   useEffect(() => {
     if (!token) {
@@ -214,9 +233,12 @@ export default function ManpowerAdminJobs() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, search, status, navigate]);
 
+  useEffect(() => { setCurrentPage(1); }, [search, status, rowsPerPage]);
+
   async function loadJobs() {
     try {
       setLoading(true);
+      setLoadError("");
 
       const query = new URLSearchParams();
 
@@ -244,7 +266,7 @@ export default function ManpowerAdminJobs() {
 
       setJobs(Array.isArray(data?.jobs) ? data.jobs : []);
     } catch (error) {
-      alert(error?.message || "Failed to load job vacancies.");
+      setLoadError(error?.message || "Failed to load job vacancies.");
     } finally {
       setLoading(false);
     }
@@ -257,6 +279,7 @@ export default function ManpowerAdminJobs() {
     setImageFile(null);
     setPreviewUrl("");
     setImageInputKey((current) => current + 1);
+    setFormError("");
   }
 
   function startEdit(job) {
@@ -293,13 +316,22 @@ export default function ManpowerAdminJobs() {
     const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
     if (!allowed.includes(String(file.type || "").toLowerCase())) {
-      alert("Please upload JPG, JPEG, PNG, or WEBP only.");
+      setFormError("Please upload JPG, JPEG, PNG, or WEBP only.");
       setImageFile(null);
       setPreviewUrl(editingJob ? resolveImageSource(editingJob.imageUrl) : "");
       setImageInputKey((current) => current + 1);
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      setFormError("The job image must not exceed 5 MB.");
+      setImageFile(null);
+      setPreviewUrl(editingJob ? resolveImageSource(editingJob.imageUrl) : "");
+      setImageInputKey((current) => current + 1);
+      return;
+    }
+
+    setFormError("");
     const objectUrl = URL.createObjectURL(file);
     previewObjectUrlRef.current = objectUrl;
 
@@ -309,122 +341,64 @@ export default function ManpowerAdminJobs() {
 
   async function submitJob(event) {
     event.preventDefault();
+    setFormError("");
+    const title = form.title.trim();
+    const description = form.description.trim();
+    const qualifications = form.qualifications.trim();
+    if (title.length < 3) { setFormError("Job title must contain at least 3 characters."); return; }
+    if (description.length < 20) { setFormError("Add a job description with at least 20 characters."); return; }
+    if (!qualifications) { setFormError("Add at least one qualification."); return; }
+    if (!editingJob && !imageFile) { setFormError("Upload a job image before publishing the vacancy."); return; }
 
     try {
       setSaving(true);
-
       const payload = new FormData();
-      payload.append("title", form.title.trim());
-      payload.append("description", form.description.trim());
-      payload.append("qualifications", form.qualifications.trim());
+      payload.append("title", title);
+      payload.append("description", description);
+      payload.append("qualifications", qualifications);
       payload.append("active", String(Boolean(form.active)));
-
-      if (imageFile) {
-        payload.append("image", imageFile);
-      }
-
-      const url = editingJob
-        ? `${API_BASE}/manpower/admin/jobs/${editingJob._id}`
-        : `${API_BASE}/manpower/admin/jobs`;
-
-      const res = await fetch(url, {
-        method: editingJob ? "PUT" : "POST",
-        headers: adminHeaders(),
-        body: payload,
-      });
-
+      if (imageFile) payload.append("image", imageFile);
+      const url = editingJob ? `${API_BASE}/manpower/admin/jobs/${editingJob._id}` : `${API_BASE}/manpower/admin/jobs`;
+      const res = await fetch(url, { method: editingJob ? "PUT" : "POST", headers: adminHeaders(), body: payload });
       const data = await res.json().catch(() => ({}));
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to save job vacancy.");
-      }
-
-      alert(data?.message || "Job vacancy saved successfully.");
+      if (res.status === 401 || res.status === 403) { logout(); return; }
+      if (!res.ok) throw new Error(data?.message || "Failed to save job vacancy.");
+      recordAdminActivity(editingJob ? "Updated job vacancy" : "Created job vacancy", title);
+      setNotice({ tone: "success", title: editingJob ? "Job updated" : "Job created", message: data?.message || `${title} was saved successfully.` });
       resetForm();
       await loadJobs();
     } catch (error) {
-      alert(error?.message || "Failed to save job vacancy.");
-    } finally {
-      setSaving(false);
-    }
+      setFormError(error?.message || "Failed to save job vacancy.");
+    } finally { setSaving(false); }
   }
 
-  async function updateJobStatus(job, active) {
-    const confirmed = window.confirm(
-      active ? `Activate ${job.title}?` : `Deactivate ${job.title}?`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const res = await fetch(
-        `${API_BASE}/manpower/admin/jobs/${job._id}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            ...adminHeaders(),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ active }),
-        }
-      );
-
-      const data = await res.json().catch(() => ({}));
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to update job status.");
-      }
-
-      await loadJobs();
-    } catch (error) {
-      alert(error?.message || "Failed to update job status.");
-    }
+  function updateJobStatus(job, active) {
+    setConfirmAction({ type: "status", job, active, title: active ? "Publish this job vacancy?" : "Close this job vacancy?", description: active ? `${job.title} will become visible to applicants.` : `${job.title} will be hidden from the public vacancy list.` });
   }
 
-  async function deleteJob(job) {
-    const confirmed = window.confirm(
-      `Delete ${job.title}?\n\nIf this job already has applicants, it will be deactivated instead.`
-    );
+  function deleteJob(job) {
+    setConfirmAction({ type: "delete", job, title: "Delete this job vacancy?", description: `Delete ${job.title}? If the server detects existing applicants, it may deactivate the vacancy instead.` });
+  }
 
-    if (!confirmed) return;
-
+  async function runConfirmedAction() {
+    if (!confirmAction) return;
+    const { type, job, active } = confirmAction;
     try {
-      const res = await fetch(`${API_BASE}/manpower/admin/jobs/${job._id}`, {
-        method: "DELETE",
-        headers: adminHeaders(),
-      });
-
+      setActionLoading(`${type}-${job._id}`);
+      const res = type === "status"
+        ? await fetch(`${API_BASE}/manpower/admin/jobs/${job._id}/status`, { method: "PATCH", headers: adminHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ active }) })
+        : await fetch(`${API_BASE}/manpower/admin/jobs/${job._id}`, { method: "DELETE", headers: adminHeaders() });
       const data = await res.json().catch(() => ({}));
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to delete job vacancy.");
-      }
-
-      alert(data?.message || "Job vacancy deleted successfully.");
-
-      if (editingJob?._id === job._id) {
-        resetForm();
-      }
-
+      if (res.status === 401 || res.status === 403) { logout(); return; }
+      if (!res.ok) throw new Error(data?.message || (type === "status" ? "Failed to update job status." : "Failed to delete job vacancy."));
+      recordAdminActivity(type === "delete" ? "Deleted job vacancy" : active ? "Published job vacancy" : "Closed job vacancy", job.title || "Untitled job");
+      setNotice({ tone: "success", title: type === "delete" ? "Job removed" : active ? "Job published" : "Job closed", message: data?.message || `${job.title} was updated successfully.` });
+      if (type === "delete" && editingJob?._id === job._id) resetForm();
+      setConfirmAction(null);
       await loadJobs();
     } catch (error) {
-      alert(error?.message || "Failed to delete job vacancy.");
-    }
+      setNotice({ tone: "danger", title: "Action failed", message: error?.message || "The vacancy could not be updated." });
+    } finally { setActionLoading(""); }
   }
 
   const summary = useMemo(() => {
@@ -435,6 +409,10 @@ export default function ManpowerAdminJobs() {
     };
   }, [jobs]);
 
+  const totalPages = Math.max(Math.ceil(jobs.length / rowsPerPage), 1);
+  const safePage = Math.min(currentPage, totalPages);
+  const visibleJobs = useMemo(() => jobs.slice((safePage - 1) * rowsPerPage, safePage * rowsPerPage), [jobs, safePage, rowsPerPage]);
+
   return (
     <AdminShell
       current="jobs"
@@ -442,6 +420,7 @@ export default function ManpowerAdminJobs() {
       subtitle="Add, edit, deactivate, or delete manpower job offers shown to applicants."
       onLogout={logout}
     >
+      <Toast notice={notice} onClose={() => setNotice(null)} />
       <div className="animate-[fadeUp_0.6s_ease-out] space-y-8">
         <style>{`
           @keyframes fadeUp {
@@ -513,6 +492,7 @@ export default function ManpowerAdminJobs() {
           }
         >
           <form onSubmit={submitJob} className="grid gap-6">
+            {formError ? <InlineNotice tone="danger">{formError}</InlineNotice> : null}
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
               <div className="rounded-[28px] border border-[#dce8dc] bg-[#f8fbf6] p-5 shadow-[0_12px_30px_rgba(8,39,25,0.06)]">
                 <div className="grid gap-4">
@@ -528,8 +508,10 @@ export default function ManpowerAdminJobs() {
                       }
                       className={`mt-2 ${inputClassName}`}
                       placeholder="Example: Security Guard"
+                      maxLength={100}
                       required
                     />
+                  <p className="-mt-2 text-right text-xs font-semibold text-[#7a897c]">{form.title.length}/100</p>
                   </label>
 
                   <label className="block">
@@ -544,7 +526,9 @@ export default function ManpowerAdminJobs() {
                       }
                       className={`mt-2 min-h-[130px] ${inputClassName}`}
                       placeholder="Describe the job responsibilities and work details."
+                      maxLength={1200}
                     />
+                  <p className="-mt-2 text-right text-xs font-semibold text-[#7a897c]">{form.description.length}/1200</p>
                   </label>
 
                   <label className="block">
@@ -558,8 +542,10 @@ export default function ManpowerAdminJobs() {
                         }))
                       }
                       className={`mt-2 min-h-[110px] ${inputClassName}`}
+                      maxLength={1200}
                       placeholder={`One qualification per line\nExample:\nAt least high school graduate\nWith related experience\nWilling to work shifting schedules`}
                     />
+                  <p className="-mt-2 text-right text-xs font-semibold text-[#7a897c]">{form.qualifications.length}/1200</p>
                   </label>
 
                   <label className="flex items-center gap-3 rounded-2xl border border-[#d7decf] bg-white px-4 py-3 text-sm font-bold text-[#395345] shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md">
@@ -607,7 +593,7 @@ export default function ManpowerAdminJobs() {
                 />
 
                 <p className="mt-3 text-xs font-semibold leading-5 text-[#6b7a6d]">
-                  Accepted files: JPG, JPEG, PNG, WEBP.
+                  Accepted files: JPG, JPEG, PNG, WEBP. Maximum file size: 5 MB. Recommended ratio: 16:9.
                 </p>
               </div>
             </div>
@@ -619,8 +605,11 @@ export default function ManpowerAdminJobs() {
                 </ActionButton>
               ) : null}
 
-              <ActionButton type="submit" disabled={saving}>
-                {saving ? "Saving..." : editingJob ? "Update Job" : "Add Job"}
+              <ActionButton type="button" variant="ghost" onClick={() => setPreviewOpen(true)} disabled={!form.title && !form.description && !previewUrl}>
+                Preview
+              </ActionButton>
+              <ActionButton type="submit" loading={saving}>
+                {editingJob ? "Update Job" : form.active ? "Publish Job" : "Save as Inactive"}
               </ActionButton>
             </div>
           </form>
@@ -651,7 +640,7 @@ export default function ManpowerAdminJobs() {
             </div>
           }
         >
-          <div className="overflow-hidden rounded-[30px] border border-[#dce8dc] bg-[#f7faf6] shadow-[0_18px_45px_rgba(8,39,25,0.08)]">
+          {loadError ? <ErrorState message={loadError} onRetry={loadJobs} /> : <div className="overflow-hidden rounded-[30px] border border-[#dce8dc] bg-[#f7faf6] shadow-[0_18px_45px_rgba(8,39,25,0.08)]">
             <div className="relative overflow-hidden bg-[#082719] px-6 py-6 text-white">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(244,212,132,0.24),transparent_34%),linear-gradient(135deg,rgba(35,95,62,0.96),rgba(8,39,25,1))]" />
               <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-[#f4d484]/20 blur-3xl" />
@@ -687,7 +676,7 @@ export default function ManpowerAdminJobs() {
                 </div>
 
                 <div className="divide-y divide-[#edf2eb]">
-                  {jobs.map((job) => (
+                  {visibleJobs.map((job) => (
                     <article
                       key={job._id}
                       className="group grid gap-4 px-5 py-5 transition duration-300 hover:bg-[#f8fbf6] lg:grid-cols-[0.85fr_2fr_0.75fr_1fr_1.35fr] lg:items-center"
@@ -723,6 +712,10 @@ export default function ManpowerAdminJobs() {
                           {job.description || "No description added."}
                         </p>
 
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span className="inline-flex rounded-full bg-[#eef4ef] px-3 py-1 text-xs font-black text-[#395345]">{Number(job.applicantCount ?? job.applicationsCount ?? job.totalApplicants ?? 0)} applicant(s)</span>
+                          {job.updatedAt ? <span className="inline-flex rounded-full bg-[#f5f0e2] px-3 py-1 text-xs font-black text-[#7f6225]">Updated {formatDateTime(job.updatedAt)}</span> : null}
+                        </div>
                         {Array.isArray(job.qualifications) && job.qualifications.length ? (
                           <p className="mt-2 inline-flex rounded-full bg-[#eef4ef] px-3 py-1 text-xs font-black text-[#395345]">
                             {job.qualifications.length} qualification{job.qualifications.length > 1 ? "s" : ""}
@@ -762,16 +755,16 @@ export default function ManpowerAdminJobs() {
                           </ActionButton>
 
                           {job.active ? (
-                            <ActionButton size="sm" variant="warning" onClick={() => updateJobStatus(job, false)}>
-                              Deactivate
+                            <ActionButton size="sm" variant="warning" onClick={() => updateJobStatus(job, false)} loading={actionLoading === `status-${job._id}`}>
+                              Close
                             </ActionButton>
                           ) : (
-                            <ActionButton size="sm" variant="success" onClick={() => updateJobStatus(job, true)}>
-                              Activate
+                            <ActionButton size="sm" variant="success" onClick={() => updateJobStatus(job, true)} loading={actionLoading === `status-${job._id}`}>
+                              Publish
                             </ActionButton>
                           )}
 
-                          <ActionButton size="sm" variant="danger" onClick={() => deleteJob(job)}>
+                          <ActionButton size="sm" variant="danger" onClick={() => deleteJob(job)} loading={actionLoading === `delete-${job._id}`}>
                             Delete
                           </ActionButton>
                         </div>
@@ -795,9 +788,21 @@ export default function ManpowerAdminJobs() {
                 </div>
               </div>
             </div>
-          </div>
+          </div>}
+          {!loadError && jobs.length ? <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#dce8dc] bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><label className="flex items-center gap-2 text-sm font-semibold text-[#5f6f61]">Rows <select value={rowsPerPage} onChange={(event) => setRowsPerPage(Number(event.target.value))} className={compactInputClassName}><option value={5}>5</option><option value={10}>10</option><option value={20}>20</option></select></label><div className="flex items-center gap-2"><ActionButton size="sm" variant="ghost" disabled={safePage <= 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>Previous</ActionButton><span className="text-sm font-bold text-[#5f6f61]">Page {safePage} of {totalPages}</span><ActionButton size="sm" variant="ghost" disabled={safePage >= totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>Next</ActionButton></div></div> : null}
         </DashboardSectionCard>
       </div>
+
+      <AdminModal open={previewOpen} title="Public job preview" description="This preview uses the content currently entered in the form." onClose={() => setPreviewOpen(false)} maxWidth="max-w-2xl" footer={<ActionButton variant="ghost" onClick={() => setPreviewOpen(false)}>Close preview</ActionButton>}>
+        <article className="overflow-hidden rounded-[24px] border border-[#dce8dc] bg-white shadow-sm">
+          {previewUrl ? <img src={previewUrl} alt="Job preview" className="h-64 w-full object-cover" /> : <div className="flex h-52 items-center justify-center bg-[#eef3ea] text-sm font-bold text-[#6b7a6d]">No image selected</div>}
+          <div className="p-6"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-2xl font-black text-[#071f14]">{form.title || "Untitled vacancy"}</h3><StatusPill tone={form.active ? "success" : "warning"}>{form.active ? "Published" : "Inactive"}</StatusPill></div><p className="mt-4 whitespace-pre-line text-sm leading-7 text-[#5f6f61]">{form.description || "No job description entered."}</p><div className="mt-5"><FieldLabel>Qualifications</FieldLabel><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#5f6f61]">{form.qualifications.split(/\n+/).map((item) => item.trim()).filter(Boolean).map((item) => <li key={item}>{item}</li>)}</ul></div></div>
+        </article>
+      </AdminModal>
+
+      <AdminModal open={Boolean(confirmAction)} title={confirmAction?.title || "Confirm action"} description={confirmAction?.description} onClose={() => !actionLoading && setConfirmAction(null)} footer={<><ActionButton variant="ghost" onClick={() => setConfirmAction(null)} disabled={Boolean(actionLoading)}>Cancel</ActionButton><ActionButton variant={confirmAction?.type === "delete" ? "danger" : confirmAction?.active ? "success" : "warning"} onClick={runConfirmedAction} loading={Boolean(actionLoading)}>{confirmAction?.type === "delete" ? "Delete job" : confirmAction?.active ? "Publish job" : "Close job"}</ActionButton></>}>
+        <InlineNotice tone={confirmAction?.type === "delete" ? "warning" : "info"}>{confirmAction?.type === "delete" ? "Deletion may be permanent. Existing applicants can cause the server to keep the record and close it instead." : "The public vacancy list will update after this action completes."}</InlineNotice>
+      </AdminModal>
     </AdminShell>
   );
 }

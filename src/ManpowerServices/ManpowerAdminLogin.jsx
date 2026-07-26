@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { recordAdminActivity } from "./ManpowerAdminShell";
 
-const BACKGROUND_IMAGES = ["/TrainingAds.png", "/LTCBanner.png", "/TrainingAssessment.png"];
+const BACKGROUND_IMAGES = ["/ManpowerBanner.png"];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -77,6 +78,7 @@ export default function ManpowerAdminLogin() {
       }
 
       saveAdminSession(data.token, data.adminUser);
+      recordAdminActivity("Signed in to the Admin portal", data?.adminUser?.email || data?.adminUser?.username || "Administrator");
       setLoginForm({ username: "", password: "" });
       navigate("/manpower-admin", { replace: true });
     } catch (error) {
@@ -87,7 +89,7 @@ export default function ManpowerAdminLogin() {
   }
 
   const goToMainHome = () => navigate("/");
-  const goToManpowerHome = () => navigate("/manpower");
+  const goToManpowerHome = () => navigate("/manpower-services");
 
   const UserIcon = () => (
     <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">

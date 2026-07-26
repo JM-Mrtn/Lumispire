@@ -100,6 +100,7 @@ export default function ManpowerEmployeeProfile() {
     success: "",
     error: "",
   });
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const fullName = useMemo(() => {
     return [
@@ -174,6 +175,11 @@ export default function ManpowerEmployeeProfile() {
 
       const nextEmployee = data?.employee || null;
 
+      if (nextEmployee?.mustChangePassword) {
+        saveEmployeeSession(token, nextEmployee);
+        navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
+        return;
+      }
       setEmployee(nextEmployee);
       saveEmployeeSession(token, nextEmployee);
     } catch (err) {
@@ -243,6 +249,21 @@ export default function ManpowerEmployeeProfile() {
       });
       return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoState({
+        loading: false,
+        success: "",
+        error: "Profile photo must not exceed 5 MB.",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    revokePhotoUrl();
+    photoObjectUrlRef.current = previewUrl;
+    setPhotoUrl(previewUrl);
 
     const formData = new FormData();
     formData.append("profilePhoto", file);
@@ -1595,7 +1616,8 @@ export default function ManpowerEmployeeProfile() {
 
             {!loading && error && (
               <div className="ltc-alert ltc-alert-error" style={fontPoppins}>
-                {error}
+                <p>{error}</p>
+                <button type="button" onClick={() => { loadProfile(); loadProfilePhoto(); }} className="ltc-action-button light" style={fontMontserrat}>Try Again</button>
               </div>
             )}
 
@@ -1629,6 +1651,9 @@ export default function ManpowerEmployeeProfile() {
                         className="hidden"
                       />
                     </label>
+                    <p style={{ margin: "10px 0 0", color: "#667085", fontSize: 12, textAlign: "center" }}>
+                      JPG, PNG, or WEBP. Maximum file size: 5 MB.
+                    </p>
 
                     {photoState.success && (
                       <p className="ltc-alert ltc-alert-success" style={{ ...fontPontano, marginTop: "14px", width: "100%" }}>
@@ -1663,7 +1688,17 @@ export default function ManpowerEmployeeProfile() {
                       <ProfileInfoBlock value={middleName} label="Middle Name" />
                       <ProfileInfoBlock value={displayEmail} label="Email Address" />
                       <ProfileInfoBlock value={contactNumber} label="Contact Number" />
-                      <ProfileInfoBlock value={statusLabel} label="Status" />
+                      <ProfileInfoBlock value={statusLabel} label="Account Status" />
+                      <ProfileInfoBlock value={employee?.employeeId || employee?.employeeNumber || "Managed by HR"} label="Employee ID" />
+                      <ProfileInfoBlock value={employee?.position || employee?.vacancyTitle || "Managed by HR"} label="Position" />
+                      <ProfileInfoBlock value={employee?.deploymentSite || employee?.site || "Managed by HR"} label="Deployment Site" />
+                      <ProfileInfoBlock value={employee?.region || "Managed by HR"} label="Region" />
+                      <ProfileInfoBlock value={employee?.employmentStatus || statusLabel} label="Employment Status" />
+                      <ProfileInfoBlock value={employee?.startDate || employee?.dateHired ? new Date(employee.startDate || employee.dateHired).toLocaleDateString("en-PH") : "Managed by HR"} label="Start Date" />
+                    </div>
+
+                    <div style={{ marginTop: 18, padding: 16, borderRadius: 16, background: "#f7faf8", border: "1px solid #dce7df", color: "#52695a", fontSize: 13 }}>
+                      Employment fields are managed by HR. Contact HR to request corrections to your legal name, contact details, position, deployment site, or employment status.
                     </div>
 
                     <div className="ltc-action-row">
@@ -1678,7 +1713,7 @@ export default function ManpowerEmployeeProfile() {
 
                       <button
                         type="button"
-                        onClick={logout}
+                        onClick={() => setShowLogoutConfirm(true)}
                         className="ltc-action-button"
                         style={fontMontserrat}
                       >
@@ -1717,20 +1752,19 @@ export default function ManpowerEmployeeProfile() {
           </FooterColumn>
 
           <FooterColumn title="Contact Information">
-            <p style={fontPontano}>ltc.tamis@gmail.com</p>
-            <p style={fontPontano}>lorengladisu@ltcmultiservices.com</p>
-            <p style={fontPontano}>09959808051 / 09516281271</p>
+            <p style={fontPontano}>ltc.tamsi@gmail.com</p>
+            <p style={fontPontano}>lorengladius@ltcmultiservices.com</p>
+            <p style={fontPontano}>+639516281271 / +639959808051</p>
           </FooterColumn>
 
           <FooterColumn title="Address">
-            <p style={fontPontano}>2/F 544 Curie Street,</p>
+            <p style={fontPontano}>2/F 5441 Currie Street,</p>
             <p style={fontPontano}>Palanan, Makati City</p>
           </FooterColumn>
 
           <FooterColumn title="Follow Us">
-            <p style={fontPontano}>Facebook</p>
-            <p style={fontPontano}>Email</p>
-            <p style={fontPontano}>LinkedIn</p>
+            <a href="https://www.facebook.com/profile.php?id=61571746334920" target="_blank" rel="noreferrer" style={fontPontano}>Facebook Page</a>
+            <a href="mailto:lorengladius@ltcmultiservices.com" style={fontPontano}>Email LTC Manpower</a>
           </FooterColumn>
         </div>
 
@@ -1739,6 +1773,19 @@ export default function ManpowerEmployeeProfile() {
           <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
         </div>
       </footer>
+
+      {showLogoutConfirm ? (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "grid", placeItems: "center", padding: 20, background: "rgba(3,24,15,.72)", backdropFilter: "blur(6px)" }}>
+          <div role="dialog" aria-modal="true" style={{ width: "min(440px,100%)", borderRadius: 24, background: "white", padding: 26, boxShadow: "0 30px 80px rgba(0,0,0,.28)" }}>
+            <h2 style={{ margin: 0, color: "#0e3321", fontFamily: "'Montserrat', sans-serif" }}>Sign out of the Employee Portal?</h2>
+            <p style={{ color: "#667085" }}>You will need to enter your employee email and password again.</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => setShowLogoutConfirm(false)} className="ltc-action-button light">Stay Signed In</button>
+              <button type="button" onClick={logout} className="ltc-action-button">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

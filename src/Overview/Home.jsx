@@ -4,6 +4,7 @@ import ChatbotWidget from "./ChatbotWidget";
 import { getPublicLtcContent, pickPublicLtcImage } from "./ltcContentApi";
 
 const CONTACT_ROUTE = "/contact";
+const RESORT_AND_VENUE_ROUTE = "/resort-venue";
 const PROMO_SESSION_KEY = "ltc_home_promo_seen_session";
 
 const LOGO_SRC = "/LTCLogo.jpg";
@@ -43,7 +44,7 @@ const Home = () => {
       description:
         "Discover hospitality-focused services designed to deliver excellent guest experiences.",
       buttonText: "View Hotel & Resort",
-      route: "/resort-venue",
+      route: RESORT_AND_VENUE_ROUTE,
     },
     {
       image: "/TrainingAds.png",
@@ -130,7 +131,9 @@ const Home = () => {
     if (!isPromoOpen || promoItems.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentPromoIndex((prev) => (prev + 1) % promoItems.length);
+      setCurrentPromoIndex(
+        (previousIndex) => (previousIndex + 1) % promoItems.length
+      );
     }, 5000);
 
     return () => clearInterval(interval);
@@ -163,25 +166,25 @@ const Home = () => {
 
   const ServiceIconHotel = () => (
     <svg viewBox="0 0 24 24" className="ltc-svg-icon">
-      <path d="M4 20V9.5L12 4l8 5.5V20"></path>
-      <path d="M9 20v-6h6v6"></path>
-      <path d="M7 11h.01M17 11h.01"></path>
+      <path d="M4 20V9.5L12 4l8 5.5V20" />
+      <path d="M9 20v-6h6v6" />
+      <path d="M7 11h.01M17 11h.01" />
     </svg>
   );
 
   const ServiceIconTraining = () => (
     <svg viewBox="0 0 24 24" className="ltc-svg-icon">
-      <path d="M5 19.5V5.8A2.3 2.3 0 0 1 7.3 3.5H19v15H7.3A2.3 2.3 0 0 0 5 20.5Z"></path>
-      <path d="M8 7h7"></path>
-      <path d="M8 10h5"></path>
+      <path d="M5 19.5V5.8A2.3 2.3 0 0 1 7.3 3.5H19v15H7.3A2.3 2.3 0 0 0 5 20.5Z" />
+      <path d="M8 7h7" />
+      <path d="M8 10h5" />
     </svg>
   );
 
   const ServiceIconManpower = () => (
     <svg viewBox="0 0 24 24" className="ltc-svg-icon">
-      <path d="M16 19v-1.5a4 4 0 0 0-8 0V19"></path>
-      <path d="M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path>
-      <path d="M19 19v-1a3 3 0 0 0-2.3-2.9"></path>
+      <path d="M16 19v-1.5a4 4 0 0 0-8 0V19" />
+      <path d="M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+      <path d="M19 19v-1a3 3 0 0 0-2.3-2.9" />
     </svg>
   );
 
@@ -190,7 +193,7 @@ const Home = () => {
       title: "Hotel & Resort",
       description:
         "Professional hospitality services tailored to meet the highest industry standards. Our team ensures exceptional customer experiences.",
-      route: "/hotel-resort",
+      route: RESORT_AND_VENUE_ROUTE,
       Icon: ServiceIconHotel,
     },
     {
@@ -691,6 +694,22 @@ const Home = () => {
           align-items: center;
         }
 
+        .ltc-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          min-height: 32px;
+          margin-bottom: 18px;
+          padding: 6px 14px;
+          border-radius: 999px;
+          color: var(--gold-soft);
+          background: rgba(255,255,255,.1);
+          border: 1px solid rgba(255,255,255,.14);
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: .13em;
+          text-transform: uppercase;
+        }
+
         .ltc-band h3 {
           margin: 0;
           font-size: clamp(32px,4vw,50px);
@@ -1160,6 +1179,7 @@ const Home = () => {
         <div className="ltc-promo-overlay">
           <div className="ltc-promo-card">
             <button
+              type="button"
               onClick={closePromo}
               className="ltc-promo-close"
               aria-label="Close promotional popup"
@@ -1171,7 +1191,11 @@ const Home = () => {
                 stroke="currentColor"
                 strokeWidth={2.2}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
@@ -1179,8 +1203,8 @@ const Home = () => {
               <img
                 src={promoItems[currentPromoIndex].image}
                 alt={promoItems[currentPromoIndex].title}
-                onError={(e) => {
-                  e.currentTarget.src =
+                onError={(event) => {
+                  event.currentTarget.src =
                     "https://placehold.co/1600x900/355E3B/FFFFFF?text=Promotional+Ad";
                 }}
               />
@@ -1188,8 +1212,13 @@ const Home = () => {
               <div className="ltc-promo-shade" />
 
               <div className="ltc-promo-content">
-                <h2 style={fontMontserrat}>{promoItems[currentPromoIndex].title}</h2>
-                <p style={fontPontano}>{promoItems[currentPromoIndex].description}</p>
+                <h2 style={fontMontserrat}>
+                  {promoItems[currentPromoIndex].title}
+                </h2>
+
+                <p style={fontPontano}>
+                  {promoItems[currentPromoIndex].description}
+                </p>
 
                 <button
                   type="button"
@@ -1205,6 +1234,7 @@ const Home = () => {
                 {promoItems.map((item, index) => (
                   <button
                     key={item.title}
+                    type="button"
                     onClick={() => setCurrentPromoIndex(index)}
                     aria-label={`Go to ${item.title}`}
                     className={`ltc-promo-dot ${
@@ -1226,9 +1256,14 @@ const Home = () => {
             <div>
               <h1 style={fontMontserrat}>
                 LTC Group of Companies
-                <span style={{ fontSize: "10px", verticalAlign: "super" }}>®</span>
+                <span style={{ fontSize: "10px", verticalAlign: "super" }}>
+                  ®
+                </span>
               </h1>
-              <p style={fontPontano}>Providing quality services and training solutions.</p>
+
+              <p style={fontPontano}>
+                Providing quality services and training solutions.
+              </p>
             </div>
           </button>
 
@@ -1239,9 +1274,9 @@ const Home = () => {
               return (
                 <button
                   key={link.label}
+                  type="button"
                   onClick={() => goTo(link.to)}
                   className={`ltc-nav-link ${isActive ? "active" : ""}`}
-                  type="button"
                 >
                   {link.label}
                 </button>
@@ -1250,10 +1285,10 @@ const Home = () => {
           </nav>
 
           <button
+            type="button"
             onClick={() => setIsSidebarOpen(true)}
             className="ltc-menu-button"
             aria-label="Open menu"
-            type="button"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1262,7 +1297,11 @@ const Home = () => {
               stroke="currentColor"
               strokeWidth={2}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
         </div>
@@ -1282,10 +1321,10 @@ const Home = () => {
               </p>
 
               <button
+                type="button"
                 onClick={() => setIsSidebarOpen(false)}
                 className="ltc-sidebar-close"
                 aria-label="Close menu"
-                type="button"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -1294,7 +1333,11 @@ const Home = () => {
                   stroke="currentColor"
                   strokeWidth={2}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -1306,9 +1349,11 @@ const Home = () => {
                 return (
                   <button
                     key={link.label}
-                    onClick={() => goTo(link.to)}
-                    className={`ltc-sidebar-link ${isActive ? "active" : ""}`}
                     type="button"
+                    onClick={() => goTo(link.to)}
+                    className={`ltc-sidebar-link ${
+                      isActive ? "active" : ""
+                    }`}
                   >
                     {link.label}
                   </button>
@@ -1362,29 +1407,35 @@ const Home = () => {
           <div className="ltc-container">
             <div className="ltc-section-title">
               <span>Our Services</span>
-              <h3 style={fontMontserrat}>Professional solutions for every business need</h3>
+
+              <h3 style={fontMontserrat}>
+                Professional solutions for every business need
+              </h3>
+
               <p style={fontPontano}>
-                Our comprehensive range of services is designed to meet your business needs and
-                exceed expectations.
+                Our comprehensive range of services is designed to meet your
+                business needs and exceed expectations.
               </p>
             </div>
 
             <div className="ltc-grid-3">
-              {serviceCards.map(({ title, description, route, Icon }) => (
-                <button
-                  key={title}
-                  type="button"
-                  onClick={() => navigate(route)}
-                  className="ltc-card"
-                >
-                  <div className="ltc-icon">
-                    <Icon />
-                  </div>
+              {serviceCards.map(
+                ({ title, description, route, Icon }) => (
+                  <button
+                    key={title}
+                    type="button"
+                    onClick={() => goTo(route)}
+                    className="ltc-card"
+                  >
+                    <div className="ltc-icon">
+                      <Icon />
+                    </div>
 
-                  <h4 style={fontMontserrat}>{title}</h4>
-                  <p style={fontPontano}>{description}</p>
-                </button>
-              ))}
+                    <h4 style={fontMontserrat}>{title}</h4>
+                    <p style={fontPontano}>{description}</p>
+                  </button>
+                )
+              )}
             </div>
           </div>
         </section>
@@ -1392,15 +1443,19 @@ const Home = () => {
         <section className="ltc-section ltc-band">
           <div className="ltc-container ltc-band-content">
             <div>
-              <div className="ltc-eyebrow">Let’s Meet Our Loyalty</div>
+              <div className="ltc-eyebrow">
+                Let&apos;s Meet Our Loyalty
+              </div>
 
               <h3 style={fontMontserrat}>
-                Built on integrity, service excellence, and dependable partnership.
+                Built on integrity, service excellence, and dependable
+                partnership.
               </h3>
 
               <p style={fontPontano}>
-                We support companies with reliable service teams, practical training, and
-                professional assessment solutions aligned with real business operations.
+                We support companies with reliable service teams, practical
+                training, and professional assessment solutions aligned with
+                real business operations.
               </p>
             </div>
 
@@ -1432,30 +1487,37 @@ const Home = () => {
           <div className="ltc-container">
             <div className="ltc-section-title">
               <span>Work With Us</span>
-              <h3 style={fontMontserrat}>Values that guide every service</h3>
+
+              <h3 style={fontMontserrat}>
+                Values that guide every service
+              </h3>
+
               <p style={fontPontano}>
-                Our work is shaped by principles that help us build trust with clients, partners,
-                and professionals.
+                Our work is shaped by principles that help us build trust with
+                clients, partners, and professionals.
               </p>
             </div>
 
             <div className="ltc-grid-3">
               {values.map((value, index) => (
-                <article key={value.title} className={getValueCardClass(index, values.length)}>
+                <article
+                  key={value.title}
+                  className={getValueCardClass(index, values.length)}
+                >
                   <div className="ltc-icon">
                     {index === 0 ? (
                       <svg viewBox="0 0 24 24" className="ltc-svg-icon">
-                        <path d="M12 3 4.5 6v5.8c0 4.7 3.2 7.4 7.5 9.2 4.3-1.8 7.5-4.5 7.5-9.2V6L12 3Z"></path>
-                        <path d="m8.8 12.2 2.1 2.1 4.6-4.8"></path>
+                        <path d="M12 3 4.5 6v5.8c0 4.7 3.2 7.4 7.5 9.2 4.3-1.8 7.5-4.5 7.5-9.2V6L12 3Z" />
+                        <path d="m8.8 12.2 2.1 2.1 4.6-4.8" />
                       </svg>
                     ) : index === 1 ? (
                       <svg viewBox="0 0 24 24" className="ltc-svg-icon">
-                        <path d="M12 21s7-4.6 7-11a7 7 0 1 0-14 0c0 6.4 7 11 7 11Z"></path>
-                        <path d="M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path>
+                        <path d="M12 21s7-4.6 7-11a7 7 0 1 0-14 0c0 6.4 7 11 7 11Z" />
+                        <path d="M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                       </svg>
                     ) : (
                       <svg viewBox="0 0 24 24" className="ltc-svg-icon">
-                        <path d="M13 3 4 14h7l-1 7 10-12h-7V3Z"></path>
+                        <path d="M13 3 4 14h7l-1 7 10-12h-7V3Z" />
                       </svg>
                     )}
                   </div>
@@ -1472,10 +1534,13 @@ const Home = () => {
           <div className="ltc-container">
             <div className="ltc-cta-box">
               <div>
-                <h3 style={fontMontserrat}>Ready to experience our services?</h3>
+                <h3 style={fontMontserrat}>
+                  Ready to experience our services?
+                </h3>
+
                 <p style={fontPontano}>
-                  Join our growing list of satisfied clients and experience our exceptional services
-                  firsthand.
+                  Join our growing list of satisfied clients and experience
+                  our exceptional services firsthand.
                 </p>
               </div>
 
@@ -1496,41 +1561,76 @@ const Home = () => {
         <div className="ltc-container ltc-footer-grid">
           <div>
             <h4 style={fontMontserrat}>LTC Group of Companies</h4>
+
             <p style={fontPontano}>
-              Professional training, assessment, manpower, hotel and restaurant service solutions.
+              Professional training, assessment, manpower, hotel and restaurant
+              service solutions.
             </p>
           </div>
 
           <div>
             <h5 style={fontMontserrat}>Menu</h5>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, ...fontPontano }}>
+
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+                ...fontPontano,
+              }}
+            >
               <FooterLink onClick={() => goTo("/")}>Home</FooterLink>
-              <FooterLink onClick={() => goTo("/about-us")}>About Us</FooterLink>
-              <FooterLink onClick={() => goTo("/team")}>Team</FooterLink>
-              <FooterLink onClick={() => goTo(CONTACT_ROUTE)}>Contact Us</FooterLink>
+
+              <FooterLink onClick={() => goTo("/about-us")}>
+                About Us
+              </FooterLink>
+
+              <FooterLink onClick={() => goTo("/team")}>
+                Team
+              </FooterLink>
+
+              <FooterLink onClick={() => goTo(CONTACT_ROUTE)}>
+                Contact Us
+              </FooterLink>
             </ul>
           </div>
 
           <div>
             <h5 style={fontMontserrat}>Contact</h5>
-            <p style={fontPontano}>lornacastigador@ltcmultiservices.com</p>
-            <p style={fontPontano}>lorengladius@ltcmultiservices.com</p>
+
+            <p style={fontPontano}>
+              lornacastigador@ltcmultiservices.com
+            </p>
+
+            <p style={fontPontano}>
+              lorengladius@ltcmultiservices.com
+            </p>
+
             <p style={fontPontano}>Admin@ltcmultiservices.com</p>
           </div>
 
           <div>
             <h5 style={fontMontserrat}>Address</h5>
+
             <p style={fontPontano}>
-              5411 Light Tower Center &amp; Realty Development, Inc., Building II, Curie Street,
-              Palanan, Makati City.
+              5411 Light Tower Center &amp; Realty Development, Inc., Building
+              II, Curie Street, Palanan, Makati City.
             </p>
-            <p style={fontPontano}>Light Tower Center, 1730 Dian Street, Palanan, Makati City.</p>
+
+            <p style={fontPontano}>
+              Light Tower Center, 1730 Dian Street, Palanan, Makati City.
+            </p>
           </div>
         </div>
 
         <div className="ltc-container ltc-copyright">
-          <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
-          <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
+          <span style={fontPontano}>
+            © 2026 LTC GROUP OF COMPANIES. All rights reserved.
+          </span>
+
+          <span style={fontPontano}>
+            Developed by CRMS Tech Alliance
+          </span>
         </div>
       </footer>
 

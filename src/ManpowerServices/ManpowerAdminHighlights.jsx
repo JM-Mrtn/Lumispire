@@ -2,10 +2,15 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ActionButton,
+  AdminModal,
   AdminShell,
+  ErrorState,
   FieldLabel,
+  InlineNotice,
   StatusPill,
+  Toast,
   inputClassName,
+  recordAdminActivity,
 } from "./ManpowerAdminShell";
 import { API_BASE, manpowerUrl } from "./manpowerApi";
 
@@ -26,6 +31,8 @@ function getAdminToken() {
 function clearAdminSession() {
   localStorage.removeItem("manpowerAdminToken");
   localStorage.removeItem("manpowerAdminUser");
+  localStorage.removeItem("manpowerAdmin");
+  localStorage.removeItem("manpowerToken");
 }
 
 function adminHeaders(extra = {}) {
@@ -153,6 +160,12 @@ export default function ManpowerAdminHighlights() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [notice, setNotice] = useState(null);
+  const [formError, setFormError] = useState("");
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState("");
 
   const [form, setForm] = useState(emptyForm);
   const [editingHighlight, setEditingHighlight] = useState(null);
@@ -188,10 +201,14 @@ export default function ManpowerAdminHighlights() {
   }
 
   useEffect(() => {
-    return () => {
-      revokePreviewUrl();
-    };
+    return () => { revokePreviewUrl(); };
   }, []);
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = window.setTimeout(() => setNotice(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   useEffect(() => {
     if (!token) {
@@ -206,6 +223,7 @@ export default function ManpowerAdminHighlights() {
   async function loadHighlights() {
     try {
       setLoading(true);
+      setLoadError("");
 
       const query = new URLSearchParams();
 
@@ -233,7 +251,7 @@ export default function ManpowerAdminHighlights() {
 
       setHighlights(Array.isArray(data?.highlights) ? data.highlights : []);
     } catch (error) {
-      alert(error?.message || "Failed to load highlights.");
+      setLoadError(error?.message || "Failed to load highlights.");
     } finally {
       setLoading(false);
     }
@@ -279,15 +297,22 @@ export default function ManpowerAdminHighlights() {
     const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
     if (!allowed.includes(String(file.type || "").toLowerCase())) {
-      alert("Please upload JPG, JPEG, PNG, or WEBP only.");
+      setFormError("Please upload JPG, JPEG, PNG, or WEBP only.");
       setImageFile(null);
-      setPreviewUrl(
-        editingHighlight ? resolveImageSource(editingHighlight.imageUrl) : ""
-      );
+      setPreviewUrl(editingHighlight ? resolveImageSource(editingHighlight.imageUrl) : "");
       setImageInputKey((current) => current + 1);
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      setFormError("The highlight image must not exceed 5 MB.");
+      setImageFile(null);
+      setPreviewUrl(editingHighlight ? resolveImageSource(editingHighlight.imageUrl) : "");
+      setImageInputKey((current) => current + 1);
+      return;
+    }
+
+    setFormError("");
     const objectUrl = URL.createObjectURL(file);
     previewObjectUrlRef.current = objectUrl;
 
@@ -297,128 +322,83 @@ export default function ManpowerAdminHighlights() {
 
   async function submitHighlight(event) {
     event.preventDefault();
-
-    if (!editingHighlight && !imageFile) {
-      alert("Please upload a highlight image.");
-      return;
-    }
+    setFormError("");
+    const title = form.title.trim();
+    const subtitle = form.subtitle.trim();
+    if (title.length < 3) { setFormError("Highlight title must contain at least 3 characters."); return; }
+    if (!editingHighlight && !imageFile) { setFormError("Please upload a highlight image."); return; }
+    const activeCountExcludingCurrent = highlights.filter((item) => item.active !== false && item._id !== editingHighlight?._id).length;
+    if (form.active && activeCountExcludingCurrent >= 3) { setFormError("Only 3 homepage highlights can be active at the same time. Deactivate another highlight first."); return; }
 
     try {
       setSaving(true);
-
       const payload = new FormData();
-      payload.append("title", form.title.trim());
-      payload.append("subtitle", form.subtitle.trim());
+      payload.append("title", title);
+      payload.append("subtitle", subtitle);
       payload.append("sortOrder", String(Number(form.sortOrder || 0)));
       payload.append("active", String(Boolean(form.active)));
-
-      if (imageFile) {
-        payload.append("image", imageFile);
-      }
-
-      const url = editingHighlight
-        ? `${HIGHLIGHTS_API}/${editingHighlight._id}`
-        : HIGHLIGHTS_API;
-
-      const res = await fetch(url, {
-        method: editingHighlight ? "PUT" : "POST",
-        headers: adminHeaders(),
-        body: payload,
-      });
-
+      if (imageFile) payload.append("image", imageFile);
+      const url = editingHighlight ? `${HIGHLIGHTS_API}/${editingHighlight._id}` : HIGHLIGHTS_API;
+      const res = await fetch(url, { method: editingHighlight ? "PUT" : "POST", headers: adminHeaders(), body: payload });
       const data = await res.json().catch(() => ({}));
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to save highlight.");
-      }
-
-      alert(data?.message || "Highlight saved successfully.");
+      if (res.status === 401 || res.status === 403) { logout(); return; }
+      if (!res.ok) throw new Error(data?.message || "Failed to save highlight.");
+      recordAdminActivity(editingHighlight ? "Updated homepage highlight" : "Created homepage highlight", title);
+      setNotice({ tone: "success", title: editingHighlight ? "Highlight updated" : "Highlight created", message: data?.message || `${title} was saved successfully.` });
       resetForm();
       await loadHighlights();
-    } catch (error) {
-      alert(error?.message || "Failed to save highlight.");
-    } finally {
-      setSaving(false);
-    }
+    } catch (error) { setFormError(error?.message || "Failed to save highlight."); }
+    finally { setSaving(false); }
   }
 
-  async function updateHighlightStatus(highlight, active) {
-    const confirmed = window.confirm(
-      active
-        ? `Activate "${highlight.title || "this highlight"}"?`
-        : `Deactivate "${highlight.title || "this highlight"}"?`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const res = await fetch(`${HIGHLIGHTS_API}/${highlight._id}/status`, {
-        method: "PATCH",
-        headers: {
-          ...adminHeaders(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ active }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to update highlight status.");
-      }
-
-      await loadHighlights();
-    } catch (error) {
-      alert(error?.message || "Failed to update highlight status.");
+  function updateHighlightStatus(highlight, active) {
+    if (active && highlights.filter((item) => item.active !== false).length >= 3) {
+      setNotice({ tone: "warning", title: "Active highlight limit reached", message: "Only 3 homepage highlights can be active. Deactivate one before activating another." });
+      return;
     }
+    setConfirmAction({ type: "status", highlight, active, title: active ? "Activate homepage highlight?" : "Deactivate homepage highlight?", description: active ? `${highlight.title || "This highlight"} will appear on the public homepage.` : `${highlight.title || "This highlight"} will be hidden from the public homepage.` });
   }
 
-  async function deleteHighlight(highlight) {
-    const confirmed = window.confirm(
-      `Delete "${
-        highlight.title || "this highlight"
-      }"?\n\nThis will also remove the uploaded image from storage.`
-    );
+  function deleteHighlight(highlight) {
+    setConfirmAction({ type: "delete", highlight, title: "Delete this highlight?", description: `${highlight.title || "This highlight"} and its uploaded image may be permanently removed.` });
+  }
 
-    if (!confirmed) return;
-
+  async function runConfirmedAction() {
+    if (!confirmAction) return;
+    const { type, highlight, active } = confirmAction;
     try {
-      const res = await fetch(`${HIGHLIGHTS_API}/${highlight._id}`, {
-        method: "DELETE",
-        headers: adminHeaders(),
-      });
-
+      setActionLoading(`${type}-${highlight._id}`);
+      const res = type === "status"
+        ? await fetch(`${HIGHLIGHTS_API}/${highlight._id}/status`, { method: "PATCH", headers: adminHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ active }) })
+        : await fetch(`${HIGHLIGHTS_API}/${highlight._id}`, { method: "DELETE", headers: adminHeaders() });
       const data = await res.json().catch(() => ({}));
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to delete highlight.");
-      }
-
-      alert(data?.message || "Highlight deleted successfully.");
-
-      if (editingHighlight?._id === highlight._id) {
-        resetForm();
-      }
-
+      if (res.status === 401 || res.status === 403) { logout(); return; }
+      if (!res.ok) throw new Error(data?.message || (type === "status" ? "Failed to update highlight status." : "Failed to delete highlight."));
+      recordAdminActivity(type === "delete" ? "Deleted homepage highlight" : active ? "Activated homepage highlight" : "Deactivated homepage highlight", highlight.title || "Untitled highlight");
+      setNotice({ tone: "success", title: type === "delete" ? "Highlight deleted" : active ? "Highlight activated" : "Highlight deactivated", message: data?.message || "Homepage highlight updated successfully." });
+      if (type === "delete" && editingHighlight?._id === highlight._id) resetForm();
+      setConfirmAction(null);
       await loadHighlights();
-    } catch (error) {
-      alert(error?.message || "Failed to delete highlight.");
-    }
+    } catch (error) { setNotice({ tone: "danger", title: "Action failed", message: error?.message || "The highlight could not be updated." }); }
+    finally { setActionLoading(""); }
+  }
+
+  async function changeSortOrder(highlight, delta) {
+    try {
+      setActionLoading(`order-${highlight._id}`);
+      const payload = new FormData();
+      payload.append("title", highlight.title || "");
+      payload.append("subtitle", highlight.subtitle || "");
+      payload.append("sortOrder", String(Number(highlight.sortOrder || 0) + delta));
+      payload.append("active", String(highlight.active !== false));
+      const res = await fetch(`${HIGHLIGHTS_API}/${highlight._id}`, { method: "PUT", headers: adminHeaders(), body: payload });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 403) { logout(); return; }
+      if (!res.ok) throw new Error(data?.message || "Failed to change highlight order.");
+      recordAdminActivity(delta < 0 ? "Moved homepage highlight up" : "Moved homepage highlight down", highlight.title || "Untitled highlight");
+      await loadHighlights();
+    } catch (error) { setNotice({ tone: "danger", title: "Order update failed", message: error?.message || "Could not change the highlight order." }); }
+    finally { setActionLoading(""); }
   }
 
   const summary = useMemo(() => {
@@ -433,9 +413,10 @@ export default function ManpowerAdminHighlights() {
     <AdminShell
       current="highlights"
       title="Manpower Highlight Management"
-    
+      subtitle="Create, preview, order, activate, and remove homepage highlight cards."
       onLogout={logout}
     >
+      <Toast notice={notice} onClose={() => setNotice(null)} />
       <style>{`
         @keyframes manpowerFadeUp {
           from { opacity: 0; transform: translateY(18px); }
@@ -540,12 +521,17 @@ export default function ManpowerAdminHighlights() {
           />
         </section>
 
+        <InlineNotice tone={summary.active >= 3 ? "warning" : "info"} title={`${summary.active} of 3 active homepage highlights`}>
+          The public homepage is designed for a maximum of three active highlight cards. Use the order controls below to change their sequence.
+        </InlineNotice>
+
         <DashboardSectionCard
           eyebrow="Content Editor"
           title={editingHighlight ? "Edit Highlight" : "Add New Highlight"}
         
         >
           <form onSubmit={submitHighlight} className="grid gap-5">
+            {formError ? <InlineNotice tone="danger">{formError}</InlineNotice> : null}
             <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="rounded-[24px] border border-[#dce8dc] bg-[#f7faf6] p-5 shadow-[0_12px_30px_rgba(8,39,25,0.06)]">
                 <div className="grid gap-4">
@@ -558,7 +544,10 @@ export default function ManpowerAdminHighlights() {
                       }
                       className={`mt-2 manpower-highlight-control ${inputClassName}`}
                       placeholder="Example: Successful deployment"
+                      maxLength={80}
+                      required
                     />
+                  <p className="-mt-2 text-right text-xs font-semibold text-[#7a897c]">{form.title.length}/80</p>
                   </label>
 
                   <label className="block">
@@ -570,7 +559,9 @@ export default function ManpowerAdminHighlights() {
                       }
                       className={`mt-2 min-h-[104px] manpower-highlight-control ${inputClassName}`}
                       placeholder="Optional short description"
+                      maxLength={180}
                     />
+                  <p className="-mt-2 text-right text-xs font-semibold text-[#7a897c]">{form.subtitle.length}/180</p>
                   </label>
 
                   <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
@@ -633,8 +624,7 @@ export default function ManpowerAdminHighlights() {
                 />
 
                 <p className="mt-2 text-xs font-semibold leading-5 text-[#6b7a6d]">
-                  Accepted files: JPG, JPEG, PNG, WEBP. Recommended ratio:
-                  landscape image.
+                  Accepted files: JPG, JPEG, PNG, WEBP. Maximum file size: 5 MB. Recommended ratio: landscape image.
                 </p>
               </div>
             </div>
@@ -646,12 +636,9 @@ export default function ManpowerAdminHighlights() {
                 </ActionButton>
               ) : null}
 
-              <ActionButton type="submit" disabled={saving}>
-                {saving
-                  ? "Saving..."
-                  : editingHighlight
-                  ? "Update Highlight"
-                  : "Add Highlight"}
+              <ActionButton type="button" variant="ghost" onClick={() => setPreviewOpen(true)} disabled={!form.title && !previewUrl}>Preview</ActionButton>
+              <ActionButton type="submit" loading={saving}>
+                {editingHighlight ? "Update Highlight" : form.active ? "Publish Highlight" : "Save Inactive"}
               </ActionButton>
             </div>
           </form>
@@ -682,7 +669,7 @@ export default function ManpowerAdminHighlights() {
             </div>
           }
         >
-          <div className="overflow-hidden rounded-[24px] border border-[#dce8dc] bg-[#f7faf6] shadow-[0_12px_30px_rgba(8,39,25,0.07)]">
+          {loadError ? <ErrorState message={loadError} onRetry={loadHighlights} /> : <div className="overflow-hidden rounded-[24px] border border-[#dce8dc] bg-[#f7faf6] shadow-[0_12px_30px_rgba(8,39,25,0.07)]">
             <div className="hidden grid-cols-[160px_1.5fr_100px_120px_150px_210px] gap-4 border-b border-[#e7eee6] bg-[#eef5ee] px-5 py-4 text-xs font-black uppercase tracking-[0.18em] text-[#5d7163] xl:grid">
               <span>Preview</span>
               <span>Details</span>
@@ -758,6 +745,8 @@ export default function ManpowerAdminHighlights() {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
+                    <ActionButton size="sm" variant="ghost" onClick={() => changeSortOrder(highlight, -1)} loading={actionLoading === `order-${highlight._id}`}>↑</ActionButton>
+                    <ActionButton size="sm" variant="ghost" onClick={() => changeSortOrder(highlight, 1)} loading={actionLoading === `order-${highlight._id}`}>↓</ActionButton>
                     <ActionButton
                       size="sm"
                       variant="soft"
@@ -770,16 +759,14 @@ export default function ManpowerAdminHighlights() {
                       <ActionButton
                         size="sm"
                         variant="warning"
-                        onClick={() => updateHighlightStatus(highlight, false)}
-                      >
+                        onClick={() => updateHighlightStatus(highlight, false)} loading={actionLoading === `status-${highlight._id}`}>
                         Deactivate
                       </ActionButton>
                     ) : (
                       <ActionButton
                         size="sm"
                         variant="success"
-                        onClick={() => updateHighlightStatus(highlight, true)}
-                      >
+                        onClick={() => updateHighlightStatus(highlight, true)} loading={actionLoading === `status-${highlight._id}`}>
                         Activate
                       </ActionButton>
                     )}
@@ -787,8 +774,7 @@ export default function ManpowerAdminHighlights() {
                     <ActionButton
                       size="sm"
                       variant="danger"
-                      onClick={() => deleteHighlight(highlight)}
-                    >
+                      onClick={() => deleteHighlight(highlight)} loading={actionLoading === `delete-${highlight._id}`}>
                       Delete
                     </ActionButton>
                   </div>
@@ -809,9 +795,20 @@ export default function ManpowerAdminHighlights() {
                 </div>
               ) : null}
             </div>
-          </div>
+          </div>}
         </DashboardSectionCard>
       </div>
+
+      <AdminModal open={previewOpen} title="Homepage highlight preview" description="This is an approximation of the public homepage card." onClose={() => setPreviewOpen(false)} maxWidth="max-w-xl" footer={<ActionButton variant="ghost" onClick={() => setPreviewOpen(false)}>Close preview</ActionButton>}>
+        <article className="overflow-hidden rounded-[26px] bg-[#082719] text-white shadow-xl">
+          {previewUrl ? <img src={previewUrl} alt="Highlight preview" className="h-72 w-full object-cover" /> : <div className="flex h-64 items-center justify-center bg-[#234f38] text-sm font-bold text-white/65">No image selected</div>}
+          <div className="p-6"><p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4d484]">Homepage Highlight</p><h3 className="mt-2 text-2xl font-black">{form.title || "Untitled highlight"}</h3><p className="mt-3 text-sm leading-6 text-white/70">{form.subtitle || "No subtitle entered."}</p></div>
+        </article>
+      </AdminModal>
+
+      <AdminModal open={Boolean(confirmAction)} title={confirmAction?.title || "Confirm action"} description={confirmAction?.description} onClose={() => !actionLoading && setConfirmAction(null)} footer={<><ActionButton variant="ghost" onClick={() => setConfirmAction(null)} disabled={Boolean(actionLoading)}>Cancel</ActionButton><ActionButton variant={confirmAction?.type === "delete" ? "danger" : confirmAction?.active ? "success" : "warning"} onClick={runConfirmedAction} loading={Boolean(actionLoading)}>{confirmAction?.type === "delete" ? "Delete highlight" : confirmAction?.active ? "Activate highlight" : "Deactivate highlight"}</ActionButton></>}>
+        <InlineNotice tone={confirmAction?.type === "delete" ? "warning" : "info"}>{confirmAction?.type === "delete" ? "The uploaded image may also be removed from server storage." : "The public homepage will update after this action completes."}</InlineNotice>
+      </AdminModal>
     </AdminShell>
   );
 }

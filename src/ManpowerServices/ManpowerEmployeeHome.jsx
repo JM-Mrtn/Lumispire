@@ -1,8 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const LOGO_IMAGE = "/ManpowerLogo.png";
 const HERO_IMAGE = "/ManpowerBanner.png";
+
+
+function normalizeApiBase(raw) {
+  const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
+  if (clean.endsWith("/api")) return clean;
+  if (clean.includes("/api/")) return clean.replace(/\/api\/.*$/i, "/api");
+  return `${clean}/api`;
+}
+
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
+const EMPLOYEE_LOGIN_ROUTE = "/manpower-employee-login";
+const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
 
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
 const EMPLOYEE_PAYROLL_ROUTE = "/manpower-employee-payroll";
@@ -10,11 +22,12 @@ const EMPLOYEE_LEAVE_ROUTE = "/manpower-employee-leave";
 const EMPLOYEE_PROFILE_ROUTE = "/manpower-employee-profile";
 
 const MANPOWER_CONTACT_INFO = {
-  email1: "ltc.tamis@gmail.com",
-  email2: "lorengladisu@ltcmultiservices.com",
-  phone: "09959808051 / 09516281271",
-  addressLine1: "2/F 544 Curie Street,",
+  email1: "lorengladius@ltcmultiservices.com",
+  email2: "ltc.tamsi@gmail.com",
+  phone: "+639516281271 / +639959808051",
+  addressLine1: "2/F 5441 Currie Street,",
   addressLine2: "Palanan, Makati City",
+  facebook: "https://www.facebook.com/profile.php?id=61571746334920",
 };
 
 const EMPLOYEE_NAV_ITEMS = [
@@ -33,6 +46,34 @@ function getEmployeeUser() {
   } catch {
     return null;
   }
+}
+
+function getEmployeeToken() {
+  return localStorage.getItem("manpowerEmployeeToken") || "";
+}
+
+function clearEmployeeSession() {
+  localStorage.removeItem("manpowerEmployeeToken");
+  localStorage.removeItem("manpowerEmployeeUser");
+}
+
+function peso(value) {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
+}
+
+function formatDate(value) {
+  if (!value) return "Not available";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not available";
+  return date.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function DocumentIcon(props) {
@@ -616,6 +657,30 @@ const pageStyles = `
   }
 `;
 
+const dashboardEnhancementStyles = `
+  .mp-dashboard-state { padding: 28px; border-radius: 24px; background: white; border: 1px solid rgba(14,51,33,.12); box-shadow: var(--shadow-md); text-align: center; }
+  .mp-dashboard-state.error { color: #9b2c2c; border-color: #f0caca; background: #fffafa; }
+  .mp-dashboard-toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 24px; flex-wrap: wrap; }
+  .mp-dashboard-welcome { margin: 0; font-size: clamp(28px,4vw,44px); color: var(--green-900); letter-spacing: -.05em; }
+  .mp-dashboard-subtitle { margin: 6px 0 0; color: var(--muted); }
+  .mp-dashboard-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+  .mp-dashboard-card { background: white; border: 1px solid rgba(14,51,33,.1); border-radius: 22px; padding: 20px; box-shadow: 0 14px 34px rgba(8,39,25,.08); }
+  .mp-dashboard-card small { display: block; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+  .mp-dashboard-card strong { display: block; margin-top: 8px; color: var(--green-900); font-size: 22px; line-height: 1.2; }
+  .mp-dashboard-card p { margin: 7px 0 0; color: var(--muted); font-size: 13px; }
+  .mp-dashboard-section { margin-top: 24px; }
+  .mp-dashboard-section h3 { margin: 0 0 14px; color: var(--green-900); font-size: 22px; }
+  .mp-dashboard-actions { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
+  .mp-dashboard-action { border: 1px solid rgba(14,51,33,.12); background: white; border-radius: 18px; padding: 18px; text-align: left; cursor: pointer; transition: .25s var(--ease); }
+  .mp-dashboard-action:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: rgba(215,168,77,.55); }
+  .mp-dashboard-action b { color: var(--green-900); display: block; }
+  .mp-dashboard-action span { color: var(--muted); font-size: 13px; }
+  .mp-dashboard-notice { margin-top: 18px; padding: 16px 18px; border-radius: 16px; background: #fff8e8; border: 1px solid #f1d48f; color: #6f4b08; font-weight: 700; }
+  .mp-dashboard-retry { border: 0; border-radius: 999px; padding: 11px 20px; margin-top: 14px; background: var(--green-800); color: white; font-weight: 900; cursor: pointer; }
+  @media (max-width: 980px) { .mp-dashboard-grid,.mp-dashboard-actions { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+  @media (max-width: 600px) { .mp-dashboard-grid,.mp-dashboard-actions { grid-template-columns: 1fr; } }
+`;
+
 function Header({ goTo, onOpenMenu }) {
   return (
     <header className="ltc-header">
@@ -744,11 +809,18 @@ function Footer({ goTo }) {
         </FooterColumn>
 
         <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <a
+            href={MANPOWER_CONTACT_INFO.facebook}
+            target="_blank"
+            rel="noreferrer"
+            className="ltc-footer-link"
+            style={fontPontano}
+          >
+            Facebook Page
+          </a>
+          <a href={`mailto:${MANPOWER_CONTACT_INFO.email1}`} className="ltc-footer-link" style={fontPontano}>
+            Email LTC Manpower
+          </a>
         </FooterColumn>
       </div>
 
@@ -832,89 +904,188 @@ function MobileMenu({ onClose, goTo }) {
 export default function ManpowerEmployeeHome() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const employee = getEmployeeUser();
+  const [employee, setEmployee] = useState(getEmployeeUser());
+  const [payrollRows, setPayrollRows] = useState([]);
+  const [leaveRows, setLeaveRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const fullName = [
-    employee?.firstName || "",
-    employee?.middleName || "",
-    employee?.lastName || "",
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const fullName = useMemo(() => [
+    employee?.firstName,
+    employee?.middleName,
+    employee?.lastName,
+  ].filter(Boolean).join(" ").replace(/\s+/g, " ").trim(), [employee]);
 
   const displayName = fullName || "Employee";
+  const latestPayroll = useMemo(() => [...payrollRows].sort((a, b) =>
+    new Date(b?.payDate || b?.cutoffEnd || b?.cutoffStart || b?.createdAt || 0) - new Date(a?.payDate || a?.cutoffEnd || a?.cutoffStart || a?.createdAt || 0)
+  )[0] || null, [payrollRows]);
+  const latestLeave = useMemo(() => [...leaveRows].sort((a, b) =>
+    new Date(b?.createdAt || b?.startDate || 0) - new Date(a?.createdAt || a?.startDate || 0)
+  )[0] || null, [leaveRows]);
+  const pendingLeaves = leaveRows.filter((item) => String(item?.status || "").toUpperCase() === "PENDING").length;
+
+  function logout() {
+    clearEmployeeSession();
+    navigate(EMPLOYEE_LOGIN_ROUTE, { replace: true });
+  }
+
+  async function loadDashboard() {
+    const token = getEmployeeToken();
+    if (!token) {
+      logout();
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const [profileRes, payrollRes, leaveRes] = await Promise.all([
+        fetch(`${API_BASE}/manpower/employee/me`, { headers }),
+        fetch(`${API_BASE}/manpower/employee/payroll`, { headers }),
+        fetch(`${API_BASE}/manpower/employee/leaves`, { headers }),
+      ]);
+
+      if ([profileRes.status, payrollRes.status, leaveRes.status].some((status) => status === 401 || status === 403)) {
+        logout();
+        return;
+      }
+
+      const profileData = await profileRes.json().catch(() => ({}));
+      const payrollData = await payrollRes.json().catch(() => ({}));
+      const leaveData = await leaveRes.json().catch(() => ({}));
+
+      if (!profileRes.ok) throw new Error(profileData?.message || "Failed to load your employee profile.");
+      const nextEmployee = profileData?.employee || null;
+      if (nextEmployee?.mustChangePassword) {
+        localStorage.setItem("manpowerEmployeeUser", JSON.stringify(nextEmployee));
+        navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
+        return;
+      }
+
+      setEmployee(nextEmployee);
+      localStorage.setItem("manpowerEmployeeUser", JSON.stringify(nextEmployee));
+      const payrollList = Array.isArray(payrollData?.payrolls)
+        ? payrollData.payrolls
+        : Array.isArray(payrollData?.history)
+        ? payrollData.history
+        : Array.isArray(payrollData?.items)
+        ? payrollData.items
+        : Array.isArray(payrollData?.records)
+        ? payrollData.records
+        : [];
+      setPayrollRows(payrollList);
+      setLeaveRows(Array.isArray(leaveData?.leaves) ? leaveData.leaves : []);
+    } catch (err) {
+      setError(err?.message || "Unable to load your employee dashboard.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function goTo(path) {
     setMobileOpen(false);
     navigate(path);
   }
 
+  const latestNetPay = latestPayroll?.netPay ?? latestPayroll?.computed?.netPay ?? latestPayroll?.totals?.netPay ?? 0;
+  const employmentStatus = employee?.employmentStatus || (employee?.active === false ? "Inactive" : "Active");
+
   return (
     <div className="ltc-manpower-employee-home">
       <style>{pageStyles}</style>
+      <style>{dashboardEnhancementStyles}</style>
 
       <Header goTo={goTo} onOpenMenu={() => setMobileOpen(true)} />
 
       <main>
         <section className="ltc-hero">
-          <img
-            src={HERO_IMAGE}
-            alt="Manpower Banner"
-            className="ltc-hero-slide"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
-
+          <img src={HERO_IMAGE} alt="Manpower Banner" className="ltc-hero-slide" onError={(event) => { event.currentTarget.style.display = "none"; }} />
           <div className="ltc-container ltc-hero-content">
-            <h2 className="ltc-hero-title" style={fontMontserrat}>
-              Welcome to <span>Manpower Services</span>
-            </h2>
-            <p className="ltc-hero-text" style={fontPontano}>
-              Hello, {displayName}. Access your payroll records, submit leave requests, and manage your employee profile.
-            </p>
+            <h2 className="ltc-hero-title" style={fontMontserrat}>Employee <span>Dashboard</span></h2>
+            <p className="ltc-hero-text" style={fontPontano}>Welcome back, {displayName}. Review your employment, payroll, leave, and account information in one place.</p>
           </div>
         </section>
 
         <section className="ltc-section">
           <div className="ltc-container">
-            <div className="ltc-home-shell">
-              <h2 className="ltc-section-heading" style={fontMontserrat}>
-                Welcome to Manpower Employee Portal
-              </h2>
-              <div className="ltc-section-line" />
-              <p className="ltc-section-intro" style={fontPoppins}>
-                Hope you're doing well today!
-              </p>
-
-              <div className="ltc-quick-grid">
-                <ActionCard
-                  title="Payroll"
-                  subtitle="View your payroll history"
-                  buttonLabel="View"
-                  icon="payroll"
-                  onClick={() => navigate(EMPLOYEE_PAYROLL_ROUTE)}
-                />
-
-                <ActionCard
-                  title="File Leave"
-                  subtitle="Submit and monitor leave requests"
-                  buttonLabel="Submit"
-                  icon="leave"
-                  onClick={() => navigate(EMPLOYEE_LEAVE_ROUTE)}
-                />
+            {loading ? <div className="mp-dashboard-state">Loading your employee dashboard...</div> : null}
+            {!loading && error ? (
+              <div className="mp-dashboard-state error">
+                <strong>{error}</strong>
+                <br />
+                <button type="button" className="mp-dashboard-retry" onClick={loadDashboard}>Try Again</button>
               </div>
-            </div>
+            ) : null}
+
+            {!loading && !error ? (
+              <div className="ltc-home-shell">
+                <div className="mp-dashboard-toolbar">
+                  <div>
+                    <h2 className="mp-dashboard-welcome" style={fontMontserrat}>Hello, {displayName}</h2>
+                    <p className="mp-dashboard-subtitle" style={fontPontano}>Here is your current employment and portal summary.</p>
+                  </div>
+                  <button type="button" className="ltc-card-action" onClick={loadDashboard} style={fontPoppins}>Refresh</button>
+                </div>
+
+                <div className="mp-dashboard-grid">
+                  <article className="mp-dashboard-card"><small>Position</small><strong>{employee?.position || employee?.vacancyTitle || "Not assigned"}</strong><p>{employee?.deploymentSite || employee?.site || "Deployment site not assigned"}</p></article>
+                  <article className="mp-dashboard-card"><small>Employment status</small><strong>{employmentStatus}</strong><p>Started {formatDate(employee?.startDate || employee?.dateHired)}</p></article>
+                  <article className="mp-dashboard-card"><small>Latest net pay</small><strong>{latestPayroll ? peso(latestNetPay) : "No record"}</strong><p>{latestPayroll ? formatDate(latestPayroll?.payDate || latestPayroll?.cutoffEnd || latestPayroll?.cutoffStart || latestPayroll?.createdAt) : "Payroll will appear when released"}</p></article>
+                  <article className="mp-dashboard-card"><small>Leave requests</small><strong>{pendingLeaves} pending</strong><p>{latestLeave ? `Latest: ${latestLeave.leaveType || "Leave"} - ${latestLeave.status || "Pending"}` : "No leave request yet"}</p></article>
+                </div>
+
+                {employee?.mustChangePassword ? <div className="mp-dashboard-notice">For security, change your temporary password before continuing.</div> : null}
+
+                <section className="mp-dashboard-section">
+                  <h3 style={fontMontserrat}>Quick actions</h3>
+                  <div className="mp-dashboard-actions">
+                    <button type="button" className="mp-dashboard-action" onClick={() => goTo(EMPLOYEE_PAYROLL_ROUTE)}><b>View Payroll</b><span>Review salary slips and payroll history.</span></button>
+                    <button type="button" className="mp-dashboard-action" onClick={() => goTo(EMPLOYEE_LEAVE_ROUTE)}><b>File Leave</b><span>Submit and monitor leave requests.</span></button>
+                    <button type="button" className="mp-dashboard-action" onClick={() => goTo(EMPLOYEE_PROFILE_ROUTE)}><b>My Profile</b><span>Review your personal and employment information.</span></button>
+                    <button type="button" className="mp-dashboard-action" onClick={() => goTo(EMPLOYEE_CHANGE_PASSWORD_ROUTE)}><b>Account Security</b><span>Change your employee portal password.</span></button>
+                  </div>
+                </section>
+
+                <section className="mp-dashboard-section">
+                  <h3 style={fontMontserrat}>Account details</h3>
+                  <div className="mp-dashboard-grid">
+                    <article className="mp-dashboard-card"><small>Company email</small><strong style={{ fontSize: 16 }}>{employee?.companyEmail || employee?.email || "Not available"}</strong></article>
+                    <article className="mp-dashboard-card"><small>Employee ID</small><strong>{employee?.employeeId || employee?.employeeNumber || "Not available"}</strong></article>
+                    <article className="mp-dashboard-card"><small>Region</small><strong>{employee?.region || "Not assigned"}</strong></article>
+                    <article className="mp-dashboard-card"><small>Daily rate</small><strong>{employee?.dailyRate ? peso(employee.dailyRate) : "Managed by HR"}</strong></article>
+                  </div>
+                </section>
+
+                <div className="mp-dashboard-section">
+                  <button type="button" className="mp-dashboard-retry" onClick={() => setShowLogoutConfirm(true)}>Sign Out</button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
       </main>
 
       <Footer goTo={goTo} />
-
-      {mobileOpen ? (
-        <MobileMenu onClose={() => setMobileOpen(false)} goTo={goTo} />
+      {mobileOpen ? <MobileMenu onClose={() => setMobileOpen(false)} goTo={goTo} /> : null}
+      {showLogoutConfirm ? (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "grid", placeItems: "center", padding: 20, background: "rgba(3,24,15,.72)", backdropFilter: "blur(6px)" }}>
+          <div role="dialog" aria-modal="true" style={{ width: "min(440px,100%)", borderRadius: 24, background: "white", padding: 26, boxShadow: "0 30px 80px rgba(0,0,0,.28)" }}>
+            <h2 style={{ margin: 0, color: "#0e3321", fontFamily: "'Montserrat', sans-serif" }}>Sign out of the Employee Portal?</h2>
+            <p style={{ color: "#667085" }}>You will need to sign in again to access your records.</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+              <button type="button" className="mp-dashboard-retry" style={{ background: "#eef2ef", color: "#244532" }} onClick={() => setShowLogoutConfirm(false)}>Stay Signed In</button>
+              <button type="button" className="mp-dashboard-retry" onClick={logout}>Sign Out</button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

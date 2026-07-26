@@ -162,7 +162,7 @@ function FooterLogo() {
 
 
 const manpowerApplyEnrollmentStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
 
   .ltc-enrollment-page {
     --green-950: #071f14;
@@ -609,10 +609,99 @@ const manpowerApplyEnrollmentStyles = `
     .ltc-enrollment-page footer > div:first-child,
     .ltc-enrollment-page footer > div:last-child { padding-left: 16px !important; padding-right: 16px !important; }
   }
+
+  /* ===== Unified LTC Manpower public-page refinements ===== */
+  .ltc-enrollment-page h1,
+  .ltc-enrollment-page h2,
+  .ltc-enrollment-page h3,
+  .ltc-enrollment-page h4,
+  .ltc-enrollment-page h5 { font-family: "Montserrat", "Inter", Arial, sans-serif !important; }
+
+  .ltc-enrollment-page .mp-menu-button {
+    display: none;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    padding: 0 !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+    border-radius: 14px !important;
+    color: #fff !important;
+    background: rgba(255,255,255,.10) !important;
+    cursor: pointer;
+  }
+  .ltc-enrollment-page .mp-menu-button svg { width: 24px; height: 24px; }
+
+  .ltc-enrollment-page .mp-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0,0,0,.48);
+    backdrop-filter: blur(5px);
+  }
+  .ltc-enrollment-page .mp-sidebar-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(320px,88vw);
+    height: 100%;
+    padding: 22px;
+    background: #fff;
+    box-shadow: -24px 0 70px rgba(0,0,0,.28);
+  }
+  .ltc-enrollment-page .mp-sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(16,24,40,.10);
+  }
+  .ltc-enrollment-page .mp-sidebar-title { margin: 0; color: var(--green-950); font-size: 12px; font-weight: 900; letter-spacing: .14em; }
+  .ltc-enrollment-page .mp-sidebar-close { width: 40px; height: 40px; border: 0; border-radius: 13px; color: #101828; background: #f2f4f7; cursor: pointer; }
+  .ltc-enrollment-page .mp-sidebar-link { display: block; width: 100%; margin: 0 0 8px; padding: 13px 14px; border: 0; border-radius: 14px; color: #101828; background: transparent; font-size: 13px; font-weight: 800; text-align: left; text-transform: uppercase; text-decoration: none; cursor: pointer; }
+  .ltc-enrollment-page .mp-sidebar-link:hover,
+  .ltc-enrollment-page .mp-sidebar-link.active { color: #fff; background: var(--green-800); }
+
+  .ltc-enrollment-page main > section:first-child > div {
+    background:
+      linear-gradient(120deg, rgba(2,18,11,.95) 0%, rgba(5,37,23,.88) 44%, rgba(12,64,39,.72) 100%),
+      url('/ManpowerBanner.png') center center / cover no-repeat !important;
+  }
+  .ltc-enrollment-page main > section:first-child h2::after { content: none !important; }
+
+  .ltc-enrollment-page form > section { border-radius: 26px !important; }
+  .ltc-enrollment-page form > section h3::before { color: var(--green-700); }
+  .ltc-enrollment-page input,
+  .ltc-enrollment-page select,
+  .ltc-enrollment-page textarea { border-radius: 16px !important; }
+
+  .ltc-enrollment-page footer > div:first-child {
+    display: grid !important;
+    grid-template-columns: 1.5fr .9fr 1fr 1.4fr .8fr !important;
+    gap: 22px !important;
+    padding-bottom: 24px !important;
+    border-bottom: 1px solid rgba(255,255,255,.10) !important;
+  }
+  .ltc-enrollment-page footer > div:first-child > div { border-left: 0 !important; padding-left: 0 !important; }
+  .ltc-enrollment-page footer a { display: block; margin: 5px 0; color: rgba(255,255,255,.68); font-size: 13px; line-height: 1.55; text-decoration: none; }
+  .ltc-enrollment-page footer a:hover { color: #fff; text-decoration: underline; }
+  .ltc-enrollment-page footer > div:last-child { display: flex !important; justify-content: space-between !important; gap: 12px !important; padding-top: 14px !important; }
+
+  @media (max-width: 1100px) {
+    .ltc-enrollment-page footer > div:first-child { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  }
+  @media (max-width: 900px) {
+    .ltc-enrollment-page .mp-nav { min-height: 72px !important; }
+    .ltc-enrollment-page .mp-menu-button { display: grid !important; }
+    .ltc-enrollment-page footer > div:first-child { grid-template-columns: 1fr !important; gap: 18px !important; }
+    .ltc-enrollment-page footer > div:last-child { flex-direction: column !important; }
+  }
+
 `;
 
 export default function ManpowerApplyPage() {
   const [jobs, setJobs] = useState([]);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const vacancies = jobs.length ? jobs.map((job) => job.title) : DEFAULT_VACANCIES;
 
   useEffect(() => {
@@ -1052,8 +1141,37 @@ export default function ManpowerApplyPage() {
               Sign In
             </Link>
           </nav>
+
+          <button
+            type="button"
+            className="mp-menu-button"
+            aria-label="Open menu"
+            onClick={() => setMobileOpen(true)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </div>
       </header>
+
+      {mobileOpen ? (
+        <div className="mp-sidebar-overlay">
+          <div style={{ position: "absolute", inset: 0 }} onClick={() => setMobileOpen(false)} />
+          <aside className="mp-sidebar-panel">
+            <div className="mp-sidebar-top">
+              <p className="mp-sidebar-title">MENU</p>
+              <button type="button" className="mp-sidebar-close" aria-label="Close menu" onClick={() => setMobileOpen(false)}>✕</button>
+            </div>
+            <Link to="/manpower-services" className="mp-sidebar-link" onClick={() => setMobileOpen(false)}>Home</Link>
+            <Link to="/manpower-positions" className="mp-sidebar-link active" onClick={() => setMobileOpen(false)}>Job Offer</Link>
+            <Link to="/manpower-requirements" className="mp-sidebar-link" onClick={() => setMobileOpen(false)}>Requirements</Link>
+            <Link to="/manpower-contact" className="mp-sidebar-link" onClick={() => setMobileOpen(false)}>Contact</Link>
+            <Link to="/manpower-faqs" className="mp-sidebar-link" onClick={() => setMobileOpen(false)}>FAQs</Link>
+            <Link to="/manpower-employee-login" className="mp-sidebar-link" onClick={() => setMobileOpen(false)}>Sign In</Link>
+          </aside>
+        </div>
+      ) : null}
 
       <main>
         <section className="mx-auto max-w-7xl px-4 pt-0 md:px-6">
@@ -1061,7 +1179,7 @@ export default function ManpowerApplyPage() {
             className="relative min-h-[180px] overflow-hidden md:min-h-[230px]"
             style={{
               backgroundImage:
-                "linear-gradient(90deg, rgba(42,82,61,0.88) 0%, rgba(64,94,77,0.58) 38%, rgba(64,94,77,0.18) 100%), url('/images/application-hero.jpg')",
+                "linear-gradient(90deg, rgba(42,82,61,0.88) 0%, rgba(64,94,77,0.58) 38%, rgba(64,94,77,0.18) 100%), url('/ManpowerBanner.png')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundColor: "#64766c",
@@ -1405,26 +1523,27 @@ export default function ManpowerApplyPage() {
             <div className="md:border-l md:border-white/20 md:pl-5">
               <h3 className="text-lg font-extrabold">Menu</h3>
               <div className="mt-2 space-y-1 text-sm text-white/90">
-                <p>Home</p>
-                <p>Course</p>
-                <p>Requirements</p>
-                <p>Profile</p>
+                <Link to="/manpower-services">Home</Link>
+                <Link to="/manpower-positions">Job Offer</Link>
+                <Link to="/manpower-requirements">Requirements</Link>
+                <Link to="/manpower-employee-login">Profile</Link>
               </div>
             </div>
 
             <div className="md:border-l md:border-white/20 md:pl-5">
               <h3 className="text-lg font-extrabold">Contact Information</h3>
               <div className="mt-2 space-y-1 text-sm text-white/90">
-                <p>ltc.tamis@gmail.com</p>
-                <p>lorengladisu@ltcmultiservices.com</p>
-                <p>09959808051 / 09516281271</p>
+                <p><a href="mailto:ltc.tamsi@gmail.com">ltc.tamsi@gmail.com</a></p>
+                <p><a href="mailto:lorengladius@ltcmultiservices.com">lorengladius@ltcmultiservices.com</a></p>
+                <p><a href="tel:+639516281271">+639516281271</a></p>
+            <p><a href="tel:+639959808051">+639959808051</a></p>
               </div>
             </div>
 
             <div className="md:border-l md:border-white/20 md:pl-5">
               <h3 className="text-lg font-extrabold">Address</h3>
               <div className="mt-2 space-y-1 text-sm text-white/90">
-                <p>2/F 544 Curie Street,</p>
+                <p>2/F 5441 Currie Street,</p>
                 <p>Palanan, Makati City</p>
               </div>
             </div>
@@ -1432,9 +1551,8 @@ export default function ManpowerApplyPage() {
             <div className="md:border-l md:border-white/20 md:pl-5">
               <h3 className="text-lg font-extrabold">Follow Us</h3>
               <div className="mt-2 space-y-1 text-sm text-white/90">
-                <p>Facebook</p>
-                <p>Email</p>
-                <p>LinkedIn</p>
+                <p><a href={"https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"} target="_blank" rel="noopener noreferrer">Facebook</a></p>
+                <p><a href="mailto:lorengladius@ltcmultiservices.com">Email</a></p>
               </div>
             </div>
           </div>

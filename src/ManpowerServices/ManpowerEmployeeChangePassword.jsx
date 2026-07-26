@@ -531,6 +531,29 @@ export default function ManpowerEmployeeChangePassword() {
     success: "",
     error: "",
   });
+  const [otpSeconds, setOtpSeconds] = useState(0);
+
+  const passwordChecks = useMemo(() => {
+    const value = String(passwordForm.newPassword || "");
+    return {
+      length: value.length >= 8,
+      upper: /[A-Z]/.test(value),
+      lower: /[a-z]/.test(value),
+      number: /\d/.test(value),
+      special: /[^A-Za-z0-9]/.test(value),
+      different: Boolean(value) && value !== passwordForm.currentPassword,
+    };
+  }, [passwordForm.newPassword, passwordForm.currentPassword]);
+
+  const strongPassword = Object.values(passwordChecks).every(Boolean);
+
+  useEffect(() => {
+    if (otpSeconds <= 0) return undefined;
+    const timer = window.setInterval(() => {
+      setOtpSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [otpSeconds]);
 
   const fullName = useMemo(() => {
     return [
@@ -610,8 +633,8 @@ export default function ManpowerEmployeeChangePassword() {
       return "Please complete current password, new password, and confirm password first.";
     }
 
-    if (newPassword.length < 8) {
-      return "New password must be at least 8 characters.";
+    if (!strongPassword) {
+      return "Use at least 8 characters with uppercase, lowercase, number, and special character. The new password must differ from the current password.";
     }
 
     if (newPassword !== confirmPassword) {
@@ -682,9 +705,10 @@ export default function ManpowerEmployeeChangePassword() {
 
       setOtpState({
         loading: false,
-        success: data?.message || "OTP sent successfully.",
+        success: data?.message || "OTP sent successfully. It will expire shortly.",
         error: "",
       });
+      setOtpSeconds(60);
     } catch (err) {
       setOtpState({
         loading: false,
@@ -722,11 +746,11 @@ export default function ManpowerEmployeeChangePassword() {
       return;
     }
 
-    if (newPassword.length < 8) {
+    if (!strongPassword) {
       setPasswordState({
         loading: false,
         success: "",
-        error: "New password must be at least 8 characters.",
+        error: "Your new password does not meet all security requirements.",
       });
       return;
     }
@@ -737,6 +761,11 @@ export default function ManpowerEmployeeChangePassword() {
         success: "",
         error: "New password and confirm password do not match.",
       });
+      return;
+    }
+
+    if (!/^\d{6}$/.test(otp)) {
+      setPasswordState({ loading: false, success: "", error: "Enter the complete 6-digit OTP." });
       return;
     }
 
@@ -771,32 +800,18 @@ export default function ManpowerEmployeeChangePassword() {
         throw new Error(data?.message || "Failed to change password.");
       }
 
-      const updatedEmployee = {
-        ...(employee || {}),
-        mustChangePassword: false,
-      };
-
-      setEmployee(updatedEmployee);
-      saveEmployeeSession(token, updatedEmployee);
-
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-        otp: "",
-      });
-
-      setOtpState({
-        loading: false,
-        success: "",
-        error: "",
-      });
-
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "", otp: "" });
+      setOtpState({ loading: false, success: "", error: "" });
+      setOtpSeconds(0);
       setPasswordState({
         loading: false,
-        success: data?.message || "Password updated successfully.",
+        success: data?.message || "Password updated successfully. You will be signed out for security.",
         error: "",
       });
+      window.setTimeout(() => {
+        clearEmployeeSession();
+        navigate("/manpower-employee-login", { replace: true, state: { passwordChanged: true } });
+      }, 1400);
     } catch (err) {
       setPasswordState({
         loading: false,
@@ -987,6 +1002,21 @@ export default function ManpowerEmployeeChangePassword() {
                       />
                     </div>
 
+                    <div style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 8, padding: 14, borderRadius: 16, background: "#f7faf8", border: "1px solid #dce7df", fontSize: 13 }}>
+                      {[
+                        ["length", "At least 8 characters"],
+                        ["upper", "At least one uppercase letter"],
+                        ["lower", "At least one lowercase letter"],
+                        ["number", "At least one number"],
+                        ["special", "At least one special character"],
+                        ["different", "Different from current password"],
+                      ].map(([key, label]) => (
+                        <span key={key} style={{ color: passwordChecks[key] ? "#1f6b38" : "#8a4d4d", fontWeight: 700 }}>
+                          {passwordChecks[key] ? "✓" : "○"} {label}
+                        </span>
+                      ))}
+                    </div>
+
                     <div className="ltc-field">
                       <label style={fontPoppins}>Confirm New Password</label>
                       <input
@@ -1028,16 +1058,16 @@ export default function ManpowerEmployeeChangePassword() {
                         <button
                           type="button"
                           onClick={sendOtp}
-                          disabled={otpState.loading}
+                          disabled={otpState.loading || otpSeconds > 0 || !strongPassword}
                           className="ltc-primary-button"
                           style={fontMontserrat}
                         >
-                          {otpState.loading ? "Sending OTP..." : "Send OTP"}
+                          {otpState.loading ? "Sending OTP..." : otpSeconds > 0 ? `Resend OTP in ${otpSeconds}s` : "Send OTP"}
                         </button>
 
                         <button
                           type="submit"
-                          disabled={passwordState.loading}
+                          disabled={passwordState.loading || !strongPassword || passwordForm.otp.length !== 6}
                           className="ltc-secondary-button"
                           style={fontMontserrat}
                         >
@@ -1057,7 +1087,7 @@ export default function ManpowerEmployeeChangePassword() {
                   </form>
 
                   <p className="ltc-note" style={fontPontano}>
-                    Keep your password private. Use at least 8 characters for your new manpower account password.
+                    Keep your password private. After a successful change, you will be signed out and must sign in again using the new password.
                   </p>
                 </div>
               </section>

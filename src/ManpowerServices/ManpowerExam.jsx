@@ -113,16 +113,17 @@ function ExamLayout({ children }) {
             <div className="md:border-l md:border-white/20 md:pl-5">
               <h3 className="text-lg font-extrabold">Contact Information</h3>
               <div className="mt-2 space-y-1 text-sm text-white/90">
-                <p>ltc.tamis@gmail.com</p>
-                <p>lorengladisu@ltcmultiservices.com</p>
-                <p>09959808051 / 09516281271</p>
+                <a className="block hover:text-white" href="mailto:lorengladius@ltcmultiservices.com">lorengladius@ltcmultiservices.com</a>
+                <a className="block hover:text-white" href="mailto:ltc.tamsi@gmail.com">ltc.tamsi@gmail.com</a>
+                <a className="block hover:text-white" href="tel:+639516281271">+639516281271</a>
+                <a className="block hover:text-white" href="tel:+639959808051">+639959808051</a>
               </div>
             </div>
 
             <div className="md:border-l md:border-white/20 md:pl-5">
               <h3 className="text-lg font-extrabold">Address</h3>
               <div className="mt-2 space-y-1 text-sm text-white/90">
-                <p>2/F 544 Curie Street,</p>
+                <p>2/F 5441 Currie Street,</p>
                 <p>Palanan, Makati City</p>
               </div>
             </div>
@@ -130,9 +131,8 @@ function ExamLayout({ children }) {
             <div className="md:border-l md:border-white/20 md:pl-5">
               <h3 className="text-lg font-extrabold">Follow Us</h3>
               <div className="mt-2 space-y-1 text-sm text-white/90">
-                <p>Facebook</p>
-                <p>Email</p>
-                <p>LinkedIn</p>
+                <a href="https://www.facebook.com/profile.php?id=61571746334920" target="_blank" rel="noreferrer" className="block hover:text-white">Facebook Page</a>
+                <a href="mailto:lorengladius@ltcmultiservices.com" className="block hover:text-white">Email LTC Manpower</a>
               </div>
             </div>
           </div>
@@ -154,7 +154,7 @@ function ExamHero({ title = "Qualifying Exam", subtitle = "Complete your manpowe
         className="relative min-h-[180px] overflow-hidden md:min-h-[230px]"
         style={{
           backgroundImage:
-            "linear-gradient(90deg, rgba(42,82,61,0.9) 0%, rgba(64,94,77,0.66) 38%, rgba(64,94,77,0.24) 100%), url('/images/application-hero.jpg')",
+            "linear-gradient(90deg, rgba(42,82,61,0.9) 0%, rgba(64,94,77,0.66) 38%, rgba(64,94,77,0.24) 100%), url('/ManpowerBanner.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundColor: "#64766c",
@@ -209,6 +209,7 @@ export default function ManpowerExam() {
   const [examData, setExamData] = useState(null);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -251,6 +252,24 @@ export default function ManpowerExam() {
 
   const questions = useMemo(() => examData?.exam?.questions || [], [examData]);
 
+  const answeredCount = useMemo(() => questions.filter((question) =>
+    String(answers[question.id] || "").trim()
+  ).length, [questions, answers]);
+
+  const unansweredQuestions = useMemo(() => questions.filter((question) =>
+    !String(answers[question.id] || "").trim()
+  ), [questions, answers]);
+
+  useEffect(() => {
+    if (result || answeredCount === 0) return undefined;
+    function warnBeforeLeave(event) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", warnBeforeLeave);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeave);
+  }, [answeredCount, result]);
+
   function updateAnswer(questionId, value) {
     setAnswers((prev) => ({
       ...prev,
@@ -258,40 +277,38 @@ export default function ManpowerExam() {
     }));
   }
 
-  async function submitExam(e) {
+  function submitExam(e) {
     e.preventDefault();
-
     setError("");
 
-    const payloadAnswers = questions.map((question) => ({
-      questionId: question.id,
-      answer: answers[question.id] || "",
-    }));
-
-    if (payloadAnswers.every((row) => !String(row.answer || "").trim())) {
-      setError("Please answer the qualifying exam before submitting.");
+    if (unansweredQuestions.length > 0) {
+      const first = unansweredQuestions[0];
+      const firstIndex = questions.findIndex((question) => question.id === first.id);
+      setError(`Please answer question ${firstIndex + 1}. All questions are required before submission.`);
+      document.getElementById(`exam-question-${first.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
-    setSubmitting(true);
+    setShowSubmitConfirm(true);
+  }
 
+  async function performSubmitExam() {
+    setShowSubmitConfirm(false);
+    setError("");
+    const payloadAnswers = questions.map((question) => ({
+      questionId: question.id,
+      answer: String(answers[question.id] || "").trim(),
+    }));
+
+    setSubmitting(true);
     try {
       const res = await fetch(`${API_BASE}/manpower/applications/${applicationId}/exam`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          answers: payloadAnswers,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers: payloadAnswers }),
       });
-
       const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to submit qualifying exam.");
-      }
-
+      if (!res.ok) throw new Error(data?.message || "Failed to submit qualifying exam.");
       setResult(data?.assessment || null);
     } catch (err) {
       setError(err?.message || "Failed to submit qualifying exam.");
@@ -444,6 +461,21 @@ export default function ManpowerExam() {
 
           <div className="mx-auto my-8 h-[2px] w-[90%] bg-[#617b6a]" />
 
+          <div className="mb-6 rounded-2xl border border-[#d7decf] bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#5f6f61]">Exam progress</p>
+                <strong className="mt-1 block text-xl text-[#24352c]">{answeredCount} of {questions.length} answered</strong>
+              </div>
+              <span className={`rounded-full px-4 py-2 text-xs font-black ${unansweredQuestions.length ? "bg-[#fff4df] text-[#7a5311]" : "bg-[#e8f5ec] text-[#1f6b38]"}`}>
+                {unansweredQuestions.length ? `${unansweredQuestions.length} remaining` : "Ready to submit"}
+              </span>
+            </div>
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-[#e7ece8]">
+              <div className="h-full rounded-full bg-[#315b42] transition-all" style={{ width: `${questions.length ? (answeredCount / questions.length) * 100 : 0}%` }} />
+            </div>
+          </div>
+
           <form onSubmit={submitExam} className="space-y-6">
             <section>
               <h3 className="font-serif text-[28px] text-[#3f5e4d] md:text-[38px]">
@@ -454,7 +486,8 @@ export default function ManpowerExam() {
                 {questions.map((question, index) => (
                   <section
                     key={question.id}
-                    className="rounded-2xl border border-[#d7decf] bg-white p-5 shadow-sm"
+                    id={`exam-question-${question.id}`}
+                    className={`rounded-2xl border bg-white p-5 shadow-sm ${String(answers[question.id] || "").trim() ? "border-[#9ac2a8]" : "border-[#d7decf]"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <h2 className="font-semibold text-[#24352c]">
@@ -508,7 +541,7 @@ export default function ManpowerExam() {
             <div className="flex flex-col items-center justify-center gap-4 pt-2 md:flex-row md:gap-16">
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || unansweredQuestions.length > 0}
                 className="min-w-[210px] rounded-[10px] border border-[#91a691] bg-gradient-to-b from-[#e8f0e7] to-[#bccdbb] px-6 py-3 text-sm font-semibold text-[#345240] shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {submitting ? "Submitting Exam..." : "Submit Qualifying Exam"}
@@ -525,6 +558,20 @@ export default function ManpowerExam() {
           </form>
         </div>
       </section>
+
+      {showSubmitConfirm ? (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-5 backdrop-blur-sm">
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-[26px] bg-white p-7 shadow-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b1812f]">Final submission</p>
+            <h2 className="mt-2 text-2xl font-black text-[#24352c]">Submit your qualifying exam?</h2>
+            <p className="mt-3 text-sm leading-6 text-[#56695b]">You answered all {questions.length} questions. After submission, your answers cannot be changed.</p>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button type="button" onClick={() => setShowSubmitConfirm(false)} className="rounded-xl border border-[#91a691] px-5 py-2.5 text-sm font-bold text-[#345240]">Review Answers</button>
+              <button type="button" onClick={performSubmitExam} disabled={submitting} className="rounded-xl bg-[#315b42] px-5 py-2.5 text-sm font-black text-white disabled:opacity-60">{submitting ? "Submitting..." : "Confirm Submission"}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </ExamLayout>
   );
 }

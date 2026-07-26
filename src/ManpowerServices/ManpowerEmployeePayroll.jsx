@@ -22,9 +22,10 @@ const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
 const EMPLOYEE_PAYROLL_ROUTE = "/manpower-employee-payroll";
 const EMPLOYEE_LEAVE_ROUTE = "/manpower-employee-leave";
 const EMPLOYEE_PROFILE_ROUTE = "/manpower-employee-profile";
+const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
 
 const COMPANY_NAME = "LTC Manpower Services";
-const COMPANY_ADDRESS = "2/F 544 Curie Street, Palanan, Makati City";
+const COMPANY_ADDRESS = "2/F 5441 Currie Street, Palanan, Makati City";
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -33,7 +34,7 @@ const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 const employeePayrollAssignmentStyles = `
   @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-  .ltc-trainee-home-page {
+  .manpower-employee-payroll-page {
     --green-950: #071f14;
     --green-900: #0e3321;
     --green-800: #174a30;
@@ -60,7 +61,7 @@ const employeePayrollAssignmentStyles = `
     font-family: "Inter", Arial, sans-serif;
   }
 
-  .ltc-trainee-home-page * { box-sizing: border-box; }
+  .manpower-employee-payroll-page * { box-sizing: border-box; }
   .ltc-container { width: min(1180px, 92%); margin: auto; }
 
   .ltc-header {
@@ -653,7 +654,7 @@ const employeePayrollAssignmentStyles = `
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ltc-trainee-home-page *, .ltc-trainee-home-page *::before, .ltc-trainee-home-page *::after {
+    .manpower-employee-payroll-page *, .manpower-employee-payroll-page *::before, .manpower-employee-payroll-page *::after {
       animation-duration: .001ms !important;
       animation-iteration-count: 1 !important;
       scroll-behavior: auto !important;
@@ -1677,6 +1678,7 @@ function PayrollModal({
   employeeEmail,
   onClose,
   onDownload,
+  onPrint,
 }) {
   return (
     <div className="fixed inset-0 z-[70] overflow-y-auto bg-black/60 px-4 py-6">
@@ -1695,6 +1697,14 @@ function PayrollModal({
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onPrint(row)}
+              className="rounded-xl border-2 border-[#315b42] px-5 py-2 text-sm font-black text-[#315b42] transition hover:bg-[#315b42] hover:text-white"
+            >
+              Print / Save PDF
+            </button>
+
             <button
               type="button"
               onClick={() => onDownload(row)}
@@ -1797,6 +1807,10 @@ export default function ManpowerEmployeePayroll() {
 
       if (data?.employee) {
         localStorage.setItem("manpowerEmployeeUser", JSON.stringify(data.employee));
+        if (data.employee.mustChangePassword) {
+          navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
+          return;
+        }
         setEmployee(data.employee);
       }
 
@@ -1879,6 +1893,30 @@ export default function ManpowerEmployeePayroll() {
     });
   }, [rows, searchValue, filterDate, cutoffFilter, dateSort, employeeName, employeeEmail]);
 
+  const payrollSummary = useMemo(() => {
+    return rows.reduce((totals, row) => {
+      const slip = getSalarySlipData(row);
+      totals.gross += slip.grossPay;
+      totals.deductions += slip.totalDeductions;
+      totals.net += slip.netPay;
+      return totals;
+    }, { gross: 0, deductions: 0, net: 0 });
+  }, [rows]);
+
+  function handlePrint(row) {
+    const html = buildSalarySlipHtml({ row, employee, employeeName, employeeEmail });
+    const printWindow = window.open("", "_blank", "width=1000,height=800");
+    if (!printWindow) {
+      setError("Pop-up blocked. Allow pop-ups to print or save the payslip as PDF.");
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    window.setTimeout(() => printWindow.print(), 350);
+  }
+
   function handleDownload(row) {
     const fileDate = formatDateKey(getDisplayDate(row)) || "payroll";
 
@@ -1893,7 +1931,7 @@ export default function ManpowerEmployeePayroll() {
   }
 
   return (
-    <div className="ltc-trainee-home-page" style={fontPontano}>
+    <div className="manpower-employee-payroll-page" style={fontPontano}>
       <style>{employeePayrollAssignmentStyles}</style>
 
       <header className="ltc-header">
@@ -2024,6 +2062,25 @@ export default function ManpowerEmployeePayroll() {
                 </div>
               </div>
 
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14, marginBottom: 18 }}>
+                <div style={{ padding: 18, borderRadius: 18, background: "#f4f8f5", border: "1px solid #d8e5db" }}>
+                  <p style={{ margin: 0, color: "#667085", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Payroll records</p>
+                  <strong style={{ display: "block", marginTop: 7, color: "#0e3321", fontSize: 24 }}>{rows.length}</strong>
+                </div>
+                <div style={{ padding: 18, borderRadius: 18, background: "#f4f8f5", border: "1px solid #d8e5db" }}>
+                  <p style={{ margin: 0, color: "#667085", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Total gross</p>
+                  <strong style={{ display: "block", marginTop: 7, color: "#0e3321", fontSize: 24 }}>{formatMoney(payrollSummary.gross)}</strong>
+                </div>
+                <div style={{ padding: 18, borderRadius: 18, background: "#fff8ea", border: "1px solid #efd99d" }}>
+                  <p style={{ margin: 0, color: "#7a5a17", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Total deductions</p>
+                  <strong style={{ display: "block", marginTop: 7, color: "#6f4b08", fontSize: 24 }}>{formatMoney(payrollSummary.deductions)}</strong>
+                </div>
+                <div style={{ padding: 18, borderRadius: 18, background: "#edf8f1", border: "1px solid #bcdcc8" }}>
+                  <p style={{ margin: 0, color: "#2d6946", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Total net pay</p>
+                  <strong style={{ display: "block", marginTop: 7, color: "#174a30", fontSize: 24 }}>{formatMoney(payrollSummary.net)}</strong>
+                </div>
+              </div>
+
               <div className="ltc-payroll-tools">
                 <input
                   type="text"
@@ -2075,6 +2132,14 @@ export default function ManpowerEmployeePayroll() {
                 >
                   {refreshing ? "Refreshing..." : "Refresh"}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => { setSearchValue(""); setFilterDate(""); setCutoffFilter("all"); setDateSort("newest"); }}
+                  className="ltc-outline-button"
+                  style={fontMontserrat}
+                >
+                  Clear Filters
+                </button>
               </div>
 
               <section className="ltc-payroll-list">
@@ -2086,7 +2151,8 @@ export default function ManpowerEmployeePayroll() {
 
                 {!loading && error ? (
                   <div className="ltc-state-card error" style={fontPoppins}>
-                    {error}
+                    <p>{error}</p>
+                    <button type="button" onClick={() => loadPayroll(false)} className="ltc-primary-button" style={fontMontserrat}>Try Again</button>
                   </div>
                 ) : null}
 
@@ -2115,6 +2181,22 @@ export default function ManpowerEmployeePayroll() {
                           <p className="ltc-payroll-item-text" style={fontPontano}>
                             Cycle: {getCutoffCycleLabel(row)}
                           </p>
+                          <span style={{ display: "inline-flex", marginTop: 8, padding: "5px 10px", borderRadius: 999, background: "#eaf5ee", color: "#1f6b38", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: ".06em" }}>
+                            {row?.payrollStatus || row?.status || "Recorded"}
+                          </span>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(105px,1fr))", gap: 10, flex: "1 1 380px" }}>
+                          {(() => {
+                            const slip = getSalarySlipData(row);
+                            return (
+                              <>
+                                <div><small style={{ color: "#667085", fontWeight: 800 }}>Gross Pay</small><strong style={{ display: "block", color: "#174a30" }}>{formatMoney(slip.grossPay)}</strong></div>
+                                <div><small style={{ color: "#667085", fontWeight: 800 }}>Deductions</small><strong style={{ display: "block", color: "#7a4d16" }}>{formatMoney(slip.totalDeductions)}</strong></div>
+                                <div><small style={{ color: "#667085", fontWeight: 800 }}>Net Pay</small><strong style={{ display: "block", color: "#0e3321" }}>{formatMoney(slip.netPay)}</strong></div>
+                              </>
+                            );
+                          })()}
                         </div>
 
                         <div className="ltc-payroll-actions">
@@ -2125,6 +2207,15 @@ export default function ManpowerEmployeePayroll() {
                             style={fontMontserrat}
                           >
                             View Salary Slip
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handlePrint(row)}
+                            className="ltc-outline-button"
+                            style={fontMontserrat}
+                          >
+                            Print / Save PDF
                           </button>
 
                           <button
@@ -2170,20 +2261,19 @@ export default function ManpowerEmployeePayroll() {
           </FooterColumn>
 
           <FooterColumn title="Contact Information">
-            <p style={fontPontano}>ltc.tamis@gmail.com</p>
-            <p style={fontPontano}>lorengladisu@ltcmultiservices.com</p>
-            <p style={fontPontano}>09959808051 / 09516281271</p>
+            <p style={fontPontano}>ltc.tamsi@gmail.com</p>
+            <p style={fontPontano}>lorengladius@ltcmultiservices.com</p>
+            <p style={fontPontano}>+639516281271 / +639959808051</p>
           </FooterColumn>
 
           <FooterColumn title="Address">
-            <p style={fontPontano}>2/F 544 Curie Street,</p>
+            <p style={fontPontano}>2/F 5441 Currie Street,</p>
             <p style={fontPontano}>Palanan, Makati City</p>
           </FooterColumn>
 
           <FooterColumn title="Follow Us">
-            <p style={fontPontano}>Facebook</p>
-            <p style={fontPontano}>Email</p>
-            <p style={fontPontano}>LinkedIn</p>
+            <a href="https://www.facebook.com/profile.php?id=61571746334920" target="_blank" rel="noreferrer" style={fontPontano}>Facebook Page</a>
+            <a href="mailto:lorengladius@ltcmultiservices.com" style={fontPontano}>Email LTC Manpower</a>
           </FooterColumn>
         </div>
 
@@ -2201,6 +2291,7 @@ export default function ManpowerEmployeePayroll() {
           employeeEmail={employeeEmail}
           onClose={() => setSelectedRow(null)}
           onDownload={handleDownload}
+          onPrint={handlePrint}
         />
       ) : null}
     </div>

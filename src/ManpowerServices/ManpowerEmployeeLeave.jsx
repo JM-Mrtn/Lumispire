@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/LTCBanner.png";
+const HERO_IMAGE = "/ManpowerBanner.png";
 
 const EMPLOYEE_LOGIN_ROUTE = "/manpower-employee-login";
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
 const EMPLOYEE_PAYROLL_ROUTE = "/manpower-employee-payroll";
 const EMPLOYEE_LEAVE_ROUTE = "/manpower-employee-leave";
 const EMPLOYEE_PROFILE_ROUTE = "/manpower-employee-profile";
+const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
 
 function normalizeApiBase(raw) {
   const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
@@ -152,6 +153,7 @@ export default function ManpowerEmployeeLeave() {
   const [historyTypeFilter, setHistoryTypeFilter] = useState("all");
   const [historyDateFilter, setHistoryDateFilter] = useState("");
   const [historySortOrder, setHistorySortOrder] = useState("newest");
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   const fullName = useMemo(() => {
     return [
@@ -231,6 +233,27 @@ export default function ManpowerEmployeeLeave() {
     });
   }, [leaves, historyStatusFilter, historyTypeFilter, historyDateFilter, historySortOrder]);
 
+  const requestedDays = useMemo(() => {
+    if (!form.startDate || !form.endDate) return 0;
+    const start = new Date(`${form.startDate}T00:00:00`);
+    const end = new Date(`${form.endDate}T00:00:00`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
+    return Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+  }, [form.startDate, form.endDate]);
+
+  const overlappingLeave = useMemo(() => {
+    if (!form.startDate || !form.endDate) return null;
+    const requestedStart = new Date(`${form.startDate}T00:00:00`).getTime();
+    const requestedEnd = new Date(`${form.endDate}T23:59:59`).getTime();
+    return leaves.find((item) => {
+      const status = normalizeStatus(item?.status);
+      if (!["PENDING", "APPROVED"].includes(status)) return false;
+      const start = item?.startDate ? new Date(item.startDate).getTime() : NaN;
+      const end = item?.endDate ? new Date(item.endDate).getTime() : start;
+      return Number.isFinite(start) && Number.isFinite(end) && requestedStart <= end && requestedEnd >= start;
+    }) || null;
+  }, [form.startDate, form.endDate, leaves]);
+
   function clearHistoryFilters() {
     setHistoryStatusFilter("all");
     setHistoryTypeFilter("all");
@@ -264,11 +287,14 @@ export default function ManpowerEmployeeLeave() {
         throw new Error(data?.message || "Failed to load employee profile.");
       }
 
-      setEmployee(data.employee || null);
-      localStorage.setItem(
-        "manpowerEmployeeUser",
-        JSON.stringify(data.employee || null)
-      );
+      const nextEmployee = data.employee || null;
+      if (nextEmployee?.mustChangePassword) {
+        localStorage.setItem("manpowerEmployeeUser", JSON.stringify(nextEmployee));
+        navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
+        return;
+      }
+      setEmployee(nextEmployee);
+      localStorage.setItem("manpowerEmployeeUser", JSON.stringify(nextEmployee));
     } catch (error) {
       setMessage({
         success: "",
@@ -325,38 +351,40 @@ export default function ManpowerEmployeeLeave() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, navigate]);
 
-  async function submitLeave(event) {
+  function submitLeave(event) {
     event.preventDefault();
-
     setMessage({ success: "", error: "" });
 
-    if (!form.startDate) {
-      setMessage({ success: "", error: "Please select a start date." });
+    if (!form.startDate || !form.endDate) {
+      setMessage({ success: "", error: "Please select both the start and end dates." });
       return;
     }
-
-    if (!form.endDate) {
-      setMessage({ success: "", error: "Please select an end date." });
-      return;
-    }
-
     if (new Date(form.endDate).getTime() < new Date(form.startDate).getTime()) {
+      setMessage({ success: "", error: "End date must not be earlier than start date." });
+      return;
+    }
+    if (!form.reason.trim() || form.reason.trim().length < 10) {
+      setMessage({ success: "", error: "Please enter a clear reason with at least 10 characters." });
+      return;
+    }
+    if (form.reason.trim().length > 1000) {
+      setMessage({ success: "", error: "Reason must not exceed 1,000 characters." });
+      return;
+    }
+    if (overlappingLeave) {
       setMessage({
         success: "",
-        error: "End date must not be earlier than start date.",
+        error: `The selected dates overlap with an existing ${String(overlappingLeave.status || "pending").toLowerCase()} leave request.`,
       });
       return;
     }
+    setShowSubmitConfirm(true);
+  }
 
-    if (!form.reason.trim() || form.reason.trim().length < 5) {
-      setMessage({
-        success: "",
-        error: "Please enter a reason with at least 5 characters.",
-      });
-      return;
-    }
-
+  async function confirmSubmitLeave() {
+    setShowSubmitConfirm(false);
     setLeaveLoading(true);
+    setMessage({ success: "", error: "" });
 
     try {
       const res = await fetch(`${API_BASE}/manpower/employee/leaves`, {
@@ -372,36 +400,18 @@ export default function ManpowerEmployeeLeave() {
           reason: form.reason.trim(),
         }),
       });
-
       const data = await res.json().catch(() => ({}));
-
       if (res.status === 401 || res.status === 403) {
         logout();
         return;
       }
+      if (!res.ok) throw new Error(data?.message || "Failed to submit leave request.");
 
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to submit leave request.");
-      }
-
-      setMessage({
-        success: data?.message || "Leave request submitted successfully.",
-        error: "",
-      });
-
-      setForm({
-        leaveType: "Vacation Leave",
-        startDate: "",
-        endDate: "",
-        reason: "",
-      });
-
+      setMessage({ success: data?.message || "Leave request submitted successfully.", error: "" });
+      setForm({ leaveType: "Vacation Leave", startDate: "", endDate: "", reason: "" });
       await loadLeaves();
     } catch (error) {
-      setMessage({
-        success: "",
-        error: error?.message || "Failed to submit leave request.",
-      });
+      setMessage({ success: "", error: error?.message || "Failed to submit leave request." });
     } finally {
       setLeaveLoading(false);
     }
@@ -1399,11 +1409,22 @@ export default function ManpowerEmployeeLeave() {
                               }))
                             }
                             rows={6}
+                            maxLength={1000}
                             className={inputClass}
-                            placeholder="Write your reason for leave..."
+                            placeholder="Explain the reason for your leave request..."
                             required
                           />
+                          <span style={{ display: "block", marginTop: 6, color: "#667085", fontSize: 12 }}>
+                            {form.reason.length}/1000 characters
+                          </span>
                         </label>
+
+                        {requestedDays > 0 ? (
+                          <div style={{ padding: "12px 14px", borderRadius: 14, background: overlappingLeave ? "#fff4f4" : "#f0f8f3", border: `1px solid ${overlappingLeave ? "#efb7b7" : "#cbe2d2"}`, color: overlappingLeave ? "#8b2525" : "#245b3b", fontWeight: 700 }}>
+                            {requestedDays} calendar day{requestedDays === 1 ? "" : "s"} requested.
+                            {overlappingLeave ? " These dates overlap with an existing leave request." : " No overlapping pending or approved leave was found."}
+                          </div>
+                        ) : null}
 
                         <button
                           type="submit"
@@ -1411,7 +1432,7 @@ export default function ManpowerEmployeeLeave() {
                           className="mp-leave-btn mp-leave-btn-primary"
                           style={fontMontserrat}
                         >
-                          {leaveLoading ? "Submitting..." : "Submit Leave Request"}
+                          {leaveLoading ? "Submitting..." : "Review Leave Request"}
                         </button>
                       </div>
                     </div>
@@ -1573,20 +1594,19 @@ export default function ManpowerEmployeeLeave() {
           </FooterColumn>
 
           <FooterColumn title="Contact Information">
-            <p>ltc.tamis@gmail.com</p>
-            <p>lorengladisu@ltcmultiservices.com</p>
-            <p>09959808051 / 09516281271</p>
+            <p>ltc.tamsi@gmail.com</p>
+            <p>lorengladius@ltcmultiservices.com</p>
+            <p>+639516281271 / +639959808051</p>
           </FooterColumn>
 
           <FooterColumn title="Address">
-            <p>2/F 544 Curie Street,</p>
+            <p>2/F 5441 Currie Street,</p>
             <p>Palanan, Makati City</p>
           </FooterColumn>
 
           <FooterColumn title="Follow Us">
-            <p>Facebook</p>
-            <p>Email</p>
-            <p>LinkedIn</p>
+            <a href="https://www.facebook.com/profile.php?id=61571746334920" target="_blank" rel="noreferrer">Facebook Page</a>
+            <a href="mailto:lorengladius@ltcmultiservices.com">Email LTC Manpower</a>
           </FooterColumn>
         </div>
 
@@ -1595,6 +1615,26 @@ export default function ManpowerEmployeeLeave() {
           <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
         </div>
       </footer>
+
+      {showSubmitConfirm ? (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "grid", placeItems: "center", padding: 20, background: "rgba(3,24,15,.72)", backdropFilter: "blur(6px)" }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="leave-confirm-title" style={{ width: "min(520px,100%)", borderRadius: 24, background: "white", padding: 26, boxShadow: "0 30px 80px rgba(0,0,0,.28)" }}>
+            <p style={{ margin: 0, color: "#d7a84d", fontWeight: 900, textTransform: "uppercase", letterSpacing: ".12em", fontSize: 12 }}>Confirm request</p>
+            <h2 id="leave-confirm-title" style={{ margin: "8px 0 14px", color: "#0e3321", fontFamily: "'Montserrat', sans-serif" }}>Submit this leave request?</h2>
+            <div style={{ borderRadius: 16, background: "#f6faf7", border: "1px solid #dce9df", padding: 16, color: "#344b3d" }}>
+              <strong>{form.leaveType}</strong>
+              <p style={{ margin: "6px 0 0" }}>{formatDate(form.startDate)} - {formatDate(form.endDate)}</p>
+              <p style={{ margin: "4px 0 0" }}>{requestedDays} calendar day{requestedDays === 1 ? "" : "s"}</p>
+              <p style={{ margin: "10px 0 0", whiteSpace: "pre-wrap" }}>{form.reason.trim()}</p>
+            </div>
+            <p style={{ color: "#667085", fontSize: 13 }}>HR will review this request. Submitted details cannot be edited from the employee portal.</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => setShowSubmitConfirm(false)} className="mp-leave-btn" style={{ background: "#eef2ef", color: "#244532" }}>Go Back</button>
+              <button type="button" onClick={confirmSubmitLeave} className="mp-leave-btn mp-leave-btn-primary">Confirm and Submit</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

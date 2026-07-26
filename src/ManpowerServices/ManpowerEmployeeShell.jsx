@@ -46,6 +46,7 @@ function FooterColumn({ title, children }) {
 export default function ManpowerEmployeeShell({ active = "home", children }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   function goTo(path) {
     setMenuOpen(false);
@@ -103,7 +104,7 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={logout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="hidden rounded-full bg-[#315b42] px-5 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-[#254934] lg:inline-flex"
             >
               Logout
@@ -172,7 +173,7 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
 
               <button
                 type="button"
-                onClick={logout}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="py-2 text-left text-red-700"
               >
                 Logout
@@ -240,20 +241,19 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
             </FooterColumn>
 
             <FooterColumn title="Contact Information">
-              <p>ltc.tamis@gmail.com</p>
-              <p>lorengladisu@ltcmultiservices.com</p>
-              <p>09959808051 / 09516281271</p>
+              <p>ltc.tamsi@gmail.com</p>
+              <p>lorengladius@ltcmultiservices.com</p>
+              <p>+639516281271 / +639959808051</p>
             </FooterColumn>
 
             <FooterColumn title="Address">
-              <p>2/F 544 Curie Street,</p>
+              <p>2/F 5441 Currie Street,</p>
               <p>Palanan, Makati City</p>
             </FooterColumn>
 
             <FooterColumn title="Follow Us">
-              <p>Facebook</p>
-              <p>Email</p>
-              <p>LinkedIn</p>
+              <a href="https://www.facebook.com/profile.php?id=61571746334920" target="_blank" rel="noreferrer" className="block hover:text-[#315b42]">Facebook Page</a>
+              <a href="mailto:lorengladius@ltcmultiservices.com" className="block hover:text-[#315b42]">Email LTC Manpower</a>
             </FooterColumn>
           </div>
 
@@ -263,6 +263,19 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
           </div>
         </div>
       </footer>
+
+      {showLogoutConfirm ? (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-5 backdrop-blur-sm">
+          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-[26px] bg-white p-7 shadow-2xl">
+            <h2 className="text-2xl font-black text-[#24352c]">Sign out of the Employee Portal?</h2>
+            <p className="mt-3 text-sm leading-6 text-[#56695b]">You will need to sign in again to view payroll, leave, and profile information.</p>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-xl border border-[#91a691] px-5 py-2.5 text-sm font-bold text-[#345240]">Stay Signed In</button>
+              <button type="button" onClick={logout} className="rounded-xl bg-[#315b42] px-5 py-2.5 text-sm font-black text-white">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

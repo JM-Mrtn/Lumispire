@@ -34,6 +34,7 @@ const DEFAULT_VACANCIES = [
   "Messenger",
   "Forklift Operator",
   "Janitor",
+  "Construction Worker",
 ];
 
 const ATTENDANCE_FIELDS = [
@@ -471,6 +472,7 @@ function HalfPayrollTable({
   result,
   isEditing,
   isLoading,
+  isSaving,
   onEdit,
   onTopLevelChange,
   onAttendanceChange,
@@ -626,9 +628,10 @@ function HalfPayrollTable({
             <button
               type="button"
               onClick={onSave}
-              className="mt-4 w-full rounded-xl bg-[#395345] px-4 py-3 text-xs font-black text-white transition hover:bg-[#2c4136]"
+              disabled={isSaving || isLoading}
+              className="mt-4 w-full rounded-xl bg-[#395345] px-4 py-3 text-xs font-black text-white transition hover:bg-[#2c4136] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {hasSavedRecord ? `Update ${title}` : `Save ${title}`}
+              {isSaving ? "Saving..." : hasSavedRecord ? `Update ${title}` : `Save ${title}`}
             </button>
           ) : null}
 
@@ -775,6 +778,16 @@ export default function ManpowerHrPayroll() {
   const [searchValue, setSearchValue] = useState("");
   const [page, setPage] = useState(1);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [payrollMonth, setPayrollMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [savingHalf, setSavingHalf] = useState("");
+  const [dirtyHalves, setDirtyHalves] = useState({ firstHalf: false, secondHalf: false });
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loadingSelectedPayroll, setLoadingSelectedPayroll] = useState(false);
@@ -797,13 +810,15 @@ export default function ManpowerHrPayroll() {
 
   const itemsPerPage = 5;
 
-  const vacancies = jobs.length ? jobs.map((job) => job.title) : DEFAULT_VACANCIES;
+  const vacancies = jobs.length
+    ? Array.from(new Set(jobs.map((job) => (typeof job === "string" ? job : job?.title || job?.name || "")).filter(Boolean)))
+    : DEFAULT_VACANCIES;
 
   const hrEmail =
     hrUser?.email ||
     hrUser?.companyEmail ||
     hrUser?.username ||
-    "traineeemail@tamsi.com";
+    "ltc.tamsi@gmail.com";
 
   useEffect(() => {
     let active = true;
@@ -818,7 +833,13 @@ export default function ManpowerHrPayroll() {
         }
 
         if (active) {
-          setJobs(Array.isArray(data?.jobs) ? data.jobs : []);
+          setJobs(
+            Array.isArray(data?.jobs)
+              ? data.jobs
+              : Array.isArray(data?.vacancies)
+              ? data.vacancies
+              : []
+          );
         }
       } catch (error) {
         console.error("loadManpowerJobs error:", error);
@@ -851,6 +872,58 @@ export default function ManpowerHrPayroll() {
     clearHrSession();
     setToken("");
     navigate("/manpower-hr-login", { replace: true });
+  }
+
+  function notify(type, message) {
+    setFeedback({ type, message });
+    window.setTimeout(() => {
+      setFeedback((current) => current.message === message ? { type: "", message: "" } : current);
+    }, 4500);
+  }
+
+  function baseDateFromMonth(monthKey = payrollMonth) {
+    const [year, month] = String(monthKey).split("-").map(Number);
+    return Number.isFinite(year) && Number.isFinite(month) ? new Date(year, month - 1, 1) : new Date();
+  }
+
+  function validatePayrollForm(form) {
+    if (!form?.cutoffStart || !form?.cutoffEnd) return "Cutoff start and end dates are required.";
+    const start = new Date(`${form.cutoffStart}T00:00:00`);
+    const end = new Date(`${form.cutoffEnd}T00:00:00`);
+    if (start > end) return "Cutoff end date cannot be earlier than the start date.";
+    for (const field of ATTENDANCE_FIELDS) {
+      const value = Number(form?.attendance?.[field.key] || 0);
+      if (!Number.isFinite(value) || value < 0) return `${field.label} cannot be negative.`;
+      if (field.key !== "absentDays" && value > 400) return `${field.label} is unusually high. Enter 400 hours or less.`;
+      if (field.key === "absentDays" && value > 31) return "Absent days cannot exceed 31.";
+    }
+    return "";
+  }
+
+  function exportEmployeePayrollCsv() {
+    if (!selectedEmployee || !employeePayrollRows.length) {
+      notify("error", "No saved payroll records are available to export.");
+      return;
+    }
+    const headers = ["Employee", "Email", "Cutoff Start", "Cutoff End", "Gross Pay", "Deductions", "Net Pay", "Updated At"];
+    const rows = employeePayrollRows.map((row) => [
+      getEmployeeName(selectedEmployee),
+      selectedEmployee?.companyEmail || selectedEmployee?.email || "",
+      formatDateInput(row?.cutoffStart),
+      formatDateInput(row?.cutoffEnd),
+      row?.computed?.grossPay || 0,
+      row?.computed?.totalDeductions || 0,
+      row?.computed?.netPay || 0,
+      formatDateTime(row?.updatedAt || row?.createdAt),
+    ]);
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `payroll-${getEmployeeName(selectedEmployee).replace(/\s+/g, "-").toLowerCase()}-${payrollMonth}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    notify("success", "Payroll records exported successfully.");
   }
 
   async function loadEmployees() {
@@ -925,6 +998,7 @@ export default function ManpowerHrPayroll() {
   );
 
   function updatePayrollTopLevel(halfKey, key, value) {
+    setDirtyHalves((prev) => ({ ...prev, [halfKey]: true }));
     setPayrollForms((prev) => ({
       ...prev,
       [halfKey]: {
@@ -935,6 +1009,7 @@ export default function ManpowerHrPayroll() {
   }
 
   function updatePayrollField(halfKey, group, key, value) {
+    setDirtyHalves((prev) => ({ ...prev, [halfKey]: true }));
     setPayrollForms((prev) => ({
       ...prev,
       [halfKey]: {
@@ -999,7 +1074,7 @@ export default function ManpowerHrPayroll() {
         secondHalf: !secondSaved,
       });
     } catch (error) {
-      alert(error?.message || "Failed to load saved payroll.");
+      notify("error", error?.message || "Failed to load saved payroll.");
 
       setPayrollForms(baseForms);
 
@@ -1020,7 +1095,7 @@ export default function ManpowerHrPayroll() {
   }
 
   function openPayrollModal(employee) {
-    const baseForms = createDualPayrollForms(new Date());
+    const baseForms = createDualPayrollForms(baseDateFromMonth());
 
     setSelectedEmployee(employee);
 
@@ -1037,71 +1112,88 @@ export default function ManpowerHrPayroll() {
     });
 
     setEmployeePayrollRows([]);
+    setDirtyHalves({ firstHalf: false, secondHalf: false });
+    setShowCloseConfirm(false);
 
     loadPayrollForEmployee(employee, baseForms);
   }
 
+  function changePayrollMonth(value) {
+    setPayrollMonth(value);
+    if (!selectedEmployee) return;
+    const baseForms = createDualPayrollForms(baseDateFromMonth(value));
+    setPayrollForms(baseForms);
+    setPayrollResults({ firstHalf: null, secondHalf: null });
+    setEditMode({ firstHalf: true, secondHalf: true });
+    setDirtyHalves({ firstHalf: false, secondHalf: false });
+    loadPayrollForEmployee(selectedEmployee, baseForms);
+  }
+
+  function requestClosePayroll() {
+    if (dirtyHalves.firstHalf || dirtyHalves.secondHalf) {
+      setShowCloseConfirm(true);
+      return;
+    }
+    setSelectedEmployee(null);
+  }
+
   async function savePayroll(halfKey) {
-    if (!selectedEmployee?._id) return;
+    if (!selectedEmployee?._id || savingHalf) return;
 
     const currentForm = payrollForms[halfKey];
-
-    const payload = {
-      cutoffStart: currentForm.cutoffStart,
-      cutoffEnd: currentForm.cutoffEnd,
-      wholeMonthSalary: 0,
-      attendance: currentForm.attendance,
-      adjustments: {
-        allowAutoGovernmentDeductions:
-          currentForm.adjustments.allowAutoGovernmentDeductions,
-      },
-    };
-
-    const res = await fetch(
-      `${API_BASE}/manpower/hr/payroll/${selectedEmployee._id}`,
-      {
-        method: "POST",
-        headers: {
-          ...hrHeaders(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      alert(data?.message || `Failed to save ${halfKey}.`);
+    const validationError = validatePayrollForm(currentForm);
+    if (validationError) {
+      notify("error", validationError);
       return;
     }
 
-    const savedPayroll = data.payroll;
+    setSavingHalf(halfKey);
 
-    setPayrollResults((prev) => ({
-      ...prev,
-      [halfKey]: savedPayroll,
-    }));
+    try {
+      const payload = {
+        cutoffStart: currentForm.cutoffStart,
+        cutoffEnd: currentForm.cutoffEnd,
+        wholeMonthSalary: 0,
+        attendance: currentForm.attendance,
+        adjustments: {
+          allowAutoGovernmentDeductions: currentForm.adjustments.allowAutoGovernmentDeductions,
+        },
+        status: "CALCULATED",
+      };
 
-    setPayrollForms((prev) => ({
-      ...prev,
-      [halfKey]: buildFormFromPayroll(savedPayroll),
-    }));
+      const res = await fetch(`${API_BASE}/manpower/hr/payroll/${selectedEmployee._id}`, {
+        method: "POST",
+        headers: { ...hrHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
+      if (!res.ok) throw new Error(data?.message || `Failed to save ${halfKey}.`);
 
-    setEditMode((prev) => ({
-      ...prev,
-      [halfKey]: false,
-    }));
-
-    setEmployeePayrollRows((prev) => upsertPayrollRow(prev, savedPayroll));
-
-    alert(`${halfKey === "firstHalf" ? "1st Half" : "2nd Half"} payroll saved.`);
+      const savedPayroll = data.payroll;
+      setPayrollResults((prev) => ({ ...prev, [halfKey]: savedPayroll }));
+      setPayrollForms((prev) => ({ ...prev, [halfKey]: buildFormFromPayroll(savedPayroll) }));
+      setEditMode((prev) => ({ ...prev, [halfKey]: false }));
+      setDirtyHalves((prev) => ({ ...prev, [halfKey]: false }));
+      setEmployeePayrollRows((prev) => upsertPayrollRow(prev, savedPayroll));
+      notify("success", `${halfKey === "firstHalf" ? "1st Half" : "2nd Half"} payroll saved and calculated.`);
+    } catch (error) {
+      notify("error", error?.message || "Failed to save payroll.");
+    } finally {
+      setSavingHalf("");
+    }
   }
 
   return (
     <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+      {feedback.message ? <div className={`fixed right-5 top-5 z-[90] max-w-md rounded-2xl border px-5 py-4 text-sm font-black shadow-[0_22px_60px_rgba(8,39,25,0.24)] ${feedback.type === "error" ? "border-[#efc9c9] bg-[#fff2f2] text-[#912f2f]" : "border-[#cfe6d5] bg-white text-[#174a30]"}`}>{feedback.message}</div> : null}
+      {mobileSidebarOpen ? <button type="button" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} className="fixed inset-0 z-40 bg-[#071f14]/60 backdrop-blur-sm lg:hidden" /> : null}
       <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+        <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[270px] flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)] transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <button type="button" onClick={() => setMobileSidebarOpen(false)} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl font-black lg:hidden">×</button>
           <div className="text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
               Manpower Services HR
@@ -1139,7 +1231,7 @@ export default function ManpowerHrPayroll() {
           <div className="border-t border-white/15 pt-7">
             <button
               type="button"
-              onClick={logout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="group flex min-h-[46px] w-full items-center gap-3 rounded-[23px] bg-white/10 px-5 text-left text-[12px] font-black capitalize tracking-tight text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#f4d484] hover:text-[#071f14]"
             >
               <span className="grid h-7 w-7 shrink-0 place-items-center text-white/90 transition duration-300 group-hover:text-[#071f14]">
@@ -1147,13 +1239,14 @@ export default function ManpowerHrPayroll() {
               </span>
               <span>Sign out</span>
             </button>
-            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
-              © LTC Manpower Services
-            </p>
+            <p className="mt-4 break-all text-center text-[11px] font-bold text-white/65">{hrEmail}</p>
+            <button type="button" onClick={() => navigate("/manpower-services")} className="mt-3 w-full text-center text-[11px] font-black uppercase tracking-[0.12em] text-[#f4d484] hover:text-white">View Public Website</button>
+            <p className="mt-4 text-center text-[11px] font-bold text-white/55">© LTC Manpower Services</p>
           </div>
         </aside>
 
         <main className="min-w-0 px-5 py-6 lg:px-8">
+          <div className="mb-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm lg:hidden"><button type="button" onClick={() => setMobileSidebarOpen(true)} className="rounded-full bg-[#082719] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-white">Menu</button><p className="text-sm font-black text-[#071f14]">Payroll Management</p></div>
           <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
             <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
             <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
@@ -1280,7 +1373,7 @@ export default function ManpowerHrPayroll() {
                           {employee.companyEmail ||
                             employee.email ||
                             employee.personalEmail ||
-                            "traineeemail@tamsi.com"}
+                            "No email provided"}
                         </p>
 
                         <p className="min-w-0 text-[13px] font-black leading-5 text-[#071f14]">
@@ -1350,6 +1443,14 @@ export default function ManpowerHrPayroll() {
         </main>
       </div>
 
+      {showLogoutConfirm ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#071f14]/70 p-4 backdrop-blur-sm"><div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl"><p className="text-xs font-black uppercase tracking-[0.2em] text-[#d7a84d]">Confirm Sign Out</p><h2 className="mt-2 text-2xl font-black">Leave the HR portal?</h2><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-full bg-[#eef3ea] px-5 py-3 text-sm font-black">Cancel</button><button type="button" onClick={logout} className="rounded-full bg-[#8b3232] px-5 py-3 text-sm font-black text-white">Sign Out</button></div></div></div>
+      ) : null}
+
+      {showCloseConfirm ? (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#071f14]/75 p-4 backdrop-blur-sm"><div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl"><p className="text-xs font-black uppercase tracking-[0.2em] text-[#d7a84d]">Unsaved Changes</p><h2 className="mt-2 text-2xl font-black">Close payroll without saving?</h2><p className="mt-3 text-sm font-semibold text-[#071f14]/55">Changes made to the current payroll form will be discarded.</p><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setShowCloseConfirm(false)} className="rounded-full bg-[#eef3ea] px-5 py-3 text-sm font-black">Continue Editing</button><button type="button" onClick={() => { setShowCloseConfirm(false); setSelectedEmployee(null); setDirtyHalves({ firstHalf: false, secondHalf: false }); }} className="rounded-full bg-[#8b3232] px-5 py-3 text-sm font-black text-white">Discard Changes</button></div></div></div>
+      ) : null}
+
       {selectedEmployee ? (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-[#071f14]/70 px-3 py-5 backdrop-blur-sm">
           <div className="mx-auto max-w-[1500px] animate-[payrollModalIn_0.35s_ease-out] overflow-hidden rounded-[32px] bg-[#edf3ee] text-[#071f14] shadow-[0_35px_100px_rgba(0,0,0,0.35)] ring-1 ring-white/40">
@@ -1378,7 +1479,7 @@ export default function ManpowerHrPayroll() {
 
                 <button
                   type="button"
-                  onClick={() => setSelectedEmployee(null)}
+                  onClick={requestClosePayroll}
                   className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-white px-6 text-[12px] font-black uppercase tracking-[0.08em] text-[#071f14] transition hover:-translate-y-0.5 hover:bg-[#f4d484]"
                 >
                   Close
@@ -1387,6 +1488,11 @@ export default function ManpowerHrPayroll() {
             </div>
 
             <div className="p-4 md:p-6">
+              <div className="mb-5 grid gap-3 rounded-2xl border border-[#d7e2da] bg-white p-4 sm:grid-cols-[220px_1fr_auto] sm:items-end">
+                <label className="text-xs font-black uppercase tracking-[0.12em] text-[#395345]">Payroll Month<input type="month" value={payrollMonth} onChange={(event) => changePayrollMonth(event.target.value)} className="mt-2 w-full rounded-xl border border-[#d7e2da] px-3 py-2 text-sm font-bold outline-none focus:border-[#d7a84d]" /></label>
+                <p className="text-sm font-semibold text-[#071f14]/55">Select a month to load or encode both payroll cutoffs. Saved records are matched by employee and cutoff dates.</p>
+                <button type="button" onClick={exportEmployeePayrollCsv} className="rounded-full border border-[#174a30] px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-[#174a30] hover:bg-[#eef4ef]">Export CSV</button>
+              </div>
               {employeePayrollRows.length ? (
                 <div className="mb-5 rounded-2xl border border-[#d7e2da] bg-white px-5 py-4 text-sm font-bold text-[#174a30] shadow-[0_12px_28px_rgba(8,39,25,0.06)]">
                   Saved payroll records found: {employeePayrollRows.length}
@@ -1400,6 +1506,7 @@ export default function ManpowerHrPayroll() {
                   result={payrollResults.firstHalf}
                   isEditing={editMode.firstHalf}
                   isLoading={loadingSelectedPayroll}
+                  isSaving={savingHalf === "firstHalf"}
                   onEdit={() =>
                     setEditMode((prev) => ({
                       ...prev,
@@ -1429,6 +1536,7 @@ export default function ManpowerHrPayroll() {
                   result={payrollResults.secondHalf}
                   isEditing={editMode.secondHalf}
                   isLoading={loadingSelectedPayroll}
+                  isSaving={savingHalf === "secondHalf"}
                   onEdit={() =>
                     setEditMode((prev) => ({
                       ...prev,

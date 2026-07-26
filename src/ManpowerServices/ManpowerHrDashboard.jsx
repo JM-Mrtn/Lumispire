@@ -34,6 +34,7 @@ const VACANCIES = [
   "Messenger",
   "Forklift Operator",
   "Janitor",
+  "Construction Worker",
 ];
 
 function getHrToken() {
@@ -292,6 +293,11 @@ export default function ManpowerHrDashboard() {
   const [hrUser] = useState(getHrUser());
   const [applications, setApplications] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [vacancyNames, setVacancyNames] = useState(VACANCIES);
+  const [leaves, setLeaves] = useState([]);
+  const [payrollRows, setPayrollRows] = useState([]);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [vacancyFilter, setVacancyFilter] = useState("all");
@@ -305,7 +311,7 @@ export default function ManpowerHrDashboard() {
     hrUser?.email ||
     hrUser?.companyEmail ||
     hrUser?.username ||
-    "traineeemail@tamsi.com";
+    "ltc.tamsi@gmail.com";
 
   function logout() {
     clearHrSession();
@@ -347,12 +353,57 @@ export default function ManpowerHrDashboard() {
     }
   }
 
+  async function loadVacancies() {
+    try {
+      const res = await fetch(`${API_BASE}/manpower/vacancies`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return;
+      const records = Array.isArray(data?.jobs)
+        ? data.jobs
+        : Array.isArray(data?.vacancies)
+        ? data.vacancies
+        : [];
+      const names = records
+        .map((item) => (typeof item === "string" ? item : item?.title || item?.name || ""))
+        .filter(Boolean);
+      if (names.length) setVacancyNames(Array.from(new Set(names)));
+    } catch {
+      // Keep the safe fallback list.
+    }
+  }
+
+  async function loadLeaves() {
+    const res = await fetch(`${API_BASE}/manpower/hr/leaves`, { headers: hrHeaders() });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401 || res.status === 403) {
+      logout();
+      return;
+    }
+    if (res.ok) setLeaves(Array.isArray(data?.leaves) ? data.leaves : []);
+  }
+
+  async function loadPayrollRows() {
+    const res = await fetch(`${API_BASE}/manpower/hr/payroll`, { headers: hrHeaders() });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401 || res.status === 403) {
+      logout();
+      return;
+    }
+    if (res.ok) setPayrollRows(Array.isArray(data?.payrolls) ? data.payrolls : []);
+  }
+
   async function refreshDashboard() {
     setLoading(true);
     setStatusMessage("");
 
     try {
-      await Promise.all([loadApplications(), loadEmployees()]);
+      await Promise.all([
+        loadApplications(),
+        loadEmployees(),
+        loadVacancies(),
+        loadLeaves(),
+        loadPayrollRows(),
+      ]);
     } catch (error) {
       setStatusMessage(error?.message || "Failed to refresh dashboard.");
     } finally {
@@ -402,11 +453,24 @@ export default function ManpowerHrDashboard() {
       totalEmployees: employees.length,
       activeEmployees: employees.filter((item) => item.active !== false).length,
       inactiveEmployees: employees.filter((item) => item.active === false).length,
+      pendingLeaves: leaves.filter((item) => String(item?.status || "").toUpperCase() === "PENDING").length,
+      interviewsToday: applications.filter((row) => {
+        const scheduled = row?.interview?.scheduledAt;
+        if (!scheduled) return false;
+        const date = new Date(scheduled);
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+      }).length,
+      incompleteRequirements: applications.filter((row) => {
+        const required = ["validId", "resume", "nbi", "barangayClearance"];
+        return required.some((key) => !row?.requirements?.[key]?.fileId && !row?.requirements?.[key]?.filename);
+      }).length,
+      payrollRecords: payrollRows.length,
     };
-  }, [applications, employees]);
+  }, [applications, employees, leaves, payrollRows]);
 
   const vacancyRows = useMemo(() => {
-    return VACANCIES.map((vacancy) => {
+    return vacancyNames.map((vacancy) => {
       const applicants = applications.filter(
         (row) => row.vacancy === vacancy
       ).length;
@@ -419,7 +483,7 @@ export default function ManpowerHrDashboard() {
         hired,
       };
     }).filter((row) => row.applicants > 0 || row.hired > 0);
-  }, [applications, employees]);
+  }, [applications, employees, vacancyNames]);
 
   const availableVacancies = useMemo(() => {
     const vacancies = employees
@@ -517,24 +581,6 @@ export default function ManpowerHrDashboard() {
     }
   }, [currentPage, totalEmployeePages]);
 
-  function updateEmployeeStatus(employee, active) {
-    setEmployees((prev) =>
-      prev.map((item) =>
-        item._id === employee._id || item.id === employee.id
-          ? {
-              ...item,
-              active,
-            }
-          : item
-      )
-    );
-
-    setStatusMessage(
-      active
-        ? "Employee marked as active on this dashboard."
-        : "Employee marked as inactive on this dashboard."
-    );
-  }
 
   const averageDailyRate = employees.length
     ? formatMoney(
@@ -547,8 +593,12 @@ export default function ManpowerHrDashboard() {
 
   return (
     <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+      {mobileSidebarOpen ? (
+        <button type="button" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} className="fixed inset-0 z-40 bg-[#071f14]/60 backdrop-blur-sm lg:hidden" />
+      ) : null}
       <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+        <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[270px] flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)] transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <button type="button" onClick={() => setMobileSidebarOpen(false)} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl font-black lg:hidden">×</button>
           <div className="text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
               Manpower Services HR
@@ -586,7 +636,7 @@ export default function ManpowerHrDashboard() {
           <div className="border-t border-white/15 pt-7">
             <button
               type="button"
-              onClick={logout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="group flex min-h-[52px] w-full items-center gap-4 rounded-[26px] bg-white/10 px-6 text-left text-[13px] font-black capitalize tracking-tight text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#f4d484] hover:text-[#071f14]"
             >
               <span className="grid h-8 w-8 shrink-0 place-items-center text-white/90 transition duration-300 group-hover:text-[#071f14]">
@@ -594,13 +644,17 @@ export default function ManpowerHrDashboard() {
               </span>
               <span>Sign out</span>
             </button>
-            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
-              © LTC Manpower Services
-            </p>
+            <p className="mt-4 break-all text-center text-[11px] font-bold text-white/65">{hrEmail}</p>
+            <button type="button" onClick={() => navigate("/manpower-services")} className="mt-3 w-full text-center text-[11px] font-black uppercase tracking-[0.12em] text-[#f4d484] hover:text-white">View Public Website</button>
+            <p className="mt-4 text-center text-[11px] font-bold text-white/55">© LTC Manpower Services</p>
           </div>
         </aside>
 
         <main className="min-w-0 px-5 py-6 lg:px-8">
+          <div className="mb-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm lg:hidden">
+            <button type="button" onClick={() => setMobileSidebarOpen(true)} className="rounded-full bg-[#082719] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-white">Menu</button>
+            <p className="text-sm font-black text-[#071f14]">HR Dashboard</p>
+          </div>
           <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
             <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
             <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
@@ -672,6 +726,40 @@ export default function ManpowerHrDashboard() {
             </SectionCard>
 
             <CalendarPanel />
+          </section>
+
+          <section className="mt-7 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            <SectionCard eyebrow="Action Center" title="HR Work Queue">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button type="button" onClick={() => navigate("/manpower-hr-applications")} className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] p-4 text-left transition hover:-translate-y-1 hover:border-[#d7a84d] hover:bg-white">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#174a30]">Recruitment</p>
+                  <p className="mt-2 text-2xl font-black text-[#071f14]">{summary.pending + summary.forReview}</p>
+                  <p className="text-sm font-bold text-[#071f14]/55">applications awaiting review</p>
+                </button>
+                <button type="button" onClick={() => navigate("/manpower-hr-applications")} className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] p-4 text-left transition hover:-translate-y-1 hover:border-[#d7a84d] hover:bg-white">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#174a30]">Today</p>
+                  <p className="mt-2 text-2xl font-black text-[#071f14]">{summary.interviewsToday}</p>
+                  <p className="text-sm font-bold text-[#071f14]/55">interviews scheduled today</p>
+                </button>
+                <button type="button" onClick={() => navigate("/manpower-hr-leaves")} className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] p-4 text-left transition hover:-translate-y-1 hover:border-[#d7a84d] hover:bg-white">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#174a30]">Leave</p>
+                  <p className="mt-2 text-2xl font-black text-[#071f14]">{summary.pendingLeaves}</p>
+                  <p className="text-sm font-bold text-[#071f14]/55">pending leave requests</p>
+                </button>
+                <button type="button" onClick={() => navigate("/manpower-hr-payroll")} className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] p-4 text-left transition hover:-translate-y-1 hover:border-[#d7a84d] hover:bg-white">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#174a30]">Payroll</p>
+                  <p className="mt-2 text-2xl font-black text-[#071f14]">{summary.payrollRecords}</p>
+                  <p className="text-sm font-bold text-[#071f14]/55">saved payroll records</p>
+                </button>
+              </div>
+            </SectionCard>
+            <SectionCard eyebrow="Attention" title="Items to Review">
+              <div className="space-y-3 text-sm font-bold text-[#071f14]">
+                <div className="rounded-2xl bg-[#fff4e8] px-4 py-3 text-[#8a5206]">{summary.incompleteRequirements} applications may have incomplete core requirements.</div>
+                <div className="rounded-2xl bg-[#eef4ff] px-4 py-3 text-[#244b92]">{summary.interviewScheduled} applicants currently have scheduled interviews.</div>
+                <div className="rounded-2xl bg-[#f8fbf9] px-4 py-3 text-[#174a30]">Employee account activation and deactivation are handled in the Admin portal.</div>
+              </div>
+            </SectionCard>
           </section>
 
           <SectionCard
@@ -781,7 +869,7 @@ export default function ManpowerHrDashboard() {
                           {employee.companyEmail ||
                             employee.email ||
                             employee.personalEmail ||
-                            "traineeemail@tamsi.com"}
+                            "No email provided"}
                         </p>
 
                         <p className="text-[13px] font-black text-[#071f14]">
@@ -798,30 +886,15 @@ export default function ManpowerHrDashboard() {
                           {active ? "Active" : "Inactive"}
                         </span>
 
-                        <div className="flex flex-wrap gap-2 md:justify-end">
+                        <div className="flex flex-col gap-2 md:items-end">
                           <button
                             type="button"
-                            onClick={() => updateEmployeeStatus(employee, true)}
-                            className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.05em] transition ${
-                              active
-                                ? "bg-[#dff5e6] text-[#0f6b35]"
-                                : "bg-[#eef4ef] text-[#174a30] hover:bg-[#dff5e6] hover:text-[#0f6b35]"
-                            }`}
+                            onClick={() => navigate("/manpower-hr-payroll", { state: { employeeId } })}
+                            className="rounded-full bg-[#082719] px-4 py-2 text-[11px] font-black uppercase tracking-[0.05em] text-white transition hover:-translate-y-0.5 hover:bg-[#174a30]"
                           >
-                            Activate
+                            Open Payroll
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() => updateEmployeeStatus(employee, false)}
-                            className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.05em] transition ${
-                              !active
-                                ? "bg-[#fee2e2] text-[#9d2f2f]"
-                                : "bg-[#fff1f1] text-[#9d2f2f] hover:bg-[#fee2e2]"
-                            }`}
-                          >
-                            Deactivate
-                          </button>
+                          <span className="text-[10px] font-bold text-[#071f14]/45">Account access is managed by Admin.</span>
                         </div>
                       </article>
                     );
@@ -951,6 +1024,20 @@ export default function ManpowerHrDashboard() {
           </section>
         </main>
       </div>
+
+      {showLogoutConfirm ? (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#071f14]/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-[0_34px_90px_rgba(8,39,25,0.35)]">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d7a84d]">Confirm Sign Out</p>
+            <h2 className="mt-2 text-2xl font-black text-[#071f14]">Leave the HR portal?</h2>
+            <p className="mt-3 text-sm font-semibold leading-6 text-[#071f14]/60">You will need to sign in again to continue managing HR records.</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-full bg-[#eef3ea] px-5 py-3 text-sm font-black text-[#395345]">Cancel</button>
+              <button type="button" onClick={logout} className="rounded-full bg-[#8b3232] px-5 py-3 text-sm font-black text-white">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

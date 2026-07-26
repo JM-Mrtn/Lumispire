@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const HERO_IMAGE = "/ManpowerBanner.png";
@@ -7,7 +7,7 @@ const LOGO_IMAGE = "/ManpowerLogo.png";
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
 const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
-const EMPLOYEE_FORGOT_PASSWORD_ROUTE = "/manpower-employee-forgot-password";
+const REMEMBER_EMAIL_KEY = "manpowerEmployeeRememberedEmail";
 
 function normalizeApiBase(raw) {
   const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
@@ -69,7 +69,7 @@ function EyeOffIcon() {
 const manpowerLoginStyles = `
   @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&display=swap");
 
-  .ltc-trainee-login-page {
+  .manpower-employee-login-page {
     --green-950: #071f14;
     --green-900: #0e3321;
     --green-800: #174a30;
@@ -94,14 +94,14 @@ const manpowerLoginStyles = `
     font-family: "Inter", Arial, sans-serif;
   }
 
-  .ltc-trainee-login-page * { box-sizing: border-box; }
+  .manpower-employee-login-page * { box-sizing: border-box; }
 
-  .ltc-trainee-login-container {
+  .manpower-employee-login-container {
     width: min(1180px, 92%);
     margin: auto;
   }
 
-  .ltc-trainee-login-header {
+  .manpower-employee-login-header {
     position: sticky;
     top: 0;
     z-index: 50;
@@ -112,7 +112,7 @@ const manpowerLoginStyles = `
     margin: 0;
   }
 
-  .ltc-trainee-login-header .ltc-trainee-login-container {
+  .manpower-employee-login-header .manpower-employee-login-container {
     width: 100%;
     max-width: none;
     margin: 0;
@@ -120,7 +120,7 @@ const manpowerLoginStyles = `
     padding-right: 32px;
   }
 
-  .ltc-trainee-login-nav {
+  .manpower-employee-login-nav {
     min-height: 76px;
     display: flex;
     justify-content: space-between;
@@ -128,7 +128,7 @@ const manpowerLoginStyles = `
     gap: 24px;
   }
 
-  .ltc-trainee-login-logo {
+  .manpower-employee-login-logo {
     display: flex;
     align-items: center;
     gap: 13px;
@@ -141,7 +141,7 @@ const manpowerLoginStyles = `
     text-decoration: none;
   }
 
-  .ltc-trainee-login-logo-icon {
+  .manpower-employee-login-logo-icon {
     width: 42px;
     height: 42px;
     border-radius: 999px;
@@ -150,7 +150,7 @@ const manpowerLoginStyles = `
     box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
   }
 
-  .ltc-trainee-login-logo h1 {
+  .manpower-employee-login-logo h1 {
     font-size: 18px;
     line-height: 1;
     font-weight: 900;
@@ -159,19 +159,19 @@ const manpowerLoginStyles = `
     margin: 0;
   }
 
-  .ltc-trainee-login-logo p {
+  .manpower-employee-login-logo p {
     font-size: 11px;
     color: rgba(255,255,255,.72);
     margin: 3px 0 0;
   }
 
-  .ltc-trainee-login-desktop-nav {
+  .manpower-employee-login-desktop-nav {
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  .ltc-trainee-login-nav-link {
+  .manpower-employee-login-nav-link {
     color: rgba(255,255,255,.78);
     font-size: 12px;
     font-weight: 800;
@@ -186,20 +186,20 @@ const manpowerLoginStyles = `
     text-decoration: none;
   }
 
-  .ltc-trainee-login-nav-link:hover,
-  .ltc-trainee-login-nav-link.active {
+  .manpower-employee-login-nav-link:hover,
+  .manpower-employee-login-nav-link.active {
     color: white;
     background: rgba(255,255,255,.13);
     transform: translateY(-1px);
   }
 
-  .ltc-trainee-login-back-button {
+  .manpower-employee-login-back-button {
     color: #102418;
     background: linear-gradient(135deg,#f4d484,#d7a84d);
     box-shadow: 0 14px 28px rgba(215,168,77,.18);
   }
 
-  .ltc-trainee-login-menu-button {
+  .manpower-employee-login-menu-button {
     display: none;
     color: white;
     border: 0;
@@ -213,14 +213,14 @@ const manpowerLoginStyles = `
     text-transform: uppercase;
   }
 
-  .ltc-trainee-login-mobile-nav {
+  .manpower-employee-login-mobile-nav {
     display: none;
     border-top: 1px solid rgba(255,255,255,.1);
     padding: 8px 18px 18px;
     background: var(--footer-green);
   }
 
-  .ltc-trainee-login-mobile-nav button {
+  .manpower-employee-login-mobile-nav button {
     display: block;
     width: 100%;
     border: 0;
@@ -234,12 +234,12 @@ const manpowerLoginStyles = `
     letter-spacing: .08em;
   }
 
-  .ltc-trainee-login-mobile-nav button:hover {
+  .manpower-employee-login-mobile-nav button:hover {
     color: white;
     background: rgba(255,255,255,.11);
   }
 
-  .ltc-trainee-login-hero {
+  .manpower-employee-login-hero {
     position: relative;
     min-height: calc(100vh - 76px);
     overflow: hidden;
@@ -250,7 +250,7 @@ const manpowerLoginStyles = `
     background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
   }
 
-  .ltc-trainee-login-hero-bg {
+  .manpower-employee-login-hero-bg {
     position: absolute;
     inset: 0;
     z-index: -4;
@@ -260,7 +260,7 @@ const manpowerLoginStyles = `
     opacity: .32;
   }
 
-  .ltc-trainee-login-hero::before {
+  .manpower-employee-login-hero::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -268,7 +268,7 @@ const manpowerLoginStyles = `
     background: linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.76) 100%);
   }
 
-  .ltc-trainee-login-hero::after {
+  .manpower-employee-login-hero::after {
     content: "";
     position: absolute;
     inset: -16% -10% -24%;
@@ -283,7 +283,7 @@ const manpowerLoginStyles = `
     pointer-events: none;
   }
 
-  .ltc-trainee-login-grid {
+  .manpower-employee-login-grid {
     position: relative;
     z-index: 2;
     display: grid;
@@ -292,7 +292,7 @@ const manpowerLoginStyles = `
     gap: 44px;
   }
 
-  .ltc-trainee-login-eyebrow {
+  .manpower-employee-login-eyebrow {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -309,7 +309,7 @@ const manpowerLoginStyles = `
     box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
   }
 
-  .ltc-trainee-login-title {
+  .manpower-employee-login-title {
     margin: 22px 0 16px;
     max-width: 720px;
     color: white;
@@ -319,9 +319,9 @@ const manpowerLoginStyles = `
     letter-spacing: -.075em;
   }
 
-  .ltc-trainee-login-title span { color: var(--gold-soft); }
+  .manpower-employee-login-title span { color: var(--gold-soft); }
 
-  .ltc-trainee-login-copy {
+  .manpower-employee-login-copy {
     max-width: 620px;
     color: rgba(255,255,255,.84);
     font-size: 18px;
@@ -329,7 +329,7 @@ const manpowerLoginStyles = `
     margin: 0;
   }
 
-  .ltc-trainee-login-points {
+  .manpower-employee-login-points {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
@@ -337,7 +337,7 @@ const manpowerLoginStyles = `
     max-width: 700px;
   }
 
-  .ltc-trainee-login-point {
+  .manpower-employee-login-point {
     border: 1px solid rgba(255,255,255,.14);
     border-radius: 20px;
     background: rgba(255,255,255,.09);
@@ -345,7 +345,7 @@ const manpowerLoginStyles = `
     backdrop-filter: blur(10px);
   }
 
-  .ltc-trainee-login-point strong {
+  .manpower-employee-login-point strong {
     display: block;
     color: white;
     font-size: 14px;
@@ -353,7 +353,7 @@ const manpowerLoginStyles = `
     margin-bottom: 2px;
   }
 
-  .ltc-trainee-login-point span {
+  .manpower-employee-login-point span {
     display: block;
     color: rgba(255,255,255,.66);
     font-size: 12px;
@@ -361,7 +361,7 @@ const manpowerLoginStyles = `
     line-height: 1.45;
   }
 
-  .ltc-trainee-login-card {
+  .manpower-employee-login-card {
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(255,255,255,.18);
@@ -374,7 +374,7 @@ const manpowerLoginStyles = `
     animation: loginFadeUp .7s var(--ease) both;
   }
 
-  .ltc-trainee-login-card::before {
+  .manpower-employee-login-card::before {
     content: "";
     position: absolute;
     top: -90px;
@@ -385,13 +385,13 @@ const manpowerLoginStyles = `
     pointer-events: none;
   }
 
-  .ltc-trainee-login-card-header {
+  .manpower-employee-login-card-header {
     position: relative;
     text-align: center;
     margin-bottom: 24px;
   }
 
-  .ltc-trainee-login-card-title {
+  .manpower-employee-login-card-title {
     margin: 0;
     color: var(--green-950);
     font-size: 34px;
@@ -400,14 +400,14 @@ const manpowerLoginStyles = `
     letter-spacing: -.05em;
   }
 
-  .ltc-trainee-login-card-subtitle {
+  .manpower-employee-login-card-subtitle {
     margin: 10px 0 0;
     color: var(--muted);
     font-size: 14px;
     font-weight: 700;
   }
 
-  .ltc-trainee-login-alert {
+  .manpower-employee-login-alert {
     position: relative;
     border-radius: 18px;
     border: 1px solid rgba(239,68,68,.22);
@@ -420,13 +420,13 @@ const manpowerLoginStyles = `
     margin-bottom: 18px;
   }
 
-  .ltc-trainee-login-form {
+  .manpower-employee-login-form {
     position: relative;
     display: grid;
     gap: 18px;
   }
 
-  .ltc-trainee-login-field label {
+  .manpower-employee-login-field label {
     display: block;
     margin-bottom: 8px;
     color: var(--green-950);
@@ -436,9 +436,9 @@ const manpowerLoginStyles = `
     text-transform: uppercase;
   }
 
-  .ltc-trainee-login-input-wrap { position: relative; }
+  .manpower-employee-login-input-wrap { position: relative; }
 
-  .ltc-trainee-login-input {
+  .manpower-employee-login-input {
     width: 100%;
     min-height: 54px;
     border: 1px solid rgba(8,39,25,.14);
@@ -453,15 +453,15 @@ const manpowerLoginStyles = `
     transition: .22s var(--ease);
   }
 
-  .ltc-trainee-login-input.password { padding-right: 58px; }
+  .manpower-employee-login-input.password { padding-right: 58px; }
 
-  .ltc-trainee-login-input:focus {
+  .manpower-employee-login-input:focus {
     border-color: rgba(215,168,77,.8);
     box-shadow: 0 0 0 4px rgba(215,168,77,.16);
     transform: translateY(-1px);
   }
 
-  .ltc-trainee-login-eye-button {
+  .manpower-employee-login-eye-button {
     position: absolute;
     right: 16px;
     top: 50%;
@@ -475,9 +475,9 @@ const manpowerLoginStyles = `
     transition: .22s var(--ease);
   }
 
-  .ltc-trainee-login-eye-button:hover { background: rgba(8,39,25,.08); }
+  .manpower-employee-login-eye-button:hover { background: rgba(8,39,25,.08); }
 
-  .ltc-trainee-login-submit {
+  .manpower-employee-login-submit {
     width: 100%;
     border: 0;
     border-radius: 999px;
@@ -494,33 +494,66 @@ const manpowerLoginStyles = `
     transition: .25s var(--ease);
   }
 
-  .ltc-trainee-login-submit:hover:not(:disabled) {
+  .manpower-employee-login-submit:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 22px 42px rgba(215,168,77,.34);
   }
 
-  .ltc-trainee-login-submit:disabled {
+  .manpower-employee-login-submit:disabled {
     cursor: not-allowed;
     opacity: .62;
   }
 
-  .ltc-trainee-login-links {
+  .manpower-employee-login-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: -4px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .manpower-employee-login-remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .manpower-employee-login-remember input { accent-color: var(--green-700); }
+
+  .manpower-employee-login-caps {
+    margin: 8px 0 0;
+    color: #9a6410;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .manpower-employee-login-help {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .manpower-employee-login-links {
     display: grid;
     gap: 8px;
     text-align: center;
     margin-top: 3px;
   }
 
-  .ltc-trainee-login-links a {
+  .manpower-employee-login-links a {
     color: var(--green-800);
     font-weight: 900;
     text-decoration: none;
     transition: .22s var(--ease);
   }
 
-  .ltc-trainee-login-links a:hover { color: var(--gold); }
+  .manpower-employee-login-links a:hover { color: var(--gold); }
 
-  .ltc-trainee-login-links p {
+  .manpower-employee-login-links p {
     margin: 0;
     color: var(--muted);
     font-size: 14px;
@@ -533,28 +566,28 @@ const manpowerLoginStyles = `
   }
 
   @media (max-width: 1024px) {
-    .ltc-trainee-login-desktop-nav { display: none; }
-    .ltc-trainee-login-menu-button { display: inline-flex; align-items: center; justify-content: center; }
-    .ltc-trainee-login-mobile-nav.open { display: block; }
-    .ltc-trainee-login-grid { grid-template-columns: 1fr; gap: 32px; max-width: 760px; margin: 0 auto; }
-    .ltc-trainee-login-hero-copy { text-align: center; }
-    .ltc-trainee-login-title, .ltc-trainee-login-copy { margin-left: auto; margin-right: auto; }
-    .ltc-trainee-login-points { margin-left: auto; margin-right: auto; }
+    .manpower-employee-login-desktop-nav { display: none; }
+    .manpower-employee-login-menu-button { display: inline-flex; align-items: center; justify-content: center; }
+    .manpower-employee-login-mobile-nav.open { display: block; }
+    .manpower-employee-login-grid { grid-template-columns: 1fr; gap: 32px; max-width: 760px; margin: 0 auto; }
+    .manpower-employee-login-hero-copy { text-align: center; }
+    .manpower-employee-login-title, .manpower-employee-login-copy { margin-left: auto; margin-right: auto; }
+    .manpower-employee-login-points { margin-left: auto; margin-right: auto; }
   }
 
   @media (max-width: 680px) {
-    .ltc-trainee-login-header .ltc-trainee-login-container { padding-left: 18px; padding-right: 18px; }
-    .ltc-trainee-login-nav { min-height: 68px; }
-    .ltc-trainee-login-logo-icon { width: 38px; height: 38px; }
-    .ltc-trainee-login-logo h1 { font-size: 16px; }
-    .ltc-trainee-login-logo p { display: none; }
-    .ltc-trainee-login-hero { min-height: calc(100vh - 68px); padding: 32px 0; }
-    .ltc-trainee-login-eyebrow { padding: 10px 16px; font-size: 10px; letter-spacing: .18em; }
-    .ltc-trainee-login-title { font-size: clamp(40px, 12vw, 58px); }
-    .ltc-trainee-login-copy { font-size: 15px; }
-    .ltc-trainee-login-points { grid-template-columns: 1fr; }
-    .ltc-trainee-login-card { border-radius: 24px; padding: 26px 20px; }
-    .ltc-trainee-login-card-title { font-size: 28px; }
+    .manpower-employee-login-header .manpower-employee-login-container { padding-left: 18px; padding-right: 18px; }
+    .manpower-employee-login-nav { min-height: 68px; }
+    .manpower-employee-login-logo-icon { width: 38px; height: 38px; }
+    .manpower-employee-login-logo h1 { font-size: 16px; }
+    .manpower-employee-login-logo p { display: none; }
+    .manpower-employee-login-hero { min-height: calc(100vh - 68px); padding: 32px 0; }
+    .manpower-employee-login-eyebrow { padding: 10px 16px; font-size: 10px; letter-spacing: .18em; }
+    .manpower-employee-login-title { font-size: clamp(40px, 12vw, 58px); }
+    .manpower-employee-login-copy { font-size: 15px; }
+    .manpower-employee-login-points { grid-template-columns: 1fr; }
+    .manpower-employee-login-card { border-radius: 24px; padding: 26px 20px; }
+    .manpower-employee-login-card-title { font-size: 28px; }
   }
 `;
 
@@ -563,9 +596,14 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(
+    () => Boolean(localStorage.getItem(REMEMBER_EMAIL_KEY))
+  );
+  const [checkingSession, setCheckingSession] = useState(true);
 
   const [form, setForm] = useState({
-    email: "",
+    email: localStorage.getItem(REMEMBER_EMAIL_KEY) || "",
     password: "",
   });
 
@@ -573,6 +611,49 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
     loading: false,
     error: "",
   });
+
+  useEffect(() => {
+    let active = true;
+    const token = localStorage.getItem("manpowerEmployeeToken") || "";
+
+    async function validateExistingSession() {
+      if (!token) {
+        if (active) setCheckingSession(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/manpower/employee/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          localStorage.removeItem("manpowerEmployeeToken");
+          localStorage.removeItem("manpowerEmployeeUser");
+          if (active) setCheckingSession(false);
+          return;
+        }
+
+        const employee = data?.employee || null;
+        localStorage.setItem("manpowerEmployeeUser", JSON.stringify(employee));
+        if (!active) return;
+        navigate(
+          employee?.mustChangePassword
+            ? EMPLOYEE_CHANGE_PASSWORD_ROUTE
+            : EMPLOYEE_HOME_ROUTE,
+          { replace: true }
+        );
+      } catch {
+        if (active) setCheckingSession(false);
+      }
+    }
+
+    validateExistingSession();
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   function goTo(path) {
     setMobileOpen(false);
@@ -636,6 +717,11 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
 
       localStorage.setItem("manpowerEmployeeToken", token);
       localStorage.setItem("manpowerEmployeeUser", JSON.stringify(employee));
+      if (rememberEmail) {
+        localStorage.setItem(REMEMBER_EMAIL_KEY, payload.email);
+      } else {
+        localStorage.removeItem(REMEMBER_EMAIL_KEY);
+      }
 
       if (typeof onLogin === "function") {
         onLogin({
@@ -651,30 +737,35 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
 
       navigate(EMPLOYEE_HOME_ROUTE, { replace: true });
     } catch (error) {
-      setStatus({
-        loading: false,
-        error: error?.message || "Failed to sign in.",
-      });
+      const rawMessage = String(error?.message || "Failed to sign in.");
+      const lower = rawMessage.toLowerCase();
+      let friendlyMessage = rawMessage;
+      if (lower.includes("inactive") || lower.includes("disabled")) {
+        friendlyMessage = "Your employee account is inactive. Please contact HR or the administrator.";
+      } else if (lower.includes("unauthorized") || lower.includes("invalid")) {
+        friendlyMessage = "Invalid employee email or password.";
+      }
+      setStatus({ loading: false, error: friendlyMessage });
     }
   }
 
   return (
-    <div className="ltc-trainee-login-page">
+    <div className="manpower-employee-login-page">
       <style>{manpowerLoginStyles}</style>
 
-      <header className="ltc-trainee-login-header">
-        <div className="ltc-trainee-login-container">
-          <div className="ltc-trainee-login-nav">
+      <header className="manpower-employee-login-header">
+        <div className="manpower-employee-login-container">
+          <div className="manpower-employee-login-nav">
             <button
               type="button"
               onClick={() => goTo(MANPOWER_HOME_ROUTE)}
-              className="ltc-trainee-login-logo"
+              className="manpower-employee-login-logo"
               aria-label="LTC Manpower Home"
             >
               <img
                 src={LOGO_IMAGE}
                 alt="LTC Manpower Logo"
-                className="ltc-trainee-login-logo-icon"
+                className="manpower-employee-login-logo-icon"
                 onError={(event) => {
                   event.currentTarget.style.display = "none";
                 }}
@@ -686,23 +777,23 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
               </span>
             </button>
 
-            <nav className="ltc-trainee-login-desktop-nav">
-              <Link to={MANPOWER_HOME_ROUTE} className="ltc-trainee-login-nav-link">
+            <nav className="manpower-employee-login-desktop-nav">
+              <Link to={MANPOWER_HOME_ROUTE} className="manpower-employee-login-nav-link">
                 Home
               </Link>
-              <Link to="/manpower-positions" className="ltc-trainee-login-nav-link">
+              <Link to="/manpower-positions" className="manpower-employee-login-nav-link">
                 Job Offer
               </Link>
-              <Link to="/manpower-requirements" className="ltc-trainee-login-nav-link">
+              <Link to="/manpower-requirements" className="manpower-employee-login-nav-link">
                 Requirements
               </Link>
-              <Link to="/manpower-contact" className="ltc-trainee-login-nav-link">
+              <Link to="/manpower-contact" className="manpower-employee-login-nav-link">
                 Contact
               </Link>
-              <Link to="/manpower-faqs" className="ltc-trainee-login-nav-link">
+              <Link to="/manpower-faqs" className="manpower-employee-login-nav-link">
                 FAQs
               </Link>
-              <Link to={MANPOWER_HOME_ROUTE} className="ltc-trainee-login-nav-link ltc-trainee-login-back-button">
+              <Link to={MANPOWER_HOME_ROUTE} className="manpower-employee-login-nav-link manpower-employee-login-back-button">
                 Back
               </Link>
             </nav>
@@ -710,14 +801,14 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
             <button
               type="button"
               onClick={() => setMobileOpen((prev) => !prev)}
-              className="ltc-trainee-login-menu-button"
+              className="manpower-employee-login-menu-button"
             >
               Menu
             </button>
           </div>
         </div>
 
-        <div className={`ltc-trainee-login-mobile-nav ${mobileOpen ? "open" : ""}`}>
+        <div className={`manpower-employee-login-mobile-nav ${mobileOpen ? "open" : ""}`}>
           <button type="button" onClick={() => goTo(MANPOWER_HOME_ROUTE)}>Home</button>
           <button type="button" onClick={() => goTo("/manpower-positions")}>Job Offer</button>
           <button type="button" onClick={() => goTo("/manpower-requirements")}>Requirements</button>
@@ -728,57 +819,57 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
       </header>
 
       <main>
-        <section className="ltc-trainee-login-hero">
+        <section className="manpower-employee-login-hero">
           <img
             src={HERO_IMAGE}
             alt="LTC Manpower"
-            className="ltc-trainee-login-hero-bg"
+            className="manpower-employee-login-hero-bg"
             onError={(event) => {
               event.currentTarget.src =
                 "https://placehold.co/1600x900/082719/f4d484?text=LTC+Manpower+Services";
             }}
           />
 
-          <div className="ltc-trainee-login-container ltc-trainee-login-grid">
-            <div className="ltc-trainee-login-hero-copy">
-              <div className="ltc-trainee-login-eyebrow">Employee Portal</div>
+          <div className="manpower-employee-login-container manpower-employee-login-grid">
+            <div className="manpower-employee-login-hero-copy">
+              <div className="manpower-employee-login-eyebrow">Employee Portal</div>
 
-              <h2 className="ltc-trainee-login-title">
+              <h2 className="manpower-employee-login-title">
                 Welcome <span>Back</span>
               </h2>
 
-              <p className="ltc-trainee-login-copy">
+              <p className="manpower-employee-login-copy">
                 Sign in to access your manpower employee dashboard, review your account, and manage your work information securely.
               </p>
 
-              <div className="ltc-trainee-login-points" aria-hidden="true">
-                <div className="ltc-trainee-login-point">
+              <div className="manpower-employee-login-points" aria-hidden="true">
+                <div className="manpower-employee-login-point">
                   <strong>Secure Login</strong>
                   <span>Protected employee access</span>
                 </div>
-                <div className="ltc-trainee-login-point">
+                <div className="manpower-employee-login-point">
                   <strong>Account Status</strong>
                   <span>Access manpower tools</span>
                 </div>
-                <div className="ltc-trainee-login-point">
+                <div className="manpower-employee-login-point">
                   <strong>Fast Access</strong>
                   <span>Continue to your dashboard</span>
                 </div>
               </div>
             </div>
 
-            <div className="ltc-trainee-login-card">
-              <div className="ltc-trainee-login-card-header">
-                <h1 className="ltc-trainee-login-card-title">Employee Login</h1>
-                <p className="ltc-trainee-login-card-subtitle">
+            <div className="manpower-employee-login-card">
+              <div className="manpower-employee-login-card-header">
+                <h1 className="manpower-employee-login-card-title">Employee Login</h1>
+                <p className="manpower-employee-login-card-subtitle">
                   Enter your employee email and password to continue.
                 </p>
               </div>
 
-              {status.error && <div className="ltc-trainee-login-alert">{status.error}</div>}
+              {status.error && <div className="manpower-employee-login-alert">{status.error}</div>}
 
-              <form onSubmit={handleSubmit} className="ltc-trainee-login-form">
-                <div className="ltc-trainee-login-field">
+              <form onSubmit={handleSubmit} className="manpower-employee-login-form">
+                <div className="manpower-employee-login-field">
                   <label htmlFor="employee-email">Employee Email</label>
                   <input
                     id="employee-email"
@@ -786,39 +877,55 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
                     value={form.email}
                     onChange={(event) => updateField("email", event.target.value)}
                     autoComplete="email"
-                    className="ltc-trainee-login-input"
+                    className="manpower-employee-login-input"
                   />
                 </div>
 
-                <div className="ltc-trainee-login-field">
+                <div className="manpower-employee-login-field">
                   <label htmlFor="employee-password">Password</label>
-                  <div className="ltc-trainee-login-input-wrap">
+                  <div className="manpower-employee-login-input-wrap">
                     <input
                       id="employee-password"
                       type={showPassword ? "text" : "password"}
                       value={form.password}
                       onChange={(event) => updateField("password", event.target.value)}
+                      onKeyUp={(event) => setCapsLockOn(event.getModifierState("CapsLock"))}
+                      onKeyDown={(event) => setCapsLockOn(event.getModifierState("CapsLock"))}
+                      onBlur={() => setCapsLockOn(false)}
                       autoComplete="current-password"
-                      className="ltc-trainee-login-input password"
+                      className="manpower-employee-login-input password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
-                      className="ltc-trainee-login-eye-button"
+                      className="manpower-employee-login-eye-button"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                     </button>
                   </div>
+                  {capsLockOn ? (
+                    <p className="manpower-employee-login-caps" role="status">Caps Lock is on.</p>
+                  ) : null}
                 </div>
 
-                <button type="submit" disabled={status.loading} className="ltc-trainee-login-submit">
-                  {status.loading ? "Signing In..." : "Sign In"}
+                <div className="manpower-employee-login-options">
+                  <label className="manpower-employee-login-remember">
+                    <input
+                      type="checkbox"
+                      checked={rememberEmail}
+                      onChange={(event) => setRememberEmail(event.target.checked)}
+                    />
+                    Remember email
+                  </label>
+                  <span className="manpower-employee-login-help">Password help: contact HR.</span>
+                </div>
+
+                <button type="submit" disabled={status.loading || checkingSession} className="manpower-employee-login-submit">
+                  {checkingSession ? "Checking Session..." : status.loading ? "Signing In..." : "Sign In"}
                 </button>
 
-                <div className="ltc-trainee-login-links">
-                  <Link to={EMPLOYEE_FORGOT_PASSWORD_ROUTE}>Forgot Password?</Link>
-
+                <div className="manpower-employee-login-links">
                   <p>
                     Don&apos;t have account? <Link to="/manpower-apply">Apply Now</Link>
                   </p>

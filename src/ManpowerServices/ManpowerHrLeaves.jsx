@@ -152,6 +152,10 @@ function StatusBadge({ status }) {
       ? "bg-[#bdf0a8] text-[#244b35]"
       : value === "REJECTED"
       ? "bg-[#f4c8c8] text-[#7c3232]"
+      : value === "CANCELLED"
+      ? "bg-[#eef0f2] text-[#475467]"
+      : value === "COMPLETED"
+      ? "bg-[#d5e7ff] text-[#244b92]"
       : "bg-[#fff0ba] text-[#73520d]";
 
   return (
@@ -341,6 +345,14 @@ export default function ManpowerHrLeaves() {
   const [leaves, setLeaves] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [leaveTypeFilter, setLeaveTypeFilter] = useState("");
+  const [vacancyFilter, setVacancyFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -357,7 +369,7 @@ export default function ManpowerHrLeaves() {
     hrUser?.email ||
     hrUser?.companyEmail ||
     hrUser?.username ||
-    "traineeemail@tamsi.com";
+    "ltc.tamsi@gmail.com";
 
   function logout() {
     clearHrSession();
@@ -426,8 +438,6 @@ export default function ManpowerHrLeaves() {
   const filteredLeaves = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
-    if (!keyword) return leaves;
-
     return leaves.filter((row) => {
       const haystack = [
         getEmployeeName(row),
@@ -445,9 +455,76 @@ export default function ManpowerHrLeaves() {
         .join(" ")
         .toLowerCase();
 
-      return haystack.includes(keyword);
+      const startDate = row?.startDate ? new Date(row.startDate) : null;
+      const endDate = row?.endDate ? new Date(row.endDate) : null;
+      const fromDate = dateFrom ? new Date(`${dateFrom}T00:00:00`) : null;
+      const toDate = dateTo ? new Date(`${dateTo}T23:59:59`) : null;
+      const job = row?.vacancy || row?.job || "";
+
+      const matchesSearch = !keyword || haystack.includes(keyword);
+      const matchesType = !leaveTypeFilter || row?.leaveType === leaveTypeFilter;
+      const matchesVacancy = !vacancyFilter || job === vacancyFilter;
+      const matchesFrom = !fromDate || !endDate || endDate >= fromDate;
+      const matchesTo = !toDate || !startDate || startDate <= toDate;
+
+      return matchesSearch && matchesType && matchesVacancy && matchesFrom && matchesTo;
     });
-  }, [leaves, search]);
+  }, [leaves, search, leaveTypeFilter, vacancyFilter, dateFrom, dateTo]);
+
+  const leaveTypes = useMemo(
+    () => Array.from(new Set(leaves.map((row) => row?.leaveType).filter(Boolean))).sort(),
+    [leaves]
+  );
+
+  const vacancyOptions = useMemo(
+    () => Array.from(new Set(leaves.map((row) => row?.vacancy || row?.job).filter(Boolean))).sort(),
+    [leaves]
+  );
+
+  const itemsPerPage = 8;
+  const totalPages = Math.max(1, Math.ceil(filteredLeaves.length / itemsPerPage));
+  const pagedLeaves = filteredLeaves.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, leaveTypeFilter, vacancyFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const overlappingLeaves = useMemo(() => {
+    if (!selectedLeave) return [];
+    const selectedEmployeeId = selectedLeave?.employeeId?._id || selectedLeave?.employeeId || selectedLeave?.companyEmail || selectedLeave?.email;
+    const selectedStart = new Date(selectedLeave.startDate).getTime();
+    const selectedEnd = new Date(selectedLeave.endDate).getTime();
+    if (!selectedEmployeeId || !Number.isFinite(selectedStart) || !Number.isFinite(selectedEnd)) return [];
+    return leaves.filter((row) => {
+      if (row._id === selectedLeave._id) return false;
+      const employeeId = row?.employeeId?._id || row?.employeeId || row?.companyEmail || row?.email;
+      if (String(employeeId) !== String(selectedEmployeeId)) return false;
+      if (!["PENDING", "APPROVED"].includes(normalizeStatus(row.status))) return false;
+      const start = new Date(row.startDate).getTime();
+      const end = new Date(row.endDate).getTime();
+      return Number.isFinite(start) && Number.isFinite(end) && start <= selectedEnd && end >= selectedStart;
+    });
+  }, [selectedLeave, leaves]);
+
+  function exportLeavesCsv() {
+    const headers = ["Employee", "Email", "Job", "Leave Type", "Start", "End", "Days", "Status", "HR Remarks"];
+    const rows = filteredLeaves.map((row) => [
+      getEmployeeName(row), row?.companyEmail || row?.email || "", row?.vacancy || row?.job || "",
+      row?.leaveType || "", formatDate(row?.startDate), formatDate(row?.endDate), row?.totalDays || "",
+      normalizeStatus(row?.status), row?.hrRemarks || "",
+    ]);
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `manpower-leaves-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   const summary = useMemo(() => {
     return {
@@ -462,6 +539,7 @@ export default function ManpowerHrLeaves() {
   }, [leaves]);
 
   function openReviewModal(leave) {
+    setPendingAction("");
     setSelectedLeave(leave);
     setHrRemarks(leave?.hrRemarks || "");
 
@@ -472,6 +550,7 @@ export default function ManpowerHrLeaves() {
   }
 
   function closeReviewModal() {
+    setPendingAction("");
     setSelectedLeave(null);
     setHrRemarks("");
   }
@@ -491,6 +570,7 @@ export default function ManpowerHrLeaves() {
       return;
     }
 
+    setPendingAction("");
     setActionLoading(true);
 
     setMessage({
@@ -556,8 +636,12 @@ export default function ManpowerHrLeaves() {
         }
       `}</style>
 
+      {mobileSidebarOpen ? (
+        <button type="button" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} className="fixed inset-0 z-40 bg-[#071f14]/60 backdrop-blur-sm lg:hidden" />
+      ) : null}
       <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+        <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[270px] flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)] transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <button type="button" onClick={() => setMobileSidebarOpen(false)} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl font-black lg:hidden">×</button>
           <div className="text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
               Manpower Services HR
@@ -588,7 +672,7 @@ export default function ManpowerHrLeaves() {
           <div className="border-t border-white/15 pt-7">
             <button
               type="button"
-              onClick={logout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="group flex min-h-[52px] w-full items-center gap-4 rounded-[26px] bg-white/10 px-6 text-left text-[13px] font-black capitalize tracking-tight text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#f4d484] hover:text-[#071f14]"
             >
               <span className="grid h-8 w-8 shrink-0 place-items-center text-white/90 transition duration-300 group-hover:text-[#071f14]">
@@ -596,13 +680,17 @@ export default function ManpowerHrLeaves() {
               </span>
               <span>Sign out</span>
             </button>
-            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
-              © LTC Manpower Services
-            </p>
+            <p className="mt-4 break-all text-center text-[11px] font-bold text-white/65">{hrEmail}</p>
+            <button type="button" onClick={() => navigate("/manpower-services")} className="mt-3 w-full text-center text-[11px] font-black uppercase tracking-[0.12em] text-[#f4d484] hover:text-white">View Public Website</button>
+            <p className="mt-4 text-center text-[11px] font-bold text-white/55">© LTC Manpower Services</p>
           </div>
         </aside>
 
         <main className="min-w-0 px-5 py-6 lg:px-8">
+          <div className="mb-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm lg:hidden">
+            <button type="button" onClick={() => setMobileSidebarOpen(true)} className="rounded-full bg-[#082719] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-white">Menu</button>
+            <p className="text-sm font-black text-[#071f14]">Leave Management</p>
+          </div>
           <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
             <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
             <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
@@ -665,43 +753,24 @@ export default function ManpowerHrLeaves() {
             title="List of Employee Leave Requests"
             className="mt-7"
             right={
-              <div className="flex w-full flex-col gap-3 xl:w-auto xl:items-end">
-                <div className="grid w-full gap-3 sm:grid-cols-2 xl:w-auto xl:grid-cols-[300px_170px_auto]">
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search employee, email, leave type..."
-                    className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[13px] font-bold text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
-                  />
-
-                  <select
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value)}
-                    className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
-                    aria-label="Filter leave requests by status"
-                  >
-                    <option value="">All Status</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="REJECTED">Rejected</option>
+              <div className="flex w-full flex-col gap-3">
+                <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <input type="text" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search employee, email, leave type..." className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[13px] font-bold text-[#071f14] outline-none focus:border-[#d7a84d]" />
+                  <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="min-h-[48px] rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none focus:border-[#d7a84d]">
+                    <option value="">All Status</option><option value="PENDING">Pending</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option><option value="CANCELLED">Cancelled</option><option value="COMPLETED">Completed</option>
                   </select>
-
-                  <button
-                    type="button"
-                    onClick={loadLeaves}
-                    disabled={loading}
-                    title="Refresh leave requests"
-                    aria-label="Refresh leave requests"
-                    className="grid h-12 w-12 place-items-center rounded-full bg-[#174a30] text-white shadow-[0_14px_28px_rgba(8,39,25,0.16)] transition hover:-translate-y-0.5 hover:bg-[#082719] disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    <RefreshIcon />
-                  </button>
+                  <select value={leaveTypeFilter} onChange={(event) => setLeaveTypeFilter(event.target.value)} className="min-h-[48px] rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none focus:border-[#d7a84d]">
+                    <option value="">All Leave Types</option>{leaveTypes.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                  <select value={vacancyFilter} onChange={(event) => setVacancyFilter(event.target.value)} className="min-h-[48px] rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none focus:border-[#d7a84d]">
+                    <option value="">All Jobs</option>{vacancyOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                  <label className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-[#071f14]/45">From<input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="mt-1 block w-full bg-transparent text-xs text-[#071f14] outline-none" /></label>
+                  <label className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-[#071f14]/45">To<input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="mt-1 block w-full bg-transparent text-xs text-[#071f14] outline-none" /></label>
+                  <button type="button" onClick={exportLeavesCsv} className="min-h-[48px] rounded-full border border-[#174a30] bg-white px-5 text-xs font-black uppercase tracking-[0.08em] text-[#174a30] hover:bg-[#eef4ef]">Export CSV</button>
+                  <button type="button" onClick={loadLeaves} disabled={loading} className="min-h-[48px] rounded-full bg-[#174a30] px-5 text-xs font-black uppercase tracking-[0.08em] text-white disabled:opacity-60">{loading ? "Refreshing..." : "Refresh"}</button>
                 </div>
-
-                <p className="text-[12px] font-black uppercase tracking-[0.12em] text-[#071f14]/45">
-                  Showing {filteredLeaves.length} of {leaves.length} requests
-                </p>
+                <p className="text-[12px] font-black uppercase tracking-[0.12em] text-[#071f14]/45">Showing {filteredLeaves.length} of {leaves.length} requests</p>
               </div>
             }
           >
@@ -718,9 +787,9 @@ export default function ManpowerHrLeaves() {
             ) : null}
 
             <div className="overflow-hidden rounded-3xl border border-[#d7e2da] bg-[#f8fbf9]">
-              {filteredLeaves.length ? (
+              {pagedLeaves.length ? (
                 <div className="divide-y divide-[#d7e2da]">
-                  {filteredLeaves.map((leave) => (
+                  {pagedLeaves.map((leave) => (
                     <article
                       key={leave._id}
                       className="grid gap-4 bg-white/70 px-5 py-5 transition duration-300 hover:bg-white hover:shadow-[0_16px_40px_rgba(8,39,25,0.08)] md:grid-cols-[58px_1.15fr_1.45fr_0.9fr_0.9fr_0.65fr_58px] md:items-center"
@@ -739,7 +808,7 @@ export default function ManpowerHrLeaves() {
                       </div>
 
                       <p className="break-all text-[13px] font-extrabold text-[#071f14]/70">
-                        {leave.companyEmail || leave.email || "traineeemail@tamsi.com"}
+                        {leave.companyEmail || leave.email || "No email provided"}
                       </p>
 
                       <p className="text-[13px] font-black text-[#071f14]">
@@ -770,6 +839,13 @@ export default function ManpowerHrLeaves() {
                       </div>
                     </article>
                   ))}
+                  <div className="flex flex-col gap-3 border-t border-[#d7e2da] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs font-bold text-[#071f14]/55">Page {page} of {totalPages}</p>
+                    <div className="flex gap-2">
+                      <button type="button" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="rounded-full border border-[#d7e2da] px-4 py-2 text-xs font-black disabled:opacity-40">Prev</button>
+                      <button type="button" disabled={page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} className="rounded-full bg-[#082719] px-4 py-2 text-xs font-black text-white disabled:opacity-40">Next</button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="px-4 py-14 text-center text-[14px] font-bold text-[#071f14]/55">
@@ -780,6 +856,16 @@ export default function ManpowerHrLeaves() {
           </HrSectionCard>
         </main>
       </div>
+
+      {showLogoutConfirm ? (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#071f14]/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-[0_34px_90px_rgba(8,39,25,0.35)]">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d7a84d]">Confirm Sign Out</p>
+            <h2 className="mt-2 text-2xl font-black text-[#071f14]">Leave the HR portal?</h2>
+            <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-full bg-[#eef3ea] px-5 py-3 text-sm font-black text-[#395345]">Cancel</button><button type="button" onClick={logout} className="rounded-full bg-[#8b3232] px-5 py-3 text-sm font-black text-white">Sign Out</button></div>
+          </div>
+        </div>
+      ) : null}
 
       {selectedLeave ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
@@ -821,6 +907,8 @@ export default function ManpowerHrLeaves() {
                 <p><span className="font-black text-[#071f14]">Dates:</span> {formatDate(selectedLeave.startDate)} - {formatDate(selectedLeave.endDate)}</p>
                 <p><span className="font-black text-[#071f14]">Total Days:</span> {selectedLeave.totalDays || 0}</p>
                 <p><span className="font-black text-[#071f14]">Filed:</span> {formatDateTime(selectedLeave.createdAt)}</p>
+                <p><span className="font-black text-[#071f14]">Available Balance:</span> {selectedLeave.availableBalance ?? selectedLeave.leaveBalance ?? "Not provided"}</p>
+                <p><span className="font-black text-[#071f14]">Supporting Document:</span> {selectedLeave.attachmentUrl || selectedLeave.attachment?.url ? <a href={selectedLeave.attachmentUrl || selectedLeave.attachment?.url} target="_blank" rel="noreferrer" className="font-black text-[#174a30] underline">Open attachment</a> : "None"}</p>
                 <p className="md:col-span-2"><span className="font-black text-[#071f14]">Reason:</span> {selectedLeave.reason || "-"}</p>
 
                 {selectedLeave.reviewedBy ? (
@@ -831,6 +919,12 @@ export default function ManpowerHrLeaves() {
                   <p><span className="font-black text-[#071f14]">Reviewed At:</span> {formatDateTime(selectedLeave.reviewedAt)}</p>
                 ) : null}
               </div>
+
+              {overlappingLeaves.length ? (
+                <div className="mt-5 rounded-[18px] border border-[#f0d39a] bg-[#fff8e8] px-4 py-3 text-sm font-bold text-[#8a5206]">
+                  Warning: {overlappingLeaves.length} overlapping pending or approved leave request(s) were found for this employee.
+                </div>
+              ) : null}
 
               <label className="mt-5 block text-sm font-black text-[#071f14]">
                 HR Remarks
@@ -853,7 +947,7 @@ export default function ManpowerHrLeaves() {
                 <button
                   type="button"
                   disabled={actionLoading || normalizeStatus(selectedLeave.status) !== "PENDING"}
-                  onClick={() => reviewLeave("reject")}
+                  onClick={() => setPendingAction("reject")}
                   className="rounded-full bg-[#fff1f1] px-6 py-3 text-sm font-black text-[#9d2f2f] transition hover:-translate-y-0.5 hover:bg-[#fee2e2] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   {actionLoading ? "Saving..." : "Reject"}
@@ -862,12 +956,23 @@ export default function ManpowerHrLeaves() {
                 <button
                   type="button"
                   disabled={actionLoading || normalizeStatus(selectedLeave.status) !== "PENDING"}
-                  onClick={() => reviewLeave("approve")}
+                  onClick={() => setPendingAction("approve")}
                   className="rounded-full bg-[#174a30] px-6 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-[#082719] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   {actionLoading ? "Saving..." : "Approve"}
                 </button>
               </div>
+
+              {pendingAction ? (
+                <div className="mt-5 rounded-[20px] border border-[#d7e2da] bg-[#f8fbf9] p-4">
+                  <p className="text-sm font-black text-[#071f14]">Confirm {pendingAction === "approve" ? "approval" : "rejection"}?</p>
+                  <p className="mt-1 text-xs font-semibold text-[#071f14]/55">This action updates the employee's leave record.</p>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button type="button" onClick={() => setPendingAction("")} className="rounded-full bg-white px-4 py-2 text-xs font-black text-[#395345]">Cancel</button>
+                    <button type="button" onClick={() => reviewLeave(pendingAction)} disabled={actionLoading} className={`rounded-full px-4 py-2 text-xs font-black text-white ${pendingAction === "approve" ? "bg-[#174a30]" : "bg-[#8b3232]"}`}>{actionLoading ? "Saving..." : "Confirm"}</button>
+                  </div>
+                </div>
+              ) : null}
 
               {normalizeStatus(selectedLeave.status) !== "PENDING" ? (
                 <p className="mt-3 text-right text-xs font-semibold text-[#7a5b0b]">

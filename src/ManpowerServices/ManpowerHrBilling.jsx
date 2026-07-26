@@ -209,6 +209,9 @@ function buildBillingGroups(
   vacancyList = DEFAULT_VACANCIES
 ) {
   const filteredRows = rows.filter((row) => {
+    const payrollStatus = String(row?.status || row?.payrollStatus || "CALCULATED").toUpperCase();
+    if (["DRAFT", "CANCELLED", "VOID"].includes(payrollStatus)) return false;
+
     const rowMonth = getMonthKey(row?.cutoffEnd || row?.cutoffStart);
 
     if (!rowMonth || rowMonth !== monthKey) return false;
@@ -256,6 +259,7 @@ function buildBillingGroups(
       grossPay: toNumber(row?.computed?.grossPay ?? row?.grossPay),
       netPay: toNumber(row?.computed?.netPay ?? row?.netPay),
       servicesAmount,
+      payrollStatus: String(row?.status || row?.payrollStatus || "CALCULATED").toUpperCase(),
     });
 
     if (employeeInfo.id) {
@@ -320,19 +324,22 @@ function drawBillingHeader(doc, group) {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("2/F 544 Curie Street, Palanan, Makati City", 14, 22);
-  doc.text("09959808051 / 09516281271", 14, 27);
+  doc.text("2/F 5441 Currie Street, Palanan, Makati City", 14, 22);
+  doc.text("+63 951 628 1271 / +63 995 980 8051", 14, 27);
+  doc.text("lorengladius@ltcmultiservices.com | ltc.tamsi@gmail.com", 14, 32);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
-  doc.text("Monthly Billing Statement", 14, 38);
+  doc.text("Monthly Billing Statement", 14, 42);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text(`Billing Month: ${formatMonthDisplay(group.monthKey)}`, 14, 45);
-  doc.text(`Vacancy: ${group.vacancy}`, 14, 50);
-  doc.text(`Employees: ${group.employeeCount}`, 14, 55);
-  doc.text(`Payroll Entries Included: ${group.payrollEntryCount}`, 14, 60);
+  doc.text(`Billing Number: ${group.billingNumber || "-"}`, 14, 49);
+  doc.text(`Billing Month: ${formatMonthDisplay(group.monthKey)}`, 14, 54);
+  doc.text(`Client: ${group.clientName || "Not specified"}`, 14, 59);
+  doc.text(`Vacancy: ${group.vacancy}`, 14, 64);
+  doc.text(`Employees: ${group.employeeCount} | Payroll Entries: ${group.payrollEntryCount}`, 14, 69);
+  doc.text(`Due Date: ${group.dueDate || "-"} | Prepared by: ${group.preparedBy || "HR"}`, 14, 74);
 }
 
 function drawBillingTotals(doc, group, startY) {
@@ -396,7 +403,7 @@ function addBillingSectionToPdf(doc, group, withPageBreak = false) {
   drawBillingHeader(doc, group);
 
   autoTable(doc, {
-    startY: 66,
+    startY: 80,
     head: [
       ["#", "Employee", "Company Email", "Cutoff Covered", "Services Amount"],
     ],
@@ -452,10 +459,21 @@ function addBillingSectionToPdf(doc, group, withPageBreak = false) {
     "Billing basis used in this statement: total payroll gross pay for the selected month and vacancy.",
     14,
     finalY + 4,
-    {
-      maxWidth: 182,
-    }
+    { maxWidth: 182 }
   );
+
+  let signatureY = finalY + 25;
+  if (signatureY > 265) {
+    doc.addPage();
+    signatureY = 35;
+  }
+  doc.setDrawColor(60, 83, 69);
+  doc.line(14, signatureY, 82, signatureY);
+  doc.line(116, signatureY, 196, signatureY);
+  doc.setFontSize(9);
+  doc.text(group.preparedBy || "Prepared by", 14, signatureY + 5);
+  doc.text("Prepared by", 14, signatureY + 10);
+  doc.text("Approved by / Authorized Signatory", 116, signatureY + 10);
 }
 
 function applyPageNumbers(doc) {
@@ -698,9 +716,8 @@ function VacancyBillingModal({ group, onClose, onDownload }) {
               <h2 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">
                 {group.vacancy}
               </h2>
-              <p className="mt-2 text-sm font-semibold leading-6 text-white/75">
-                {formatMonthDisplay(group.monthKey)} • Employees: {group.employeeCount} • Payroll entries: {group.payrollEntryCount}
-              </p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-white/75">{formatMonthDisplay(group.monthKey)} • Employees: {group.employeeCount} • Payroll entries: {group.payrollEntryCount}</p>
+              <p className="mt-1 text-xs font-bold text-white/60">{group.billingNumber} • Client: {group.clientName || "Not specified"} • Due: {group.dueDate || "-"}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -793,10 +810,19 @@ export default function ManpowerHrBilling() {
   const [loadingBilling, setLoadingBilling] = useState(false);
   const [allPayrollRows, setAllPayrollRows] = useState([]);
   const [selectedBillingGroup, setSelectedBillingGroup] = useState(null);
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [pendingExport, setPendingExport] = useState(null);
+  const [billingMeta, setBillingMeta] = useState({
+    clientName: "",
+    dueDate: "",
+    preparedBy: hrUser?.fullName || hrUser?.name || hrUser?.email || "HR Department",
+  });
 
   const vacancies = useMemo(() => {
     const dbVacancies = jobs
-      .map((job) => String(job?.title || "").trim())
+      .map((job) => String(typeof job === "string" ? job : job?.title || job?.name || "").trim())
       .filter(Boolean);
 
     return dbVacancies.length ? dbVacancies : DEFAULT_VACANCIES;
@@ -806,7 +832,7 @@ export default function ManpowerHrBilling() {
     hrUser?.email ||
     hrUser?.companyEmail ||
     hrUser?.username ||
-    "traineeemail@tamsi.com";
+    "ltc.tamsi@gmail.com";
 
   function logout() {
     clearHrSession();
@@ -814,6 +840,40 @@ export default function ManpowerHrBilling() {
     navigate("/manpower-hr-login", {
       replace: true,
     });
+  }
+
+  function notify(type, message) {
+    setFeedback({ type, message });
+    window.setTimeout(() => setFeedback((current) => current.message === message ? { type: "", message: "" } : current), 4500);
+  }
+
+  function billingNumberFor(vacancy, monthKey) {
+    const slug = String(vacancy || "BILL").replace(/[^A-Za-z0-9]/g, "").slice(0, 6).toUpperCase();
+    return `LTC-${String(monthKey || "").replace("-", "")}-${slug || "BILL"}`;
+  }
+
+  function requestExport(type, group = null) {
+    if (!billingMeta.clientName.trim()) {
+      notify("error", "Enter the client or company name before generating billing.");
+      return;
+    }
+    if (!billingMeta.dueDate) {
+      notify("error", "Select a payment due date before generating billing.");
+      return;
+    }
+    setPendingExport({ type, group });
+  }
+
+  function confirmExport() {
+    if (!pendingExport) return;
+    if (pendingExport.type === "all") {
+      downloadAllBillings(billingGroups, billingMonth);
+      notify("success", "All billing statements were generated.");
+    } else if (pendingExport.group) {
+      downloadBillingForVacancy(pendingExport.group);
+      notify("success", `Billing statement for ${pendingExport.group.vacancy} was generated.`);
+    }
+    setPendingExport(null);
   }
 
   useEffect(() => {
@@ -829,7 +889,7 @@ export default function ManpowerHrBilling() {
         }
 
         if (active) {
-          setJobs(Array.isArray(data?.jobs) ? data.jobs : []);
+          setJobs(Array.isArray(data?.jobs) ? data.jobs : Array.isArray(data?.vacancies) ? data.vacancies : []);
         }
       } catch (error) {
         console.error("loadManpowerJobs error:", error);
@@ -882,20 +942,26 @@ export default function ManpowerHrBilling() {
       setAllPayrollRows(dedupePayrollRows(data?.payrolls || []));
     } catch (error) {
       console.error(error);
-      alert(error?.message || "Failed to load billing records.");
+      notify("error", error?.message || "Failed to load billing records.");
     } finally {
       setLoadingBilling(false);
     }
   }
 
   const billingGroups = useMemo(() => {
-    return buildBillingGroups(
-      allPayrollRows,
-      billingMonth,
-      vacancyFilter,
-      vacancies
-    );
-  }, [allPayrollRows, billingMonth, vacancyFilter, vacancies]);
+    return buildBillingGroups(allPayrollRows, billingMonth, vacancyFilter, vacancies).map((group) => ({
+      ...group,
+      billingNumber: billingNumberFor(group.vacancy, group.monthKey),
+      clientName: billingMeta.clientName.trim(),
+      dueDate: billingMeta.dueDate,
+      preparedBy: billingMeta.preparedBy.trim() || "HR Department",
+    }));
+  }, [allPayrollRows, billingMonth, vacancyFilter, vacancies, billingMeta]);
+
+  const excludedPayrollCount = useMemo(() => allPayrollRows.filter((row) => {
+    const status = String(row?.status || row?.payrollStatus || "CALCULATED").toUpperCase();
+    return ["DRAFT", "CANCELLED", "VOID"].includes(status) && getMonthKey(row?.cutoffEnd || row?.cutoffStart) === billingMonth;
+  }).length, [allPayrollRows, billingMonth]);
 
   const overallTotals = useMemo(() => {
     return billingGroups.reduce(
@@ -920,8 +986,11 @@ export default function ManpowerHrBilling() {
 
   return (
     <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+      {feedback.message ? <div className={`fixed right-5 top-5 z-[100] max-w-md rounded-2xl border px-5 py-4 text-sm font-black shadow-[0_22px_60px_rgba(8,39,25,0.24)] ${feedback.type === "error" ? "border-[#efc9c9] bg-[#fff2f2] text-[#912f2f]" : "border-[#cfe6d5] bg-white text-[#174a30]"}`}>{feedback.message}</div> : null}
+      {mobileSidebarOpen ? <button type="button" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} className="fixed inset-0 z-40 bg-[#071f14]/60 backdrop-blur-sm lg:hidden" /> : null}
       <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+        <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[270px] flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)] transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <button type="button" onClick={() => setMobileSidebarOpen(false)} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl font-black lg:hidden">×</button>
           <div className="text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
               Manpower Services HR
@@ -964,13 +1033,14 @@ export default function ManpowerHrBilling() {
               </span>
               <span>Sign out</span>
             </button>
-            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
-              © LTC Manpower Services
-            </p>
+            <p className="mt-4 break-all text-center text-[11px] font-bold text-white/65">{hrEmail}</p>
+            <button type="button" onClick={() => navigate("/manpower-services")} className="mt-3 w-full text-center text-[11px] font-black uppercase tracking-[0.12em] text-[#f4d484] hover:text-white">View Public Website</button>
+            <p className="mt-4 text-center text-[11px] font-bold text-white/55">© LTC Manpower Services</p>
           </div>
         </aside>
 
         <main className="min-w-0 px-5 py-6 lg:px-8">
+          <div className="mb-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm lg:hidden"><button type="button" onClick={() => setMobileSidebarOpen(true)} className="rounded-full bg-[#082719] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-white">Menu</button><p className="text-sm font-black text-[#071f14]">Billing Management</p></div>
           <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
             <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
             <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
@@ -1011,7 +1081,7 @@ export default function ManpowerHrBilling() {
             title="Monthly Billing Filters"
             className="mt-7"
             right={
-              <div className="grid w-full gap-3 xl:w-auto xl:grid-cols-[240px_180px_auto_auto]">
+              <div className="grid w-full gap-3 md:grid-cols-2 xl:w-auto xl:grid-cols-[210px_160px_210px_170px_180px_auto_auto]">
                 <select
                   value={vacancyFilter}
                   onChange={(event) => setVacancyFilter(event.target.value)}
@@ -1032,6 +1102,10 @@ export default function ManpowerHrBilling() {
                   className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)]"
                 />
 
+                <input type="text" value={billingMeta.clientName} onChange={(event) => setBillingMeta((prev) => ({ ...prev, clientName: event.target.value }))} placeholder="Client / company name" className="min-h-[48px] rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-xs font-bold outline-none focus:border-[#d7a84d]" />
+                <input type="date" value={billingMeta.dueDate} onChange={(event) => setBillingMeta((prev) => ({ ...prev, dueDate: event.target.value }))} title="Payment due date" className="min-h-[48px] rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-xs font-bold outline-none focus:border-[#d7a84d]" />
+                <input type="text" value={billingMeta.preparedBy} onChange={(event) => setBillingMeta((prev) => ({ ...prev, preparedBy: event.target.value }))} placeholder="Prepared by" className="min-h-[48px] rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-xs font-bold outline-none focus:border-[#d7a84d]" />
+
                 <button
                   type="button"
                   onClick={loadAllPayrollRows}
@@ -1045,7 +1119,7 @@ export default function ManpowerHrBilling() {
 
                 <button
                   type="button"
-                  onClick={() => downloadAllBillings(billingGroups, billingMonth)}
+                  onClick={() => requestExport("all")}
                   disabled={!billingGroups.length}
                   className="group inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#082719] text-white shadow-[0_12px_26px_rgba(8,39,25,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#d7a84d] hover:text-[#071f14] disabled:cursor-not-allowed disabled:opacity-40"
                   title="Export all billing"
@@ -1064,6 +1138,7 @@ export default function ManpowerHrBilling() {
                 <span> • All job offers</span>
               )}
             </div>
+            {excludedPayrollCount ? <div className="mt-4 rounded-2xl border border-[#f0d39a] bg-[#fff8e8] px-5 py-4 text-sm font-bold text-[#8a5206]">{excludedPayrollCount} draft, cancelled, or void payroll record(s) were excluded from billing.</div> : null}
           </SectionCard>
 
           <SectionCard eyebrow="Billing Records" title="Vacancy Billing List" className="mt-7">
@@ -1104,9 +1179,8 @@ export default function ManpowerHrBilling() {
                         >
                           {group.vacancy}
                         </button>
-                        <p className="mt-1 text-[11px] font-black uppercase tracking-[0.16em] text-[#071f14]/35">
-                          {formatMonthDisplay(group.monthKey)}
-                        </p>
+                        <p className="mt-1 text-[11px] font-black uppercase tracking-[0.16em] text-[#071f14]/35">{formatMonthDisplay(group.monthKey)}</p>
+                        <span className="mt-2 inline-flex rounded-full bg-[#e8f4ed] px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#246843]">Ready to Generate</span>
                       </div>
 
                       <span className="inline-flex w-fit rounded-full bg-[#eef4ef] px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#174a30]">
@@ -1140,12 +1214,20 @@ export default function ManpowerHrBilling() {
         </main>
       </div>
 
+      {showLogoutConfirm ? (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#071f14]/70 p-4 backdrop-blur-sm"><div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl"><p className="text-xs font-black uppercase tracking-[0.2em] text-[#d7a84d]">Confirm Sign Out</p><h2 className="mt-2 text-2xl font-black">Leave the HR portal?</h2><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-full bg-[#eef3ea] px-5 py-3 text-sm font-black">Cancel</button><button type="button" onClick={logout} className="rounded-full bg-[#8b3232] px-5 py-3 text-sm font-black text-white">Sign Out</button></div></div></div>
+      ) : null}
+
+      {pendingExport ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#071f14]/75 p-4 backdrop-blur-sm"><div className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl"><p className="text-xs font-black uppercase tracking-[0.2em] text-[#d7a84d]">Generate Billing PDF</p><h2 className="mt-2 text-2xl font-black">Confirm billing details</h2><div className="mt-4 rounded-2xl bg-[#f8fbf9] p-4 text-sm font-semibold text-[#395345]"><p><b>Client:</b> {billingMeta.clientName}</p><p><b>Month:</b> {formatMonthDisplay(billingMonth)}</p><p><b>Due:</b> {billingMeta.dueDate}</p><p><b>Prepared by:</b> {billingMeta.preparedBy}</p></div><p className="mt-4 text-sm font-semibold text-[#071f14]/55">Review the generated PDF before sending it to the client. Generation does not record payment status on the server.</p><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setPendingExport(null)} className="rounded-full bg-[#eef3ea] px-5 py-3 text-sm font-black">Cancel</button><button type="button" onClick={confirmExport} className="rounded-full bg-[#174a30] px-5 py-3 text-sm font-black text-white">Generate PDF</button></div></div></div>
+      ) : null}
+
       <VacancyBillingModal
         group={selectedBillingGroup}
         onClose={() => setSelectedBillingGroup(null)}
         onDownload={() => {
           if (!selectedBillingGroup) return;
-          downloadBillingForVacancy(selectedBillingGroup);
+          requestExport("group", selectedBillingGroup);
         }}
       />
     </div>

@@ -9,7 +9,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { AdminShell, LoadingState } from "./ManpowerAdminShell";
+import {
+  ActionButton,
+  AdminShell,
+  ErrorState,
+  LoadingState,
+  formatDateTime,
+  getAdminActivities,
+} from "./ManpowerAdminShell";
 
 function normalizeApiBase(raw) {
   const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
@@ -42,6 +49,8 @@ function getAdminToken() {
 function clearAdminSession() {
   localStorage.removeItem("manpowerAdminToken");
   localStorage.removeItem("manpowerAdminUser");
+  localStorage.removeItem("manpowerAdmin");
+  localStorage.removeItem("manpowerToken");
 }
 
 function adminHeaders(extra = {}) {
@@ -140,6 +149,7 @@ export default function ManpowerAdminDashboard() {
   const currentYear = new Date().getFullYear();
   const [token, setToken] = useState(getAdminToken());
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [availableYears, setAvailableYears] = useState([currentYear]);
   const [monthlyApplicants, setMonthlyApplicants] = useState(
@@ -174,6 +184,7 @@ export default function ManpowerAdminDashboard() {
   async function loadDashboard(year = selectedYear) {
     try {
       setLoading(true);
+      setLoadError("");
 
       const res = await fetch(
         `${API_BASE}/manpower/admin/dashboard?year=${encodeURIComponent(year)}`,
@@ -209,13 +220,21 @@ export default function ManpowerAdminDashboard() {
       setSelectedYear(apiSelectedYear);
       setAvailableYears(nextYears);
     } catch (error) {
-      alert(error?.message || "Failed to load admin dashboard.");
+      setLoadError(error?.message || "Failed to load admin dashboard.");
     } finally {
       setLoading(false);
     }
   }
 
   const totalRows = useMemo(() => vacancyBreakdown.length, [vacancyBreakdown]);
+  const maxApplicants = useMemo(() => Math.max(...monthlyApplicants.map((item) => Number(item.total || 0)), 0), [monthlyApplicants]);
+  const chartMaximum = Math.max(25, Math.ceil((maxApplicants + 5) / 10) * 10);
+  const activities = getAdminActivities(8);
+  const attentionItems = [
+    summary.mustChangePasswordCount > 0 ? `${summary.mustChangePasswordCount} employee account${summary.mustChangePasswordCount === 1 ? "" : "s"} still require a password change.` : "All active employee passwords are ready.",
+    summary.inactiveEmployees > 0 ? `${summary.inactiveEmployees} employee account${summary.inactiveEmployees === 1 ? " is" : "s are"} currently inactive.` : "No inactive employee accounts require review.",
+    vacancyBreakdown.length ? `${vacancyBreakdown.length} vacancy group${vacancyBreakdown.length === 1 ? " is" : "s are"} represented in employee accounts.` : "No vacancy account breakdown is available yet.",
+  ];
 
   return (
     <AdminShell
@@ -226,6 +245,8 @@ export default function ManpowerAdminDashboard() {
     >
       {loading ? (
         <LoadingState>Loading admin dashboard...</LoadingState>
+      ) : loadError ? (
+        <ErrorState message={loadError} onRetry={() => loadDashboard(selectedYear)} />
       ) : (
         <div className="animate-[fadeUp_0.6s_ease-out] space-y-8">
           <style>{`
@@ -258,6 +279,31 @@ export default function ManpowerAdminDashboard() {
               >
                 Refresh Dashboard
               </button>
+            </div>
+          </section>
+
+          <section className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+            <div className="rounded-[28px] border border-[#dce8dc] bg-white p-6 shadow-[0_18px_45px_rgba(8,39,25,0.09)]">
+              <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-[#235f3e]">Needs attention</p>
+              <h3 className="mt-2 text-2xl font-black text-[#071f14]">Admin action center</h3>
+              <div className="mt-5 space-y-3">
+                {attentionItems.map((item, index) => (
+                  <div key={item} className="flex gap-3 rounded-2xl border border-[#e2ebe0] bg-[#f8fbf7] p-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef4ef] text-sm font-black text-[#235f3e]">{index + 1}</span>
+                    <p className="text-sm font-semibold leading-6 text-[#526257]">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-[#dce8dc] bg-white p-6 shadow-[0_18px_45px_rgba(8,39,25,0.09)]">
+              <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-[#235f3e]">Quick actions</p>
+              <div className="mt-4 grid gap-3">
+                <ActionButton onClick={() => navigate("/manpower-admin-accounts")}>Manage Accounts</ActionButton>
+                <ActionButton variant="info" onClick={() => navigate("/manpower-admin-jobs")}>Post or Manage Jobs</ActionButton>
+                <ActionButton variant="warning" onClick={() => navigate("/manpower-admin-highlights")}>Manage Highlights</ActionButton>
+                <ActionButton variant="ghost" onClick={() => navigate("/manpower-admin-deductions")}>Review Deductions</ActionButton>
+              </div>
             </div>
           </section>
 
@@ -342,8 +388,8 @@ export default function ManpowerAdminDashboard() {
                     height={78}
                   />
                   <YAxis
-                    domain={[0, 100]}
-                    ticks={[0, 25, 50, 75, 100]}
+                    domain={[0, chartMaximum]}
+                    allowDecimals={false}
                     tick={{ fontSize: 12 }}
                   />
                   <Tooltip
@@ -492,6 +538,21 @@ export default function ManpowerAdminDashboard() {
                 </div>
               </div>
             </div>
+          </DashboardSectionCard>
+
+          <DashboardSectionCard eyebrow="Security & Operations" title="Recent Admin Activity" subtitle="Actions completed in this browser are recorded locally for quick accountability. Server-wide audit history requires a backend audit endpoint.">
+            {activities.length ? (
+              <div className="divide-y divide-[#edf2eb] overflow-hidden rounded-2xl border border-[#e1e9df]">
+                {activities.map((activity) => (
+                  <div key={activity.id} className="flex flex-col gap-2 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div><p className="text-sm font-extrabold text-[#071f14]">{activity.action}</p><p className="mt-1 text-xs font-semibold text-[#5f6f61]">{activity.details || activity.admin}</p></div>
+                    <p className="text-xs font-bold text-[#7a897c]">{formatDateTime(activity.at)}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-[#cfd8c8] bg-[#f8fbf7] p-8 text-center text-sm font-semibold text-[#68786b]">Admin actions completed from the updated pages will appear here.</div>
+            )}
           </DashboardSectionCard>
         </div>
       )}

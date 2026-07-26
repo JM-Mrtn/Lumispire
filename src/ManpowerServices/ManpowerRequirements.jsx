@@ -20,8 +20,8 @@ const REQUIREMENTS = [
 ];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const fontPontano = { fontFamily: "'Inter', sans-serif" };
+const fontPoppins = { fontFamily: "'Inter', sans-serif" };
 
 const RevealOnScroll = ({ children, className = "", delay = 0, y = 22 }) => {
   const ref = useRef(null);
@@ -206,7 +206,7 @@ export default function ManpowerRequirements() {
   return (
     <div className="mp-about-style" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
 
         .mp-about-style {
           --green-950: #071f14;
@@ -884,6 +884,522 @@ export default function ManpowerRequirements() {
           .mp-stats { grid-template-columns: 1fr; }
           .mp-footer .mp-container { padding-left: 16px; padding-right: 16px; }
         }
+
+
+        /* ===== Unified LTC Manpower public-page design ===== */
+        .mp-about-style,
+        .mp-contact-page,
+        .mp-faq-page {
+          --green-950: #071f14;
+          --green-900: #0e3321;
+          --green-800: #174a30;
+          --green-700: #235f3e;
+          --green-600: #2f754c;
+          --footer-green: #082719;
+          --gold: #d7a84d;
+          --gold-soft: #f4d484;
+          --white: #ffffff;
+          --dark: #101828;
+          --muted: #667085;
+          --glass: rgba(255,255,255,.86);
+          --shadow-sm: 0 10px 28px rgba(8,39,25,.08);
+          --shadow-md: 0 18px 45px rgba(8,39,25,.12);
+          --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+          --radius: 24px;
+          --ease: cubic-bezier(.22,1,.36,1);
+          min-height: 100vh;
+          color: var(--dark);
+          background:
+            radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+            radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+            linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+          font-family: "Inter", Arial, sans-serif !important;
+          line-height: 1.65;
+          letter-spacing: -.01em;
+          overflow-x: hidden;
+        }
+
+        .mp-about-style *,
+        .mp-contact-page *,
+        .mp-faq-page * { box-sizing: border-box; }
+
+        .mp-about-style h1,
+        .mp-about-style h2,
+        .mp-about-style h3,
+        .mp-about-style h4,
+        .mp-about-style h5,
+        .mp-contact-page h1,
+        .mp-contact-page h2,
+        .mp-contact-page h3,
+        .mp-contact-page h4,
+        .mp-contact-page h5,
+        .mp-faq-page h1,
+        .mp-faq-page h2,
+        .mp-faq-page h3,
+        .mp-faq-page h4,
+        .mp-faq-page h5 {
+          font-family: "Montserrat", "Inter", Arial, sans-serif !important;
+        }
+
+        .mp-container { width: min(1180px, 92%); margin-inline: auto; }
+
+        .mp-header {
+          position: sticky !important;
+          top: 0;
+          z-index: 50;
+          width: 100%;
+          margin: 0 !important;
+          background: rgba(8,39,25,.97) !important;
+          border-bottom: 1px solid rgba(255,255,255,.10) !important;
+          box-shadow: 0 10px 34px rgba(7,31,20,.18) !important;
+          backdrop-filter: blur(16px);
+        }
+
+        .mp-header .mp-container {
+          width: 100% !important;
+          max-width: none !important;
+          margin: 0 !important;
+          padding-inline: 32px !important;
+        }
+
+        .mp-nav {
+          min-height: 76px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          gap: 24px !important;
+        }
+
+        .mp-logo,
+        .mp-footer-brand {
+          display: flex !important;
+          align-items: center !important;
+          gap: 13px !important;
+          border: 0 !important;
+          background: transparent !important;
+          color: #fff !important;
+          padding: 0 !important;
+          text-align: left !important;
+          text-decoration: none !important;
+          cursor: pointer;
+        }
+
+        .mp-logo-icon,
+        .mp-footer-brand img {
+          width: 42px !important;
+          height: 42px !important;
+          flex: 0 0 42px;
+          border-radius: 50% !important;
+          object-fit: cover !important;
+          background: linear-gradient(145deg,#fff,#e3f4ea) !important;
+          box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.14) !important;
+        }
+
+        .mp-logo h1 {
+          margin: 0 !important;
+          color: #fff !important;
+          font-size: 18px !important;
+          line-height: 1 !important;
+          font-weight: 900 !important;
+          letter-spacing: -.04em !important;
+          text-transform: uppercase !important;
+        }
+
+        .mp-logo p {
+          margin: 4px 0 0 !important;
+          color: rgba(255,255,255,.70) !important;
+          font-size: 11px !important;
+          line-height: 1.35 !important;
+        }
+
+        .mp-desktop-nav { display: flex !important; align-items: center !important; gap: 8px !important; }
+
+        .mp-nav-link {
+          appearance: none;
+          border: 0 !important;
+          color: rgba(255,255,255,.78) !important;
+          background: transparent !important;
+          padding: 10px 14px !important;
+          border-radius: 999px !important;
+          font-family: "Inter", Arial, sans-serif !important;
+          font-size: 12px !important;
+          font-weight: 800 !important;
+          letter-spacing: .08em !important;
+          line-height: 1.2 !important;
+          text-transform: uppercase !important;
+          text-decoration: none !important;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: color .25s var(--ease), background .25s var(--ease), transform .25s var(--ease) !important;
+        }
+
+        .mp-nav-link:hover,
+        .mp-nav-link.active {
+          color: #fff !important;
+          background: rgba(255,255,255,.13) !important;
+          transform: translateY(-1px);
+        }
+
+        .mp-sign-in,
+        .mp-profile-button {
+          color: #102418 !important;
+          background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+          box-shadow: 0 16px 35px rgba(215,168,77,.22) !important;
+        }
+
+        .mp-sign-in:hover,
+        .mp-profile-button:hover {
+          color: #102418 !important;
+          background: linear-gradient(135deg,#f8dc8c,#d7a84d) !important;
+        }
+
+        .mp-menu-button {
+          display: none;
+          width: 44px;
+          height: 44px;
+          place-items: center;
+          padding: 0 !important;
+          border: 1px solid rgba(255,255,255,.12) !important;
+          border-radius: 14px !important;
+          color: #fff !important;
+          background: rgba(255,255,255,.10) !important;
+          cursor: pointer;
+        }
+        .mp-menu-button svg { width: 24px; height: 24px; }
+
+        .mp-sidebar-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 80 !important;
+          background: rgba(0,0,0,.48) !important;
+          backdrop-filter: blur(5px);
+        }
+
+        .mp-sidebar-panel {
+          position: absolute !important;
+          top: 0 !important;
+          right: 0 !important;
+          width: min(320px, 88vw) !important;
+          height: 100% !important;
+          padding: 22px !important;
+          border-left: 1px solid rgba(35,95,62,.10);
+          background: #fff !important;
+          box-shadow: -24px 0 70px rgba(0,0,0,.28) !important;
+        }
+
+        .mp-sidebar-top {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          margin-bottom: 16px !important;
+          padding-bottom: 16px !important;
+          border-bottom: 1px solid rgba(16,24,40,.10) !important;
+        }
+
+        .mp-sidebar-title {
+          margin: 0 !important;
+          color: var(--green-950) !important;
+          font-size: 12px !important;
+          font-weight: 900 !important;
+          letter-spacing: .14em !important;
+        }
+
+        .mp-sidebar-close {
+          width: 40px !important;
+          height: 40px !important;
+          border: 0 !important;
+          border-radius: 13px !important;
+          color: #101828 !important;
+          background: #f2f4f7 !important;
+          cursor: pointer;
+        }
+
+        .mp-sidebar-link {
+          display: block !important;
+          width: 100% !important;
+          margin: 0 0 8px !important;
+          padding: 13px 14px !important;
+          border: 0 !important;
+          border-radius: 14px !important;
+          color: #101828 !important;
+          background: transparent !important;
+          font-family: "Inter", Arial, sans-serif !important;
+          font-size: 13px !important;
+          font-weight: 800 !important;
+          text-align: left !important;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+
+        .mp-sidebar-link:hover,
+        .mp-sidebar-link.active { color: #fff !important; background: var(--green-800) !important; }
+
+        .mp-hero,
+        .mp-contact-hero {
+          position: relative !important;
+          min-height: 520px !important;
+          display: flex !important;
+          align-items: center !important;
+          overflow: hidden !important;
+          isolation: isolate;
+          color: #fff !important;
+          background-color: #082719 !important;
+        }
+
+        .mp-contact-hero {
+          background:
+            linear-gradient(120deg, rgba(2,18,11,.95) 0%, rgba(5,37,23,.88) 44%, rgba(12,64,39,.72) 100%),
+            var(--hero-image) center center / cover no-repeat !important;
+        }
+
+        .mp-hero-content,
+        .mp-contact-hero-content {
+          position: relative;
+          z-index: 2;
+          width: min(960px, 100%);
+          padding-block: 88px 100px !important;
+        }
+
+        .mp-hero h2,
+        .mp-contact-hero h2 {
+          max-width: 940px;
+          margin: 12px 0 0 !important;
+          color: #fff !important;
+          font-size: clamp(42px, 6vw, 76px) !important;
+          font-weight: 900 !important;
+          line-height: .98 !important;
+          letter-spacing: -.065em !important;
+          text-shadow: 0 8px 26px rgba(0,0,0,.22);
+        }
+
+        .mp-hero p,
+        .mp-contact-hero p {
+          max-width: 700px;
+          margin-top: 24px !important;
+          color: rgba(255,255,255,.80) !important;
+          font-size: 18px !important;
+          line-height: 1.8 !important;
+        }
+
+        .mp-eyebrow,
+        .eyebrow {
+          color: var(--gold-soft) !important;
+          font-family: "Inter", Arial, sans-serif !important;
+          font-size: 12px !important;
+          font-weight: 900 !important;
+          letter-spacing: .18em !important;
+          text-transform: uppercase !important;
+        }
+
+        .mp-btn,
+        .mp-submit-button,
+        .mp-map-button,
+        .mp-help-button {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          min-height: 50px !important;
+          padding: 0 24px !important;
+          border-radius: 999px !important;
+          font-family: "Inter", Arial, sans-serif !important;
+          font-size: 13px !important;
+          font-weight: 900 !important;
+          letter-spacing: .04em;
+          text-decoration: none !important;
+          cursor: pointer;
+          transition: transform .28s var(--ease), box-shadow .28s var(--ease), filter .28s var(--ease) !important;
+        }
+
+        .mp-btn-primary,
+        .mp-submit-button,
+        .mp-help-button {
+          border: 0 !important;
+          color: #102418 !important;
+          background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+          box-shadow: 0 16px 35px rgba(215,168,77,.26) !important;
+        }
+
+        .mp-btn-outline,
+        .mp-map-button {
+          color: var(--green-950) !important;
+          background: #fff !important;
+          border: 1px solid rgba(35,95,62,.16) !important;
+          box-shadow: var(--shadow-sm) !important;
+        }
+
+        .mp-btn:hover,
+        .mp-submit-button:hover,
+        .mp-map-button:hover,
+        .mp-help-button:hover { transform: translateY(-3px) !important; }
+
+        .mp-section { padding-block: 84px !important; }
+
+        .mp-section-title { margin-bottom: 36px !important; text-align: center !important; }
+        .mp-section-title span {
+          color: var(--green-700) !important;
+          font-size: 12px !important;
+          font-weight: 900 !important;
+          letter-spacing: .18em !important;
+          text-transform: uppercase !important;
+        }
+        .mp-section-title h2,
+        .mp-section-title h3 {
+          margin: 10px 0 0 !important;
+          color: var(--green-950) !important;
+          font-size: clamp(32px,4vw,50px) !important;
+          line-height: 1.08 !important;
+          letter-spacing: -.055em !important;
+          font-weight: 900 !important;
+        }
+        .mp-section-title p { max-width: 720px; margin: 15px auto 0 !important; color: var(--muted) !important; }
+
+        .mp-search-panel,
+        .mp-requirement-panel,
+        .mp-contact-card,
+        .mp-map-card,
+        .mp-faq-card,
+        .mp-help-card {
+          border: 1px solid rgba(255,255,255,.82) !important;
+          border-radius: 30px !important;
+          background: var(--glass) !important;
+          box-shadow: var(--shadow-md) !important;
+          backdrop-filter: blur(18px);
+        }
+
+        .mp-summary-card,
+        .mp-requirement-card,
+        .mp-job-card,
+        .mp-faq-item {
+          border: 1px solid rgba(35,95,62,.12) !important;
+          border-radius: 22px !important;
+          background: rgba(255,255,255,.94) !important;
+          box-shadow: var(--shadow-sm) !important;
+          transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease) !important;
+        }
+
+        .mp-summary-card:hover,
+        .mp-requirement-card:hover,
+        .mp-job-card:hover {
+          transform: translateY(-6px) !important;
+          border-color: rgba(215,168,77,.42) !important;
+          box-shadow: var(--shadow-md) !important;
+        }
+
+        .mp-contact-page input,
+        .mp-contact-page select,
+        .mp-contact-page textarea {
+          width: 100%;
+          min-height: 54px;
+          padding: 0 17px !important;
+          border: 1px solid rgba(35,95,62,.18) !important;
+          border-radius: 16px !important;
+          color: var(--green-950) !important;
+          background: #fff !important;
+          font-family: "Inter", Arial, sans-serif !important;
+          font-size: 14px !important;
+          font-weight: 600 !important;
+          outline: none !important;
+          box-shadow: 0 8px 20px rgba(8,39,25,.04) !important;
+        }
+        .mp-contact-page textarea { min-height: 130px; padding-top: 14px !important; resize: vertical; }
+        .mp-contact-page input:focus,
+        .mp-contact-page select:focus,
+        .mp-contact-page textarea:focus {
+          border-color: rgba(215,168,77,.78) !important;
+          box-shadow: 0 0 0 4px rgba(215,168,77,.14) !important;
+        }
+
+        .mp-footer {
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 30px 0 12px !important;
+          color: #fff !important;
+          background: var(--footer-green) !important;
+        }
+
+        .mp-footer .mp-container {
+          width: 100% !important;
+          max-width: none !important;
+          margin: 0 !important;
+          padding-inline: 32px !important;
+        }
+
+        .mp-footer-grid {
+          width: 100%;
+          display: grid !important;
+          grid-template-columns: 1.5fr .9fr 1fr 1.4fr .8fr !important;
+          gap: 22px !important;
+          padding-bottom: 24px !important;
+          border-bottom: 1px solid rgba(255,255,255,.10) !important;
+        }
+
+        .mp-footer h4 { margin: 0 0 10px !important; color: #fff !important; font-size: 18px !important; font-weight: 900 !important; }
+        .mp-footer h5 {
+          margin: 0 0 10px !important;
+          color: var(--gold-soft) !important;
+          font-size: 12px !important;
+          font-weight: 900 !important;
+          line-height: 1.2 !important;
+          letter-spacing: .14em !important;
+          text-transform: uppercase !important;
+        }
+        .mp-footer p,
+        .mp-footer a,
+        .mp-footer-link {
+          display: block;
+          margin: 5px 0 !important;
+          color: rgba(255,255,255,.68) !important;
+          font-size: 13px !important;
+          line-height: 1.55 !important;
+          text-decoration: none !important;
+        }
+        .mp-footer a:hover,
+        .mp-footer-link:hover { color: #fff !important; text-decoration: underline !important; }
+
+        .mp-copyright {
+          width: 100%;
+          display: flex !important;
+          justify-content: space-between !important;
+          gap: 12px !important;
+          padding-top: 14px !important;
+          color: rgba(255,255,255,.52) !important;
+          font-size: 12px !important;
+          line-height: 1.4 !important;
+        }
+
+        @media (max-width: 1100px) {
+          .mp-footer-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+        }
+
+        @media (max-width: 900px) {
+          .mp-header .mp-container,
+          .mp-footer .mp-container { padding-inline: 22px !important; }
+          .mp-nav { min-height: 72px !important; }
+          .mp-desktop-nav { display: none !important; }
+          .mp-menu-button { display: grid !important; }
+          .mp-hero,
+          .mp-contact-hero { min-height: 500px !important; }
+          .mp-footer-grid { grid-template-columns: 1fr !important; gap: 18px !important; }
+          .mp-copyright { flex-direction: column !important; }
+        }
+
+        @media (max-width: 600px) {
+          .mp-header .mp-container,
+          .mp-footer .mp-container { padding-inline: 16px !important; }
+          .mp-logo h1 { font-size: 14px !important; }
+          .mp-logo p { display: none !important; }
+          .mp-hero h2,
+          .mp-contact-hero h2 { font-size: clamp(38px,12vw,54px) !important; letter-spacing: -.045em !important; }
+          .mp-hero p,
+          .mp-contact-hero p { font-size: 16px !important; }
+          .mp-section { padding-block: 62px !important; }
+          .mp-btn,
+          .mp-submit-button,
+          .mp-map-button,
+          .mp-help-button { width: 100%; }
+          .mp-footer-grid { padding-bottom: 20px !important; }
+        }
+
       `}</style>
 
       <header className="mp-header">
@@ -1076,20 +1592,20 @@ export default function ManpowerRequirements() {
           </FooterColumn>
 
           <FooterColumn title="Contact Information">
-            <p>ltc.tamis@gmail.com</p>
-            <p>lorengladisu@ltcmultiservices.com</p>
-            <p>09959808051 / 09516281271</p>
+            <p><a href="mailto:ltc.tamsi@gmail.com">ltc.tamsi@gmail.com</a></p>
+            <p><a href="mailto:lorengladius@ltcmultiservices.com">lorengladius@ltcmultiservices.com</a></p>
+            <p><a href="tel:+639516281271">+639516281271</a></p>
+            <p><a href="tel:+639959808051">+639959808051</a></p>
           </FooterColumn>
 
           <FooterColumn title="Address">
-            <p>2/F 544 Curie Street,</p>
+            <p>2/F 5441 Currie Street,</p>
             <p>Palanan, Makati City</p>
           </FooterColumn>
 
           <FooterColumn title="Follow Us">
-            <p>Facebook</p>
-            <p>Email</p>
-            <p>LinkedIn</p>
+            <p><a href={"https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"} target="_blank" rel="noopener noreferrer">Facebook</a></p>
+            <p><a href="mailto:lorengladius@ltcmultiservices.com">Email</a></p>
           </FooterColumn>
         </div>
 

@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ActionButton,
+  AdminModal,
   AdminShell,
+  ErrorState,
   FieldLabel,
+  InlineNotice,
   LoadingState,
-  SectionCard,
+  Toast,
   compactInputClassName,
+  formatDateTime,
   inputClassName,
+  recordAdminActivity,
 } from "./ManpowerAdminShell";
 
 function normalizeApiBase(raw) {
@@ -26,6 +31,8 @@ function getAdminToken() {
 function clearAdminSession() {
   localStorage.removeItem("manpowerAdminToken");
   localStorage.removeItem("manpowerAdminUser");
+  localStorage.removeItem("manpowerAdmin");
+  localStorage.removeItem("manpowerToken");
 }
 
 function adminHeaders(extra = {}) {
@@ -172,11 +179,68 @@ function DashboardTableShell({ children }) {
   );
 }
 
+function validateDeductionConfig(config) {
+  const errors = [];
+  const validateRows = (rows, label, extraFields = []) => {
+    const normalized = rows.map((row, index) => ({ ...row, index, min: Number(row.min), max: row.max === "" || row.max == null ? null : Number(row.max) })).sort((a, b) => a.min - b.min);
+    normalized.forEach((row) => {
+      if (!Number.isFinite(row.min) || row.min < 0) errors.push(`${label} row ${row.index + 1}: minimum must be a non-negative number.`);
+      if (row.max !== null && (!Number.isFinite(row.max) || row.max < row.min)) errors.push(`${label} row ${row.index + 1}: maximum must be greater than or equal to minimum.`);
+      extraFields.forEach(([key, display, maxValue]) => {
+        const value = Number(row[key]);
+        if (!Number.isFinite(value) || value < 0 || (maxValue != null && value > maxValue)) errors.push(`${label} row ${row.index + 1}: ${display} is invalid.`);
+      });
+    });
+    for (let index = 1; index < normalized.length; index += 1) {
+      const previous = normalized[index - 1];
+      const current = normalized[index];
+      if (previous.max === null) errors.push(`${label}: an open-ended bracket must be the final row.`);
+      else if (Number.isFinite(previous.max) && current.min <= previous.max) errors.push(`${label}: row ${current.index + 1} overlaps another bracket.`);
+    }
+  };
+
+  validateRows(config.sss.table, "SSS", [["employeeShare", "employee share"]]);
+  validateRows(config.withholdingTax.table, "Withholding tax", [["baseTax", "base tax"], ["excessOver", "excess over"], ["rate", "rate", 1]]);
+  const numericRules = [
+    [config.philhealth.monthlyRate, "PhilHealth monthly rate", 1],
+    [config.philhealth.employeeShareRate, "PhilHealth employee share rate", 1],
+    [config.philhealth.firstHalfFixedDeduction, "PhilHealth first-half deduction"],
+    [config.pagibig.fixedEmployeeShare, "Pag-IBIG employee share"],
+  ];
+  numericRules.forEach(([raw, label, max]) => { const value = Number(raw); if (!Number.isFinite(value) || value < 0 || (max != null && value > max)) errors.push(`${label} is invalid.`); });
+  return [...new Set(errors)];
+}
+
+function estimateDeductions(config, gross) {
+  const salary = Math.max(Number(gross || 0), 0);
+  const findRow = (rows) => rows.find((row) => salary >= Number(row.min || 0) && (row.max === "" || row.max == null || salary <= Number(row.max)));
+  const sssRow = findRow(config.sss.table);
+  const taxRow = findRow(config.withholdingTax.table);
+  const sss = config.sss.enabled ? Number(sssRow?.employeeShare || 0) : 0;
+  const philhealth = config.philhealth.enabled ? salary * Number(config.philhealth.monthlyRate || 0) * Number(config.philhealth.employeeShareRate || 0) : 0;
+  const pagibig = config.pagibig.enabled ? Number(config.pagibig.fixedEmployeeShare || 0) : 0;
+  const withholdingTax = config.withholdingTax.enabled && taxRow ? Number(taxRow.baseTax || 0) + Math.max(0, salary - Number(taxRow.excessOver || 0)) * Number(taxRow.rate || 0) : 0;
+  return { sss, philhealth, pagibig, withholdingTax, total: sss + philhealth + pagibig + withholdingTax };
+}
+
+function readDeductionHistory() {
+  try { const value = JSON.parse(localStorage.getItem("manpowerDeductionHistory") || "[]"); return Array.isArray(value) ? value : []; } catch { return []; }
+}
+
 export default function ManpowerAdminDeductions() {
   const navigate = useNavigate();
   const [token, setToken] = useState(getAdminToken());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [notice, setNotice] = useState(null);
+  const [savedSnapshot, setSavedSnapshot] = useState("");
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10));
+  const [previewSalary, setPreviewSalary] = useState(20000);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetText, setResetText] = useState("");
+  const [history, setHistory] = useState(readDeductionHistory);
 
   const [config, setConfig] = useState(() =>
     normalizeConfig({
@@ -184,6 +248,22 @@ export default function ManpowerAdminDeductions() {
       withholdingTax: { table: [] },
     })
   );
+
+  const currentSnapshot = useMemo(() => JSON.stringify(config), [config]);
+  const hasUnsavedChanges = Boolean(savedSnapshot && currentSnapshot !== savedSnapshot);
+  const preview = useMemo(() => estimateDeductions(config, previewSalary), [config, previewSalary]);
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = window.setTimeout(() => setNotice(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  useEffect(() => {
+    const warn = (event) => { if (hasUnsavedChanges) { event.preventDefault(); event.returnValue = ""; } };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasUnsavedChanges]);
 
   function logout() {
     clearAdminSession();
@@ -204,6 +284,7 @@ export default function ManpowerAdminDeductions() {
   async function loadConfig() {
     try {
       setLoading(true);
+      setLoadError("");
 
       const res = await fetch(`${API_BASE}/manpower/admin/deductions`, {
         headers: adminHeaders(),
@@ -222,9 +303,12 @@ export default function ManpowerAdminDeductions() {
         );
       }
 
-      setConfig(normalizeConfig(data?.config || data?.defaults || {}));
+      const nextConfig = normalizeConfig(data?.config || data?.defaults || {});
+      setConfig(nextConfig);
+      setSavedSnapshot(JSON.stringify(nextConfig));
+      setValidationErrors([]);
     } catch (error) {
-      alert(error?.message || "Failed to load government deduction settings.");
+      setLoadError(error?.message || "Failed to load government deduction settings.");
     } finally {
       setLoading(false);
     }
@@ -335,75 +419,52 @@ export default function ManpowerAdminDeductions() {
   }
 
   async function saveConfig() {
+    const errors = validateDeductionConfig(config);
+    setValidationErrors(errors);
+    if (errors.length) {
+      setNotice({ tone: "danger", title: "Fix validation errors", message: `${errors.length} issue${errors.length === 1 ? "" : "s"} must be corrected before saving.` });
+      return;
+    }
     try {
       setSaving(true);
-
-      const res = await fetch(`${API_BASE}/manpower/admin/deductions`, {
-        method: "PUT",
-        headers: {
-          ...adminHeaders(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(config),
-      });
-
+      const previous = savedSnapshot ? JSON.parse(savedSnapshot) : null;
+      const res = await fetch(`${API_BASE}/manpower/admin/deductions`, { method: "PUT", headers: { ...adminHeaders(), "Content-Type": "application/json" }, body: JSON.stringify(config) });
       const data = await res.json().catch(() => ({}));
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
+      if (res.status === 401 || res.status === 403) { logout(); return; }
+      if (!res.ok) throw new Error(data?.message || "Failed to save government deduction settings.");
+      const nextConfig = normalizeConfig(data?.config || config);
+      if (previous) {
+        const nextHistory = [{ id: `${Date.now()}`, savedAt: new Date().toISOString(), effectiveDate, config: previous }, ...history].slice(0, 10);
+        localStorage.setItem("manpowerDeductionHistory", JSON.stringify(nextHistory));
+        setHistory(nextHistory);
       }
-
-      if (!res.ok) {
-        throw new Error(
-          data?.message || "Failed to save government deduction settings."
-        );
-      }
-
-      setConfig(normalizeConfig(data?.config || {}));
-      alert(data?.message || "Government deduction settings saved.");
-    } catch (error) {
-      alert(error?.message || "Failed to save government deduction settings.");
-    } finally {
-      setSaving(false);
-    }
+      setConfig(nextConfig);
+      setSavedSnapshot(JSON.stringify(nextConfig));
+      setValidationErrors([]);
+      recordAdminActivity("Updated government deduction settings", `Effective ${effectiveDate}`);
+      setNotice({ tone: "success", title: "Deduction settings saved", message: data?.message || "The payroll deduction configuration was updated successfully." });
+    } catch (error) { setNotice({ tone: "danger", title: "Save failed", message: error?.message || "Failed to save government deduction settings." }); }
+    finally { setSaving(false); }
   }
 
   async function resetConfig() {
-    const confirmed = window.confirm(
-      "Reset all government deduction settings to default?"
-    );
-
-    if (!confirmed) return;
-
+    if (resetText.trim().toUpperCase() !== "RESET") return;
     try {
       setSaving(true);
-
-      const res = await fetch(`${API_BASE}/manpower/admin/deductions/reset`, {
-        method: "POST",
-        headers: adminHeaders(),
-      });
-
+      const res = await fetch(`${API_BASE}/manpower/admin/deductions/reset`, { method: "POST", headers: adminHeaders() });
       const data = await res.json().catch(() => ({}));
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(
-          data?.message || "Failed to reset government deduction settings."
-        );
-      }
-
-      setConfig(normalizeConfig(data?.config || {}));
-      alert(data?.message || "Government deduction settings reset.");
-    } catch (error) {
-      alert(error?.message || "Failed to reset government deduction settings.");
-    } finally {
-      setSaving(false);
-    }
+      if (res.status === 401 || res.status === 403) { logout(); return; }
+      if (!res.ok) throw new Error(data?.message || "Failed to reset government deduction settings.");
+      const nextConfig = normalizeConfig(data?.config || {});
+      setConfig(nextConfig);
+      setSavedSnapshot(JSON.stringify(nextConfig));
+      setValidationErrors([]);
+      setResetOpen(false);
+      setResetText("");
+      recordAdminActivity("Reset government deduction settings", "Restored server defaults");
+      setNotice({ tone: "success", title: "Defaults restored", message: data?.message || "Government deduction settings were reset." });
+    } catch (error) { setNotice({ tone: "danger", title: "Reset failed", message: error?.message || "Failed to reset government deduction settings." }); }
+    finally { setSaving(false); }
   }
 
   return (
@@ -413,8 +474,11 @@ export default function ManpowerAdminDeductions() {
       subtitle="Configure SSS, PhilHealth, Pag-IBIG, and withholding tax rules used by payroll."
       onLogout={logout}
     >
+      <Toast notice={notice} onClose={() => setNotice(null)} />
       {loading ? (
         <LoadingState>Loading government deduction settings...</LoadingState>
+      ) : loadError ? (
+        <ErrorState message={loadError} onRetry={loadConfig} />
       ) : (
         <div className="animate-[deductionsFadeUp_0.6s_ease-out] space-y-8">
           <style>{`
@@ -516,6 +580,20 @@ export default function ManpowerAdminDeductions() {
               subtitle="Semi-monthly tax brackets"
               tone="warning"
             />
+          </section>
+
+          {hasUnsavedChanges ? <InlineNotice tone="warning" title="Unsaved changes">Review the validation panel and save before leaving this page.</InlineNotice> : null}
+          {validationErrors.length ? <InlineNotice tone="danger" title="Validation errors"><ul className="list-disc space-y-1 pl-5">{validationErrors.slice(0, 8).map((error) => <li key={error}>{error}</li>)}</ul>{validationErrors.length > 8 ? <p className="mt-2 font-bold">And {validationErrors.length - 8} more issue(s).</p> : null}</InlineNotice> : null}
+
+          <section className="grid gap-6 lg:grid-cols-2">
+            <DashboardPanel eyebrow="Change Control" title="Effective Date" subtitle="This date is stored in the local change history for reference. The existing API continues receiving only the supported deduction configuration.">
+              <label className="block"><FieldLabel>Effective date</FieldLabel><input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} className={`mt-2 ${inputClassName}`} /></label>
+            </DashboardPanel>
+            <DashboardPanel eyebrow="Calculation Preview" title="Estimate Employee Deductions" subtitle="Use a sample gross amount to verify the active brackets before saving.">
+              <label className="block"><FieldLabel>Sample gross amount</FieldLabel><input type="number" min="0" step="0.01" value={previewSalary} onChange={(event) => setPreviewSalary(event.target.value)} className={`mt-2 ${inputClassName}`} /></label>
+              <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div className="rounded-2xl bg-[#f7faf6] p-3">SSS <strong className="float-right">₱{preview.sss.toFixed(2)}</strong></div><div className="rounded-2xl bg-[#f7faf6] p-3">PhilHealth <strong className="float-right">₱{preview.philhealth.toFixed(2)}</strong></div><div className="rounded-2xl bg-[#f7faf6] p-3">Pag-IBIG <strong className="float-right">₱{preview.pagibig.toFixed(2)}</strong></div><div className="rounded-2xl bg-[#f7faf6] p-3">Tax <strong className="float-right">₱{preview.withholdingTax.toFixed(2)}</strong></div></div>
+              <div className="mt-3 rounded-2xl bg-[#082719] p-4 text-white"><span className="text-sm font-bold">Estimated total</span><strong className="float-right text-xl text-[#f4d484]">₱{preview.total.toFixed(2)}</strong></div>
+            </DashboardPanel>
           </section>
 
           <DashboardPanel
@@ -800,17 +878,20 @@ export default function ManpowerAdminDeductions() {
           <section className="relative overflow-hidden rounded-[26px] border border-[#d7e2d1] bg-white p-4 shadow-[0_14px_34px_rgba(8,39,25,0.08)] ring-1 ring-black/5">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#235f3e] via-[#2f754c] to-[#d7a84d]" />
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-              <ActionButton type="button" variant="danger" onClick={resetConfig} disabled={saving}>
-                Reset Defaults
-              </ActionButton>
-
-              <ActionButton type="button" onClick={saveConfig} disabled={saving}>
-                {saving ? "Saving..." : "Save Deduction Settings"}
-              </ActionButton>
+              <ActionButton type="button" variant="danger" onClick={() => setResetOpen(true)} disabled={saving}>Reset Defaults</ActionButton>
+              <ActionButton type="button" onClick={saveConfig} loading={saving}>Save Deduction Settings</ActionButton>
             </div>
           </section>
+
+          <DashboardPanel eyebrow="Local History" title="Recent Deduction Changes" subtitle="Up to ten previous configurations saved from this browser. A complete organization-wide audit log requires backend support.">
+            {history.length ? <div className="divide-y divide-[#e8eee7] overflow-hidden rounded-2xl border border-[#dce8dc]">{history.map((entry) => <div key={entry.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-extrabold text-[#071f14]">Settings replaced</p><p className="text-xs font-semibold text-[#5f6f61]">Effective date: {entry.effectiveDate || "Not specified"}</p></div><p className="text-xs font-bold text-[#7a897c]">{formatDateTime(entry.savedAt)}</p></div>)}</div> : <div className="rounded-2xl border border-dashed border-[#cfd8c8] p-8 text-center text-sm font-semibold text-[#68786b]">Previous configurations will appear after the first successful update.</div>}
+          </DashboardPanel>
         </div>
       )}
+
+      <AdminModal open={resetOpen} title="Reset all deduction settings?" description="This restores the server defaults and replaces the current SSS, PhilHealth, Pag-IBIG, and withholding-tax configuration." onClose={() => !saving && setResetOpen(false)} footer={<><ActionButton variant="ghost" onClick={() => { setResetOpen(false); setResetText(""); }} disabled={saving}>Cancel</ActionButton><ActionButton variant="danger" onClick={resetConfig} loading={saving} disabled={resetText.trim().toUpperCase() !== "RESET"}>Reset defaults</ActionButton></>}>
+        <InlineNotice tone="danger" title="High-impact action">Type <strong>RESET</strong> below to confirm.</InlineNotice><input value={resetText} onChange={(event) => setResetText(event.target.value)} placeholder="Type RESET" className={`mt-4 ${inputClassName}`} autoComplete="off" />
+      </AdminModal>
     </AdminShell>
   );
 }

@@ -236,6 +236,15 @@ function getRequirementRows(application) {
   );
 }
 
+function getRequirementCompletion(application) {
+  const keys = ["validId", "resume", "nbi", "barangayClearance", "sss", "philhealth", "pagibig", "tin"];
+  const completed = keys.filter((key) => {
+    const value = application?.requirements?.[key];
+    return Boolean(value?.filename || value?.originalName || value?.fileId);
+  }).length;
+  return Math.round((completed / keys.length) * 100);
+}
+
 const REQUIREMENT_LABELS = {
   validId: "Valid ID",
   resume: "Resume",
@@ -471,6 +480,8 @@ export default function ManpowerHrApplications() {
   const [resumeStatusFilter, setResumeStatusFilter] = useState("");
   const [sortBy, setSortBy] = useState("resume_score");
   const [searchValue, setSearchValue] = useState("");
+  const [applicationDateFrom, setApplicationDateFrom] = useState("");
+  const [applicationDateTo, setApplicationDateTo] = useState("");
   const [page, setPage] = useState(1);
 
   const [selectedApp, setSelectedApp] = useState(null);
@@ -479,9 +490,15 @@ export default function ManpowerHrApplications() {
   const [loadingList, setLoadingList] = useState(false);
   const [screeningActionId, setScreeningActionId] = useState("");
   const [actionSubmitting, setActionSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [hireCredentials, setHireCredentials] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [copiedField, setCopiedField] = useState("");
 
   const [scheduleForm, setScheduleForm] = useState({
     scheduledAt: "",
+    interviewType: "On-site",
     location: "",
     interviewer: "",
     remarks: "",
@@ -491,10 +508,14 @@ export default function ManpowerHrApplications() {
     deploymentSite: "",
     regionCode: "NCR",
     dailyRate: "",
+    startDate: "",
+    contractType: "Project-based",
     hrNotes: "",
   });
 
   const [rejectForm, setRejectForm] = useState({
+    category: "Did Not Meet Qualifications",
+    notifyApplicant: true,
     hrNotes: "",
   });
 
@@ -518,12 +539,66 @@ export default function ManpowerHrApplications() {
     hrUser?.email ||
     hrUser?.companyEmail ||
     hrUser?.username ||
-    "traineeemail@tamsi.com";
+    "ltc.tamsi@gmail.com";
 
   function logout() {
     clearHrSession();
     setToken("");
     navigate("/manpower-hr-login", { replace: true });
+  }
+
+  function notify(type, message) {
+    setFeedback({ type, message });
+    window.setTimeout(() => {
+      setFeedback((current) =>
+        current.message === message ? { type: "", message: "" } : current
+      );
+    }, 4500);
+  }
+
+  async function copyCredential(label, value) {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(String(value));
+      setCopiedField(label);
+      window.setTimeout(() => setCopiedField(""), 1800);
+    } catch {
+      notify("error", "Unable to copy. Please select and copy the value manually.");
+    }
+  }
+
+  function exportApplicationsCsv() {
+    const headers = [
+      "Applicant",
+      "Email",
+      "Contact",
+      "Vacancy",
+      "Status",
+      "Resume Score",
+      "Assessment Score",
+      "Applied At",
+    ];
+    const rows = filteredApplications.map((app) => [
+      getApplicantName(app),
+      app?.email || "",
+      app?.contactNo || "",
+      app?.vacancy || "",
+      prettifyValue(app?.status || ""),
+      getResumeScoreValue(app),
+      app?.assessment?.percentage ?? "",
+      formatDateTime(app?.createdAt),
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `manpower-applicants-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    notify("success", "Applicant records exported successfully.");
   }
 
   function revokePreviewUrl() {
@@ -792,6 +867,7 @@ export default function ManpowerHrApplications() {
                 .toISOString()
                 .slice(0, 16)
             : "",
+          interviewType: application?.interview?.interviewType || "On-site",
           location: application?.interview?.location || "",
           interviewer: application?.interview?.interviewer || "",
           remarks: application?.interview?.remarks || "",
@@ -799,6 +875,7 @@ export default function ManpowerHrApplications() {
       } else {
         setScheduleForm({
           scheduledAt: "",
+          interviewType: "On-site",
           location: "",
           interviewer: "",
           remarks: "",
@@ -810,6 +887,8 @@ export default function ManpowerHrApplications() {
           deploymentSite: application?.deploymentSite || "",
           regionCode: application?.regionCode || "NCR",
           dailyRate: "",
+          startDate: "",
+          contractType: "Project-based",
           hrNotes: application?.hrNotes || "",
         });
       } else {
@@ -817,16 +896,22 @@ export default function ManpowerHrApplications() {
           deploymentSite: "",
           regionCode: "NCR",
           dailyRate: "",
+          startDate: "",
+          contractType: "Project-based",
           hrNotes: "",
         });
       }
 
       if (mode === "reject") {
         setRejectForm({
+          category: "Did Not Meet Qualifications",
+          notifyApplicant: true,
           hrNotes: application?.hrNotes || "",
         });
       } else {
         setRejectForm({
+          category: "Did Not Meet Qualifications",
+          notifyApplicant: true,
           hrNotes: "",
         });
       }
@@ -840,7 +925,7 @@ export default function ManpowerHrApplications() {
       setActiveModal("");
       setSelectedApp(null);
       clearIdPreviewState();
-      alert(error?.message || "Failed to load application details.");
+      notify("error", error?.message || "Failed to load application details.");
     } finally {
       setLoadingApplication(false);
     }
@@ -848,6 +933,16 @@ export default function ManpowerHrApplications() {
 
   async function scheduleInterview() {
     if (!selectedApp?._id || actionSubmitting) return;
+
+    if (!scheduleForm.scheduledAt || !scheduleForm.location.trim() || !scheduleForm.interviewer.trim()) {
+      notify("error", "Interview date, interviewer, and location or meeting link are required.");
+      return;
+    }
+
+    if (new Date(scheduleForm.scheduledAt).getTime() <= Date.now()) {
+      notify("error", "Interview schedule must be set to a future date and time.");
+      return;
+    }
 
     setActionSubmitting(true);
 
@@ -867,12 +962,12 @@ export default function ManpowerHrApplications() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        alert(data?.message || "Failed to schedule interview.");
+        notify("error", data?.message || "Failed to schedule interview.");
         return;
       }
 
-      alert("Interview schedule sent to applicant email.");
       closeModal();
+      notify("success", "Interview schedule saved and sent to the applicant.");
       loadApplications();
     } finally {
       setActionSubmitting(false);
@@ -881,6 +976,21 @@ export default function ManpowerHrApplications() {
 
   async function hireApplicant() {
     if (!selectedApp?._id || actionSubmitting) return;
+
+    if (!hireForm.deploymentSite.trim() || !hireForm.regionCode.trim()) {
+      notify("error", "Deployment site and region code are required.");
+      return;
+    }
+
+    if (!Number.isFinite(Number(hireForm.dailyRate)) || Number(hireForm.dailyRate) <= 0) {
+      notify("error", "Enter a valid daily rate greater than zero.");
+      return;
+    }
+
+    if (!hireForm.startDate) {
+      notify("error", "Employee start date is required.");
+      return;
+    }
 
     setActionSubmitting(true);
 
@@ -903,15 +1013,17 @@ export default function ManpowerHrApplications() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        alert(data?.message || "Failed to hire applicant.");
+        notify("error", data?.message || "Failed to hire applicant.");
         return;
       }
 
-      alert(
-        `Applicant hired.\nCompany Email: ${data?.employee?.companyEmail || "-"}\nTemporary Password: ${data?.employee?.temporaryPassword || "-"}`
-      );
-
-      closeModal();
+      setHireCredentials({
+        companyEmail: data?.employee?.companyEmail || "-",
+        temporaryPassword: data?.employee?.temporaryPassword || "-",
+        employeeName: getApplicantName(selectedApp),
+      });
+      setActiveModal("credentials");
+      notify("success", "Applicant hired successfully. Secure credentials are ready to copy.");
       loadApplications();
     } finally {
       setActionSubmitting(false);
@@ -920,6 +1032,11 @@ export default function ManpowerHrApplications() {
 
   async function rejectApplicant(applicationId = selectedApp?._id) {
     if (!applicationId || actionSubmitting) return;
+
+    if (rejectForm.hrNotes.trim().length < 3) {
+      notify("error", "Enter a clear rejection remark before continuing.");
+      return;
+    }
 
     setActionSubmitting(true);
 
@@ -933,7 +1050,9 @@ export default function ManpowerHrApplications() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            hrNotes: rejectForm.hrNotes,
+            hrNotes: `[${rejectForm.category}] ${rejectForm.hrNotes}`.trim(),
+            rejectionCategory: rejectForm.category,
+            notifyApplicant: rejectForm.notifyApplicant,
           }),
         }
       );
@@ -941,12 +1060,12 @@ export default function ManpowerHrApplications() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        alert(data?.message || "Failed to reject applicant.");
+        notify("error", data?.message || "Failed to reject applicant.");
         return;
       }
 
-      alert("Application marked as rejected.");
       closeModal();
+      notify("success", "Application marked as rejected.");
       loadApplications();
     } finally {
       setActionSubmitting(false);
@@ -955,16 +1074,6 @@ export default function ManpowerHrApplications() {
 
   async function rescreenResume(applicationId, options = {}) {
     if (!applicationId) return false;
-
-    const skipConfirm = Boolean(options?.skipConfirm);
-
-    if (!skipConfirm) {
-      const confirmed = window.confirm(
-        "Run AI resume screening again for this applicant? This will use the stored resume file and the selected job vacancy."
-      );
-
-      if (!confirmed) return false;
-    }
 
     setScreeningActionId(applicationId);
 
@@ -983,7 +1092,7 @@ export default function ManpowerHrApplications() {
         throw new Error(data?.message || "Failed to screen applicant resume.");
       }
 
-      alert("Resume screening updated successfully.");
+      notify("success", "Resume screening updated successfully.");
 
       if (selectedApp?._id === applicationId && activeModal === "view") {
         await loadApplicationDetails(applicationId, "view");
@@ -992,7 +1101,7 @@ export default function ManpowerHrApplications() {
       loadApplications();
       return true;
     } catch (error) {
-      alert(error?.message || "Failed to screen applicant resume.");
+      notify("error", error?.message || "Failed to screen applicant resume.");
       return false;
     } finally {
       setScreeningActionId("");
@@ -1004,8 +1113,11 @@ export default function ManpowerHrApplications() {
     setActiveModal("");
     setLoadingApplication(false);
     setActionSubmitting(false);
+    setHireCredentials(null);
+    setCopiedField("");
     setScheduleForm({
       scheduledAt: "",
+      interviewType: "On-site",
       location: "",
       interviewer: "",
       remarks: "",
@@ -1014,9 +1126,13 @@ export default function ManpowerHrApplications() {
       deploymentSite: "",
       regionCode: "NCR",
       dailyRate: "",
+      startDate: "",
+      contractType: "Project-based",
       hrNotes: "",
     });
     setRejectForm({
+      category: "Did Not Meet Qualifications",
+      notifyApplicant: true,
       hrNotes: "",
     });
     clearIdPreviewState();
@@ -1086,8 +1202,13 @@ export default function ManpowerHrApplications() {
       const matchesStatus = !statusFilter || app?.status === statusFilter;
       const matchesVacancy = !vacancyFilter || app?.vacancy === vacancyFilter;
       const matchesResumeStatus = !resumeStatusFilter || resumeStatus === resumeStatusFilter;
+      const appliedAt = app?.createdAt ? new Date(app.createdAt) : null;
+      const from = applicationDateFrom ? new Date(`${applicationDateFrom}T00:00:00`) : null;
+      const to = applicationDateTo ? new Date(`${applicationDateTo}T23:59:59`) : null;
+      const matchesFrom = !from || !appliedAt || appliedAt >= from;
+      const matchesTo = !to || !appliedAt || appliedAt <= to;
 
-      return matchesKeyword && matchesStatus && matchesVacancy && matchesResumeStatus;
+      return matchesKeyword && matchesStatus && matchesVacancy && matchesResumeStatus && matchesFrom && matchesTo;
     });
 
     return [...matchedApplications].sort((a, b) => {
@@ -1102,11 +1223,22 @@ export default function ManpowerHrApplications() {
 
       return bScore - aScore;
     });
-  }, [applications, searchValue, statusFilter, vacancyFilter, resumeStatusFilter, sortBy]);
+  }, [applications, searchValue, statusFilter, vacancyFilter, resumeStatusFilter, sortBy, applicationDateFrom, applicationDateTo]);
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, vacancyFilter, resumeStatusFilter, sortBy, searchValue]);
+  }, [statusFilter, vacancyFilter, resumeStatusFilter, sortBy, searchValue, applicationDateFrom, applicationDateTo]);
+
+  const duplicateApplicantKeys = useMemo(() => {
+    const counts = new Map();
+    applications.forEach((app) => {
+      [app?.email, app?.contactNo].filter(Boolean).forEach((value) => {
+        const key = String(value).trim().toLowerCase();
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+    });
+    return new Set(Array.from(counts.entries()).filter(([, count]) => count > 1).map(([key]) => key));
+  }, [applications]);
 
   const totalPages = Math.max(1, Math.ceil(filteredApplications.length / itemsPerPage));
 
@@ -1144,6 +1276,8 @@ export default function ManpowerHrApplications() {
       ? "AI Resume Screening"
       : activeModal === "requirement"
       ? "View Uploaded Requirement"
+      : activeModal === "credentials"
+      ? "Employee Credentials"
       : "Applicant Details";
 
   const modalWidthClass =
@@ -1153,8 +1287,15 @@ export default function ManpowerHrApplications() {
 
   return (
     <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+      {feedback.message ? (
+        <div className={`fixed right-5 top-5 z-[80] max-w-md rounded-2xl border px-5 py-4 text-sm font-black shadow-[0_22px_60px_rgba(8,39,25,0.24)] ${feedback.type === "error" ? "border-[#efc9c9] bg-[#fff2f2] text-[#912f2f]" : "border-[#cfe6d5] bg-white text-[#174a30]"}`}>
+          {feedback.message}
+        </div>
+      ) : null}
+      {mobileSidebarOpen ? <button type="button" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} className="fixed inset-0 z-40 bg-[#071f14]/60 backdrop-blur-sm lg:hidden" /> : null}
       <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        <aside className="sticky top-0 flex h-screen min-h-screen w-full flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)]">
+        <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[270px] flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)] transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <button type="button" onClick={() => setMobileSidebarOpen(false)} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl font-black lg:hidden">×</button>
           <div className="text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
               Manpower Services HR
@@ -1193,7 +1334,7 @@ export default function ManpowerHrApplications() {
           <div className="border-t border-white/15 pt-7">
             <button
               type="button"
-              onClick={logout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="group flex min-h-[52px] w-full items-center gap-4 rounded-[26px] bg-white/10 px-6 text-left text-[13px] font-black capitalize tracking-tight text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#f4d484] hover:text-[#071f14]"
             >
               <span className="grid h-8 w-8 shrink-0 place-items-center text-white/90 transition duration-300 group-hover:text-[#071f14]">
@@ -1201,13 +1342,14 @@ export default function ManpowerHrApplications() {
               </span>
               <span>Sign out</span>
             </button>
-            <p className="mt-7 text-center text-[11px] font-bold text-white/55">
-              © LTC Manpower Services
-            </p>
+            <p className="mt-4 break-all text-center text-[11px] font-bold text-white/65">{hrEmail}</p>
+            <button type="button" onClick={() => navigate("/manpower-services")} className="mt-3 w-full text-center text-[11px] font-black uppercase tracking-[0.12em] text-[#f4d484] hover:text-white">View Public Website</button>
+            <p className="mt-4 text-center text-[11px] font-bold text-white/55">© LTC Manpower Services</p>
           </div>
         </aside>
 
         <main className="min-w-0 px-5 py-6 lg:px-8">
+          <div className="mb-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm lg:hidden"><button type="button" onClick={() => setMobileSidebarOpen(true)} className="rounded-full bg-[#082719] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-white">Menu</button><p className="text-sm font-black text-[#071f14]">Applicant Management</p></div>
           <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#071f14] via-[#174a30] to-[#315b42] p-7 text-white shadow-[0_30px_80px_rgba(8,39,25,0.18)] md:p-10">
             <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#f4d484]/20 blur-3xl" />
             <div className="absolute -bottom-28 left-1/3 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
@@ -1224,14 +1366,23 @@ export default function ManpowerHrApplications() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={loadApplications}
-                disabled={loadingList}
-                className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-white px-7 text-[13px] font-black uppercase tracking-[0.08em] text-[#071f14] shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#f4d484] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {loadingList ? "Refreshing..." : "Refresh Applicants"}
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={exportApplicationsCsv}
+                  className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-white/25 bg-white/10 px-7 text-[13px] font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-1 hover:bg-white hover:text-[#071f14]"
+                >
+                  Export CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={loadApplications}
+                  disabled={loadingList}
+                  className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-white px-7 text-[13px] font-black uppercase tracking-[0.08em] text-[#071f14] shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#f4d484] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {loadingList ? "Refreshing..." : "Refresh Applicants"}
+                </button>
+              </div>
             </div>
           </section>
 
@@ -1338,7 +1489,7 @@ export default function ManpowerHrApplications() {
             title="List of Applicants"
             className="mt-7"
             right={
-              <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(250px,1fr)_170px_190px_160px_48px] xl:items-center">
+              <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:items-center">
                 <input
                   type="text"
                   value={searchValue}
@@ -1349,6 +1500,20 @@ export default function ManpowerHrApplications() {
                   placeholder="Search applicant, email, score..."
                   className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[13px] font-bold text-[#071f14] outline-none transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_28px_rgba(8,39,25,0.08)] focus:border-[#d7a84d] focus:bg-white focus:shadow-[0_12px_28px_rgba(8,39,25,0.08)] sm:col-span-2 xl:col-span-1"
                 />
+
+                <select
+                  value={statusFilter}
+                  onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}
+                  className="min-h-[48px] w-full rounded-full border border-[#d7e2da] bg-[#f8fbf9] px-5 text-[12px] font-black text-[#071f14] outline-none transition hover:-translate-y-0.5 hover:bg-white focus:border-[#d7a84d]"
+                >
+                  <option value="">All Stages</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="FOR_REVIEW">For Review</option>
+                  <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+                  <option value="INTERVIEWED">Interviewed</option>
+                  <option value="HIRED">Hired</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
 
                 <select
                   value={vacancyFilter}
@@ -1396,13 +1561,16 @@ export default function ManpowerHrApplications() {
                   <option value="oldest">Oldest</option>
                 </select>
 
+                <label className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-[#071f14]/45">Applied From<input type="date" value={applicationDateFrom} onChange={(event) => setApplicationDateFrom(event.target.value)} className="mt-1 block w-full bg-transparent text-xs text-[#071f14] outline-none" /></label>
+                <label className="rounded-2xl border border-[#d7e2da] bg-[#f8fbf9] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-[#071f14]/45">Applied To<input type="date" value={applicationDateTo} onChange={(event) => setApplicationDateTo(event.target.value)} className="mt-1 block w-full bg-transparent text-xs text-[#071f14] outline-none" /></label>
+
                 <button
                   type="button"
                   onClick={loadApplications}
                   disabled={loadingList}
                   title={loadingList ? "Loading applicants" : "Refresh applicants"}
                   aria-label={loadingList ? "Loading applicants" : "Refresh applicants"}
-                  className="group grid min-h-[48px] w-full place-items-center rounded-full bg-[#174a30] text-white shadow-[0_14px_28px_rgba(8,39,25,0.16)] transition hover:-translate-y-0.5 hover:bg-[#082719] hover:shadow-[0_18px_38px_rgba(8,39,25,0.22)] disabled:cursor-not-allowed disabled:opacity-70 sm:col-span-2 xl:col-span-1 xl:w-12"
+                  className="group grid min-h-[48px] w-full place-items-center rounded-full bg-[#174a30] text-white shadow-[0_14px_28px_rgba(8,39,25,0.16)] transition hover:-translate-y-0.5 hover:bg-[#082719] hover:shadow-[0_18px_38px_rgba(8,39,25,0.22)] disabled:cursor-not-allowed disabled:opacity-70 sm:col-span-2 xl:col-span-1"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -1731,6 +1899,20 @@ export default function ManpowerHrApplications() {
           .ltc-hr-action-modal > .text-center { margin: 18px; }
         }
       `}</style>
+
+      {showLogoutConfirm ? (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#071f14]/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-[0_34px_90px_rgba(8,39,25,0.35)]">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d7a84d]">Confirm Sign Out</p>
+            <h2 className="mt-2 text-2xl font-black text-[#071f14]">Leave the HR portal?</h2>
+            <p className="mt-3 text-sm font-semibold leading-6 text-[#071f14]/60">Any unsaved form changes will be discarded.</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-full bg-[#eef3ea] px-5 py-3 text-sm font-black text-[#395345]">Cancel</button>
+              <button type="button" onClick={logout} className="rounded-full bg-[#8b3232] px-5 py-3 text-sm font-black text-white">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {activeModal && (
         <div className="ltc-hr-modal-overlay fixed inset-0 z-40 flex items-center justify-center bg-[#071f14]/70 p-4">
@@ -2203,6 +2385,15 @@ export default function ManpowerHrApplications() {
                   </p>
                 </div>
 
+                <select
+                  value={scheduleForm.interviewType}
+                  onChange={(event) => setScheduleForm((prev) => ({ ...prev, interviewType: event.target.value }))}
+                  className="w-full rounded-xl border border-[#c6ccb9] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#395345]"
+                >
+                  <option value="On-site">On-site interview</option>
+                  <option value="Online">Online interview</option>
+                  <option value="Phone">Phone interview</option>
+                </select>
                 <input
                   type="datetime-local"
                   value={scheduleForm.scheduledAt}
@@ -2212,7 +2403,7 @@ export default function ManpowerHrApplications() {
                   className="w-full rounded-xl border border-[#c6ccb9] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#395345]"
                 />
                 <input
-                  placeholder="Location"
+                  placeholder="Location or meeting link"
                   value={scheduleForm.location}
                   onChange={(event) =>
                     setScheduleForm((prev) => ({ ...prev, location: event.target.value }))
@@ -2295,6 +2486,30 @@ export default function ManpowerHrApplications() {
                   }
                   className="w-full rounded-xl border border-[#c6ccb9] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#246843]"
                 />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-black uppercase tracking-[0.1em] text-[#395345]">
+                    Start Date
+                    <input
+                      type="date"
+                      value={hireForm.startDate}
+                      onChange={(event) => setHireForm((prev) => ({ ...prev, startDate: event.target.value }))}
+                      className="mt-2 w-full rounded-xl border border-[#c6ccb9] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#246843]"
+                    />
+                  </label>
+                  <label className="text-xs font-black uppercase tracking-[0.1em] text-[#395345]">
+                    Contract Type
+                    <select
+                      value={hireForm.contractType}
+                      onChange={(event) => setHireForm((prev) => ({ ...prev, contractType: event.target.value }))}
+                      className="mt-2 w-full rounded-xl border border-[#c6ccb9] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#246843]"
+                    >
+                      <option>Project-based</option>
+                      <option>Probationary</option>
+                      <option>Regular</option>
+                      <option>Fixed-term</option>
+                    </select>
+                  </label>
+                </div>
                 <textarea
                   rows={4}
                   placeholder="HR Notes"
@@ -2332,6 +2547,28 @@ export default function ManpowerHrApplications() {
                   </p>
                 </div>
 
+                <select
+                  value={rejectForm.category}
+                  onChange={(event) => setRejectForm((prev) => ({ ...prev, category: event.target.value }))}
+                  className="w-full rounded-xl border border-[#c6ccb9] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#8b3232]"
+                >
+                  <option>Incomplete Requirements</option>
+                  <option>Did Not Meet Qualifications</option>
+                  <option>Failed Assessment</option>
+                  <option>Failed Interview</option>
+                  <option>Position Filled</option>
+                  <option>Duplicate Application</option>
+                  <option>Unable to Contact</option>
+                  <option>Other</option>
+                </select>
+                <label className="flex items-center gap-3 rounded-2xl border border-[#d7e2da] bg-white px-4 py-3 text-sm font-bold text-[#395345]">
+                  <input
+                    type="checkbox"
+                    checked={rejectForm.notifyApplicant}
+                    onChange={(event) => setRejectForm((prev) => ({ ...prev, notifyApplicant: event.target.checked }))}
+                  />
+                  Send applicant notification when supported by the server
+                </label>
                 <textarea
                   rows={5}
                   placeholder="Rejection note or reason"
@@ -2360,6 +2597,37 @@ export default function ManpowerHrApplications() {
                   </button>
                 </div>
               </div>
+            ) : activeModal === "credentials" && hireCredentials ? (
+              <div className="space-y-5">
+                <div className="rounded-2xl border border-[#cfe6d5] bg-[#eef8f1] p-5 text-sm text-[#174a30]">
+                  <p className="text-lg font-black">Applicant hired successfully</p>
+                  <p className="mt-1 font-semibold">Copy the temporary credentials securely. They disappear when this window is closed.</p>
+                </div>
+                <div className="space-y-4 rounded-[24px] border border-[#d7e2da] bg-white p-5">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-[#071f14]/45">Company Email</p>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                      <input readOnly value={hireCredentials.companyEmail} className="min-w-0 flex-1 rounded-xl border border-[#d7e2da] bg-[#f8fbf9] px-4 py-3 font-bold" />
+                      <button type="button" onClick={() => copyCredential("email", hireCredentials.companyEmail)} className="bg-[#174a30] px-5 py-3 text-sm font-black text-white">
+                        {copiedField === "email" ? "Copied" : "Copy Email"}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-[#071f14]/45">Temporary Password</p>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                      <input readOnly value={hireCredentials.temporaryPassword} className="min-w-0 flex-1 rounded-xl border border-[#d7e2da] bg-[#f8fbf9] px-4 py-3 font-mono font-bold" />
+                      <button type="button" onClick={() => copyCredential("password", hireCredentials.temporaryPassword)} className="bg-[#d7a84d] px-5 py-3 text-sm font-black text-[#071f14]">
+                        {copiedField === "password" ? "Copied" : "Copy Password"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <p className="rounded-2xl bg-[#fff4e8] p-4 text-sm font-bold text-[#8a5206]">The employee should change this temporary password immediately after the first login.</p>
+                <div className="flex justify-end">
+                  <button type="button" onClick={closeModal} className="bg-[#082719] px-6 py-3 text-sm font-black text-white">Done</button>
+                </div>
+              </div>
             ) : activeModal === "ai" ? (
               <div className="space-y-4">
                 <div className="rounded-2xl bg-[#f8faf6] p-4 text-sm text-[#56695b]">
@@ -2380,7 +2648,7 @@ export default function ManpowerHrApplications() {
                 </div>
 
                 <div className="rounded-2xl bg-[#eef4ff] p-4 text-sm font-semibold text-[#244b92]">
-                  This will run AI resume screening again using the uploaded resume and selected vacancy.
+                  AI screening is a decision-support tool only. HR must manually review the applicant before approving, rejecting, or hiring. Running it again uses the uploaded resume and selected vacancy.
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
