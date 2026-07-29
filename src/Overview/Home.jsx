@@ -43,7 +43,6 @@ const Home = () => {
       title: "Hotel & Resort Services",
       description:
         "Discover hospitality-focused services designed to deliver excellent guest experiences.",
-      buttonText: "View Hotel & Resort",
       route: RESORT_AND_VENUE_ROUTE,
     },
     {
@@ -51,7 +50,6 @@ const Home = () => {
       title: "Training & Assessment",
       description:
         "Explore skills training, development programs, and assessment services for learners and professionals.",
-      buttonText: "View Training & Assessment",
       route: "/training-assessment",
     },
     {
@@ -59,7 +57,6 @@ const Home = () => {
       title: "Manpower Services",
       description:
         "Find reliable staffing and workforce support solutions tailored for your organization.",
-      buttonText: "View Manpower Services",
       route: "/manpower-services",
     },
   ];
@@ -950,11 +947,18 @@ const Home = () => {
 
         .ltc-promo-card {
           position: relative;
-          width: min(100%, 1024px);
+          width: min(100%, 1024px, calc((100vh - 32px) * 1.5));
+          aspect-ratio: 3 / 2;
           overflow: hidden;
           border-radius: 28px;
           background: white;
           box-shadow: 0 32px 90px rgba(0,0,0,.34);
+          cursor: pointer;
+        }
+
+        .ltc-promo-card:focus-visible {
+          outline: 4px solid white;
+          outline-offset: 5px;
         }
 
         .ltc-promo-close {
@@ -980,42 +984,16 @@ const Home = () => {
 
         .ltc-promo-media {
           position: relative;
-          height: min(500px, 70vh);
-          background: #e4e7ec;
+          width: 100%;
+          height: 100%;
+          background: white;
         }
 
         .ltc-promo-media img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
           display: block;
-        }
-
-        .ltc-promo-shade {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to top, rgba(0,0,0,.68), rgba(0,0,0,.18), rgba(0,0,0,.08));
-        }
-
-        .ltc-promo-content {
-          position: absolute;
-          left: clamp(24px, 5vw, 42px);
-          right: clamp(24px, 5vw, 42px);
-          bottom: 70px;
-          color: white;
-        }
-
-        .ltc-promo-content h2 {
-          margin: 0;
-          font-size: clamp(28px,4vw,44px);
-          line-height: 1.08;
-          font-weight: 900;
-        }
-
-        .ltc-promo-content p {
-          max-width: 670px;
-          margin: 10px 0 0;
-          color: rgba(255,255,255,.88);
         }
 
         .ltc-promo-dots {
@@ -1164,10 +1142,6 @@ const Home = () => {
             font-size: 10px;
           }
 
-          .ltc-promo-media {
-            height: 420px;
-          }
-
           .ltc-footer .ltc-container {
             padding-left: 16px;
             padding-right: 16px;
@@ -1177,10 +1151,27 @@ const Home = () => {
 
       {isPromoOpen && (
         <div className="ltc-promo-overlay">
-          <div className="ltc-promo-card">
+          <div
+            className="ltc-promo-card"
+            role="link"
+            tabIndex={0}
+            aria-label={`Open ${promoItems[currentPromoIndex].title}`}
+            onClick={goToPromoRoute}
+            onKeyDown={(event) => {
+              if (event.target !== event.currentTarget) return;
+
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                goToPromoRoute();
+              }
+            }}
+          >
             <button
               type="button"
-              onClick={closePromo}
+              onClick={(event) => {
+                event.stopPropagation();
+                closePromo();
+              }}
               className="ltc-promo-close"
               aria-label="Close promotional popup"
             >
@@ -1209,33 +1200,15 @@ const Home = () => {
                 }}
               />
 
-              <div className="ltc-promo-shade" />
-
-              <div className="ltc-promo-content">
-                <h2 style={fontMontserrat}>
-                  {promoItems[currentPromoIndex].title}
-                </h2>
-
-                <p style={fontPontano}>
-                  {promoItems[currentPromoIndex].description}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={goToPromoRoute}
-                  className="ltc-btn ltc-btn-primary"
-                  style={{ ...fontMontserrat, marginTop: "22px" }}
-                >
-                  {promoItems[currentPromoIndex].buttonText}
-                </button>
-              </div>
-
               <div className="ltc-promo-dots">
                 {promoItems.map((item, index) => (
                   <button
                     key={item.title}
                     type="button"
-                    onClick={() => setCurrentPromoIndex(index)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setCurrentPromoIndex(index);
+                    }}
                     aria-label={`Go to ${item.title}`}
                     className={`ltc-promo-dot ${
                       currentPromoIndex === index ? "active" : ""

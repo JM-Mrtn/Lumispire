@@ -463,10 +463,11 @@ const ChatbotWidget = () => {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-5 right-5 z-[120] inline-flex items-center gap-3 rounded-full bg-[#395345] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_32px_rgba(57,83,69,0.35)] transition hover:bg-[#2c4136]"
+          className="fixed bottom-5 right-5 z-[120] inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#395345] text-white shadow-[0_14px_32px_rgba(57,83,69,0.35)] transition hover:bg-[#2c4136]"
+          aria-label="Open chatbot"
+          title="Open chatbot"
         >
-          <ChatIcon className="h-5 w-5" />
-          Ask AI
+          <ChatIcon className="h-6 w-6" />
         </button>
       )}
     </>
