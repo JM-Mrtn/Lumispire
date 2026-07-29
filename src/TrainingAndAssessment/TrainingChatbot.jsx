@@ -803,10 +803,11 @@ export default function TrainingChatbot() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-5 right-5 z-[120] inline-flex items-center gap-3 rounded-full bg-[#395345] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_32px_rgba(57,83,69,0.35)] transition hover:bg-[#2c4136]"
+          className="fixed bottom-5 right-5 z-[120] inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#395345] text-white shadow-[0_14px_32px_rgba(57,83,69,0.35)] transition hover:-translate-y-1 hover:bg-[#2c4136]"
+          aria-label="Open AI chatbot"
+          title="Open AI chatbot"
         >
-          <ChatIcon className="h-5 w-5" />
-          Ask AI
+          <ChatIcon className="h-7 w-7" />
         </button>
       )}
     </>

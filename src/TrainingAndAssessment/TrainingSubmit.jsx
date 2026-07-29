@@ -1,7 +1,7 @@
 // src/TrainingAndAssessment/TrainingSubmit.jsx
 import React from "react";
 import { useLocation } from "react-router-dom";
-import { TrainingPublicShell } from "./TrainingPublicLayout";
+import { TrainingPublicShell } from "./TrainingRequirements";
 
 export default function TrainingSubmit() {
   const location = useLocation();
@@ -69,7 +69,7 @@ export default function TrainingSubmit() {
 
                 <button
                   type="button"
-                  onClick={() => goTo("/trainee-login")}
+                  onClick={() => goTo("/training-login")}
                   className="rounded-full border border-[#c8ccbf] bg-white px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#395345] transition hover:bg-[#f1f4ec]"
                 >
                   Go to Sign In

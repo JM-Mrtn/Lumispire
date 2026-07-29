@@ -1160,23 +1160,60 @@ function getHotelApiBase() {
 const API_BASE = getHotelApiBase();
 const SOCKET_BASE = API_BASE.replace(/\/api\/hotel$/i, "").replace(/\/api$/i, "");
 
+function ConcernIcon({ type }) {
+  const commonProps = {
+    width: 28,
+    height: 28,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": true,
+  };
+
+  if (type === "reschedule") {
+    return (
+      <svg {...commonProps}>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 10h18" />
+        <path d="M8 14h3M8 17h2M15.5 14.5l1.5 1.5 2.5-3" />
+      </svg>
+    );
+  }
+
+  if (type === "cancel") {
+    return (
+      <svg {...commonProps}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="m9 9 6 6M15 9l-6 6" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...commonProps}>
+      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />
+      <path d="M8 9h8M8 13h5" />
+    </svg>
+  );
+}
+
 const CONCERNS = [
   {
     id: "reschedule",
     label: "Reschedule",
-    icon: "📅",
     description: "Request a new date or time for an existing booking.",
   },
   {
     id: "cancel",
     label: "Cancel",
-    icon: "❌",
     description: "Ask the admin to cancel an existing booking.",
   },
   {
     id: "others",
     label: "Others",
-    icon: "💬",
     description: "Ask about rooms, packages, payment, or other concerns.",
   },
 ];
@@ -1831,7 +1868,9 @@ export default function HotelChat() {
             onClick={() => selectConcern(concern.id)}
             className="rounded-2xl border border-black/10 bg-[#fafaf7] p-4 text-left transition hover:-translate-y-0.5 hover:border-[#355240]/40 hover:bg-[#355240]/5"
           >
-            <div className="text-2xl">{concern.icon}</div>
+            <div className="inline-flex text-[#355240]">
+              <ConcernIcon type={concern.id} />
+            </div>
             <p className="mt-2 text-sm font-extrabold text-[#355240]">
               {concern.label}
             </p>

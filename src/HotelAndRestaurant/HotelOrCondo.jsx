@@ -207,6 +207,10 @@ function buildRoomCards(packages = []) {
           capacity: "",
           imageUrl: "",
           inclusions: [],
+          guestFeedback: {
+            averageRating: 0,
+            totalReviews: 0,
+          },
           displayOrder: Number(pkg.displayOrder || 0),
           packages: [],
           rates: [],
@@ -221,6 +225,13 @@ function buildRoomCards(packages = []) {
       if (!current.subtitle && pkg.subtitle) current.subtitle = pkg.subtitle;
       if (!current.description && pkg.description) current.description = pkg.description;
       if (!current.imageUrl && pkg.imageUrl) current.imageUrl = pkg.imageUrl;
+
+      if (
+        Number(pkg.guestFeedback?.totalReviews || 0) >
+        Number(current.guestFeedback?.totalReviews || 0)
+      ) {
+        current.guestFeedback = pkg.guestFeedback;
+      }
 
       if (Array.isArray(pkg.inclusions)) {
         current.inclusions.push(...pkg.inclusions);
@@ -876,11 +887,12 @@ export default function HotelOrCondo() {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 24px;
-          align-items: stretch;
+          align-items: start;
         }
 
         .ltc-card-grid > div {
-          height: 100%;
+          height: auto;
+          align-self: start;
         }
 
         .ltc-service-card,
@@ -916,9 +928,9 @@ export default function HotelOrCondo() {
         }
 
         .ltc-service-card {
-          height: 430px;
-          min-height: 430px;
-          max-height: 430px;
+          height: 315px;
+          min-height: 315px;
+          max-height: 315px;
           display: flex;
           flex-direction: column;
           cursor: pointer;
@@ -952,7 +964,7 @@ export default function HotelOrCondo() {
         }
 
         .ltc-service-content {
-          padding: 20px;
+          padding: 16px 20px 18px;
           flex: 1;
           display: flex;
           flex-direction: column;
@@ -991,12 +1003,135 @@ export default function HotelOrCondo() {
           line-height: 1.18;
           font-weight: 900;
           letter-spacing: -.035em;
-          min-height: 48px;
+          min-height: 28px;
           max-height: 48px;
           overflow: hidden;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
+        }
+
+        .ltc-guest-rating {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 6px;
+          min-height: 22px;
+        }
+
+        .ltc-rating-stars {
+          display: inline-flex;
+          gap: 2px;
+          color: #d6d9dd;
+          font-size: 17px;
+          line-height: 1;
+          letter-spacing: 0;
+        }
+
+        .ltc-rating-stars .filled {
+          color: var(--gold);
+        }
+
+        .ltc-rating-label {
+          color: var(--muted);
+          font-size: 12px;
+          line-height: 1.35;
+          font-weight: 700;
+        }
+
+        .ltc-feedback-section {
+          margin-top: 20px;
+          padding: 18px;
+          border-radius: 20px;
+          background: #f7f7f5;
+        }
+
+        .ltc-feedback-heading,
+        .ltc-feedback-item-top,
+        .ltc-feedback-pagination {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .ltc-feedback-heading h4 {
+          margin: 0;
+          color: var(--green-950);
+          font-size: 18px;
+          font-weight: 900;
+        }
+
+        .ltc-feedback-list {
+          display: grid;
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        .ltc-feedback-item {
+          padding: 14px;
+          border: 1px solid rgba(35,95,62,.12);
+          border-radius: 16px;
+          background: white;
+        }
+
+        .ltc-feedback-name {
+          color: var(--green-900);
+          font-size: 13px;
+          font-weight: 900;
+        }
+
+        .ltc-feedback-date {
+          color: var(--muted);
+          font-size: 11px;
+        }
+
+        .ltc-feedback-text,
+        .ltc-feedback-reply,
+        .ltc-feedback-status {
+          margin: 8px 0 0;
+          color: var(--muted);
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        .ltc-feedback-reply {
+          padding: 10px 12px;
+          border-radius: 12px;
+          background: rgba(35,95,62,.07);
+        }
+
+        .ltc-feedback-more,
+        .ltc-feedback-page-button {
+          border: 1px solid rgba(35,95,62,.18);
+          border-radius: 999px;
+          background: white;
+          color: var(--green-800);
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .ltc-feedback-more {
+          margin-top: 14px;
+          min-height: 38px;
+          padding: 0 16px;
+        }
+
+        .ltc-feedback-pagination {
+          margin-top: 14px;
+        }
+
+        .ltc-feedback-page-button {
+          min-height: 34px;
+          padding: 0 14px;
+        }
+
+        .ltc-feedback-page-button:disabled {
+          opacity: .45;
+          cursor: not-allowed;
         }
 
         .ltc-pagination {
@@ -1413,9 +1548,9 @@ export default function HotelOrCondo() {
           }
 
           .ltc-service-card {
-            height: 430px;
-            min-height: 430px;
-            max-height: 430px;
+            height: 315px;
+            min-height: 315px;
+            max-height: 315px;
           }
 
           .ltc-footer {
@@ -1488,9 +1623,9 @@ export default function HotelOrCondo() {
           }
 
           .ltc-service-card {
-            height: 410px;
-            min-height: 410px;
-            max-height: 410px;
+            height: 300px;
+            min-height: 300px;
+            max-height: 300px;
           }
 
           .ltc-service-media {
@@ -1617,8 +1752,6 @@ export default function HotelOrCondo() {
                       <ServiceCard
                         item={item}
                         imageSrc={getImageSrc(item)}
-                        capacity={item.capacity || "-"}
-                        price={item.priceRange || formatPeso(item.price)}
                         onDetails={() => setSelectedDetails(item)}
                       />
                     </RevealOnScroll>
@@ -1665,6 +1798,7 @@ export default function HotelOrCondo() {
           }}
           getImageSrc={getImageSrc}
           formatPeso={formatPeso}
+          API_BASE={API_BASE}
         />
       )}
 
@@ -1753,7 +1887,7 @@ function ServiceTab({ label, active = false, onClick }) {
   );
 }
 
-function ServiceCard({ item, imageSrc, capacity, price, onDetails }) {
+function ServiceCard({ item, imageSrc, onDetails }) {
   return (
     <article
       className="ltc-service-card"
@@ -1779,19 +1913,175 @@ function ServiceCard({ item, imageSrc, capacity, price, onDetails }) {
       </div>
 
       <div className="ltc-service-content">
-        <div className="ltc-service-meta">
-          <span className="ltc-pill" style={fontMontserrat}>
-            {capacity}
-          </span>
-
-          <span className="ltc-pill" style={fontMontserrat}>
-            {price}
-          </span>
-        </div>
-
         <h3 style={fontMontserrat}>{item.title}</h3>
+
+        <GuestRating feedback={item.guestFeedback} />
       </div>
     </article>
+  );
+}
+
+function GuestRating({ feedback = {} }) {
+  const averageRating = Number(feedback?.averageRating || 0);
+  const totalReviews = Number(feedback?.totalReviews || 0);
+  const filledStars = Math.round(averageRating);
+  const label = totalReviews
+    ? `${averageRating.toFixed(1)} (${totalReviews} ${
+        totalReviews === 1 ? "review" : "reviews"
+      })`
+    : "No guest reviews yet";
+
+  return (
+    <div className="ltc-guest-rating" style={fontMontserrat}>
+      <span
+        className="ltc-rating-stars"
+        role="img"
+        aria-label={totalReviews ? `${averageRating.toFixed(1)} out of 5 stars` : "Not yet rated"}
+      >
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span key={star} className={star <= filledStars ? "filled" : ""}>
+            ★
+          </span>
+        ))}
+      </span>
+      <span className="ltc-rating-label">{label}</span>
+    </div>
+  );
+}
+
+function GuestFeedbackSection({ packageId, API_BASE, summary = {} }) {
+  const [reviews, setReviews] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    totalReviews: Number(summary?.totalReviews || 0),
+  });
+  const [page, setPage] = useState(1);
+  const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadReviews = async () => {
+      if (!packageId) {
+        setReviews([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
+      try {
+        const res = await fetch(`${API_BASE}/packages/${packageId}/reviews?page=${page}&limit=3`);
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) throw new Error(data.message || "Failed to load guest feedback.");
+        if (!active) return;
+
+        setReviews(Array.isArray(data.reviews) ? data.reviews : []);
+        setPagination(data.pagination || { page: 1, totalPages: 1, totalReviews: 0 });
+      } catch (loadError) {
+        if (active) setError(loadError.message || "Unable to load guest feedback.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadReviews();
+    return () => {
+      active = false;
+    };
+  }, [API_BASE, packageId, page]);
+
+  return (
+    <section className="ltc-feedback-section">
+      <div className="ltc-feedback-heading">
+        <h4 style={fontMontserrat}>Guest Feedback</h4>
+        <GuestRating feedback={summary} />
+      </div>
+
+      {loading ? <p className="ltc-feedback-status">Loading feedback...</p> : null}
+      {!loading && error ? <p className="ltc-feedback-status">{error}</p> : null}
+      {!loading && !error && reviews.length === 0 ? (
+        <p className="ltc-feedback-status">No guest feedback yet.</p>
+      ) : null}
+
+      {!loading && !error && reviews.length > 0 ? (
+        <div className="ltc-feedback-list">
+          {reviews.map((review) => (
+            <article className="ltc-feedback-item" key={review._id}>
+              <div className="ltc-feedback-item-top">
+                <span className="ltc-feedback-name" style={fontMontserrat}>
+                  {review.guestName}
+                </span>
+                <span className="ltc-feedback-date" style={fontPontano}>
+                  {review.createdAt
+                    ? new Date(review.createdAt).toLocaleDateString("en-PH", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : ""}
+                </span>
+              </div>
+              <div className="ltc-rating-stars" aria-label={`${review.rating} out of 5 stars`}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star} className={star <= Number(review.rating) ? "filled" : ""}>
+                    ★
+                  </span>
+                ))}
+              </div>
+              <p className="ltc-feedback-text" style={fontPontano}>
+                {review.reviewText}
+              </p>
+              {review.adminReply ? (
+                <p className="ltc-feedback-reply" style={fontPontano}>
+                  <strong>Management reply:</strong> {review.adminReply}
+                </p>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      ) : null}
+
+      {!expanded && Number(pagination.totalPages || 1) > 1 ? (
+        <button
+          type="button"
+          className="ltc-feedback-more"
+          style={fontMontserrat}
+          onClick={() => setExpanded(true)}
+        >
+          See more reviews
+        </button>
+      ) : null}
+
+      {expanded && Number(pagination.totalPages || 1) > 1 ? (
+        <div className="ltc-feedback-pagination" style={fontMontserrat}>
+          <button
+            type="button"
+            className="ltc-feedback-page-button"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+          >
+            Previous
+          </button>
+          <span>
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          <button
+            type="button"
+            className="ltc-feedback-page-button"
+            disabled={page >= pagination.totalPages || loading}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            Next
+          </button>
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -2019,7 +2309,7 @@ function MenuItem({ label, onClick, active = false }) {
   );
 }
 
-function PackageDetailsModal({ item, onClose, onBook, getImageSrc, formatPeso }) {
+function PackageDetailsModal({ item, onClose, onBook, getImageSrc, formatPeso, API_BASE }) {
   return (
     <div className="ltc-modal-shell">
       <div className="ltc-modal-backdrop" onClick={onClose} />
@@ -2097,6 +2387,12 @@ function PackageDetailsModal({ item, onClose, onBook, getImageSrc, formatPeso })
             </ul>
           </div>
         ) : null}
+
+        <GuestFeedbackSection
+          packageId={item.rates?.[0]?.packageId || item.packages?.[0]?._id}
+          API_BASE={API_BASE}
+          summary={item.guestFeedback}
+        />
 
         <div className="ltc-modal-actions">
           <button

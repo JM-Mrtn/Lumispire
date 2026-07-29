@@ -130,7 +130,7 @@ const enrollmentPageStyles = `
     height: 42px !important;
     border-radius: 999px;
     background: white;
-    object-fit: cover;
+    object-fit: contain;
     box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
   }
 
@@ -158,7 +158,6 @@ const enrollmentPageStyles = `
   }
 
   .ltc-enrollment-page header nav button:hover,
-  .ltc-enrollment-page header nav button:nth-child(3),
   .ltc-enrollment-page header > div:first-child > button:nth-last-child(2):hover {
     color: white !important;
     background: rgba(255,255,255,.13) !important;
@@ -1380,7 +1379,7 @@ export default function TrainingEnrollmentForm() {
             />
 
             <span className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
-              TAMSI
+              TRAINING &amp; ASSESSMENT
             </span>
           </button>
 
@@ -1404,7 +1403,7 @@ export default function TrainingEnrollmentForm() {
             <button
               type="button"
               onClick={() => goTo("/training-requirements")}
-              className="border-b-2 border-[#45674b] pb-1 text-[11px] font-bold uppercase tracking-wide text-[#173d25]"
+              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
             >
               Requirements
             </button>
@@ -1419,16 +1418,24 @@ export default function TrainingEnrollmentForm() {
 
             <button
               type="button"
-              onClick={() => goTo("/training-contact-us")}
+              onClick={() => goTo("/training-faqs")}
               className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
             >
               FAQs
+            </button>
+
+            <button
+              type="button"
+              onClick={() => goTo("/training-certificate-validation")}
+              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
+            >
+              Certificate Validation
             </button>
           </nav>
 
           <button
             type="button"
-            onClick={() => goTo("/trainee-login")}
+            onClick={() => goTo("/training-login")}
             className="ml-3 hidden text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] md:block lg:ml-4"
           >
             Sign In
@@ -1475,7 +1482,23 @@ export default function TrainingEnrollmentForm() {
                 onClick={() => goTo("/training-contact-us")}
                 className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
               >
-                Contact / FAQs
+                Contact
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goTo("/training-faqs")}
+                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
+              >
+                FAQs
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goTo("/training-certificate-validation")}
+                className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
+              >
+                Certificate Validation
               </button>
 
               <button
@@ -1488,7 +1511,7 @@ export default function TrainingEnrollmentForm() {
 
               <button
                 type="button"
-                onClick={() => goTo("/trainee-login")}
+                onClick={() => goTo("/training-login")}
                 className="block w-full rounded-lg px-4 py-3 text-left text-sm font-semibold text-[#45674b] hover:bg-white"
               >
                 Sign In
@@ -1978,9 +2001,9 @@ export default function TrainingEnrollmentForm() {
             <div className="border-[#d6ded2] md:border-r md:pr-4">
               <div className="flex items-center gap-4">
                 <img
-                  src="/TamsiLogo.png"
-                  alt="Lumispire Logo"
-                  className="h-10 w-10 object-contain"
+                  src="/TrainingLumispireLogo.png"
+                  alt="Training Lumispire Logo"
+                  className="h-auto w-[110px] object-contain"
                   onError={(e) => {
                     e.currentTarget.src =
                       "https://placehold.co/80x80/ffffff/4d6f55?text=L";
@@ -1988,7 +2011,7 @@ export default function TrainingEnrollmentForm() {
                 />
 
                 <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
-                  LUMISPIRE
+                  TRAINING &amp; ASSESSMENT
                 </h2>
               </div>
             </div>
@@ -2015,18 +2038,18 @@ export default function TrainingEnrollmentForm() {
 
                 <button
                   type="button"
-                  onClick={() => goTo("/training-requirements")}
+                  onClick={() => goTo("/training-certificate-validation")}
                   className="block hover:text-[#173d25]"
                 >
-                  Requirements
+                  Certificate Validation
                 </button>
 
                 <button
                   type="button"
-                  onClick={goToProfile}
+                  onClick={() => goTo("/training-login")}
                   className="block hover:text-[#173d25]"
                 >
-                  Profile
+                  Sign In
                 </button>
               </div>
             </div>
@@ -2037,9 +2060,9 @@ export default function TrainingEnrollmentForm() {
               </h3>
 
               <div className="mt-1 space-y-0.5 text-[11px] font-semibold leading-snug text-[#6b776d]">
+                <p>lorengladius@ltcmultiservices.com</p>
                 <p>ltc.tamsi@gmail.com</p>
-                <p>lorengladis@ltcmultiservices.com</p>
-                <p>0995906805 / 09516281271</p>
+                <p>+639516281271 / +639959808051</p>
               </div>
             </div>
 

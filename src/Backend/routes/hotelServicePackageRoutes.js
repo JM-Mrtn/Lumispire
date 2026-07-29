@@ -3,6 +3,7 @@ import multer from "multer";
 import requireHotelAdmin from "../middleware/requireHotelAdmin.js";
 import {
   getPublicHotelServicePackages,
+  getPublicHotelPackageReviews,
   getAdminHotelServicePackages,
   getHotelServicePackageImage,
   createHotelServicePackage,
@@ -31,6 +32,7 @@ const uploadPackageImage = multer({
 
 /* Public active packages */
 router.get("/packages", getPublicHotelServicePackages);
+router.get("/packages/:packageId/reviews", getPublicHotelPackageReviews);
 router.get("/packages/:packageId/image", getHotelServicePackageImage);
 
 /* Admin package management */

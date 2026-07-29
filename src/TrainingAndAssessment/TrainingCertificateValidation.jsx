@@ -1,6 +1,6 @@
 // src/TrainingAndAssessment/TrainingCertificateValidation.jsx
 import React, { useMemo, useState } from "react";
-import { TrainingPublicShell } from "./TrainingPublicLayout";
+import { TrainingPublicShell } from "./TrainingRequirements";
 
 function normalizeApiBase(raw) {
   if (!raw) return "http://localhost:5000/api";

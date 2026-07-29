@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import HotelServicePackage from "../models/HotelServicePackage.js";
+import HotelGuestReview from "../models/HotelGuestReview.js";
 
 const PACKAGE_TYPES = new Set(["resort_venue", "hotel_condo", "event_package"]);
 
@@ -269,6 +270,67 @@ function withImageUrl(req, pkg) {
   return plain;
 }
 
+function getReviewBookingType(packageType = "") {
+  if (packageType === "resort_venue") return "resort";
+  if (packageType === "event_package") return "event";
+  if (packageType === "hotel_condo") return "hotel_room";
+  return "";
+}
+
+function getReviewTitleKey(value = "", bookingType = "") {
+  let key = cleanText(value)
+    .toLowerCase()
+    .replace(/\bcabanas\b/g, "cavanas")
+    .replace(/\bbooking\b/g, "")
+    .replace(/\b(8|12|22)\s*hours?\b/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+  if (bookingType === "hotel_room") {
+    key = key.replace(/\b(room|hotel|condo)\b/g, " ").replace(/\s+/g, " ").trim();
+  }
+
+  return key;
+}
+
+function addGuestFeedback(packages = [], reviews = []) {
+  const totals = new Map();
+
+  reviews.forEach((review) => {
+    const bookingType = cleanText(review.bookingType);
+    const titleKey = getReviewTitleKey(review.bookingTitle, bookingType);
+    const rating = Number(review.rating || 0);
+
+    if (!bookingType || !titleKey || !Number.isFinite(rating)) return;
+
+    const mapKey = `${bookingType}:${titleKey}`;
+    const current = totals.get(mapKey) || { ratingTotal: 0, totalReviews: 0 };
+
+    current.ratingTotal += rating;
+    current.totalReviews += 1;
+    totals.set(mapKey, current);
+  });
+
+  return packages.map((pkg) => {
+    const plain = typeof pkg?.toObject === "function" ? pkg.toObject() : { ...pkg };
+    const bookingType = getReviewBookingType(plain.type);
+    const titleKey = getReviewTitleKey(plain.title, bookingType);
+    const summary = totals.get(`${bookingType}:${titleKey}`) || {
+      ratingTotal: 0,
+      totalReviews: 0,
+    };
+
+    plain.guestFeedback = {
+      averageRating: summary.totalReviews
+        ? Number((summary.ratingTotal / summary.totalReviews).toFixed(1))
+        : 0,
+      totalReviews: summary.totalReviews,
+    };
+
+    return plain;
+  });
+}
+
 function uploadedImagePayload(file) {
   if (!file) return null;
 
@@ -353,21 +415,102 @@ export const getPublicHotelServicePackages = async (req, res) => {
 
     if (type) query.type = type;
 
-    const packages = await HotelServicePackage.find(query).sort({
-      type: 1,
-      displayOrder: 1,
-      createdAt: -1,
-    });
+    const [packages, reviews] = await Promise.all([
+      HotelServicePackage.find(query).sort({
+        type: 1,
+        displayOrder: 1,
+        createdAt: -1,
+      }),
+      HotelGuestReview.find({ isVisible: { $ne: false } })
+        .select("bookingType bookingTitle rating")
+        .lean(),
+    ]);
+
+    const packagesWithFeedback = addGuestFeedback(packages, reviews);
 
     return res.json({
       success: true,
-      packages: packages.map((pkg) => withImageUrl(req, pkg)),
+      packages: packagesWithFeedback.map((pkg) => withImageUrl(req, pkg)),
     });
   } catch (error) {
     console.error("getPublicHotelServicePackages error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to load packages.",
+    });
+  }
+};
+
+export const getPublicHotelPackageReviews = async (req, res) => {
+  try {
+    const { packageId } = req.params;
+    const requestedPage = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(10, Math.max(1, Number.parseInt(req.query.limit, 10) || 3));
+
+    if (!mongoose.Types.ObjectId.isValid(packageId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid package ID.",
+      });
+    }
+
+    const pkg = await HotelServicePackage.findById(packageId).lean();
+
+    if (!pkg || pkg.isActive === false) {
+      return res.status(404).json({
+        success: false,
+        message: "Package not found.",
+      });
+    }
+
+    const bookingType = getReviewBookingType(pkg.type);
+    const packageTitleKey = getReviewTitleKey(pkg.title, bookingType);
+    const visibleReviews = await HotelGuestReview.find({
+      bookingType,
+      isVisible: { $ne: false },
+    })
+      .select("firstName lastName rating reviewText adminReply bookingTitle createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const matchingReviews = visibleReviews.filter(
+      (review) => getReviewTitleKey(review.bookingTitle, bookingType) === packageTitleKey
+    );
+    const totalReviews = matchingReviews.length;
+    const totalPages = Math.max(1, Math.ceil(totalReviews / limit));
+    const page = Math.min(requestedPage, totalPages);
+    const start = (page - 1) * limit;
+    const reviews = matchingReviews.slice(start, start + limit).map((review) => {
+      const firstName = cleanText(review.firstName) || "Guest";
+      const lastInitial = cleanText(review.lastName).charAt(0).toUpperCase();
+
+      return {
+        _id: review._id,
+        guestName: `${firstName}${lastInitial ? ` ${lastInitial}.` : ""}`,
+        rating: Number(review.rating || 0),
+        reviewText: cleanText(review.reviewText),
+        adminReply: cleanText(review.adminReply),
+        createdAt: review.createdAt,
+      };
+    });
+
+    return res.json({
+      success: true,
+      reviews,
+      pagination: {
+        page,
+        limit,
+        totalReviews,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("getPublicHotelPackageReviews error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load guest feedback.",
     });
   }
 };

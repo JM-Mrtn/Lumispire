@@ -3,7 +3,8 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TrainingChatbot from "./TrainingChatbot";
 
-const LOGO_IMAGE = "/logo.png";
+const HEADER_LOGO_IMAGE = "/TamsiLogo.png";
+const FOOTER_LOGO_IMAGE = "/TrainingLumispireLogo.png";
 const HERO_IMAGE = "/tamsi-banner.jpg";
 
 const TRAINING_HOME_ROUTE = "/training";
@@ -13,13 +14,14 @@ const TRAINING_REQUIREMENTS_ROUTE = "/training-requirements";
 const TRAINING_LOGIN_ROUTE = "/training-login";
 const TRAINING_CONTACT_ROUTE = "/training-contact-us";
 const TRAINING_FAQS_ROUTE = "/training-faqs";
+const TRAINING_CERTIFICATE_VALIDATION_ROUTE = "/training-certificate-validation";
 
 const TRAINING_CONTACT_INFO = {
-  email1: "ltc.tamsi@gmail.com",
-  email2: "training@ltcmultiservices.com",
-  phone: "09959808051 / 09516281271",
-  addressLine1: "2/F 544 Curie Street,",
-  addressLine2: "Palanan, Makati City",
+  email1: "lorengladius@ltcmultiservices.com",
+  email2: "ltc.tamsi@gmail.com",
+  phone: "+639516281271 / +639959808051",
+  addressLine1: "2/F 5441 CURRIE STREET,",
+  addressLine2: "PALANAN, MAKATI CITY",
 };
 
 const TRAINING_NAV_ITEMS = [
@@ -28,6 +30,22 @@ const TRAINING_NAV_ITEMS = [
   { key: "requirements", label: "Requirements", path: TRAINING_REQUIREMENTS_ROUTE },
   { key: "contact", label: "Contact", path: TRAINING_CONTACT_ROUTE },
   { key: "faqs", label: "FAQs", path: TRAINING_FAQS_ROUTE },
+  {
+    key: "certificate-validation",
+    label: "Certificate Validation",
+    path: TRAINING_CERTIFICATE_VALIDATION_ROUTE,
+  },
+];
+
+const TRAINING_FOOTER_NAV_ITEMS = [
+  { key: "home", label: "Home", path: TRAINING_HOME_ROUTE },
+  { key: "course", label: "Course", path: TRAINING_COURSE_ROUTE },
+  {
+    key: "certificate-validation",
+    label: "Certificate Validation",
+    path: TRAINING_CERTIFICATE_VALIDATION_ROUTE,
+  },
+  { key: "sign-in", label: "Sign In", path: TRAINING_LOGIN_ROUTE },
 ];
 
 function normalizeApiBase(raw) {
@@ -541,6 +559,82 @@ const pageStyles = `
   .ltc-highlight-card img { width: 100%; height: 190px; object-fit: cover; display: block; transition: .3s var(--ease); }
   .ltc-highlight-card:hover img { transform: scale(1.04); }
 
+  .ltc-application-cta-section {
+    width: 100%;
+    background: #f7faf8;
+    padding: 104px 0;
+  }
+
+  .ltc-application-cta {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    width: min(1480px, calc(100% - 64px));
+    min-height: 296px;
+    margin: 0 auto;
+    border-radius: 40px;
+    background:
+      linear-gradient(90deg, rgba(7, 39, 25, .94) 0%, rgba(18, 82, 51, .83) 62%, rgba(34, 106, 69, .72) 100%),
+      url("/tamsi-banner.jpg") center 48% / cover no-repeat;
+    box-shadow: 0 28px 72px rgba(8, 39, 25, .22);
+  }
+
+  .ltc-application-cta::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: .12;
+    background-image: radial-gradient(rgba(255,255,255,.9) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .ltc-application-cta-inner {
+    min-height: 296px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 48px;
+    padding: 52px 62px;
+  }
+
+  .ltc-application-cta h2 {
+    max-width: 880px;
+    margin: 0;
+    color: white;
+    font-size: clamp(38px, 3.6vw, 64px);
+    line-height: 1.02;
+    font-weight: 900;
+    letter-spacing: -.055em;
+  }
+
+  .ltc-application-cta p {
+    margin: 20px 0 0;
+    color: rgba(255,255,255,.84);
+    font-size: clamp(15px, 1.25vw, 20px);
+    line-height: 1.55;
+  }
+
+  .ltc-application-cta-button {
+    min-width: 146px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #f4d484, #d7a84d);
+    color: #082719;
+    padding: 17px 30px;
+    font-size: 15px;
+    line-height: 1.25;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 18px 34px rgba(0,0,0,.18);
+    transition: .25s var(--ease);
+  }
+
+  .ltc-application-cta-button:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.04);
+  }
+
   .ltc-footer {
     width: 100%;
     background: var(--footer-green);
@@ -552,16 +646,19 @@ const pageStyles = `
   .ltc-footer .ltc-container {
     width: 100%;
     max-width: none;
-    margin: 0;
-    padding-left: 32px;
-    padding-right: 32px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 40px;
+    padding-right: 40px;
+    box-sizing: border-box;
   }
 
   .ltc-footer-grid {
     width: 100%;
     display: grid;
-    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
-    gap: 22px;
+    grid-template-columns: 1.35fr .75fr 1.05fr 1fr .7fr;
+    column-gap: clamp(28px, 4vw, 76px);
+    row-gap: 22px;
     padding-bottom: 24px;
     border-bottom: 1px solid rgba(255,255,255,.1);
   }
@@ -569,8 +666,11 @@ const pageStyles = `
   .ltc-footer-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    flex-direction: row;
+    gap: 14px;
+    width: 100%;
     text-decoration: none;
+    text-align: left;
     border: 0;
     background: transparent;
     padding: 0;
@@ -578,11 +678,21 @@ const pageStyles = `
   }
 
   .ltc-footer-brand img {
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
+    flex: 0 0 auto;
+    width: 110px;
+    height: auto;
+    border-radius: 0;
     object-fit: contain;
-    background: white;
+    background: transparent;
+    display: block;
+  }
+
+  .ltc-footer-brand-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 
   .ltc-footer h4 {
@@ -592,6 +702,12 @@ const pageStyles = `
     line-height: 1.2;
     margin: 0;
     text-transform: uppercase;
+  }
+
+  .ltc-footer-brand-description {
+    max-width: 300px;
+    margin: 0 !important;
+    color: rgba(255,255,255,.72) !important;
   }
 
   .ltc-footer h5 {
@@ -654,12 +770,12 @@ const pageStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
+    width: 64px;
+    height: 64px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,.25);
     background: white;
-    color: var(--green-800);
+    padding: 6px;
     box-shadow: 0 14px 35px rgba(0,0,0,.24);
     transition: .25s var(--ease);
     cursor: pointer;
@@ -667,8 +783,15 @@ const pageStyles = `
 
   .training-floating-home:hover {
     transform: translateY(-4px) scale(1.05);
-    background: var(--green-800);
-    color: white;
+    background: white;
+  }
+
+  .training-floating-home img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    object-fit: contain;
   }
 
   .training-floating-home span {
@@ -721,15 +844,28 @@ const pageStyles = `
     .ltc-highlight-carousel { gap: 10px; }
     .ltc-highlight-grid { grid-template-columns: 1fr; }
     .ltc-highlight-card img { height: 220px; }
+    .ltc-application-cta-section { padding: 64px 0; }
+    .ltc-application-cta { width: calc(100% - 44px); border-radius: 30px; }
+    .ltc-application-cta-inner {
+      min-height: 330px;
+      grid-template-columns: 1fr;
+      gap: 28px;
+      padding: 42px 34px;
+    }
+    .ltc-application-cta-button { justify-self: start; }
     .ltc-footer { padding: 28px 0 12px; }
     .ltc-footer-grid { grid-template-columns: 1fr; gap: 18px; padding-bottom: 22px; }
-    .ltc-footer .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-footer .ltc-container { width: 100%; padding-left: 22px; padding-right: 22px; }
     .ltc-copyright { flex-direction: column; }
   }
 
   @media (max-width: 600px) {
-    .ltc-header .ltc-container,
-    .ltc-footer .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-header .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-application-cta-section { padding: 44px 0; }
+    .ltc-application-cta { width: calc(100% - 28px); border-radius: 24px; }
+    .ltc-application-cta-inner { min-height: 360px; padding: 34px 24px; }
+    .ltc-application-cta h2 { font-size: clamp(34px, 11vw, 46px); }
+    .ltc-footer .ltc-container { width: 100%; padding-left: 16px; padding-right: 16px; }
     .ltc-logo h1 { font-size: 14px; }
     .ltc-logo p { font-size: 10px; }
     .ltc-hero-title { font-size: clamp(34px, 11vw, 46px); letter-spacing: -.045em; }
@@ -899,7 +1035,7 @@ function CourseIcon() {
   );
 }
 
-function Header({ goTo, onOpenMenu }) {
+function Header({ goTo, onOpenMenu, active = "requirements" }) {
   return (
     <header className="ltc-header">
       <div className="ltc-container">
@@ -911,7 +1047,7 @@ function Header({ goTo, onOpenMenu }) {
             aria-label="Training and Assessment Home"
           >
             <img
-              src={LOGO_IMAGE}
+              src={HEADER_LOGO_IMAGE}
               alt="TAMSI Logo"
               className="ltc-logo-icon"
               onError={(event) => {
@@ -929,7 +1065,7 @@ function Header({ goTo, onOpenMenu }) {
               <HeaderNavButton
                 key={item.key}
                 label={item.label}
-                active={item.key === "requirements"}
+                active={item.key === active}
                 onClick={() => goTo(item.path)}
               />
             ))}
@@ -983,23 +1119,27 @@ function Footer({ goTo }) {
             className="ltc-footer-brand"
           >
             <img
-              src={LOGO_IMAGE}
-              alt="TAMSI Logo"
+              src={FOOTER_LOGO_IMAGE}
+              alt="Training Lumispire Logo"
               onError={(event) => {
                 event.currentTarget.src = "https://placehold.co/80x80/ffffff/4d6f55?text=T";
               }}
             />
-            <h4 style={fontMontserrat}>TAMSI</h4>
+            <div className="ltc-footer-brand-copy">
+              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <p className="ltc-footer-brand-description" style={fontPontano}>
+                Practical training, assessment, and learner support.
+              </p>
+            </div>
           </button>
         </div>
 
         <FooterColumn title="Menu">
-          {TRAINING_NAV_ITEMS.map((item) => (
+          {TRAINING_FOOTER_NAV_ITEMS.map((item) => (
             <FooterLink key={item.key} onClick={() => goTo(item.path)}>
               {item.label}
             </FooterLink>
           ))}
-          <FooterLink onClick={() => goTo(TRAINING_LOGIN_ROUTE)}>Sign In</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Contact Information">
@@ -1014,11 +1154,14 @@ function Footer({ goTo }) {
         </FooterColumn>
 
         <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <a
+            className="ltc-footer-link"
+            href="https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Facebook
+          </a>
         </FooterColumn>
       </div>
 
@@ -1056,7 +1199,7 @@ function FooterText({ children }) {
   return <p style={fontPontano}>{children}</p>;
 }
 
-function MobileMenu({ onClose, goTo }) {
+function MobileMenu({ onClose, goTo, active = "requirements" }) {
   return (
     <div className="ltc-sidebar-overlay">
       <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
@@ -1079,7 +1222,7 @@ function MobileMenu({ onClose, goTo }) {
             key={item.key}
             type="button"
             onClick={() => goTo(item.path)}
-            className={`ltc-sidebar-link ${item.key === "requirements" ? "active" : ""}`}
+            className={`ltc-sidebar-link ${item.key === active ? "active" : ""}`}
             style={fontPoppins}
           >
             {item.label}
@@ -1109,21 +1252,74 @@ function FloatingHomeIconButton({ onClick }) {
       className="training-floating-home"
     >
       <span>LTC GROUP OF COMPANIES</span>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ width: 24, height: 24 }}
-      >
-        <path d="m3 10.5 9-7 9 7" />
-        <path d="M5 10v10h14V10" />
-        <path d="M9 20v-6h6v6" />
-      </svg>
+      <img src={HEADER_LOGO_IMAGE} alt="" aria-hidden="true" />
     </button>
+  );
+}
+
+export function TrainingPublicShell({
+  active = "",
+  title,
+  subtitle,
+  children,
+}) {
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  function goTo(path) {
+    setMobileOpen(false);
+    navigate(path);
+  }
+
+  return (
+    <div className="ltc-training-home">
+      <style>{pageStyles}</style>
+
+      <Header
+        active={active}
+        goTo={goTo}
+        onOpenMenu={() => setMobileOpen(true)}
+      />
+
+      <main>
+        <section className="ltc-hero">
+          <img
+            src={HERO_IMAGE}
+            alt="Training and Assessment Banner"
+            className="ltc-hero-slide"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+
+          <div className="ltc-container ltc-hero-content">
+            <h2 className="ltc-hero-title" style={fontMontserrat}>
+              {title}
+            </h2>
+            {subtitle ? (
+              <p className="ltc-hero-text" style={fontPontano}>
+                {subtitle}
+              </p>
+            ) : null}
+          </div>
+        </section>
+
+        {typeof children === "function" ? children({ goTo }) : children}
+      </main>
+
+      <Footer goTo={goTo} />
+
+      {mobileOpen ? (
+        <MobileMenu
+          active={active}
+          onClose={() => setMobileOpen(false)}
+          goTo={goTo}
+        />
+      ) : null}
+
+      <FloatingHomeIconButton onClick={() => navigate("/")} />
+      <TrainingChatbot />
+    </div>
   );
 }
 
@@ -1208,6 +1404,27 @@ export default function TrainingRequirements() {
           </div>
         </section>
       </main>
+
+      <section className="ltc-application-cta-section" aria-label="Start your training application">
+        <div className="ltc-application-cta">
+          <div className="ltc-application-cta-inner">
+            <div>
+              <h2 style={fontMontserrat}>Ready to start your training application?</h2>
+              <p style={fontPontano}>
+                Submit your details, prepare your requirements, and take the next step with Training &amp; Assessment.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="ltc-application-cta-button"
+              style={fontPoppins}
+              onClick={() => goTo(TRAINING_ENROLL_ROUTE)}
+            >
+              Enroll Now
+            </button>
+          </div>
+        </div>
+      </section>
 
       <Footer goTo={goTo} />
 

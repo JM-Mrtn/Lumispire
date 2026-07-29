@@ -12,6 +12,7 @@ const COLORS = {
 
 const HOTEL_LOGO = "/HotelLogo.png";
 const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
+const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -63,7 +64,8 @@ const pageStyles = `
   .ltc-menu-button svg { width: 24px; height: 24px; }
 
   .ltc-hero { position: relative; overflow: hidden; color: white; isolation: isolate; background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%); padding: 82px 0 78px; }
-  .ltc-hero-slide { position: absolute; inset: 0; z-index: -4; width: 100%; height: 100%; object-fit: cover; opacity: .35; }
+  .ltc-hero-slide { position: absolute; inset: 0; z-index: -4; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1000ms ease; }
+  .ltc-hero-slide.active { opacity: 1; }
   .ltc-hero::before { content: ""; position: absolute; inset: 0; z-index: -3; background: linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.76) 100%); }
   .ltc-hero::after { content: ""; position: absolute; inset: -16% -10% -24% -10%; z-index: -2; background: radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%), radial-gradient(circle at 36% 92%, rgba(7,76,47,.46), transparent 30%), radial-gradient(circle at 72% 18%, rgba(28,108,68,.28), transparent 30%), radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%); filter: blur(30px); pointer-events: none; }
   .ltc-hero-content { position: relative; z-index: 2; max-width: 920px; margin: 0 auto; text-align: center; }
@@ -85,7 +87,7 @@ const pageStyles = `
   .ltc-secondary-button { border: 1px solid rgba(35,95,62,.18); color: var(--green-800); background: white; box-shadow: 0 12px 28px rgba(8,39,25,.06); }
   .ltc-secondary-button:hover { transform: translateY(-4px); color: white; background: var(--green-800); border-color: var(--green-800); box-shadow: 0 18px 38px rgba(8,39,25,.18); }
   .ltc-primary-button:disabled, .ltc-secondary-button:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; }
-  .ltc-status { margin-top: 24px; border-radius: 16px; border: 1px solid transparent; padding: 12px 14px; font-size: 13px; line-height: 1.55; font-weight: 800; }
+  .ltc-status { margin: 0 0 24px; border-radius: 16px; border: 1px solid transparent; padding: 12px 14px; font-size: 13px; line-height: 1.55; font-weight: 800; }
   .ltc-status-success { color: #047857; background: rgba(16,185,129,.10); border-color: rgba(16,185,129,.25); }
   .ltc-status-error { color: #b42318; background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.22); }
   .ltc-status-warning { color: #b54708; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.25); }
@@ -441,10 +443,581 @@ const pageStyles = `
     padding: 0 26px 26px;
   }
 
-  @media (max-width: 1100px) { .ltc-stats-grid { grid-template-columns: repeat(3,1fr); } .ltc-bookings-grid, .ltc-footer-grid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 900px) { .ltc-header .ltc-container { padding-left: 22px; padding-right: 22px; } .ltc-nav { min-height: auto; padding: 18px 0; } .ltc-desktop-nav { display: none; } .ltc-menu-button { display: grid; place-items: center; } .ltc-hero { padding: 76px 0 74px; } .ltc-section { padding: 44px 0 64px; } .ltc-form-shell { padding: 28px 22px; } .ltc-filter-header { align-items: flex-start; } .ltc-footer { padding: 28px 0 12px; } .ltc-footer-grid { gap: 18px; padding-bottom: 22px; } .ltc-footer .ltc-container { padding-left: 22px; padding-right: 22px; } .ltc-copyright { flex-direction: column; } }
-  @media (max-width: 700px) { .ltc-stats-grid, .ltc-stats-grid-secondary, .ltc-bookings-grid, .ltc-info-grid, .ltc-complete-details-grid, .ltc-footer-grid { grid-template-columns: 1fr; } .ltc-card-actions { grid-template-columns: 1fr; } .ltc-timeline-steps { gap: 4px; } .ltc-card-top-inner, .ltc-modal-top, .ltc-details-modal-header { flex-direction: column; } }
-  @media (max-width: 600px) { .ltc-header .ltc-container, .ltc-footer .ltc-container { padding-left: 16px; padding-right: 16px; } .ltc-logo h1 { font-size: 14px; } .ltc-logo p { font-size: 10px; } .ltc-hero-title { font-size: clamp(34px, 11vw, 46px); letter-spacing: -.045em; } .ltc-hero-text { font-size: 15px; } .ltc-form-shell { padding: 26px 18px; } .ltc-primary-button, .ltc-secondary-button { width: 100%; min-width: 0; } .ltc-modal { padding: 22px 18px; } }
+  .ltc-empty-state {
+    padding: 54px 28px;
+    text-align: center;
+  }
+
+  .ltc-timeline {
+    margin-bottom: 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(35,95,62,.10);
+    background: linear-gradient(180deg, rgba(35,95,62,.055), rgba(255,255,255,.72));
+    padding: 18px 16px;
+  }
+
+  .ltc-timeline-steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 10px;
+  }
+
+  .ltc-timeline-steps::before {
+    content: "";
+    position: absolute;
+    top: 17px;
+    left: 16%;
+    right: 16%;
+    height: 2px;
+    background: rgba(35,95,62,.14);
+  }
+
+  .ltc-timeline-step {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .ltc-step-circle {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto;
+    border-radius: 999px;
+    border: 2px solid rgba(35,95,62,.18);
+    color: var(--muted);
+    background: white;
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(8,39,25,.08);
+  }
+
+  .ltc-timeline-step.active .ltc-step-circle {
+    border-color: var(--gold);
+    color: #102418;
+    background: linear-gradient(135deg,var(--gold-soft),var(--gold));
+  }
+
+  .ltc-step-title {
+    margin: 9px 0 0;
+    color: var(--green-950);
+    font-size: 11px;
+    line-height: 1.25;
+    font-weight: 900;
+  }
+
+  .ltc-step-desc {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.35;
+    font-weight: 700;
+  }
+
+  .ltc-cancelled-note {
+    margin-top: 14px;
+    border-radius: 12px;
+    background: rgba(239,68,68,.10);
+    color: #b42318;
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .ltc-pagination {
+    margin-top: 28px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .ltc-pagination-text {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .ltc-page-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+
+  .ltc-page-button {
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(35,95,62,.14);
+    background: white;
+    color: var(--green-800);
+    padding: 0 13px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 900;
+    transition: .24s var(--ease);
+  }
+
+  .ltc-page-button:hover:not(:disabled),
+  .ltc-page-button.active {
+    border-color: transparent;
+    color: #102418;
+    background: linear-gradient(135deg,var(--gold-soft),var(--gold));
+    box-shadow: 0 10px 22px rgba(215,168,77,.22);
+    transform: translateY(-2px);
+  }
+
+  .ltc-page-button:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+  }
+
+  .ltc-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    overflow-y: auto;
+    padding: 24px;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(6px);
+  }
+
+  .ltc-modal {
+    position: relative;
+    width: min(620px,96vw);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    border-radius: 26px;
+    border: 1px solid rgba(255,255,255,.76);
+    background: white;
+    box-shadow: 0 34px 90px rgba(0,0,0,.28);
+    padding: 30px;
+  }
+
+  .ltc-modal::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+  }
+
+  .ltc-modal-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(35,95,62,.10);
+  }
+
+  .ltc-modal-close {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(35,95,62,.08);
+    color: var(--green-800);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 900;
+    transition: .24s var(--ease);
+  }
+
+  .ltc-modal-close:hover {
+    color: white;
+    background: var(--green-800);
+    transform: rotate(5deg);
+  }
+
+  .ltc-field {
+    margin-top: 22px;
+  }
+
+  .ltc-field > label {
+    display: block;
+    margin-bottom: 9px;
+    color: var(--green-950);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+  }
+
+  .ltc-rating-row {
+    display: flex;
+    gap: 8px;
+    border-radius: 18px;
+    border: 1px solid rgba(35,95,62,.10);
+    background: rgba(35,95,62,.04);
+    padding: 13px 15px;
+  }
+
+  .ltc-star-button {
+    width: 46px;
+    height: 46px;
+    border: 0;
+    border-radius: 14px;
+    color: #d0d5dd;
+    background: white;
+    cursor: pointer;
+    font-size: 27px;
+    line-height: 1;
+    transition: .22s var(--ease);
+    box-shadow: 0 7px 16px rgba(8,39,25,.06);
+  }
+
+  .ltc-star-button:hover,
+  .ltc-star-button.active {
+    color: var(--gold);
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 12px 24px rgba(215,168,77,.20);
+  }
+
+  .ltc-textarea {
+    width: 100%;
+    min-height: 150px;
+    resize: vertical;
+    border-radius: 18px;
+    border: 1px solid rgba(35,95,62,.16);
+    background: #fbfdfb;
+    color: var(--green-950);
+    padding: 15px 16px;
+    outline: none;
+    font-size: 14px;
+    line-height: 1.65;
+    font-weight: 600;
+    transition: .22s var(--ease);
+  }
+
+  .ltc-textarea:focus {
+    border-color: var(--gold);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(215,168,77,.13);
+  }
+
+  .ltc-char-count {
+    margin: 7px 2px 0;
+    color: var(--muted);
+    text-align: right;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .ltc-review-suggestions {
+    margin-top: 14px;
+  }
+
+  .ltc-review-suggestions-label {
+    margin: 0 0 9px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .ltc-review-suggestion-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .ltc-review-suggestion-button {
+    min-height: 38px;
+    border: 1px solid rgba(35,95,62,.14);
+    border-radius: 999px;
+    padding: 8px 14px;
+    background: rgba(35,95,62,.06);
+    color: var(--green-800);
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1.35;
+    font-weight: 800;
+    transition: .22s var(--ease);
+  }
+
+  .ltc-review-suggestion-button:hover {
+    border-color: var(--gold);
+    background: rgba(215,168,77,.14);
+    transform: translateY(-2px);
+  }
+
+  .ltc-review-suggestion-button.selected {
+    border-color: transparent;
+    color: #102418;
+    background: linear-gradient(135deg,var(--gold-soft),var(--gold));
+    box-shadow: 0 9px 20px rgba(215,168,77,.18);
+  }
+
+  .ltc-review-validation {
+    margin: 9px 2px 0;
+    color: #b42318;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .ltc-modal-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .ltc-footer {
+    width: 100%;
+    margin: 0;
+    padding: 30px 0 12px;
+    background: var(--footer-green);
+    color: white;
+  }
+
+  .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-footer-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.1fr .75fr 1.1fr 1.1fr 1fr;
+    gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .ltc-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-footer-brand img {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+  }
+
+  .ltc-footer h4 {
+    margin: 0;
+    color: white;
+    font-size: 20px;
+    line-height: 1.2;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .ltc-footer h5 {
+    margin: 0 0 10px;
+    color: var(--gold-soft);
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 900;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .ltc-footer p,
+  .ltc-footer-link {
+    display: block;
+    margin: 5px 0;
+    color: rgba(255,255,255,.68);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .ltc-footer-small-text {
+    margin: 4px 0 !important;
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+  }
+
+  .ltc-footer-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .ltc-footer-link:hover {
+    color: white;
+    text-decoration: underline;
+  }
+
+  .ltc-facebook-link {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    color: white;
+    cursor: pointer;
+    transition: .25s var(--ease);
+  }
+
+  .ltc-facebook-link:hover {
+    color: var(--gold-soft);
+    border-color: rgba(244,212,132,.42);
+    background: rgba(244,212,132,.12);
+    transform: translateY(-2px);
+  }
+
+  .ltc-facebook-link svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  .ltc-copyright {
+    width: 100%;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .ltc-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0,0,0,.42);
+  }
+
+  .ltc-sidebar-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(310px,86vw);
+    height: 100%;
+    padding: 20px;
+    background: white;
+    box-shadow: -20px 0 60px rgba(0,0,0,.25);
+  }
+
+  .ltc-sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(16,24,40,.1);
+  }
+
+  .ltc-sidebar-title {
+    margin: 0;
+    color: var(--green-950);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .14em;
+  }
+
+  .ltc-sidebar-close {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 12px;
+    background: #f2f4f7;
+    color: var(--dark);
+    cursor: pointer;
+  }
+
+  .ltc-sidebar-link {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--dark);
+    padding: 13px 14px;
+    cursor: pointer;
+    text-align: left;
+    font-weight: 800;
+  }
+
+  .ltc-sidebar-link:hover,
+  .ltc-sidebar-link.active {
+    background: var(--green-800);
+    color: white;
+  }
+
+  @media (max-width: 1100px) {
+    .ltc-stats-grid { grid-template-columns: repeat(3,1fr); }
+    .ltc-bookings-grid,
+    .ltc-footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-header .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-nav { min-height: auto; padding: 18px 0; }
+    .ltc-desktop-nav { display: none; }
+    .ltc-menu-button { display: grid; place-items: center; }
+    .ltc-hero { padding: 76px 0 74px; }
+    .ltc-section { padding: 44px 0 64px; }
+    .ltc-form-shell { padding: 28px 22px; }
+    .ltc-filter-header { align-items: flex-start; }
+    .ltc-footer { padding: 28px 0 12px; }
+    .ltc-footer-grid { gap: 18px; padding-bottom: 22px; }
+    .ltc-footer .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-copyright { flex-direction: column; }
+  }
+
+  @media (max-width: 700px) {
+    .ltc-stats-grid,
+    .ltc-stats-grid-secondary,
+    .ltc-bookings-grid,
+    .ltc-info-grid,
+    .ltc-complete-details-grid,
+    .ltc-footer-grid { grid-template-columns: 1fr; }
+    .ltc-card-actions { grid-template-columns: 1fr; }
+    .ltc-card-top-inner,
+    .ltc-modal-top,
+    .ltc-details-receipt-top { flex-direction: column; }
+    .ltc-details-receipt-meta { text-align: left; }
+    .ltc-details-receipt-two-col { grid-template-columns: 1fr; }
+    .ltc-pagination { align-items: flex-start; flex-direction: column; }
+    .ltc-page-buttons { justify-content: flex-start; }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-header .ltc-container,
+    .ltc-footer .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-logo h1 { font-size: 14px; }
+    .ltc-logo p { font-size: 10px; }
+    .ltc-hero-title { font-size: clamp(34px,11vw,46px); letter-spacing: -.045em; }
+    .ltc-hero-text { font-size: 15px; }
+    .ltc-form-shell { padding: 26px 18px; }
+    .ltc-primary-button,
+    .ltc-secondary-button { width: 100%; min-width: 0; }
+    .ltc-modal { padding: 24px 18px; }
+    .ltc-modal-actions { flex-direction: column-reverse; }
+    .ltc-star-button { width: 42px; height: 42px; font-size: 24px; }
+    .ltc-details-receipt-paper { margin: 12px; }
+    .ltc-details-receipt-body { padding: 20px 16px 22px; }
+    .ltc-details-receipt-actions { padding: 0 16px 20px; }
+  }
 `;
 
 const STATUS_FILTERS = [
@@ -1187,6 +1760,15 @@ export default function HotelGuestReviews() {
 
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isOpen, setIsOpen] = useState(false);
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setHeroIndex((current) => (current + 1) % HERO_IMAGES.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   const authHeaders = () => ({
     Authorization: `Bearer ${getToken()}`,
@@ -1600,7 +2182,15 @@ export default function HotelGuestReviews() {
       return;
     }
 
-    if (!reviewText.trim() || reviewText.trim().length < 5) {
+    if (!reviewText.trim()) {
+      setStatus({
+        type: "error",
+        message: "Please enter a review or select at least one suggestion.",
+      });
+      return;
+    }
+
+    if (reviewText.trim().length < 5) {
       setStatus({
         type: "error",
         message: "Please write a review with at least 5 characters.",
@@ -1677,6 +2267,33 @@ export default function HotelGuestReviews() {
         goToProfile={goToProfile}
         openMenu={() => setIsOpen(true)}
       />
+
+      <section className="ltc-hero">
+        {HERO_IMAGES.map((image, index) => (
+          <img
+            key={image}
+            src={image}
+            alt=""
+            aria-hidden="true"
+            className={`ltc-hero-slide ${index === heroIndex ? "active" : ""}`}
+          />
+        ))}
+
+        <div className="ltc-container ltc-hero-content">
+          <span className="ltc-eyebrow" style={fontMontserrat}>
+            Guest Experience
+          </span>
+
+          <h1 className="ltc-hero-title" style={fontMontserrat}>
+            Your Bookings &amp; <span>Reviews</span>
+          </h1>
+
+          <p className="ltc-hero-text" style={fontPontano}>
+            Track every reservation, view your receipt, and share feedback after
+            an approved hotel, resort, or event experience.
+          </p>
+        </div>
+      </section>
 
       <main>
         <section className="ltc-section">
@@ -2332,6 +2949,17 @@ function ReceiptPreviewRow({ label, value }) {
   );
 }
 
+const REVIEW_SUGGESTIONS = [
+  "The place was clean and well-maintained.",
+  "The staff were friendly and accommodating.",
+  "The room was comfortable and relaxing.",
+  "The service was excellent.",
+  "The facilities were complete and convenient.",
+  "The location was peaceful and beautiful.",
+  "The food was delicious.",
+  "I would recommend this place to others.",
+];
+
 function ReviewModal({
   selectedBooking,
   rating,
@@ -2342,16 +2970,58 @@ function ReviewModal({
   closeReviewModal,
   submitReview,
 }) {
+  const trimmedReview = reviewText.trim();
+  const isReviewEmpty = trimmedReview.length === 0;
+  const isReviewTooShort =
+    trimmedReview.length > 0 && trimmedReview.length < 5;
+
+  const handleSuggestionClick = (suggestion) => {
+    const isSelected = reviewText.includes(suggestion);
+
+    if (isSelected) {
+      const updatedReview = reviewText
+        .replace(suggestion, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+
+      setReviewText(updatedReview);
+      return;
+    }
+
+    const updatedReview = trimmedReview
+      ? `${trimmedReview} ${suggestion}`
+      : suggestion;
+
+    setReviewText(updatedReview.slice(0, 1000));
+  };
+
   return (
-    <div className="ltc-modal-overlay">
-      <div className="ltc-modal">
+    <div
+      className="ltc-modal-overlay"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !submitting) {
+          closeReviewModal();
+        }
+      }}
+    >
+      <div
+        className="ltc-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-modal-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <div className="ltc-modal-top">
           <div>
             <p className="ltc-filter-title" style={fontMontserrat}>
               Submit Review
             </p>
 
-            <h2 className="ltc-section-heading" style={fontMontserrat}>
+            <h2
+              id="review-modal-title"
+              className="ltc-section-heading"
+              style={fontMontserrat}
+            >
               {selectedBooking.bookingTitle}
             </h2>
 
@@ -2389,15 +3059,63 @@ function ReviewModal({
         </div>
 
         <div className="ltc-field">
-          <label style={fontMontserrat}>Review</label>
+          <label htmlFor="guest-review-text" style={fontMontserrat}>
+            Review
+          </label>
+
           <textarea
+            id="guest-review-text"
             value={reviewText}
             onChange={(event) => setReviewText(event.target.value.slice(0, 1000))}
             rows={5}
-            placeholder="Write your experience here..."
+            required
+            minLength={5}
+            maxLength={1000}
+            placeholder="Write your experience here or select a suggestion below..."
             className="ltc-textarea"
             style={fontPoppins}
           />
+
+          <div className="ltc-review-suggestions">
+            <p
+              className="ltc-review-suggestions-label"
+              style={fontPoppins}
+            >
+              Click any suggestion that describes your experience:
+            </p>
+
+            <div className="ltc-review-suggestion-buttons">
+              {REVIEW_SUGGESTIONS.map((suggestion) => {
+                const isSelected = reviewText.includes(suggestion);
+
+                return (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className={`ltc-review-suggestion-button ${
+                      isSelected ? "selected" : ""
+                    }`}
+                    style={fontPoppins}
+                    aria-pressed={isSelected}
+                  >
+                    {isSelected ? "✓ " : "+ "}
+                    {suggestion}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {isReviewEmpty ? (
+            <p className="ltc-review-validation" style={fontPoppins}>
+              Please enter a review or select at least one suggestion.
+            </p>
+          ) : isReviewTooShort ? (
+            <p className="ltc-review-validation" style={fontPoppins}>
+              Your review must contain at least 5 characters.
+            </p>
+          ) : null}
 
           <p className="ltc-char-count" style={fontPoppins}>
             {reviewText.length}/1000 characters
@@ -2418,7 +3136,7 @@ function ReviewModal({
           <button
             type="button"
             onClick={submitReview}
-            disabled={submitting}
+            disabled={submitting || trimmedReview.length < 5}
             className="ltc-primary-button"
             style={fontMontserrat}
           >

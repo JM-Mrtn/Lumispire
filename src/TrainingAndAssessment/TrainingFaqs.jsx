@@ -1,14 +1,275 @@
 // src/TrainingAndAssessment/TrainingFaqs.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TrainingPublicShell } from "./TrainingRequirements";
 
-const TAMSI_LOGO = "/tamsi-logo.png";
-const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
+const TAMSI_LOGO = "/TamsiLogo.png";
+const LUMISPIRE_LOGO = "/TrainingLumispireLogo.png";
 const HERO_IMAGES = ["/tamsi-banner.jpg", "/TrainingBanner.jpg", "/training-banner.jpg"];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
 const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
+const faqChromeStyles = `
+  .ltc-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    background: var(--footer-green);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 10px 34px rgba(7,31,20,.14);
+    margin: 0;
+  }
+
+  .ltc-header .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-nav {
+    min-height: 76px;
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .ltc-logo {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: white;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    text-decoration: none;
+  }
+
+  .ltc-logo-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: white;
+    object-fit: contain;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
+  }
+
+  .ltc-logo h1 {
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -.04em;
+    margin: 0;
+  }
+
+  .ltc-logo p {
+    font-size: 11px;
+    color: rgba(255,255,255,.72);
+    margin: 3px 0 0;
+  }
+
+  .ltc-desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .ltc-profile-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-nav-link {
+    position: static;
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-radius: 999px;
+    transition: .25s var(--ease);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .ltc-nav-link::after { display: none; }
+
+  .ltc-nav-link:hover,
+  .ltc-nav-link.active {
+    color: white;
+    background: rgba(255,255,255,.13);
+    transform: translateY(-1px);
+  }
+
+  .ltc-sign-in-button {
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 14px 28px rgba(215,168,77,.18);
+  }
+
+  .ltc-menu-button {
+    display: none;
+    color: white;
+    border: 0;
+    background: rgba(255,255,255,.1);
+    border-radius: 12px;
+    transition: .25s var(--ease);
+  }
+
+  .ltc-footer {
+    width: 100%;
+    background: var(--footer-green);
+    color: white;
+    padding: 30px 0 12px;
+    margin: 0;
+  }
+
+  .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 40px;
+    padding-right: 40px;
+    box-sizing: border-box;
+  }
+
+  .ltc-footer-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.35fr .75fr 1.05fr 1fr .7fr;
+    column-gap: clamp(28px, 4vw, 76px);
+    row-gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .ltc-footer-brand {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 14px;
+    width: 100%;
+    text-decoration: none;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .ltc-footer-brand img {
+    flex: 0 0 auto;
+    width: 110px;
+    height: auto;
+    border-radius: 0;
+    object-fit: contain;
+    background: transparent;
+    display: block;
+  }
+
+  .ltc-footer-brand-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .ltc-footer h4 {
+    color: white;
+    font-weight: 900;
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .ltc-footer-brand-description {
+    max-width: 300px;
+    margin: 0 !important;
+    color: rgba(255,255,255,.72) !important;
+  }
+
+  .ltc-footer h5 {
+    color: #f4d484;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin: 0 0 10px;
+  }
+
+  .ltc-footer p,
+  .ltc-footer-link {
+    display: block;
+    color: rgba(255,255,255,.68);
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 5px 0;
+    text-decoration: none;
+  }
+
+  .ltc-footer-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .ltc-footer-link:hover { color: white; text-decoration: underline; }
+
+  .ltc-copyright {
+    width: 100%;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 1180px) {
+    .ltc-footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-header .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-nav { min-height: auto; padding: 18px 0; }
+    .ltc-desktop-nav,
+    .ltc-profile-wrap { display: none; }
+    .ltc-menu-button { display: grid; place-items: center; }
+    .ltc-footer { padding: 28px 0 12px; }
+    .ltc-footer-grid { grid-template-columns: 1fr; gap: 18px; padding-bottom: 22px; }
+    .ltc-footer .ltc-container { width: 100%; padding-left: 22px; padding-right: 22px; }
+    .ltc-copyright { flex-direction: column; }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-header .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-footer .ltc-container { width: 100%; padding-left: 16px; padding-right: 16px; }
+    .ltc-logo h1 { font-size: 14px; }
+    .ltc-logo p { font-size: 10px; }
+  }
+`;
 
 function getTrainingToken() {
   return (
@@ -136,19 +397,9 @@ const RevealOnScroll = ({ children, className = "", delay = 0, y = 18 }) => {
 
 export default function TrainingFaqs() {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const [heroIndex, setHeroIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState("All");
   const [openIndex, setOpenIndex] = useState(-1);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000);
-
-    return () => window.clearInterval(timer);
-  }, []);
 
   const filteredFaqs = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -167,12 +418,13 @@ export default function TrainingFaqs() {
     });
   }, [activeCategory, search]);
 
-  const goToProfile = () => {
-    navigate(getTrainingToken() ? "/trainee-dashboard" : "/trainee-login");
-  };
-
   return (
-    <div className="ltc-training-faq-page" style={fontPontano}>
+    <TrainingPublicShell
+      active="faqs"
+      title="Frequently Asked Questions"
+      subtitle="Find quick answers about enrollment, requirements, courses, trainee access, and certificates."
+    >
+      <div className="ltc-training-faq-page" style={fontPontano}>
       <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
@@ -280,34 +532,44 @@ export default function TrainingFaqs() {
           display: flex;
           align-items: center;
           gap: 8px;
+          margin-left: auto;
         }
 
         .ltc-nav-link {
+          position: relative;
           color: rgba(255,255,255,.78);
           font-size: 12px;
           font-weight: 800;
-          letter-spacing: .08em;
-          text-transform: uppercase;
-          padding: 10px 14px;
-          border-radius: 999px;
+          padding: 27px 14px 25px;
           transition: .25s var(--ease);
           border: 0;
           background: transparent;
           cursor: pointer;
         }
 
+        .ltc-nav-link::after {
+          content: "";
+          position: absolute;
+          left: 14px;
+          right: 14px;
+          bottom: 19px;
+          height: 2px;
+          border-radius: 999px;
+          background: var(--gold-soft);
+          transform: scaleX(0);
+          transition: .25s var(--ease);
+        }
+
         .ltc-nav-link:hover,
         .ltc-nav-link.active {
           color: white;
-          background: rgba(255,255,255,.13);
-          transform: translateY(-1px);
         }
 
-        .ltc-profile-button {
-          color: #102418;
-          background: linear-gradient(135deg,#f4d484,#d7a84d);
-          box-shadow: 0 14px 28px rgba(215,168,77,.18);
-        }
+        .ltc-nav-link:hover::after,
+        .ltc-nav-link.active::after { transform: scaleX(1); }
+
+        .ltc-profile-button { border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 10px 18px; background: rgba(255,255,255,.08); }
+        .ltc-profile-button::after { display: none; }
 
         .ltc-menu-button {
           display: none;
@@ -863,16 +1125,19 @@ export default function TrainingFaqs() {
         .ltc-footer .ltc-container {
           width: 100%;
           max-width: none;
-          margin: 0;
-          padding-left: 32px;
-          padding-right: 32px;
+          margin-left: auto;
+          margin-right: auto;
+          padding-left: 40px;
+          padding-right: 40px;
+          box-sizing: border-box;
         }
 
         .ltc-footer-grid {
           width: 100%;
           display: grid;
-          grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
-          gap: 22px;
+          grid-template-columns: 1.35fr .75fr 1.05fr 1fr .7fr;
+          column-gap: clamp(28px, 4vw, 76px);
+          row-gap: 22px;
           padding-bottom: 24px;
           border-bottom: 1px solid rgba(255,255,255,.1);
         }
@@ -880,14 +1145,32 @@ export default function TrainingFaqs() {
         .ltc-footer-brand {
           display: flex;
           align-items: center;
-          gap: 12px;
+          flex-direction: row;
+          gap: 14px;
+          width: 100%;
+          text-decoration: none;
+          text-align: left;
+          border: 0;
+          background: transparent;
+          padding: 0;
+          cursor: pointer;
         }
 
         .ltc-footer-brand img {
-          width: 42px;
-          height: 42px;
-          border-radius: 999px;
-          object-fit: cover;
+          width: 110px;
+          height: auto;
+          border-radius: 0;
+          object-fit: contain;
+          background: transparent;
+          display: block;
+        }
+
+        .ltc-footer-brand-copy {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 6px;
         }
 
         .ltc-footer h4 {
@@ -897,6 +1180,12 @@ export default function TrainingFaqs() {
           line-height: 1.2;
           margin: 0;
           text-transform: uppercase;
+        }
+
+        .ltc-footer-brand-description {
+          max-width: 300px;
+          margin: 0 !important;
+          color: rgba(255,255,255,.72) !important;
         }
 
         .ltc-footer h5 {
@@ -1073,35 +1362,7 @@ export default function TrainingFaqs() {
           }
         }
       `}</style>
-
-      <Header navigate={navigate} goToProfile={goToProfile} openMenu={() => setIsOpen(true)} />
-
-      <main>
-        <section className="ltc-hero">
-          {HERO_IMAGES.map((image, index) => (
-            <img
-              key={image}
-              src={image}
-              alt="TAMSI training background"
-              className={`ltc-hero-slide ${heroIndex === index ? "active" : ""}`}
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
-          ))}
-
-          <div className="ltc-container ltc-hero-content">
-            <RevealOnScroll>
-              <h2 style={fontMontserrat}>
-                Frequently Asked <span>Questions</span>
-              </h2>
-
-              <p style={fontPontano}>
-                Find quick answers about enrollment, requirements, courses, trainee access, roadmap, modules, assignments, attendance, and certificates.
-              </p>
-            </RevealOnScroll>
-          </div>
-        </section>
+      <style>{faqChromeStyles}</style>
 
         <section className="ltc-section">
           <div className="ltc-container">
@@ -1239,13 +1500,8 @@ export default function TrainingFaqs() {
           </div>
         </section>
 
-        <Footer />
-      </main>
-
-      {isOpen ? (
-        <MobileMenu onClose={() => setIsOpen(false)} navigate={navigate} goToProfile={goToProfile} />
-      ) : null}
-    </div>
+      </div>
+    </TrainingPublicShell>
   );
 }
 
@@ -1271,8 +1527,8 @@ function Header({ navigate, goToProfile, openMenu }) {
           />
 
           <div>
-            <h1 style={fontMontserrat}>TAMSI</h1>
-            <p style={fontPontano}>Training and assessment programs.</p>
+            <h1 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h1>
+            <p style={fontPontano}>Training and assessment portal.</p>
           </div>
         </button>
 
@@ -1282,6 +1538,10 @@ function Header({ navigate, goToProfile, openMenu }) {
           <NavButton label="Requirements" onClick={() => navigate("/training-requirements")} />
           <NavButton label="Contact" onClick={() => navigate("/training-contact-us")} />
           <NavButton active label="FAQs" onClick={() => navigate("/training-faqs")} />
+          <NavButton
+            label="Certificate Validation"
+            onClick={() => navigate("/training-certificate-validation")}
+          />
           <NavButton
             label={signedIn ? "Profile" : "Sign In"}
             onClick={goToProfile}
@@ -1317,12 +1577,16 @@ function NavButton({ label, onClick, active = false, className = "" }) {
   );
 }
 
-function Footer() {
+function Footer({ navigate }) {
   return (
     <footer className="ltc-footer">
       <div className="ltc-container ltc-footer-grid">
         <div>
-          <div className="ltc-footer-brand">
+          <button
+            type="button"
+            onClick={() => navigate("/training")}
+            className="ltc-footer-brand"
+          >
             <img
               src={LUMISPIRE_LOGO}
               alt="Lumispire logo"
@@ -1331,42 +1595,44 @@ function Footer() {
               }}
             />
 
-            <h4 style={fontMontserrat}>Lumispire</h4>
-          </div>
+            <div className="ltc-footer-brand-copy">
+              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <p className="ltc-footer-brand-description" style={fontPontano}>
+                Practical training, assessment, and learner support.
+              </p>
+            </div>
+          </button>
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink onClick={() => (window.location.href = "/training")}>Home</FooterLink>
-          <FooterLink onClick={() => (window.location.href = "/training-course")}>Course</FooterLink>
-          <FooterLink onClick={() => (window.location.href = "/training-requirements")}>Requirements</FooterLink>
-          <FooterLink onClick={() => (window.location.href = "/training-contact-us")}>Contact</FooterLink>
-          <FooterLink onClick={() => (window.location.href = "/training-faqs")}>FAQs</FooterLink>
-          <FooterLink
-            onClick={() => {
-              window.location.href = getTrainingToken() ? "/trainee-dashboard" : "/trainee-login";
-            }}
-          >
-            {getTrainingToken() ? "Profile" : "Sign In"}
+          <FooterLink onClick={() => navigate("/training")}>Home</FooterLink>
+          <FooterLink onClick={() => navigate("/training-course")}>Course</FooterLink>
+          <FooterLink onClick={() => navigate("/training-certificate-validation")}>
+            Certificate Validation
           </FooterLink>
+          <FooterLink onClick={() => navigate("/training-login")}>Sign In</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Contact Information">
-          <FooterText>ltc.amsi@gmail.com</FooterText>
           <FooterText>lorengladius@ltcmultiservices.com</FooterText>
-          <FooterText>09959808051 / 09516281271</FooterText>
+          <FooterText>ltc.tamsi@gmail.com</FooterText>
+          <FooterText>+639516281271 / +639959808051</FooterText>
         </FooterColumn>
 
         <FooterColumn title="Address">
-          <FooterText>2/F 5441 Currie Street,</FooterText>
-          <FooterText>Palanan, Makati City</FooterText>
+          <FooterText>2/F 5441 CURRIE STREET,</FooterText>
+          <FooterText>PALANAN, MAKATI CITY</FooterText>
         </FooterColumn>
 
         <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <a
+            className="ltc-footer-link"
+            href="https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Facebook
+          </a>
         </FooterColumn>
       </div>
 
@@ -1460,6 +1726,14 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           onClick={() => {
             onClose();
             navigate("/training-faqs");
+          }}
+        />
+
+        <MenuItem
+          label="CERTIFICATE VALIDATION"
+          onClick={() => {
+            onClose();
+            navigate("/training-certificate-validation");
           }}
         />
 

@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TrainingChatbot from "./TrainingChatbot";
 
-const LOGO_IMAGE = "/logo.png";
+const HEADER_LOGO_IMAGE = "/TamsiLogo.png";
+const FOOTER_LOGO_IMAGE = "/TrainingLumispireLogo.png";
 const HERO_IMAGE = "/tamsi-banner.jpg";
 
 const TRAINING_HOME_ROUTE = "/training";
@@ -13,13 +14,14 @@ const TRAINING_REQUIREMENTS_ROUTE = "/training-requirements";
 const TRAINING_CONTACT_ROUTE = "/training-contact-us";
 const TRAINING_FAQS_ROUTE = "/training-faqs";
 const TRAINING_LOGIN_ROUTE = "/training-login";
+const TRAINING_CERTIFICATE_VALIDATION_ROUTE = "/training-certificate-validation";
 
 const TRAINING_CONTACT_INFO = {
-  email1: "ltc.tamsi@gmail.com",
-  email2: "training@ltcmultiservices.com",
-  phone: "09959808051 / 09516281271",
-  addressLine1: "2/F 544 Curie Street,",
-  addressLine2: "Palanan, Makati City",
+  email1: "lorengladius@ltcmultiservices.com",
+  email2: "ltc.tamsi@gmail.com",
+  phone: "+639516281271 / +639959808051",
+  addressLine1: "2/F 5441 CURRIE STREET,",
+  addressLine2: "PALANAN, MAKATI CITY",
 };
 
 const TRAINING_NAV_ITEMS = [
@@ -28,6 +30,22 @@ const TRAINING_NAV_ITEMS = [
   { key: "requirements", label: "Requirements", path: TRAINING_REQUIREMENTS_ROUTE },
   { key: "contact", label: "Contact", path: TRAINING_CONTACT_ROUTE },
   { key: "faqs", label: "FAQs", path: TRAINING_FAQS_ROUTE },
+  {
+    key: "certificate-validation",
+    label: "Certificate Validation",
+    path: TRAINING_CERTIFICATE_VALIDATION_ROUTE,
+  },
+];
+
+const TRAINING_FOOTER_NAV_ITEMS = [
+  { key: "home", label: "Home", path: TRAINING_HOME_ROUTE },
+  { key: "course", label: "Course", path: TRAINING_COURSE_ROUTE },
+  {
+    key: "certificate-validation",
+    label: "Certificate Validation",
+    path: TRAINING_CERTIFICATE_VALIDATION_ROUTE,
+  },
+  { key: "sign-in", label: "Sign In", path: TRAINING_LOGIN_ROUTE },
 ];
 
 function normalizeApiBase(raw) {
@@ -107,9 +125,11 @@ const pageStyles = `
   .ltc-header .ltc-container {
     width: 100%;
     max-width: none;
-    margin: 0;
-    padding-left: 32px;
-    padding-right: 32px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 40px;
+    padding-right: 40px;
+    box-sizing: border-box;
   }
 
   .ltc-nav {
@@ -560,8 +580,9 @@ const pageStyles = `
   .ltc-footer-grid {
     width: 100%;
     display: grid;
-    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
-    gap: 22px;
+    grid-template-columns: 1.35fr .75fr 1.05fr 1fr .7fr;
+    column-gap: clamp(28px, 4vw, 76px);
+    row-gap: 22px;
     padding-bottom: 24px;
     border-bottom: 1px solid rgba(255,255,255,.1);
   }
@@ -569,8 +590,11 @@ const pageStyles = `
   .ltc-footer-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    flex-direction: row;
+    gap: 14px;
+    width: 100%;
     text-decoration: none;
+    text-align: left;
     border: 0;
     background: transparent;
     padding: 0;
@@ -578,11 +602,27 @@ const pageStyles = `
   }
 
   .ltc-footer-brand img {
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
+    flex: 0 0 auto;
+    width: 110px;
+    height: auto;
+    border-radius: 0;
     object-fit: contain;
-    background: white;
+    background: transparent;
+    display: block;
+  }
+
+  .ltc-footer-brand-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .ltc-footer-brand-description {
+    max-width: 300px;
+    margin: 0 !important;
+    color: rgba(255,255,255,.72) !important;
   }
 
   .ltc-footer h4 {
@@ -654,12 +694,12 @@ const pageStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
+    width: 64px;
+    height: 64px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,.25);
     background: white;
-    color: var(--green-800);
+    padding: 6px;
     box-shadow: 0 14px 35px rgba(0,0,0,.24);
     transition: .25s var(--ease);
     cursor: pointer;
@@ -667,8 +707,15 @@ const pageStyles = `
 
   .training-floating-home:hover {
     transform: translateY(-4px) scale(1.05);
-    background: var(--green-800);
-    color: white;
+    background: white;
+  }
+
+  .training-floating-home img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    object-fit: contain;
   }
 
   .training-floating-home span {
@@ -960,7 +1007,7 @@ function Header({ goTo, onOpenMenu }) {
             aria-label="Training and Assessment Home"
           >
             <img
-              src={LOGO_IMAGE}
+              src={HEADER_LOGO_IMAGE}
               alt="TAMSI Logo"
               className="ltc-logo-icon"
               onError={(event) => {
@@ -1032,23 +1079,27 @@ function Footer({ goTo }) {
             className="ltc-footer-brand"
           >
             <img
-              src={LOGO_IMAGE}
-              alt="TAMSI Logo"
+              src={FOOTER_LOGO_IMAGE}
+              alt="Training Lumispire Logo"
               onError={(event) => {
                 event.currentTarget.src = "https://placehold.co/80x80/ffffff/4d6f55?text=T";
               }}
             />
-            <h4 style={fontMontserrat}>TAMSI</h4>
+            <div className="ltc-footer-brand-copy">
+              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <p className="ltc-footer-brand-description" style={fontPontano}>
+                Practical training, assessment, and learner support.
+              </p>
+            </div>
           </button>
         </div>
 
         <FooterColumn title="Menu">
-          {TRAINING_NAV_ITEMS.map((item) => (
+          {TRAINING_FOOTER_NAV_ITEMS.map((item) => (
             <FooterLink key={item.key} onClick={() => goTo(item.path)}>
               {item.label}
             </FooterLink>
           ))}
-          <FooterLink onClick={() => goTo(TRAINING_LOGIN_ROUTE)}>Sign In</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Contact Information">
@@ -1063,11 +1114,14 @@ function Footer({ goTo }) {
         </FooterColumn>
 
         <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <a
+            className="ltc-footer-link"
+            href="https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Facebook
+          </a>
         </FooterColumn>
       </div>
 
@@ -1158,20 +1212,7 @@ function FloatingHomeIconButton({ onClick }) {
       className="training-floating-home"
     >
       <span>LTC GROUP OF COMPANIES</span>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ width: 24, height: 24 }}
-      >
-        <path d="m3 10.5 9-7 9 7" />
-        <path d="M5 10v10h14V10" />
-        <path d="M9 20v-6h6v6" />
-      </svg>
+      <img src={HEADER_LOGO_IMAGE} alt="" aria-hidden="true" />
     </button>
   );
 }
