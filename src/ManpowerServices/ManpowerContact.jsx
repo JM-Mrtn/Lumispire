@@ -141,7 +141,7 @@ function FloatingHomeIconButton({ onClick }) {
       <style>{`
         .ltc-floating-home-button {
           position: fixed;
-          right: 24px;
+          right: 20px;
           bottom: 88px;
           z-index: 10000;
           width: 56px;
@@ -201,7 +201,7 @@ function FloatingHomeIconButton({ onClick }) {
 
         @media (max-width: 640px) {
           .ltc-floating-home-button {
-            right: 18px;
+            right: 20px;
             bottom: 88px;
             width: 56px;
             height: 56px;
