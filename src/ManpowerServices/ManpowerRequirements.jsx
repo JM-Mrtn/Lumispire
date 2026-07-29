@@ -98,10 +98,10 @@ function FloatingHomeIconButton({ onClick }) {
         .ltc-floating-home-button {
           position: fixed;
           right: 24px;
-          bottom: 104px;
+          bottom: 88px;
           z-index: 10000;
-          width: 52px;
-          height: 52px;
+          width: 56px;
+          height: 56px;
           border: 1px solid rgba(255,255,255,.38);
           border-radius: 999px;
           background: #ffffff;
@@ -148,17 +148,19 @@ function FloatingHomeIconButton({ onClick }) {
           transform: translateY(-50%) translateX(0);
         }
 
-        .ltc-floating-home-button svg {
-          width: 25px;
-          height: 25px;
+        .ltc-floating-home-button img {
+          width: 100%;
+          height: 100%;
+          border-radius: 999px;
+          object-fit: cover;
         }
 
         @media (max-width: 640px) {
           .ltc-floating-home-button {
             right: 18px;
-            bottom: 96px;
-            width: 48px;
-            height: 48px;
+            bottom: 88px;
+            width: 56px;
+            height: 56px;
           }
 
           .ltc-floating-home-tooltip {
@@ -175,20 +177,7 @@ function FloatingHomeIconButton({ onClick }) {
         aria-label="Back to Home"
       >
         <span className="ltc-floating-home-tooltip">LTC GROUP OF COMPANIES</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="m3 10.5 9-7 9 7" />
-          <path d="M5 10v10h14V10" />
-          <path d="M9 20v-6h6v6" />
-        </svg>
+        <img src="/LTCLogo.jpg" alt="" aria-hidden="true" />
       </button>
     </>
   );

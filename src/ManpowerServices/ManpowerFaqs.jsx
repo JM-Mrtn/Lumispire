@@ -99,10 +99,10 @@ function FloatingHomeIconButton({ onClick }) {
         .ltc-floating-home-button {
           position: fixed;
           right: 24px;
-          bottom: 104px;
+          bottom: 88px;
           z-index: 10000;
-          width: 52px;
-          height: 52px;
+          width: 56px;
+          height: 56px;
           border: 1px solid rgba(255,255,255,.38);
           border-radius: 999px;
           background: #ffffff;
@@ -149,17 +149,19 @@ function FloatingHomeIconButton({ onClick }) {
           transform: translateY(-50%) translateX(0);
         }
 
-        .ltc-floating-home-button svg {
-          width: 25px;
-          height: 25px;
+        .ltc-floating-home-button img {
+          width: 100%;
+          height: 100%;
+          border-radius: 999px;
+          object-fit: cover;
         }
 
         @media (max-width: 640px) {
           .ltc-floating-home-button {
             right: 18px;
-            bottom: 96px;
-            width: 48px;
-            height: 48px;
+            bottom: 88px;
+            width: 56px;
+            height: 56px;
           }
 
           .ltc-floating-home-tooltip {
@@ -176,20 +178,7 @@ function FloatingHomeIconButton({ onClick }) {
         aria-label="Back to Home"
       >
         <span className="ltc-floating-home-tooltip">LTC GROUP OF COMPANIES</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="m3 10.5 9-7 9 7" />
-          <path d="M5 10v10h14V10" />
-          <path d="M9 20v-6h6v6" />
-        </svg>
+        <img src="/LTCLogo.jpg" alt="" aria-hidden="true" />
       </button>
     </>
   );
@@ -665,6 +654,25 @@ export default function ManpowerFaqs() {
           gap: 22px;
         }
 
+        .mp-help-visual {
+          width: 260px;
+          min-height: 190px;
+          align-self: stretch;
+          flex: 0 0 260px;
+          margin: -30px 4px -30px -30px;
+          overflow: hidden;
+        }
+
+        .mp-help-visual img {
+          width: 100%;
+          height: 100%;
+          display: block;
+          object-fit: cover;
+          object-position: center;
+        }
+
+        .mp-help-copy { flex: 1 1 auto; }
+
         .mp-help-card h4 {
           margin: 0;
           color: white;
@@ -820,7 +828,13 @@ export default function ManpowerFaqs() {
           .mp-footer-grid { gap: 18px; padding-bottom: 22px; }
           .mp-footer .mp-container { padding-left: 22px; padding-right: 22px; }
           .mp-copyright { flex-direction: column; }
-          .mp-help-card-content { flex-direction: column; align-items: flex-start; }
+          .mp-help-card-content { flex-wrap: wrap; align-items: center; }
+          .mp-help-visual {
+            width: 220px;
+            min-height: 180px;
+            flex-basis: 220px;
+          }
+          .mp-help-copy { min-width: 260px; }
         }
 
         @media (max-width: 600px) {
@@ -835,7 +849,19 @@ export default function ManpowerFaqs() {
           .mp-faq-card { padding: 24px 18px; }
           .mp-faq-question { min-height: 62px; padding: 16px; }
           .mp-faq-answer { padding: 16px; }
-          .mp-help-card { padding: 24px; }
+          .mp-help-card { padding: 0 24px 24px; }
+          .mp-help-card-content {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 22px;
+          }
+          .mp-help-visual {
+            width: calc(100% + 48px);
+            min-height: 210px;
+            flex-basis: 210px;
+            margin: 0 -24px;
+          }
+          .mp-help-copy { min-width: 0; }
           .mp-help-button { width: 100%; }
         }
 
@@ -1211,8 +1237,7 @@ export default function ManpowerFaqs() {
         .mp-requirement-panel,
         .mp-contact-card,
         .mp-map-card,
-        .mp-faq-card,
-        .mp-help-card {
+        .mp-faq-card {
           border: 1px solid rgba(255,255,255,.82) !important;
           border-radius: 30px !important;
           background: var(--glass) !important;
@@ -1420,7 +1445,14 @@ export default function ManpowerFaqs() {
 
               <RevealOnScroll className="mp-help-card" delay={80}>
                 <div className="mp-help-card-content">
-                  <div>
+                  <div className="mp-help-visual">
+                    <img
+                      src="/ManpowerFaqSupport.png"
+                      alt="Manpower support representative assisting a job applicant"
+                    />
+                  </div>
+
+                  <div className="mp-help-copy">
                     <h4 style={fontMontserrat}>Still need assistance?</h4>
                     <p style={fontPontano}>
                       Contact our manpower office for applications, job offer questions, and requirement concerns.
@@ -1517,42 +1549,37 @@ function Footer() {
     <footer className="mp-footer">
       <div className="mp-container mp-footer-grid">
         <div>
-          <Link to={MANPOWER_HOME_ROUTE} className="mp-footer-brand">
-            <img
-              src={LOGO_IMAGE}
-              alt="Manpower logo"
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
-
-            <h4 style={fontMontserrat}>LTC Manpower</h4>
+          <Link to={MANPOWER_HOME_ROUTE} className="mp-logo">
+            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" />
+            <div>
+              <h4 style={fontMontserrat}>LTC Manpower</h4>
+              <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
+            </div>
           </Link>
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink to={MANPOWER_HOME_ROUTE}>Home</FooterLink>
-          <FooterLink to="/manpower-positions">Job Offer</FooterLink>
-          <FooterLink to="/manpower-requirements">Requirements</FooterLink>
-          <FooterLink to="/manpower-employee-login">Profile</FooterLink>
+          <Link to={MANPOWER_HOME_ROUTE}>Home</Link>
+          <Link to="/manpower-positions">Job Offer</Link>
+          <Link to="/manpower-requirements">Requirements</Link>
+          <Link to="/manpower-employee-login">Profile</Link>
         </FooterColumn>
 
         <FooterColumn title="Contact Information">
-          <FooterText><a href="mailto:ltc.tamsi@gmail.com">ltc.tamsi@gmail.com</a></FooterText>
-          <FooterText><a href="mailto:lorengladius@ltcmultiservices.com">lorengladius@ltcmultiservices.com</a></FooterText>
-          <FooterText><a href="tel:+639516281271">+639516281271</a></FooterText>
-          <FooterText><a href="tel:+639959808051">+639959808051</a></FooterText>
+          <p><a href="mailto:ltc.tamsi@gmail.com">ltc.tamsi@gmail.com</a></p>
+          <p><a href="mailto:lorengladius@ltcmultiservices.com">lorengladius@ltcmultiservices.com</a></p>
+          <p><a href="tel:+639516281271">+639516281271</a></p>
+          <p><a href="tel:+639959808051">+639959808051</a></p>
         </FooterColumn>
 
         <FooterColumn title="Address">
-          <FooterText>2/F 5441 Currie Street,</FooterText>
-          <FooterText>Palanan, Makati City</FooterText>
+          <p>2/F 5441 Currie Street,</p>
+          <p>Palanan, Makati City</p>
         </FooterColumn>
 
         <FooterColumn title="Follow Us">
-          <div className="mp-socials">
-            <a href={"https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"} target="_blank" rel="noopener noreferrer">Facebook</a>
-          </div>
+          <p><a href={"https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"} target="_blank" rel="noopener noreferrer">Facebook</a></p>
+          <p><a href="mailto:lorengladius@ltcmultiservices.com">Email</a></p>
         </FooterColumn>
       </div>
 
@@ -1568,21 +1595,11 @@ function FooterColumn({ title, children }) {
   return (
     <div>
       <h5 style={fontMontserrat}>{title}</h5>
-      <div>{children}</div>
+      <div className="mp-footer-list" style={fontPontano}>
+        {children}
+      </div>
     </div>
   );
-}
-
-function FooterLink({ children, to }) {
-  return (
-    <Link to={to} className="mp-footer-link" style={fontPontano}>
-      {children}
-    </Link>
-  );
-}
-
-function FooterText({ children }) {
-  return <p style={fontPontano}>{children}</p>;
 }
 
 function MobileMenu({ onClose, goTo }) {

@@ -27,6 +27,49 @@ const DEFAULT_VACANCIES = [
   "Janitor",
 ];
 
+const JOB_IMAGE_LINKS = {
+  "accounting clerk":
+    "https://images.pexels.com/photos/6863183/pexels-photo-6863183.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "general clerk":
+    "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "money sorter":
+    "https://images.pexels.com/photos/4386366/pexels-photo-4386366.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "data encoder":
+    "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "admin assistant":
+    "https://images.pexels.com/photos/3760067/pexels-photo-3760067.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "hr assistant":
+    "https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "production worker":
+    "https://images.pexels.com/photos/3862365/pexels-photo-3862365.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  warehouseman:
+    "https://images.pexels.com/photos/4483610/pexels-photo-4483610.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  stockman:
+    "https://images.pexels.com/photos/4483775/pexels-photo-4483775.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "sales coordinator":
+    "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "financial advisor":
+    "https://images.pexels.com/photos/7654579/pexels-photo-7654579.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  engineer:
+    "https://images.pexels.com/photos/3862627/pexels-photo-3862627.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  driver:
+    "https://images.pexels.com/photos/13861/IMG_3496bfree.jpg?auto=compress&cs=tinysrgb&w=1200",
+  promodiser:
+    "https://images.pexels.com/photos/264507/pexels-photo-264507.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  merchandiser:
+    "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  messenger:
+    "https://images.pexels.com/photos/439366/pexels-photo-439366.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "forklift operator":
+    "https://images.pexels.com/photos/1267324/pexels-photo-1267324.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  janitor:
+    "https://images.pexels.com/photos/6195129/pexels-photo-6195129.jpeg?auto=compress&cs=tinysrgb&w=1200",
+};
+
+function getJobImageLink(title = "") {
+  return JOB_IMAGE_LINKS[String(title).trim().toLowerCase()] || "";
+}
+
 function normalizeApiBase(raw) {
   const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
 
@@ -149,7 +192,8 @@ const SearchIcon = () => (
 );
 
 function VacancyCard({ job, index, onOpen }) {
-  const imageSrc = resolveImageSource(job?.imageUrl);
+  const imageSrc =
+    resolveImageSource(job?.imageUrl) || getJobImageLink(job?.title);
 
   return (
     <RevealOnScroll delay={index * 55}>
@@ -187,7 +231,8 @@ function VacancyCard({ job, index, onOpen }) {
 function JobModal({ job, onClose, onApply }) {
   if (!job) return null;
 
-  const imageSrc = resolveImageSource(job.imageUrl);
+  const imageSrc =
+    resolveImageSource(job.imageUrl) || getJobImageLink(job.title);
 
   const qualifications = Array.isArray(job.qualifications)
     ? job.qualifications.filter(Boolean)
@@ -265,10 +310,10 @@ function FloatingHomeIconButton({ onClick }) {
         .ltc-floating-home-button {
           position: fixed;
           right: 24px;
-          bottom: 104px;
+          bottom: 88px;
           z-index: 10000;
-          width: 52px;
-          height: 52px;
+          width: 56px;
+          height: 56px;
           border: 1px solid rgba(255,255,255,.38);
           border-radius: 999px;
           background: #ffffff;
@@ -315,17 +360,19 @@ function FloatingHomeIconButton({ onClick }) {
           transform: translateY(-50%) translateX(0);
         }
 
-        .ltc-floating-home-button svg {
-          width: 25px;
-          height: 25px;
+        .ltc-floating-home-button img {
+          width: 100%;
+          height: 100%;
+          border-radius: 999px;
+          object-fit: cover;
         }
 
         @media (max-width: 640px) {
           .ltc-floating-home-button {
             right: 18px;
-            bottom: 96px;
-            width: 48px;
-            height: 48px;
+            bottom: 88px;
+            width: 56px;
+            height: 56px;
           }
 
           .ltc-floating-home-tooltip {
@@ -342,20 +389,7 @@ function FloatingHomeIconButton({ onClick }) {
         aria-label="Back to Home"
       >
         <span className="ltc-floating-home-tooltip">LTC GROUP OF COMPANIES</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="m3 10.5 9-7 9 7" />
-          <path d="M5 10v10h14V10" />
-          <path d="M9 20v-6h6v6" />
-        </svg>
+        <img src="/LTCLogo.jpg" alt="" aria-hidden="true" />
       </button>
     </>
   );
