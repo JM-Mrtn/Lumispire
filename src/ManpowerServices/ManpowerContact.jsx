@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const LOGO_IMAGE = "/ManpowerLogo.png";
@@ -231,6 +231,22 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const API_BASE = useMemo(() => {
+    const raw = (
+      import.meta.env.VITE_MANPOWER_API_BASE ||
+      import.meta.env.VITE_API_BASE ||
+      import.meta.env.VITE_API_URL ||
+      "http://localhost:5000"
+    ).replace(/\/+$/, "");
+
+    if (raw.endsWith("/api/manpower")) return raw;
+    if (raw.endsWith("/api/hotel")) return raw.replace(/\/hotel$/, "/manpower");
+    if (raw.endsWith("/api/training")) return raw.replace(/\/training$/, "/manpower");
+    if (raw.endsWith("/api")) return `${raw}/manpower`;
+    if (raw.includes("/api/manpower")) return raw;
+    return `${raw}/api/manpower`;
+  }, []);
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -273,11 +289,45 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
       return;
     }
 
+    if (payload.name.length < 2) {
+      setStatus({ loading: false, success: "", error: "Name must be at least 2 characters." });
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      setStatus({ loading: false, success: "", error: "Please enter a valid email address." });
+      return;
+    }
+
+    if (payload.subject.length < 3) {
+      setStatus({ loading: false, success: "", error: "Subject must be at least 3 characters." });
+      return;
+    }
+
+    if (payload.message.length < 10) {
+      setStatus({ loading: false, success: "", error: "Message must be at least 10 characters." });
+      return;
+    }
+
     try {
       setStatus({ loading: true, success: "", error: "" });
 
       if (typeof onSubmitMessage === "function") {
         await onSubmitMessage(payload);
+      } else {
+        const response = await fetch(`${API_BASE}/contact-message`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to send message.");
+        }
       }
 
       setForm({ name: "", email: "", subject: "", message: "" });
@@ -1630,6 +1680,9 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                         <input
                           id="name"
                           type="text"
+                          required
+                          minLength={2}
+                          maxLength={100}
                           value={form.name}
                           onChange={(e) => updateField("name", e.target.value)}
                           placeholder="Enter your full name"
@@ -1641,6 +1694,8 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                         <input
                           id="email"
                           type="email"
+                          required
+                          maxLength={254}
                           value={form.email}
                           onChange={(e) => updateField("email", e.target.value)}
                           placeholder="Enter your email address"
@@ -1653,6 +1708,9 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                       <input
                         id="subject"
                         type="text"
+                        required
+                        minLength={3}
+                        maxLength={160}
                         value={form.subject}
                         onChange={(e) => updateField("subject", e.target.value)}
                         placeholder="Enter your message subject"
@@ -1664,6 +1722,9 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                       <textarea
                         id="message"
                         rows={4}
+                        required
+                        minLength={10}
+                        maxLength={5000}
                         value={form.message}
                         onChange={(e) => updateField("message", e.target.value)}
                         placeholder="How can we help you?"

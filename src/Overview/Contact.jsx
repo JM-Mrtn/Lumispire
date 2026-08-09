@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ChatbotWidget from "./ChatbotWidget";
 
@@ -117,11 +117,30 @@ const Contact = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const API_BASE = useMemo(() => {
+    const raw = String(
+      import.meta.env.VITE_LTC_API_BASE ||
+        import.meta.env.VITE_API_BASE ||
+        import.meta.env.VITE_API_URL ||
+        "http://localhost:5000"
+    ).replace(/\/+$/, "");
+
+    if (raw.endsWith("/api/ltc")) return raw;
+    if (raw.endsWith("/api")) return `${raw}/ltc`;
+    if (raw.includes("/api/ltc")) return raw;
+    return `${raw}/api/ltc`;
+  }, []);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
+  });
+  const [status, setStatus] = useState({
+    loading: false,
+    success: "",
+    error: "",
   });
 
   const goTo = (path) => {
@@ -136,16 +155,69 @@ const Contact = () => {
       ...prev,
       [name]: value,
     }));
+
+    setStatus({ loading: false, success: "", error: "" });
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    setFormData({
-      name: "",
-      email: "",
-      message: "",
-    });
+    const payload = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      message: formData.message.trim(),
+    };
+
+    if (!payload.name || !payload.email || !payload.message) {
+      setStatus({ loading: false, success: "", error: "Please complete all fields." });
+      return;
+    }
+
+    if (payload.name.length < 2) {
+      setStatus({ loading: false, success: "", error: "Name must be at least 2 characters." });
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      setStatus({ loading: false, success: "", error: "Please enter a valid email address." });
+      return;
+    }
+
+    if (payload.message.length < 10) {
+      setStatus({ loading: false, success: "", error: "Message must be at least 10 characters." });
+      return;
+    }
+
+    try {
+      setStatus({ loading: true, success: "", error: "" });
+
+      const response = await fetch(`${API_BASE}/contact-message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send message.");
+      }
+
+      setFormData({ name: "", email: "", message: "" });
+      setStatus({
+        loading: false,
+        success: data.message || "Your message was sent successfully.",
+        error: "",
+      });
+    } catch (error) {
+      setStatus({
+        loading: false,
+        success: "",
+        error: error?.message || "Failed to send message.",
+      });
+    }
   };
 
   return (
@@ -710,6 +782,27 @@ const Contact = () => {
           line-height: 1.5;
         }
 
+        .ltc-form-status {
+          margin: 14px 0 0;
+          padding: 12px 15px;
+          border-radius: 14px;
+          font-size: 13px;
+          font-weight: 700;
+          line-height: 1.5;
+        }
+
+        .ltc-form-status.success {
+          color: #14532d;
+          background: #dcfce7;
+          border: 1px solid #86efac;
+        }
+
+        .ltc-form-status.error {
+          color: #991b1b;
+          background: #fee2e2;
+          border: 1px solid #fca5a5;
+        }
+
         .ltc-submit-button,
         .ltc-map-button {
           display: inline-flex;
@@ -733,6 +826,12 @@ const Contact = () => {
         .ltc-submit-button:hover,
         .ltc-map-button:hover {
           transform: translateY(-3px);
+        }
+
+        .ltc-submit-button:disabled {
+          cursor: not-allowed;
+          opacity: .68;
+          transform: none;
         }
 
         .ltc-map-card {
@@ -1169,6 +1268,9 @@ const Contact = () => {
                           value={formData.name}
                           onChange={handleChange}
                           placeholder="Enter your full name"
+                          minLength={2}
+                          maxLength={100}
+                          required
                         />
                       </div>
 
@@ -1184,6 +1286,8 @@ const Contact = () => {
                           value={formData.email}
                           onChange={handleChange}
                           placeholder="Enter your email address"
+                          maxLength={254}
+                          required
                         />
                       </div>
                     </div>
@@ -1199,16 +1303,36 @@ const Contact = () => {
                         value={formData.message}
                         onChange={handleChange}
                         placeholder="How can we help you?"
+                        minLength={10}
+                        maxLength={5000}
+                        required
                       />
                     </div>
+
+                    {status.success ? (
+                      <p className="ltc-form-status success" role="status" style={fontPontano}>
+                        {status.success}
+                      </p>
+                    ) : null}
+
+                    {status.error ? (
+                      <p className="ltc-form-status error" role="alert" style={fontPontano}>
+                        {status.error}
+                      </p>
+                    ) : null}
 
                     <div className="ltc-form-footer">
                       <p style={fontPontano}>
                         Please make sure your contact details are correct.
                       </p>
 
-                      <button type="submit" className="ltc-submit-button" style={fontMontserrat}>
-                        Send Message
+                      <button
+                        type="submit"
+                        className="ltc-submit-button"
+                        style={fontMontserrat}
+                        disabled={status.loading}
+                      >
+                        {status.loading ? "Sending..." : "Send Message"}
                       </button>
                     </div>
                   </form>

@@ -8,10 +8,12 @@ import {
   updateLtcAdminContent,
   uploadLtcHighlightImage,
 } from "../controllers/ltcContentController.js";
+import { sendLtcContactMessage } from "../controllers/ltcContactController.js";
 
 const router = express.Router();
 
 router.get("/public-content", getPublicLtcContent);
+router.post("/contact-message", sendLtcContactMessage);
 router.post("/admin/login", ltcAdminLogin);
 router.get("/admin/content", requireLtcAdmin, getLtcAdminContent);
 router.put("/admin/content", requireLtcAdmin, updateLtcAdminContent);

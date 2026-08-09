@@ -38,6 +38,7 @@ import adminBatchRoutes from "./routes/adminBatchRoutes.js";
 import adminRoadmapRoutes from "./routes/adminRoadmapRoutes.js";
 import trainingRfidRoutes from "./routes/trainingRfidRoutes.js";
 import ltcContentRoutes from "./routes/ltcContentRoutes.js";
+import trainingContactRoutes from "./routes/trainingContactRoutes.js";
 
 import ProfessorAttendance from "./models/ProfessorAttendance.js";
 import ProfessorAssessment from "./models/ProfessorAssessment.js";
@@ -81,7 +82,8 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const app = express();
 const port = process.env.PORT || 5000;
-const isProduction = String(process.env.NODE_ENV || "").trim() === "production";
+const isProduction =
+  String(process.env.NODE_ENV || "").trim().toLowerCase() === "production";
 
 app.set("trust proxy", 1);
 
@@ -91,7 +93,9 @@ function getClientIp(req) {
     .map((item) => item.trim())
     .filter(Boolean)[0];
 
-  return String(forwarded || req.ip || req.socket?.remoteAddress || "").trim();
+  return String(
+    forwarded || req.ip || req.socket?.remoteAddress || ""
+  ).trim();
 }
 
 function normalizeAddress(value = "") {
@@ -134,40 +138,57 @@ function createJsonLimiter({ windowMs, max, message, skip }) {
 }
 
 const generalApiLimiter = createJsonLimiter({
-  windowMs: Number(process.env.API_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+  windowMs: Number(
+    process.env.API_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000
+  ),
   max: Number(process.env.API_RATE_LIMIT_MAX || 600),
   message: "Too many requests, please try again later.",
   skip: (req) => !isProduction || isLocalRequest(req),
 });
 
 const authLimiter = createJsonLimiter({
-  windowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+  windowMs: Number(
+    process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000
+  ),
   max: Number(process.env.AUTH_RATE_LIMIT_MAX || 15),
   message: "Too many login attempts, please try again later.",
   skip: (req) => !isProduction || isLocalRequest(req),
 });
 
-const allowedOrigins = [
+const configuredOrigins = [
   process.env.CORS_ORIGIN,
   process.env.FRONTEND_URL,
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-].filter(Boolean);
+]
+  .flatMap((value) => String(value || "").split(","))
+  .map((value) => value.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+const allowedOrigins = [
+  ...new Set([
+    ...configuredOrigins,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ]),
+];
 
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const corsOptions = {
+  origin(origin, callback) {
+    const normalizedOrigin = String(origin || "").replace(/\/+$/, "");
+
+    if (!origin || allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(
+      new Error(`CORS blocked for origin: ${normalizedOrigin}`)
+    );
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 
 app.use(
   helmet({
@@ -175,8 +196,14 @@ app.use(
   })
 );
 
+/*
+ * Body parsers must appear before all application routes.
+ * This ensures that Contact forms and other JSON requests have req.body.
+ */
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+/* ---------- AUTH RATE LIMITERS ---------- */
 
 app.use("/api/professors/login", authLimiter);
 app.use("/api/admin/login", authLimiter);
@@ -189,7 +216,11 @@ app.use("/api/hotel/admin-login", authLimiter);
 app.use("/api/hotel-admin/admin-login", authLimiter);
 app.use("/api/ltc/admin/login", authLimiter);
 
+/* ---------- GENERAL API RATE LIMITER ---------- */
+
 app.use("/api", generalApiLimiter);
+
+/* ---------- DATABASE CONNECTION ---------- */
 
 const connectDB = async () => {
   try {
@@ -239,11 +270,11 @@ const connectDB = async () => {
     console.log("Indexes synced");
 
     await seedTrainingCoursesFromExistingRecords();
-
     await seedDefaultManpowerJobs();
+
     console.log("Manpower default jobs synced");
-  } catch (err) {
-    console.error("MongoDB connection/index error:", err);
+  } catch (error) {
+    console.error("MongoDB connection/index error:", error);
     process.exit(1);
   }
 };
@@ -251,9 +282,11 @@ const connectDB = async () => {
 await connectDB();
 
 /* ---------- LTC OVERVIEW CONTENT ---------- */
+
 app.use("/api/ltc", ltcContentRoutes);
 
 /* ---------- TRAINING / ENROLLMENT ---------- */
+
 app.use("/api/training-files", trainingFileRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 
@@ -266,9 +299,16 @@ app.use("/api/admin", trainingAdminRoutes);
 
 app.use("/api/professors", professorRoutes);
 app.use("/api/training/rfid", trainingRfidRoutes);
+
+/*
+ * Training Contact:
+ * POST /api/training/contact-message
+ */
+app.use("/api/training", trainingContactRoutes);
 app.use("/api/training", traineeRoutes);
 
 /* ---------- HOTEL ---------- */
+
 app.use("/api/hotel", hotelRoutes);
 app.use("/api/hotel", bookingRoutes);
 app.use("/api/hotel", eventBookingRoutes);
@@ -282,25 +322,37 @@ app.use("/api/hotel", hotelContactRoutes);
 app.use("/api/hotel-admin", hotelAdminRoutes);
 
 /* ---------- MANPOWER ---------- */
+
 app.use("/api/manpower/admin", manpowerAdminRoutes);
+
+/*
+ * manpowerPublicRoutes includes:
+ * POST /contact-message
+ *
+ * Complete endpoint:
+ * POST /api/manpower/contact-message
+ */
 app.use("/api/manpower", manpowerPublicRoutes);
 app.use("/api/manpower", manpowerAssessmentRoutes);
 app.use("/api/manpower/hr", manpowerHrRoutes);
 app.use("/api/manpower/employee", manpowerEmployeeRoutes);
 app.use("/api/manpower/files", manpowerFileRoutes);
 
+/* ---------- HEALTH CHECK ---------- */
+
 app.get("/api/health", (_req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Server is running",
   });
 });
 
 app.get("/", (_req, res) => {
-  res.status(200).send("API is running");
+  return res.status(200).send("API is running");
 });
 
 /* ---------- SOCKET.IO HOTEL CHAT ---------- */
+
 const getHotelJwtSecret = () => {
   return (
     String(process.env.HOTEL_JWT_SECRET || "").trim() ||
@@ -354,7 +406,9 @@ io.use(async (socket, next) => {
       const secret = getHotelAdminJwtSecret();
 
       if (!secret) {
-        return next(new Error("Hotel admin socket secret is missing."));
+        return next(
+          new Error("Hotel admin socket secret is missing.")
+        );
       }
 
       const decoded = jwt.verify(token, secret);
@@ -369,11 +423,14 @@ io.use(async (socket, next) => {
         tokenRole === "hotel_admin";
 
       if (!isHotelAdmin) {
-        return next(new Error("Hotel admin socket access required."));
+        return next(
+          new Error("Hotel admin socket access required.")
+        );
       }
 
       socket.data.role = "admin";
-      socket.data.adminId = getUserIdFromDecoded(decoded) || "hotel-admin";
+      socket.data.adminId =
+        getUserIdFromDecoded(decoded) || "hotel-admin";
 
       return next();
     }
@@ -381,7 +438,9 @@ io.use(async (socket, next) => {
     const secret = getHotelJwtSecret();
 
     if (!secret) {
-      return next(new Error("Hotel user socket secret is missing."));
+      return next(
+        new Error("Hotel user socket secret is missing.")
+      );
     }
 
     const decoded = jwt.verify(token, secret);
@@ -400,7 +459,9 @@ io.use(async (socket, next) => {
     }
 
     if (user.active === false) {
-      return next(new Error("Hotel user account is deactivated."));
+      return next(
+        new Error("Hotel user account is deactivated.")
+      );
     }
 
     const isVerified =
@@ -408,7 +469,9 @@ io.use(async (socket, next) => {
       user.idVerificationStatus === "verified";
 
     if (!isVerified) {
-      return next(new Error("Hotel user is not ID verified."));
+      return next(
+        new Error("Hotel user is not ID verified.")
+      );
     }
 
     socket.data.role = "user";
@@ -416,8 +479,14 @@ io.use(async (socket, next) => {
 
     return next();
   } catch (error) {
-    console.error("Socket auth error:", error?.message || error);
-    return next(new Error("Socket authentication failed."));
+    console.error(
+      "Socket auth error:",
+      error?.message || error
+    );
+
+    return next(
+      new Error("Socket authentication failed.")
+    );
   }
 });
 
@@ -429,14 +498,20 @@ io.on("connection", (socket) => {
       socket.join("hotel-chat-admins");
     });
 
-    socket.on("hotelChat:joinConversation", ({ userId } = {}) => {
-      if (userId) {
-        socket.join(`hotel-chat-user-${userId}`);
+    socket.on(
+      "hotelChat:joinConversation",
+      ({ userId } = {}) => {
+        if (userId) {
+          socket.join(`hotel-chat-user-${userId}`);
+        }
       }
-    });
+    );
 
     socket.on("disconnect", () => {
-      console.log("Hotel admin chat socket disconnected:", socket.id);
+      console.log(
+        "Hotel admin chat socket disconnected:",
+        socket.id
+      );
     });
 
     return;
@@ -452,14 +527,18 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => {
-      console.log("Hotel user chat socket disconnected:", socket.id);
+      console.log(
+        "Hotel user chat socket disconnected:",
+        socket.id
+      );
     });
   }
 });
 
 /* ---------- 404 AND ERROR HANDLERS ---------- */
-app.use((req, res) => {
-  res.status(404).json({
+
+app.use((_req, res) => {
+  return res.status(404).json({
     success: false,
     message: "Route not found",
   });
@@ -482,25 +561,41 @@ app.use((err, _req, res, _next) => {
     });
   }
 
+  if (err instanceof SyntaxError && "body" in err) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid JSON request body.",
+    });
+  }
+
   return res.status(err.status || 500).json({
     success: false,
     message: err.message || "Internal server error",
   });
 });
 
+/* ---------- START SERVER ---------- */
+
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-process.on("SIGINT", async () => {
-  try {
-    console.log("Closing server...");
-    server.close(async () => {
+/* ---------- GRACEFUL SHUTDOWN ---------- */
+
+async function shutdownServer(signal) {
+  console.log(`${signal} received. Closing server...`);
+
+  server.close(async () => {
+    try {
       await mongoose.connection.close();
+      console.log("MongoDB connection closed.");
       process.exit(0);
-    });
-  } catch (error) {
-    console.error("Error during shutdown:", error);
-    process.exit(1);
-  }
-});
+    } catch (error) {
+      console.error("Error during shutdown:", error);
+      process.exit(1);
+    }
+  });
+}
+
+process.on("SIGINT", () => shutdownServer("SIGINT"));
+process.on("SIGTERM", () => shutdownServer("SIGTERM"));

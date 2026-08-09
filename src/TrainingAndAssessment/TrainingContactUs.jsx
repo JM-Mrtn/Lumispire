@@ -1,5 +1,5 @@
 // src/TrainingAndAssessment/TrainingContactUs.jsx
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { TrainingPublicShell } from "./TrainingRequirements";
 
 const HEADER_LOGO_IMAGE = "/TamsiLogo.png";
@@ -102,20 +102,120 @@ export default function TrainingContactUs() {
     subject: "",
     message: "",
   });
+  const [isSending, setIsSending] = useState(false);
+  const [status, setStatus] = useState({ type: "", message: "" });
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    subject: false,
+    message: false,
+  });
+
+  const API_BASE = useMemo(() => {
+    const raw = (
+      import.meta.env.VITE_TRAINING_API_BASE ||
+      import.meta.env.VITE_API_BASE ||
+      import.meta.env.VITE_API_URL ||
+      "http://localhost:5000"
+    ).replace(/\/+$/, "");
+
+    if (raw.endsWith("/api/training")) return raw;
+    if (raw.endsWith("/api/hotel")) return raw.replace(/\/hotel$/, "/training");
+    if (raw.endsWith("/api")) return `${raw}/training`;
+    return `${raw}/api/training`;
+  }, []);
+
+  const validateField = (name, value) => {
+    const cleanValue = String(value || "").trim();
+
+    if (name === "name") {
+      if (!cleanValue) return "Name is required.";
+      if (cleanValue.length < 2) return "Name must be at least 2 characters.";
+      if (!/^[A-Za-zÑñ .'-]+$/.test(cleanValue)) {
+        return "Name can only contain letters, spaces, apostrophes, periods, and hyphens.";
+      }
+    }
+
+    if (name === "email") {
+      if (!cleanValue) return "Email address is required.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanValue)) {
+        return "Please enter a valid email address.";
+      }
+    }
+
+    if (name === "subject") {
+      if (!cleanValue) return "Subject is required.";
+      if (cleanValue.length < 3) return "Subject must be at least 3 characters.";
+    }
+
+    if (name === "message") {
+      if (!cleanValue) return "Message is required.";
+      if (cleanValue.length < 10) return "Message must be at least 10 characters.";
+    }
+
+    return "";
+  };
+
+  const errors = {
+    name: validateField("name", formData.name),
+    email: validateField("email", formData.email),
+    subject: validateField("subject", formData.subject),
+    message: validateField("message", formData.message),
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setStatus({ type: "", message: "" });
+  };
+
+  const handleBlur = (e) => {
+    setTouched((prev) => ({ ...prev, [e.target.name]: true }));
   };
 
   const resetForm = () => {
     setFormData({ name: "", email: "", subject: "", message: "" });
+    setTouched({ name: false, email: false, subject: false, message: false });
+    setStatus({ type: "", message: "" });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Message submitted.");
-    resetForm();
+    setTouched({ name: true, email: true, subject: true, message: true });
+
+    if (Object.values(errors).some(Boolean)) {
+      setStatus({ type: "error", message: "Please fix the highlighted fields before sending." });
+      return;
+    }
+
+    setIsSending(true);
+    setStatus({ type: "", message: "" });
+
+    try {
+      const response = await fetch(`${API_BASE}/contact-message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject.trim(),
+          message: formData.message.trim(),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to send message.");
+
+      resetForm();
+      setStatus({ type: "success", message: "Your message was sent successfully." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message || "Failed to send message." });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -161,6 +261,8 @@ export default function TrainingContactUs() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.name ? errors.name : ""}
                   required
                 />
 
@@ -170,6 +272,8 @@ export default function TrainingContactUs() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.email ? errors.email : ""}
                   required
                 />
 
@@ -178,6 +282,8 @@ export default function TrainingContactUs() {
                   name="subject"
                   value={formData.subject}
                   onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.subject ? errors.subject : ""}
                   required
                 />
 
@@ -190,24 +296,46 @@ export default function TrainingContactUs() {
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     rows={5}
                     required
-                    className="w-full resize-none rounded-xl border-2 border-white/80 bg-transparent px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/50 focus:border-white"
+                    aria-invalid={Boolean(touched.message && errors.message)}
+                    className={`w-full resize-none rounded-xl border-2 bg-transparent px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/50 focus:border-white ${
+                      touched.message && errors.message ? "border-[#ffd4d4]" : "border-white/80"
+                    }`}
                   />
+                  {touched.message && errors.message ? (
+                    <p className="mt-1 text-xs font-bold text-[#ffd4d4]">{errors.message}</p>
+                  ) : null}
                 </div>
+
+                {status.message ? (
+                  <div
+                    role="status"
+                    className={`rounded-xl px-4 py-3 text-sm font-bold ${
+                      status.type === "success"
+                        ? "bg-white text-[#2e5038]"
+                        : "border border-[#ffd4d4] bg-[#7c2d2d]/35 text-white"
+                    }`}
+                  >
+                    {status.message}
+                  </div>
+                ) : null}
 
                 <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                   <button
                     type="submit"
-                    className="h-10 flex-1 rounded-full bg-white px-6 text-xs font-extrabold uppercase tracking-wide text-[#45674b] transition hover:bg-[#eef1e7]"
+                    disabled={isSending}
+                    className="h-10 flex-1 rounded-full bg-white px-6 text-xs font-extrabold uppercase tracking-wide text-[#45674b] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Submit
+                    {isSending ? "Sending..." : "Submit"}
                   </button>
 
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="h-10 flex-1 rounded-full border-2 border-white bg-transparent px-6 text-xs font-extrabold uppercase tracking-wide text-white transition hover:bg-white hover:text-[#45674b]"
+                    disabled={isSending}
+                    className="h-10 flex-1 rounded-full border-2 border-white bg-transparent px-6 text-xs font-extrabold uppercase tracking-wide text-white transition hover:bg-white hover:text-[#45674b] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Cancel
                   </button>
@@ -465,7 +593,7 @@ function SectionHeading({ title }) {
   );
 }
 
-function ContactField({ label, type = "text", name, value, onChange, required = false }) {
+function ContactField({ label, type = "text", name, value, onChange, onBlur, error = "", required = false }) {
   return (
     <div>
       <label className="mb-1 block text-xs font-extrabold text-white">
@@ -476,9 +604,14 @@ function ContactField({ label, type = "text", name, value, onChange, required = 
         name={name}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         required={required}
-        className="h-9 w-full rounded-full border-2 border-white/80 bg-transparent px-4 text-sm font-semibold text-white outline-none transition placeholder:text-white/50 focus:border-white"
+        aria-invalid={Boolean(error)}
+        className={`h-9 w-full rounded-full border-2 bg-transparent px-4 text-sm font-semibold text-white outline-none transition placeholder:text-white/50 focus:border-white ${
+          error ? "border-[#ffd4d4]" : "border-white/80"
+        }`}
       />
+      {error ? <p className="mt-1 text-xs font-bold text-[#ffd4d4]">{error}</p> : null}
     </div>
   );
 }
