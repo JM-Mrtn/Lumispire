@@ -32,13 +32,26 @@ const API_BASE = normalizeApiBase(
 
 const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
 
+const FOOTER_LOGO_IMAGE = "/TrainingLumispireLogo.png";
+const TRAINING_HOME_ROUTE = "/training";
+const TRAINING_COURSE_ROUTE = "/training-course";
+const TRAINING_LOGIN_ROUTE = "/training-login";
+const TRAINING_CERTIFICATE_VALIDATION_ROUTE = "/training-certificate-validation";
+
 const TRAINING_CONTACT_INFO = {
-  email1: "ltc.tamsi@gmail.com",
-  email2: "lorengladis@ltcmultiservices.com",
-  phone: "09959808051 / 09516281271",
-  addressLine1: "2/F 5441 Curie Street,",
-  addressLine2: "Palanan, Makati City",
+  email1: "lorengladius@ltcmultiservices.com",
+  email2: "ltc.tamsi@gmail.com",
+  phone: "+639516281271 / +639959808051",
+  addressLine1: "2/F 5441 CURRIE STREET,",
+  addressLine2: "PALANAN, MAKATI CITY",
 };
+
+const TRAINING_FOOTER_NAV_ITEMS = [
+  { key: "home", label: "Home", path: TRAINING_HOME_ROUTE },
+  { key: "course", label: "Course", path: TRAINING_COURSE_ROUTE },
+  { key: "certificate-validation", label: "Certificate Validation", path: TRAINING_CERTIFICATE_VALIDATION_ROUTE },
+  { key: "sign-in", label: "Sign In", path: TRAINING_LOGIN_ROUTE },
+];
 
 const TRAINEE_NAV_ITEMS = [
   { key: "home", label: "Home", path: "/trainee-home" },
@@ -541,38 +554,41 @@ const pageStyles = `
   }
 
   .ltc-footer {
-    background: var(--footer-green);
-    color: rgba(255,255,255,.76);
-    margin-top: 0;
     width: 100%;
+    background: var(--footer-green);
+    color: white;
+    padding: 30px 0 12px;
+    margin: 0;
   }
 
   .ltc-footer .ltc-container {
     width: 100%;
     max-width: none;
+    margin: 0;
     padding-left: 32px;
     padding-right: 32px;
   }
 
   .ltc-footer-grid {
+    width: 100%;
     display: grid;
-    grid-template-columns: 1.05fr .85fr 1.2fr 1fr .7fr;
-    gap: 18px;
-    padding: 18px 0 12px;
-    align-items: start;
+    grid-template-columns: 1.35fr .75fr 1.05fr 1fr .7fr;
+    column-gap: clamp(28px, 4vw, 76px);
+    row-gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
   }
 
-  .ltc-footer-logo { display: flex; align-items: center; gap: 9px; color: white; }
-  .ltc-footer-logo img { width: 32px; height: 32px; border-radius: 999px; background: white; object-fit: cover; }
-  .ltc-footer-logo h2 { margin: 0; font-size: 15px; font-weight: 900; letter-spacing: -.04em; }
-  .ltc-footer h3 { margin: 0 0 7px; color: white; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; line-height: 1.15; }
-  .ltc-footer p { margin: 0 0 3px; font-size: 11px; line-height: 1.35; color: rgba(255,255,255,.72); }
-  .ltc-footer-link { display: block; border: 0; background: transparent; padding: 0; margin: 0 0 3px; color: rgba(255,255,255,.72); text-align: left; cursor: pointer; font-size: 11px; line-height: 1.25; font-weight: 700; transition: .25s var(--ease); }
-  .ltc-footer-link:hover { color: var(--gold-soft); transform: translateX(4px); }
-  .ltc-socials { display: flex; gap: 7px; }
-  .ltc-socials span { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.1); color: white; font-size: 12px; font-weight: 900; transition: .25s var(--ease); }
-  .ltc-socials span:hover { transform: translateY(-2px); background: var(--gold); color: #102418; }
-  .ltc-footer-bottom { border-top: 1px solid rgba(255,255,255,.1); padding: 8px 0; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 10px; line-height: 1.35; color: rgba(255,255,255,.56); }
+  .ltc-footer-brand { display: flex; align-items: center; flex-direction: row; gap: 14px; width: 100%; text-decoration: none; text-align: left; border: 0; background: transparent; padding: 0; cursor: pointer; }
+  .ltc-footer-brand img { flex: 0 0 auto; width: 110px; height: auto; border-radius: 0; object-fit: contain; background: transparent; display: block; }
+  .ltc-footer-brand-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .ltc-footer-brand-description { max-width: 300px; margin: 0 !important; color: rgba(255,255,255,.72) !important; }
+  .ltc-footer h4 { color: white; font-weight: 900; font-size: 20px; line-height: 1.2; margin: 0; text-transform: uppercase; }
+  .ltc-footer h5 { color: #f4d484; font-size: 12px; line-height: 1.2; font-weight: 900; text-transform: uppercase; letter-spacing: .14em; margin: 0 0 10px; }
+  .ltc-footer p, .ltc-footer-link { display: block; color: rgba(255,255,255,.68); font-size: 13px; line-height: 1.55; margin: 5px 0; }
+  .ltc-footer-link { border: 0; background: transparent; padding: 0; cursor: pointer; text-align: left; text-decoration: none; }
+  .ltc-footer-link:hover { color: white; text-decoration: underline; }
+  .ltc-copyright { width: 100%; padding-top: 14px; display: flex; justify-content: space-between; gap: 12px; color: rgba(255,255,255,.52); font-size: 12px; line-height: 1.4; }
 
   @keyframes ltcFadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes ltcHeaderDrop { from { opacity: 0; transform: translateY(-18px); } to { opacity: 1; transform: translateY(0); } }
@@ -582,7 +598,7 @@ const pageStyles = `
     .ltc-menu-button { display: inline-flex; align-items: center; }
     .ltc-profile-header-row { grid-template-columns: 1fr; }
     .ltc-info-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .ltc-footer-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .ltc-footer-grid { grid-template-columns: 1fr 1fr; }
   }
 
   @media (max-width: 720px) {
@@ -593,8 +609,10 @@ const pageStyles = `
     .ltc-profile-shell { padding: 15px; border-radius: 24px; }
     .ltc-profile-card, .ltc-profile-info-panel { padding: 20px; border-radius: 22px; min-height: auto; }
     .ltc-info-grid, .ltc-action-row { grid-template-columns: 1fr; }
-    .ltc-footer-grid { grid-template-columns: 1fr; gap: 12px; padding-top: 16px; padding-bottom: 10px; }
+    .ltc-footer { padding: 28px 0 12px; }
+    .ltc-footer-grid { grid-template-columns: 1fr; gap: 18px; padding-bottom: 22px; }
     .ltc-footer .ltc-container { padding-left: 18px; padding-right: 18px; }
+    .ltc-copyright { flex-direction: column; }
   }
 `;
 
@@ -1150,65 +1168,76 @@ function MobileSidebar({ open, goTo, onClose, activeKey }) {
 function Footer({ goTo }) {
   return (
     <footer className="ltc-footer">
-      <div className="ltc-container">
-        <div className="ltc-footer-grid">
-          <div>
-            <div className="ltc-footer-logo">
-              <img
-                src="/TamsiLogo.png"
-                alt="TAMSI Logo"
-                onError={(event) => {
-                  event.currentTarget.src =
-                    "https://placehold.co/80x80/ffffff/45674b?text=T";
-                }}
-              />
-              <h2 style={fontMontserrat}>TAMSI</h2>
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <button type="button" onClick={() => goTo(TRAINING_HOME_ROUTE)} className="ltc-footer-brand">
+            <img
+              src={FOOTER_LOGO_IMAGE}
+              alt="Training Lumispire Logo"
+              onError={(event) => {
+                event.currentTarget.src = "https://placehold.co/80x80/ffffff/4d6f55?text=T";
+              }}
+            />
+            <div className="ltc-footer-brand-copy">
+              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <p className="ltc-footer-brand-description" style={fontPontano}>
+                Practical training, assessment, and learner support.
+              </p>
             </div>
-          </div>
-
-          <div>
-            <h3 style={fontMontserrat}>Menu</h3>
-            {TRAINEE_NAV_ITEMS.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => goTo(item.path)}
-                className="ltc-footer-link"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div>
-            <h3 style={fontMontserrat}>Contact Information</h3>
-            <p>{TRAINING_CONTACT_INFO.email1}</p>
-            <p>{TRAINING_CONTACT_INFO.email2}</p>
-            <p>{TRAINING_CONTACT_INFO.phone}</p>
-          </div>
-
-          <div>
-            <h3 style={fontMontserrat}>Address</h3>
-            <p>{TRAINING_CONTACT_INFO.addressLine1}</p>
-            <p>{TRAINING_CONTACT_INFO.addressLine2}</p>
-          </div>
-
-          <div>
-            <h3 style={fontMontserrat}>Follow Us</h3>
-            <div className="ltc-socials">
-              <span>f</span>
-              <span>in</span>
-            </div>
-          </div>
+          </button>
         </div>
 
-        <div className="ltc-footer-bottom">
-          <span>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
-          <span>Developed by CRMS Tech Alliance</span>
-        </div>
+        <FooterColumn title="Menu">
+          {TRAINING_FOOTER_NAV_ITEMS.map((item) => (
+            <FooterLink key={item.key} onClick={() => goTo(item.path)}>{item.label}</FooterLink>
+          ))}
+        </FooterColumn>
+
+        <FooterColumn title="Contact Information">
+          <FooterText>{TRAINING_CONTACT_INFO.email1}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.email2}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.phone}</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Address">
+          <FooterText>{TRAINING_CONTACT_INFO.addressLine1}</FooterText>
+          <FooterText>{TRAINING_CONTACT_INFO.addressLine2}</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Follow Us">
+          <a className="ltc-footer-link" href="https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#" target="_blank" rel="noreferrer">
+            Facebook
+          </a>
+        </FooterColumn>
+      </div>
+
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
   );
+}
+
+function FooterColumn({ title, children }) {
+  return (
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function FooterLink({ children, onClick }) {
+  return (
+    <button type="button" onClick={onClick} className="ltc-footer-link" style={fontPontano}>
+      {children}
+    </button>
+  );
+}
+
+function FooterText({ children }) {
+  return <p style={fontPontano}>{children}</p>;
 }
 
 function InfoCard({ label, value, delay = 0 }) {

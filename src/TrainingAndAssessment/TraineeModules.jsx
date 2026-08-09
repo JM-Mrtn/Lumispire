@@ -32,13 +32,26 @@ const API_BASE = normalizeApiBase(
 
 const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
 
+const FOOTER_LOGO_IMAGE = "/TrainingLumispireLogo.png";
+const TRAINING_HOME_ROUTE = "/training";
+const TRAINING_COURSE_ROUTE = "/training-course";
+const TRAINING_LOGIN_ROUTE = "/training-login";
+const TRAINING_CERTIFICATE_VALIDATION_ROUTE = "/training-certificate-validation";
+
 const TRAINING_CONTACT_INFO = {
-  email1: "ltc.tamsi@gmail.com",
-  email2: "lorengladis@ltcmultiservices.com",
-  phone: "09959808051 / 09516281271",
-  addressLine1: "2/F 5441 Curie Street,",
-  addressLine2: "Palanan, Makati City",
+  email1: "lorengladius@ltcmultiservices.com",
+  email2: "ltc.tamsi@gmail.com",
+  phone: "+639516281271 / +639959808051",
+  addressLine1: "2/F 5441 CURRIE STREET,",
+  addressLine2: "PALANAN, MAKATI CITY",
 };
+
+const TRAINING_FOOTER_NAV_ITEMS = [
+  { key: "home", label: "Home", path: TRAINING_HOME_ROUTE },
+  { key: "course", label: "Course", path: TRAINING_COURSE_ROUTE },
+  { key: "certificate-validation", label: "Certificate Validation", path: TRAINING_CERTIFICATE_VALIDATION_ROUTE },
+  { key: "sign-in", label: "Sign In", path: TRAINING_LOGIN_ROUTE },
+];
 
 const TRAINEE_NAV_ITEMS = [
   { key: "home", label: "Home", path: "/trainee-home" },
@@ -453,8 +466,9 @@ const pageStyles = `
   .ltc-footer-grid {
     width: 100%;
     display: grid;
-    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
-    gap: 22px;
+    grid-template-columns: 1.35fr .75fr 1.05fr 1fr .7fr;
+    column-gap: clamp(28px, 4vw, 76px);
+    row-gap: 22px;
     padding-bottom: 24px;
     border-bottom: 1px solid rgba(255,255,255,.1);
   }
@@ -462,16 +476,29 @@ const pageStyles = `
   .ltc-footer-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    flex-direction: row;
+    gap: 14px;
+    width: 100%;
+    text-decoration: none;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
   }
 
   .ltc-footer-brand img {
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
-    object-fit: cover;
-    background: white;
+    flex: 0 0 auto;
+    width: 110px;
+    height: auto;
+    border-radius: 0;
+    object-fit: contain;
+    background: transparent;
+    display: block;
   }
+
+  .ltc-footer-brand-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .ltc-footer-brand-description { max-width: 300px; margin: 0 !important; color: rgba(255,255,255,.72) !important; }
 
   .ltc-footer h4 {
     color: white;
@@ -507,11 +534,10 @@ const pageStyles = `
     padding: 0;
     cursor: pointer;
     text-align: left;
+    text-decoration: none;
   }
 
   .ltc-footer-link:hover { color: white; text-decoration: underline; }
-  .ltc-socials { display: flex; gap: 8px; }
-  .ltc-socials span { width: 26px; height: 26px; border-radius: 999px; background: rgba(255,255,255,.13); }
 
   .ltc-copyright {
     width: 100%;
@@ -2120,21 +2146,29 @@ function Footer({ goTo }) {
     <footer className="ltc-footer">
       <div className="ltc-container ltc-footer-grid">
         <div>
-          <div className="ltc-footer-brand">
+          <button
+            type="button"
+            onClick={() => goTo(TRAINING_HOME_ROUTE)}
+            className="ltc-footer-brand"
+          >
             <img
-              src="/TamsiLogo.png"
-              alt="TAMSI Logo"
+              src={FOOTER_LOGO_IMAGE}
+              alt="Training Lumispire Logo"
               onError={(event) => {
-                event.currentTarget.src =
-                  "https://placehold.co/80x80/ffffff/4d6f55?text=T";
+                event.currentTarget.src = "https://placehold.co/80x80/ffffff/4d6f55?text=T";
               }}
             />
-            <h4 style={fontMontserrat}>TAMSI</h4>
-          </div>
+            <div className="ltc-footer-brand-copy">
+              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <p className="ltc-footer-brand-description" style={fontPontano}>
+                Practical training, assessment, and learner support.
+              </p>
+            </div>
+          </button>
         </div>
 
         <FooterColumn title="Menu">
-          {TRAINEE_NAV_ITEMS.map((item) => (
+          {TRAINING_FOOTER_NAV_ITEMS.map((item) => (
             <FooterLink key={item.key} onClick={() => goTo(item.path)}>
               {item.label}
             </FooterLink>
@@ -2153,11 +2187,14 @@ function Footer({ goTo }) {
         </FooterColumn>
 
         <FooterColumn title="Follow Us">
-          <div className="ltc-socials">
-            <span />
-            <span />
-            <span />
-          </div>
+          <a
+            className="ltc-footer-link"
+            href="https://www.facebook.com/profile.php?id=61571746334920&rdid=3bcMsbFVo3PBobtd&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1D1g1d614L#"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Facebook
+          </a>
         </FooterColumn>
       </div>
 

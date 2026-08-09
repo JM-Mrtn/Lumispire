@@ -49,9 +49,21 @@ const TRAINING_FOOTER_NAV_ITEMS = [
 ];
 
 const highlights = [
-  { image: "/tamsi-classroom.jpg", alt: "TAMSI classroom" },
-  { image: "/tamsi-lounge.jpg", alt: "TAMSI lounge" },
-  { image: "/tamsi-room.jpg", alt: "TAMSI room" },
+  {
+    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85",
+    fallback: "https://placehold.co/1200x760/173f2b/ffffff?text=Training+Classroom",
+    alt: "Students participating in a professional training session",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=85",
+    fallback: "https://placehold.co/1200x760/235f3e/ffffff?text=Hospitality+Lounge",
+    alt: "Modern hospitality lounge and dining facility",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=85",
+    fallback: "https://placehold.co/1200x760/c49a45/ffffff?text=Guest+Room",
+    alt: "Professionally prepared hotel guest room",
+  },
 ];
 
 const quickCards = [
@@ -1160,7 +1172,8 @@ export default function TrainingAndAssessmentPage() {
                         src={item.image}
                         alt={item.alt}
                         onError={(event) => {
-                          event.currentTarget.src = "https://placehold.co/520x320/d7ddd4/45674b?text=TAMSI+Highlight";
+                          event.currentTarget.onerror = null;
+                          event.currentTarget.src = item.fallback;
                         }}
                       />
                     </div>

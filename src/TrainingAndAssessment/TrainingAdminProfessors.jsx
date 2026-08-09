@@ -60,6 +60,8 @@ export default function TrainingAdminProfessors() {
   const [actingId, setActingId] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [resetResult, setResetResult] = useState(null);
+  const [temporaryPasswords, setTemporaryPasswords] = useState({});
+  const [visiblePasswords, setVisiblePasswords] = useState({});
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
@@ -173,18 +175,58 @@ export default function TrainingAdminProfessors() {
       });
       const data = await readJsonSafe(res);
       if (!res.ok) throw new Error(data?.message || "Failed to reset password.");
+      const temporaryPassword =
+        data?.temporaryPassword ||
+        data?.tempPassword ||
+        data?.password ||
+        data?.data?.temporaryPassword ||
+        "";
+
+      if (!temporaryPassword) {
+        throw new Error("Password was reset, but the server did not return the temporary password.");
+      }
+
+      const professorId = String(professor?._id || "");
       setMsg({ type: "success", text: data?.message || "Password reset." });
       setResetResult({
+        professorId,
         professor: `${professor.firstName} ${professor.lastName}`,
         username: professor.username,
         email: professor.email,
-        temporaryPassword: data?.temporaryPassword,
+        temporaryPassword,
       });
+      setTemporaryPasswords((current) => ({
+        ...current,
+        [professorId]: temporaryPassword,
+      }));
+      setVisiblePasswords((current) => ({
+        ...current,
+        [professorId]: true,
+      }));
       await loadProfessors();
     } catch (error) {
       setMsg({ type: "error", text: error.message || "Failed to reset password." });
     } finally {
       setActingId("");
+    }
+  }
+
+  function togglePassword(professorId) {
+    setVisiblePasswords((current) => ({
+      ...current,
+      [professorId]: !current[professorId],
+    }));
+  }
+
+  async function copyPassword(professorId) {
+    const password = temporaryPasswords[professorId];
+    if (!password) return;
+
+    try {
+      await navigator.clipboard.writeText(password);
+      setMsg({ type: "success", text: "Temporary password copied." });
+    } catch {
+      setMsg({ type: "error", text: "Could not copy the password. Please copy it manually." });
     }
   }
 
@@ -266,12 +308,12 @@ export default function TrainingAdminProfessors() {
         }
 
         .ta-prof-table {
-          min-width: 1120px;
+          min-width: 1320px;
         }
 
         .ta-prof-row {
           display: grid;
-          grid-template-columns: 1.35fr 1fr 1.55fr 1.5fr .75fr 178px;
+          grid-template-columns: 1.3fr .9fr 1.35fr 1.3fr 1.15fr .7fr 178px;
           gap: 18px;
           align-items: center;
         }
@@ -305,6 +347,38 @@ export default function TrainingAdminProfessors() {
           gap: 8px;
           align-items: center;
           justify-items: stretch;
+        }
+
+        .ta-prof-password {
+          display: flex;
+          min-width: 0;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .ta-prof-password-value {
+          min-width: 92px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          border-radius: 10px;
+          background: #fff6dc;
+          padding: 7px 9px;
+          color: #6f4a00;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .ta-prof-password-button {
+          height: 30px;
+          border-radius: 9px;
+          border: 1px solid rgba(8, 39, 25, 0.14);
+          background: #fff;
+          padding: 0 8px;
+          color: #2a4f33;
+          font-size: 10px;
+          font-weight: 900;
         }
 
         .ta-prof-action {
@@ -466,6 +540,7 @@ export default function TrainingAdminProfessors() {
                 <div>Username</div>
                 <div>Email</div>
                 <div>Assignments</div>
+                <div>Temporary Password</div>
                 <div>Status</div>
                 <div className="text-center">Actions</div>
               </div>
@@ -478,6 +553,7 @@ export default function TrainingAdminProfessors() {
                       <div className="h-4 rounded-full bg-black/10" />
                       <div className="h-4 rounded-full bg-black/10" />
                       <div className="h-4 rounded-full bg-black/10" />
+                      <div className="h-8 rounded-xl bg-black/10" />
                       <div className="h-6 rounded-full bg-black/10" />
                       <div className="h-8 rounded-full bg-black/10" />
                     </div>
@@ -487,6 +563,8 @@ export default function TrainingAdminProfessors() {
                     const fullName = `${professor.firstName || ""} ${professor.lastName || ""}`.trim() || "Professor";
                     const initials = `${professor.firstName?.[0] || "P"}${professor.lastName?.[0] || ""}`.toUpperCase();
                     const id = String(professor?._id || "");
+                    const temporaryPassword = temporaryPasswords[id] || "";
+                    const passwordIsVisible = Boolean(visiblePasswords[id]);
 
                     return (
                       <div key={professor._id} className="ta-prof-row ta-prof-data-row px-4 py-5 text-sm font-bold text-[#102418]">
@@ -504,6 +582,24 @@ export default function TrainingAdminProfessors() {
 
                         <div className="text-black/65">
                           {(professor.courseAssignments || []).length ? (professor.courseAssignments || []).join(", ") : "-"}
+                        </div>
+
+                        <div>
+                          {temporaryPassword ? (
+                            <div className="ta-prof-password">
+                              <span className="ta-prof-password-value" title={passwordIsVisible ? temporaryPassword : "Temporary password hidden"}>
+                                {passwordIsVisible ? temporaryPassword : "••••••••"}
+                              </span>
+                              <button type="button" onClick={() => togglePassword(id)} className="ta-prof-password-button">
+                                {passwordIsVisible ? "Hide" : "Show"}
+                              </button>
+                              <button type="button" onClick={() => copyPassword(id)} className="ta-prof-password-button">
+                                Copy
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs font-semibold text-black/35">Reset to generate</span>
+                          )}
                         </div>
 
                         <div>

@@ -242,37 +242,45 @@ const AboutUs = () => {
       title: "Training Facility",
       subtitle: "Skills development and classroom sessions",
       category: "Training & Assessment",
-      image: "/training-facility.png",
+      image:
+        "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      fallbackImage:
+        "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
     },
     {
       title: "Hotel Operations",
       subtitle: "Hospitality and guest service area",
       category: "Hotel & Resort",
-      image: "/hotel-resort.png",
+      image:
+        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
     },
     {
       title: "Manpower Deployment",
       subtitle: "Reliable staffing support solutions",
       category: "Manpower",
-      image: "/manpower-services.png",
+      image:
+        "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80",
     },
     {
       title: "Assessment Center",
       subtitle: "Evaluation and certification support",
       category: "Training & Assessment",
-      image: "/assessment-center.png",
+      image:
+        "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&q=80",
     },
     {
       title: "Workforce Support",
       subtitle: "Professional business assistance",
       category: "Manpower",
-      image: "/workforce-support.png",
+      image:
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
     },
     {
       title: "Guest Experience",
       subtitle: "Hospitality-focused operations",
       category: "Hotel & Resort",
-      image: "/guest-experience.png",
+      image:
+        "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=80",
     },
   ];
 
@@ -282,9 +290,14 @@ const AboutUs = () => {
   const achievements = apiAchievements.length ? apiAchievements : defaultAchievements;
 
   const apiHighlights = Array.isArray(ltcContent?.highlights)
-    ? ltcContent.highlights.map((item) => ({
+    ? ltcContent.highlights.map((item, index) => ({
         ...item,
-        image: pickPublicLtcImage(item.image),
+        image:
+          pickPublicLtcImage(item.image) ||
+          defaultHighlightItems[index % defaultHighlightItems.length].image,
+        fallbackImage:
+          defaultHighlightItems[index % defaultHighlightItems.length].fallbackImage ||
+          defaultHighlightItems[index % defaultHighlightItems.length].image,
       }))
     : [];
   const highlightItems = apiHighlights.length ? apiHighlights : defaultHighlightItems;
@@ -1511,8 +1524,11 @@ const AboutUs = () => {
                         src={item.image}
                         alt={item.title}
                         onError={(e) => {
+                          e.currentTarget.onerror = null;
                           e.currentTarget.src =
-                            "https://placehold.co/900x600/355E3B/FFFFFF?text=LTC+Highlight";
+                            item.fallbackImage ||
+                            defaultHighlightItems[index % defaultHighlightItems.length].fallbackImage ||
+                            defaultHighlightItems[index % defaultHighlightItems.length].image;
                         }}
                       />
                     </div>
