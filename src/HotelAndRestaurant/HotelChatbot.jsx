@@ -307,7 +307,7 @@ export default function HotelChatbot() {
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-[60] flex w-16 flex-col items-center gap-3">
+      <div className="fixed bottom-6 right-6 z-[60] flex w-[72px] flex-col items-center gap-3">
         <div className="relative h-14 w-14">
           <button
             type="button"
@@ -334,12 +334,31 @@ export default function HotelChatbot() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-[#355240] text-white shadow-2xl transition hover:-translate-y-1 hover:bg-[#2a4233] focus:outline-none focus:ring-4 focus:ring-[#355240]/25"
+          className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#3f5246] text-white shadow-[0_12px_30px_rgba(31,49,39,0.24)] transition hover:-translate-y-1 hover:bg-[#35463c] focus:outline-none focus:ring-4 focus:ring-[#3f5246]/25"
           aria-label="Open hotel chatbot"
           title="Help Bot"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl font-extrabold text-[#355240]">
-            ?
+          <span className="flex items-center justify-center text-white">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="h-[26px] w-[26px]"
+            >
+              <path
+                d="M12 3.5a8.5 8.5 0 0 0-7.36 12.76L3.5 20.5l4.21-1.2A8.5 8.5 0 1 0 12 3.5Z"
+                stroke="currentColor"
+                strokeWidth="2.1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M8 10h8M8 14h5.5"
+                stroke="currentColor"
+                strokeWidth="2.1"
+                strokeLinecap="round"
+              />
+            </svg>
           </span>
         </button>
       </div>
