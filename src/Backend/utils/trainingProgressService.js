@@ -91,6 +91,11 @@ export async function buildCompetencyProgress(course = "", completedCodes = []) 
     sequence: group.sequence || 1,
     items: (group.items || []).map((item) => ({
       ...item,
+      examQuestions: (item.examQuestions || []).map((question) => ({
+        prompt: question.prompt,
+        options: question.options,
+        keywords: question.keywords,
+      })),
       completed: completedSet.has(item.code),
     })),
   }));

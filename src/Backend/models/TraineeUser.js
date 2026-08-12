@@ -102,6 +102,27 @@ const pretestEvaluationSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const roadmapExamAnswerSchema = new mongoose.Schema(
+  {
+    prompt: { type: String, default: "", trim: true },
+    selectedAnswer: { type: String, default: "", trim: true },
+  },
+  { _id: false }
+);
+
+const roadmapExamProgressSchema = new mongoose.Schema(
+  {
+    competencyCode: { type: String, required: true, trim: true },
+    passed: { type: Boolean, default: false },
+    latestScore: { type: Number, default: 0, min: 0, max: 100 },
+    attemptCount: { type: Number, default: 0, min: 0 },
+    lastTakenAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null },
+    latestAnswers: { type: [roadmapExamAnswerSchema], default: [] },
+  },
+  { _id: false }
+);
+
 const traineeUserSchema = new mongoose.Schema(
   {
     firstName: {
@@ -222,6 +243,10 @@ const traineeUserSchema = new mongoose.Schema(
       default: "",
       trim: true,
       maxlength: 300,
+    },
+    roadmapExamProgress: {
+      type: [roadmapExamProgressSchema],
+      default: [],
     },
     gender: {
       type: String,

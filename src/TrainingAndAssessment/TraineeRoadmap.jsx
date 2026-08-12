@@ -11,9 +11,8 @@ import { buildTrainingFileUrl } from "./trainingFileUrl";
 function normalizeApiBase(raw) {
   if (!raw) return "http://localhost:5000/api";
   const r = String(raw).replace(/\/+$/, "");
-  if (r.endsWith("/api/hotel")) return r.replace(/\/api\/hotel$/i, "/api");
   if (r.endsWith("/api")) return r;
-  if (r.includes("/api/")) return r.replace(/\/api\/hotel.*$/i, "/api");
+  if (/\/api(?:\/|$)/i.test(r)) return r.replace(/\/api(?:\/.*)?$/i, "/api");
   return `${r}/api`;
 }
 
@@ -984,7 +983,6 @@ const pageStyles = `
 `;
 
 
-const PASSING_SCORE = 7;
 const EXAM_QUESTION_COUNT = 10;
 
 function getToken() {
@@ -1000,33 +998,11 @@ async function readJsonSafe(res) {
   }
 }
 
-function getObjectIdString(value) {
-  if (!value) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "object") {
-    if (value.$oid) return String(value.$oid);
-    if (
-      typeof value.toString === "function" &&
-      value.toString() !== "[object Object]"
-    ) {
-      return String(value.toString());
-    }
-  }
-  return "";
-}
-
 function normalizeCourseName(value = "") {
   const clean = String(value || "").trim().toLowerCase();
   if (clean === "housekeeping") return "Housekeeping";
   if (clean === "event management") return "Event Management";
   return String(value || "").trim();
-}
-
-function courseKey(value = "") {
-  return normalizeCourseName(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 function normalizeText(value = "") {
@@ -1050,44 +1026,6 @@ function formatDateTime(value) {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-function getRoadmapStorageKey(user, course = "") {
-  const userId =
-    getObjectIdString(user?._id) ||
-    getObjectIdString(user?.id) ||
-    String(user?.email || "trainee").trim().toLowerCase();
-
-  return `competencyRoadmapProgress:${userId}:${courseKey(
-    course || user?.course || "general"
-  )}`;
-}
-
-function readRoadmapProgress(storageKey) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(storageKey) || "null");
-
-    return {
-      examPassed: parsed?.examPassed || {},
-      attempts: parsed?.attempts || {},
-      scores: parsed?.scores || {},
-      completedAt: parsed?.completedAt || {},
-      answers: parsed?.answers || {},
-    };
-  } catch {
-    return {
-      examPassed: {},
-      attempts: {},
-      scores: {},
-      completedAt: {},
-      answers: {},
-    };
-  }
-}
-
-function writeRoadmapProgress(storageKey, value) {
-  if (!storageKey) return;
-  localStorage.setItem(storageKey, JSON.stringify(value || {}));
 }
 
 function flattenCompetencyGroups(groups = []) {
@@ -2359,7 +2297,7 @@ function normalizeRoadmapQuestion(question, index = 0, step = null) {
     ? question.options.map((option) => String(option || "").trim()).filter(Boolean)
     : [];
 
-  if (!prompt || !answer) return null;
+  if (!prompt || (!answer && !options.length)) return null;
 
   const mergedOptions = [...new Set([answer, ...options])].filter(Boolean);
   while (mergedOptions.length < 4) {
@@ -2539,10 +2477,10 @@ function StatusPill({ step }) {
     );
   }
 
-  if (!step.professorCompleted) {
+  if (step.locked) {
     return (
-      <span className="roadmap-status-pill rounded-full bg-red-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-red-700 ring-1 ring-red-200">
-        Waiting Professor Check
+      <span className="roadmap-status-pill rounded-full bg-gray-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-700 ring-1 ring-gray-200">
+        Locked
       </span>
     );
   }
@@ -2550,15 +2488,15 @@ function StatusPill({ step }) {
   if (step.examPassed) {
     return (
       <span className="roadmap-status-pill rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700 ring-1 ring-blue-200">
-        Exam Passed
+        {step.professorCompleted ? "Exam Passed" : "Exam Passed - Waiting Professor"}
       </span>
     );
   }
 
-  if (step.locked) {
+  if (step.professorCompleted) {
     return (
-      <span className="roadmap-status-pill rounded-full bg-gray-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-700 ring-1 ring-gray-200">
-        Locked
+      <span className="roadmap-status-pill rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700 ring-1 ring-blue-200">
+        Professor Checked
       </span>
     );
   }
@@ -2626,7 +2564,7 @@ function RoadmapStepCard({ step, onOpenStep, align = "left" }) {
             Score
           </div>
           <div className="mt-1 text-sm font-extrabold text-[#45674b]">
-            {step.latestScore ? `${step.latestScore}%` : "-"}
+            {step.attemptCount > 0 ? `${step.latestScore}%` : "-"}
           </div>
         </div>
 
@@ -2687,10 +2625,10 @@ function DesktopRoadmap({ steps, onOpenStep }) {
               const isLeft = step.index % 2 === 0;
               const circleClass = step.completed
                 ? "bg-green-600 text-white ring-green-100"
-                : step.professorCompleted
-                ? "bg-[#f1b337] text-white ring-yellow-100"
                 : step.locked
                 ? "bg-[#9aa59b] text-white ring-gray-100"
+                : step.professorCompleted
+                ? "bg-[#f1b337] text-white ring-yellow-100"
                 : "bg-red-400 text-white ring-red-100";
 
               return (
@@ -2769,6 +2707,8 @@ function MobileRoadmap({ steps, onOpenStep }) {
                   "roadmap-mobile-node flex h-12 w-12 items-center justify-center rounded-full text-sm font-extrabold",
                   step.completed
                     ? "bg-green-600 text-white"
+                    : step.locked
+                    ? "bg-[#9aa59b] text-white"
                     : step.professorCompleted
                     ? "bg-[#f1b337] text-white"
                     : "bg-red-400 text-white",
@@ -2799,7 +2739,7 @@ function MobileRoadmap({ steps, onOpenStep }) {
               </p>
 
               <div className="mt-3 text-xs font-bold text-[#627165]">
-                Score: {step.latestScore ? `${step.latestScore}%` : "-"} |
+                Score: {step.attemptCount > 0 ? `${step.latestScore}%` : "-"} |
                 Attempts: {step.attemptCount}
               </div>
 
@@ -3098,7 +3038,7 @@ function buildStudyModulePages(selectedStep, selectedStudyModule) {
                 Latest Score
               </div>
               <div className="mt-2 text-sm text-[#395345]">
-                {selectedStep.latestScore ? `${selectedStep.latestScore}%` : "-"}
+                {selectedStep.attemptCount > 0 ? `${selectedStep.latestScore}%` : "-"}
               </div>
             </div>
 
@@ -3160,11 +3100,7 @@ export default function TraineeRoadmap() {
   const [studyPageIndex, setStudyPageIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [examResult, setExamResult] = useState(null);
-
-  const storageKey = useMemo(
-    () => getRoadmapStorageKey(user, course),
-    [user, course]
-  );
+  const [submittingExam, setSubmittingExam] = useState(false);
 
   const [roadmapProgress, setRoadmapProgress] = useState({
     examPassed: {},
@@ -3173,10 +3109,6 @@ export default function TraineeRoadmap() {
     completedAt: {},
     answers: {},
   });
-
-  useEffect(() => {
-    setRoadmapProgress(readRoadmapProgress(storageKey));
-  }, [storageKey]);
 
   async function loadRoadmap({ silent = false } = {}) {
     if (!token) {
@@ -3215,6 +3147,15 @@ export default function TraineeRoadmap() {
 
       setProgress(data?.progress || null);
       setCourse(data?.progress?.course || data?.user?.course || "");
+      setRoadmapProgress(
+        data?.progress?.roadmapExamProgress || {
+          examPassed: {},
+          attempts: {},
+          scores: {},
+          completedAt: {},
+          answers: {},
+        }
+      );
 
       if (silent) {
         setMsg({
@@ -3280,6 +3221,23 @@ export default function TraineeRoadmap() {
     });
   }, [competencyStepsRaw, roadmapProgress]);
 
+  useEffect(() => {
+    if (!selectedStep?.id) return;
+    const refreshedStep = steps.find((step) => step.id === selectedStep.id);
+    if (!refreshedStep) return;
+
+    setSelectedStep(refreshedStep);
+    setExamResult((current) => {
+      if (!current) return current;
+      const professorPassed = refreshedStep.professorCompleted === true;
+      return {
+        ...current,
+        professorPassed,
+        unlockNext: current.examPassed && professorPassed,
+      };
+    });
+  }, [steps, selectedStep?.id]);
+
   const completedCount = steps.filter((step) => step.completed).length;
 
   const progressPercent = steps.length
@@ -3340,7 +3298,7 @@ export default function TraineeRoadmap() {
     setExamResult(null);
   }
 
-  function saveExamResult({ step, nextAnswers }) {
+  async function saveExamResult({ step, nextAnswers }) {
     if (!step) return;
 
     if (examQuestions.length < EXAM_QUESTION_COUNT) {
@@ -3359,72 +3317,55 @@ export default function TraineeRoadmap() {
       return;
     }
 
-    const correctCount = examQuestions.reduce((total, question, index) => {
-      return total + (nextAnswers[index] === question.answer ? 1 : 0);
-    }, 0);
+    try {
+      setSubmittingExam(true);
+      setMsg({ type: "", text: "" });
 
-    const scorePercent = Math.round((correctCount / examQuestions.length) * 100);
-    const examPassed = correctCount >= PASSING_SCORE;
-    const professorPassed = step.professorCompleted === true;
-    const unlockNext = examPassed && professorPassed;
+      const res = await fetch(`${API_BASE}/training/progress/roadmap-exam`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          competencyCode: step.code || step.id,
+          answers: examQuestions.map((question, index) => ({
+            prompt: question.prompt,
+            selectedAnswer: nextAnswers[index] || "",
+          })),
+        }),
+      });
+      const data = await readJsonSafe(res);
 
-    const nextProgress = {
-      examPassed: {
-        ...(roadmapProgress?.examPassed || {}),
-      },
-      attempts: {
-        ...(roadmapProgress?.attempts || {}),
-        [step.id]: Number(roadmapProgress?.attempts?.[step.id] || 0) + 1,
-      },
-      scores: {
-        ...(roadmapProgress?.scores || {}),
-        [step.id]: scorePercent,
-      },
-      completedAt: {
-        ...(roadmapProgress?.completedAt || {}),
-      },
-      answers: {
-        ...(roadmapProgress?.answers || {}),
-        [step.id]: nextAnswers,
-      },
-    };
+      if (!res.ok) {
+        if (isTrainingAuthResponse(res, data)) {
+          redirectToTraineeLogin(navigate, {
+            message: data?.message || "Please login again.",
+          });
+          return;
+        }
+        throw new Error(data?.message || "Failed to save roadmap exam.");
+      }
 
-    if (examPassed) {
-      nextProgress.examPassed[step.id] = true;
+      const result = data?.result;
+      if (!result) throw new Error("The server returned an incomplete exam result.");
+
+      setRoadmapProgress(data?.roadmapExamProgress || roadmapProgress);
+      setExamResult(result);
+      setModalPage("result");
+      setMsg({
+        type: result.unlockNext ? "success" : "error",
+        text: result.unlockNext
+          ? "Competency exam passed and professor already checked this competency. Next roadmap step is now unlocked."
+          : result.examPassed
+          ? "Exam passed, but this competency still needs professor check before the next step unlocks."
+          : "Exam not passed yet. Review the study module and try again.",
+      });
+    } catch (err) {
+      setMsg({ type: "error", text: err.message || "Failed to save roadmap exam." });
+    } finally {
+      setSubmittingExam(false);
     }
-
-    if (unlockNext) {
-      nextProgress.completedAt[step.id] = new Date().toISOString();
-    }
-
-    setRoadmapProgress(nextProgress);
-    writeRoadmapProgress(storageKey, nextProgress);
-
-    setExamResult({
-      examPassed,
-      professorPassed,
-      unlockNext,
-      correctCount,
-      total: examQuestions.length,
-      scorePercent,
-      wrongItems: examQuestions
-        .map((question, index) => ({
-          ...question,
-          selectedAnswer: nextAnswers[index] || "",
-        }))
-        .filter((item) => item.selectedAnswer !== item.answer),
-    });
-
-    setModalPage("result");
-
-    setMsg({
-      type: unlockNext ? "success" : "error",
-      text: unlockNext
-        ? "Competency exam passed and professor already checked this competency. Next roadmap step is now unlocked."
-        : examPassed
-        ? "Exam passed, but this competency still needs professor check before the next step unlocks."
-        : "Exam not passed yet. Review the study module and try again.",
-    });
   }
 
   function updateAnswer(questionIndex, option) {
@@ -3434,13 +3375,6 @@ export default function TraineeRoadmap() {
     };
 
     setAnswers(nextAnswers);
-
-    if (Object.keys(nextAnswers).length >= examQuestions.length) {
-      saveExamResult({
-        step: selectedStep,
-        nextAnswers,
-      });
-    }
   }
 
   function resetCurrentExam() {
@@ -3858,9 +3792,10 @@ export default function TraineeRoadmap() {
                         nextAnswers: answers,
                       })
                     }
-                    className="rounded-2xl bg-[#395345] px-5 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white"
+                    disabled={submittingExam}
+                    className="rounded-2xl bg-[#395345] px-5 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white disabled:cursor-wait disabled:opacity-60"
                   >
-                    Check Now
+                    {submittingExam ? "Saving..." : "Check Now"}
                   </button>
                 </div>
               </div>

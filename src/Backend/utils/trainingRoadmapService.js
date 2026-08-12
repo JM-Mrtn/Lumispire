@@ -291,9 +291,24 @@ export function normalizeRoadmapCompetencyGroups(groups = [], course = "") {
             ? uniqueStrings(item.studyPoints)
             : buildStudyPoints({ course: courseName, groupTitle: title, label });
           const rawQuestions = Array.isArray(item?.examQuestions) ? item.examQuestions : [];
-          const examQuestions = rawQuestions.length
-            ? rawQuestions.map((question) => normalizeQuestion(question, { course: courseName, groupTitle: title, label }))
-            : buildDefaultExamQuestions({ course: courseName, groupTitle: title, label, code });
+          const normalizedCustomQuestions = rawQuestions.map((question) =>
+            normalizeQuestion(question, { course: courseName, groupTitle: title, label })
+          );
+          const defaultQuestions = buildDefaultExamQuestions({
+            course: courseName,
+            groupTitle: title,
+            label,
+            code,
+          });
+          const seenQuestionPrompts = new Set();
+          const examQuestions = [...normalizedCustomQuestions, ...defaultQuestions].filter(
+            (question) => {
+              const promptKey = clean(question?.prompt).toLowerCase();
+              if (!promptKey || seenQuestionPrompts.has(promptKey)) return false;
+              seenQuestionPrompts.add(promptKey);
+              return true;
+            }
+          );
 
           const defaultStudyModule = buildDefaultStudyModule({
             course: courseName,

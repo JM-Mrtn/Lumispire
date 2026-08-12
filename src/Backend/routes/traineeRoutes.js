@@ -33,7 +33,10 @@ import {
 } from "../controllers/trainingCertificationController.js";
 import { trainingAssessmentSubmissionUpload } from "../middleware/trainingAssessmentSubmissionUpload.js";
 import { trainingProfilePhotoUpload } from "../middleware/trainingProfilePhotoUpload.js";
-import { getMyTrainingProgress } from "../controllers/trainingProgressController.js";
+import {
+  getMyTrainingProgress,
+  submitMyRoadmapExam,
+} from "../controllers/trainingProgressController.js";
 
 const router = express.Router();
 
@@ -62,6 +65,7 @@ router.get("/attendance", requireTrainee, listMyTraineeAttendance);
 router.post("/attendance/proof", requireTrainee, trainingAttendanceProofUpload, submitTraineeAttendanceProof);
 
 router.get("/progress", requireTrainee, getMyTrainingProgress);
+router.post("/progress/roadmap-exam", requireTrainee, submitMyRoadmapExam);
 
 router.get("/certificate", requireTrainee, getMyTrainingCertificate);
 router.get("/certificate/search", searchTrainingCertificates);
