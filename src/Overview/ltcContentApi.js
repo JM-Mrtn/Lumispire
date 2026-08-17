@@ -1,30 +1,8 @@
-const RAW_API_URL = String(
-  import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_SERVER_URL ||
-    "http://localhost:5000"
-).trim();
+const API_BASE = String(
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_SERVER_URL || "http://localhost:5000"
+).replace(/\/+$/, "");
 
-/*
- * Accept any of these environment values without producing a duplicate /api:
- *   https://example-api.onrender.com
- *   https://example-api.onrender.com/api
- *   https://example-api.onrender.com/api/ltc
- */
-function normalizeLtcApiBase(value) {
-  let base = String(value || "").trim().replace(/\/+$/, "");
-
-  base = base.replace(/\/api\/ltc$/i, "");
-  base = base.replace(/\/api$/i, "");
-
-  return `${base}/api/ltc`;
-}
-
-const LTC_API_BASE = normalizeLtcApiBase(RAW_API_URL);
 const LTC_ADMIN_TOKEN_KEY = "ltcAdminToken";
-
-function ltcApiUrl(path = "") {
-  return `${LTC_API_BASE}/${String(path).replace(/^\/+/, "")}`;
-}
 
 export function getLtcAdminToken() {
   return localStorage.getItem(LTC_ADMIN_TOKEN_KEY) || "";
@@ -39,42 +17,22 @@ export function clearLtcAdminToken() {
 }
 
 async function readJson(response) {
-  const rawBody = await response.text();
-  let data = {};
-
-  if (rawBody) {
-    try {
-      data = JSON.parse(rawBody);
-    } catch {
-      data = {};
-    }
-  }
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data.success === false) {
-    const serverMessage = String(data.message || "").trim();
-
-    if (response.status === 404) {
-      throw new Error(
-        `${serverMessage || "API route not found."} ` +
-          `Requested ${response.url}. Check VITE_API_URL and redeploy the backend with the LTC routes.`
-      );
-    }
-
-    throw new Error(
-      serverMessage || `Request failed with status ${response.status}. Please try again.`
-    );
+    throw new Error(data.message || "Request failed. Please try again.");
   }
 
   return data;
 }
 
 export async function getPublicLtcContent() {
-  const response = await fetch(ltcApiUrl("public-content"));
+  const response = await fetch(`${API_BASE}/api/ltc/public-content`);
   return readJson(response);
 }
 
 export async function loginLtcAdmin(credentials) {
-  const response = await fetch(ltcApiUrl("admin/login"), {
+  const response = await fetch(`${API_BASE}/api/ltc/admin/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
@@ -84,7 +42,7 @@ export async function loginLtcAdmin(credentials) {
 }
 
 export async function getLtcAdminContent() {
-  const response = await fetch(ltcApiUrl("admin/content"), {
+  const response = await fetch(`${API_BASE}/api/ltc/admin/content`, {
     headers: {
       Authorization: `Bearer ${getLtcAdminToken()}`,
     },
@@ -94,7 +52,7 @@ export async function getLtcAdminContent() {
 }
 
 export async function saveLtcAdminContent(content) {
-  const response = await fetch(ltcApiUrl("admin/content"), {
+  const response = await fetch(`${API_BASE}/api/ltc/admin/content`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -114,7 +72,7 @@ export async function uploadLtcHighlightImage(file) {
   const formData = new FormData();
   formData.append("image", file);
 
-  const response = await fetch(ltcApiUrl("admin/upload-highlight-image"), {
+  const response = await fetch(`${API_BASE}/api/ltc/admin/upload-highlight-image`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getLtcAdminToken()}`,

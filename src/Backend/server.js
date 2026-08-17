@@ -5,7 +5,6 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import path from "path";
-import fs from "fs";
 import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
@@ -40,7 +39,6 @@ import adminRoadmapRoutes from "./routes/adminRoadmapRoutes.js";
 import trainingRfidRoutes from "./routes/trainingRfidRoutes.js";
 import ltcContentRoutes from "./routes/ltcContentRoutes.js";
 import trainingContactRoutes from "./routes/trainingContactRoutes.js";
-import { ltcAdminLogin } from "./controllers/ltcContentController.js";
 
 import ProfessorAttendance from "./models/ProfessorAttendance.js";
 import ProfessorAssessment from "./models/ProfessorAssessment.js";
@@ -80,21 +78,7 @@ import { seedTrainingCoursesFromExistingRecords } from "./utils/trainingCourseSe
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load local environment variables from the first .env file that exists.
-// In this project server.js is under Lumispire/src/Backend, so ../../.env
-// resolves to Lumispire/.env. Render-provided environment variables remain
-// authoritative because dotenv does not overwrite existing process.env values.
-const envCandidates = [
-  path.resolve(__dirname, "../../.env"),
-  path.resolve(__dirname, "../.env"),
-  path.resolve(__dirname, ".env"),
-];
-
-const localEnvPath = envCandidates.find((candidate) => fs.existsSync(candidate));
-if (localEnvPath) {
-  dotenv.config({ path: localEnvPath });
-  console.log(`Loaded environment variables from ${localEnvPath}`);
-}
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -230,36 +214,11 @@ app.use("/api/manpower/employee/login", authLimiter);
 app.use("/api/hotel/hotel-login", authLimiter);
 app.use("/api/hotel/admin-login", authLimiter);
 app.use("/api/hotel-admin/admin-login", authLimiter);
+app.use("/api/ltc/admin/login", authLimiter);
 
 /* ---------- GENERAL API RATE LIMITER ---------- */
 
 app.use("/api", generalApiLimiter);
-
-/*
- * LTC login hotfix.
- * The canonical endpoint is /api/ltc/admin/login.
- * The two aliases prevent a stale frontend environment value from returning 404.
- */
-const ltcAdminLoginPaths = [
-  "/api/ltc/admin/login",
-  "/ltc/admin/login",
-  "/api/api/ltc/admin/login",
-];
-
-app.get(
-  ["/api/ltc/health", "/ltc/health", "/api/api/ltc/health"],
-  (_req, res) => {
-    return res.status(200).json({
-      success: true,
-      service: "ltc",
-      message: "LTC API routes are available.",
-      loginEndpoint: "POST /api/ltc/admin/login",
-      deploymentMarker: "ltc-login-route-v2",
-    });
-  }
-);
-
-app.post(ltcAdminLoginPaths, authLimiter, ltcAdminLogin);
 
 /* ---------- DATABASE CONNECTION ---------- */
 
