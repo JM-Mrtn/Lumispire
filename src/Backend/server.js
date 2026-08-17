@@ -39,6 +39,7 @@ import adminRoadmapRoutes from "./routes/adminRoadmapRoutes.js";
 import trainingRfidRoutes from "./routes/trainingRfidRoutes.js";
 import ltcContentRoutes from "./routes/ltcContentRoutes.js";
 import trainingContactRoutes from "./routes/trainingContactRoutes.js";
+import { ltcAdminLogin } from "./controllers/ltcContentController.js";
 
 import ProfessorAttendance from "./models/ProfessorAttendance.js";
 import ProfessorAssessment from "./models/ProfessorAssessment.js";
@@ -214,11 +215,35 @@ app.use("/api/manpower/employee/login", authLimiter);
 app.use("/api/hotel/hotel-login", authLimiter);
 app.use("/api/hotel/admin-login", authLimiter);
 app.use("/api/hotel-admin/admin-login", authLimiter);
-app.use("/api/ltc/admin/login", authLimiter);
 
 /* ---------- GENERAL API RATE LIMITER ---------- */
 
 app.use("/api", generalApiLimiter);
+
+/*
+ * LTC login hotfix.
+ * The canonical endpoint is /api/ltc/admin/login.
+ * The two aliases prevent a stale frontend environment value from returning 404.
+ */
+const ltcAdminLoginPaths = [
+  "/api/ltc/admin/login",
+  "/ltc/admin/login",
+  "/api/api/ltc/admin/login",
+];
+
+app.get(
+  ["/api/ltc/health", "/ltc/health", "/api/api/ltc/health"],
+  (_req, res) => {
+    return res.status(200).json({
+      success: true,
+      service: "ltc",
+      message: "LTC API routes are available.",
+      loginEndpoint: "POST /api/ltc/admin/login",
+    });
+  }
+);
+
+app.post(ltcAdminLoginPaths, authLimiter, ltcAdminLogin);
 
 /* ---------- DATABASE CONNECTION ---------- */
 
