@@ -24,6 +24,10 @@ const API_BASE = normalizeApiBase(
   import.meta.env.VITE_TRAINING_API_URL || import.meta.env.VITE_API_URL
 );
 
+const EMAIL_MAX_LENGTH = 100;
+const PASSWORD_MIN_LENGTH = 6;
+const PASSWORD_MAX_LENGTH = 64;
+
 async function readJsonSafe(res) {
   const text = await res.text();
 
@@ -727,8 +731,14 @@ export default function TrainingLogIn() {
 
     if (!cleanPassword) {
       nextErrors.password = "Password is required.";
-    } else if (cleanPassword.length < 6) {
-      nextErrors.password = "Password must be at least 6 characters.";
+    } else if (cleanPassword.length < PASSWORD_MIN_LENGTH) {
+      nextErrors.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
+    } else if (cleanPassword.length > PASSWORD_MAX_LENGTH) {
+      nextErrors.password = `Password cannot exceed ${PASSWORD_MAX_LENGTH} characters.`;
+    }
+
+    if (cleanEmail.length > EMAIL_MAX_LENGTH) {
+      nextErrors.email = `Email cannot exceed ${EMAIL_MAX_LENGTH} characters.`;
     }
 
     setErrors(nextErrors);
@@ -833,9 +843,13 @@ export default function TrainingLogIn() {
               aria-label="TAMSI Home"
             >
               <img
-                src="/TAMSILogoTransparent.png"
+                src="/TamsiLogo.png"
                 alt="TAMSI Logo"
                 className="ltc-trainee-login-logo-icon"
+                onError={(e) => {
+                  e.currentTarget.src =
+                    "https://placehold.co/80x80/ffffff/45674b?text=T";
+                }}
               />
 
               <span>
@@ -1005,6 +1019,7 @@ export default function TrainingLogIn() {
                       }
                     }}
                     autoComplete="email"
+                    maxLength={EMAIL_MAX_LENGTH}
                     className={`ltc-trainee-login-input ${
                       errors.email ? "error" : ""
                     }`}
@@ -1035,6 +1050,8 @@ export default function TrainingLogIn() {
                         }
                       }}
                       autoComplete="current-password"
+                      minLength={PASSWORD_MIN_LENGTH}
+                      maxLength={PASSWORD_MAX_LENGTH}
                       className={`ltc-trainee-login-input password ${
                         errors.password ? "error" : ""
                       }`}

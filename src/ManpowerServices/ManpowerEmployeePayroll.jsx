@@ -1893,16 +1893,6 @@ export default function ManpowerEmployeePayroll() {
     });
   }, [rows, searchValue, filterDate, cutoffFilter, dateSort, employeeName, employeeEmail]);
 
-  const payrollSummary = useMemo(() => {
-    return rows.reduce((totals, row) => {
-      const slip = getSalarySlipData(row);
-      totals.gross += slip.grossPay;
-      totals.deductions += slip.totalDeductions;
-      totals.net += slip.netPay;
-      return totals;
-    }, { gross: 0, deductions: 0, net: 0 });
-  }, [rows]);
-
   function handlePrint(row) {
     const html = buildSalarySlipHtml({ row, employee, employeeName, employeeEmail });
     const printWindow = window.open("", "_blank", "width=1000,height=800");
@@ -2067,18 +2057,6 @@ export default function ManpowerEmployeePayroll() {
                   <p style={{ margin: 0, color: "#667085", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Payroll records</p>
                   <strong style={{ display: "block", marginTop: 7, color: "#0e3321", fontSize: 24 }}>{rows.length}</strong>
                 </div>
-                <div style={{ padding: 18, borderRadius: 18, background: "#f4f8f5", border: "1px solid #d8e5db" }}>
-                  <p style={{ margin: 0, color: "#667085", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Total gross</p>
-                  <strong style={{ display: "block", marginTop: 7, color: "#0e3321", fontSize: 24 }}>{formatMoney(payrollSummary.gross)}</strong>
-                </div>
-                <div style={{ padding: 18, borderRadius: 18, background: "#fff8ea", border: "1px solid #efd99d" }}>
-                  <p style={{ margin: 0, color: "#7a5a17", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Total deductions</p>
-                  <strong style={{ display: "block", marginTop: 7, color: "#6f4b08", fontSize: 24 }}>{formatMoney(payrollSummary.deductions)}</strong>
-                </div>
-                <div style={{ padding: 18, borderRadius: 18, background: "#edf8f1", border: "1px solid #bcdcc8" }}>
-                  <p style={{ margin: 0, color: "#2d6946", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Total net pay</p>
-                  <strong style={{ display: "block", marginTop: 7, color: "#174a30", fontSize: 24 }}>{formatMoney(payrollSummary.net)}</strong>
-                </div>
               </div>
 
               <div className="ltc-payroll-tools">
@@ -2186,19 +2164,6 @@ export default function ManpowerEmployeePayroll() {
                           </span>
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(105px,1fr))", gap: 10, flex: "1 1 380px" }}>
-                          {(() => {
-                            const slip = getSalarySlipData(row);
-                            return (
-                              <>
-                                <div><small style={{ color: "#667085", fontWeight: 800 }}>Gross Pay</small><strong style={{ display: "block", color: "#174a30" }}>{formatMoney(slip.grossPay)}</strong></div>
-                                <div><small style={{ color: "#667085", fontWeight: 800 }}>Deductions</small><strong style={{ display: "block", color: "#7a4d16" }}>{formatMoney(slip.totalDeductions)}</strong></div>
-                                <div><small style={{ color: "#667085", fontWeight: 800 }}>Net Pay</small><strong style={{ display: "block", color: "#0e3321" }}>{formatMoney(slip.netPay)}</strong></div>
-                              </>
-                            );
-                          })()}
-                        </div>
-
                         <div className="ltc-payroll-actions">
                           <button
                             type="button"
@@ -2207,24 +2172,6 @@ export default function ManpowerEmployeePayroll() {
                             style={fontMontserrat}
                           >
                             View Salary Slip
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handlePrint(row)}
-                            className="ltc-outline-button"
-                            style={fontMontserrat}
-                          >
-                            Print / Save PDF
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDownload(row)}
-                            className="ltc-outline-button"
-                            style={fontMontserrat}
-                          >
-                            Download
                           </button>
                         </div>
                       </article>
