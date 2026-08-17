@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
@@ -79,7 +80,21 @@ import { seedTrainingCoursesFromExistingRecords } from "./utils/trainingCourseSe
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+// Load local environment variables from the first .env file that exists.
+// In this project server.js is under Lumispire/src/Backend, so ../../.env
+// resolves to Lumispire/.env. Render-provided environment variables remain
+// authoritative because dotenv does not overwrite existing process.env values.
+const envCandidates = [
+  path.resolve(__dirname, "../../.env"),
+  path.resolve(__dirname, "../.env"),
+  path.resolve(__dirname, ".env"),
+];
+
+const localEnvPath = envCandidates.find((candidate) => fs.existsSync(candidate));
+if (localEnvPath) {
+  dotenv.config({ path: localEnvPath });
+  console.log(`Loaded environment variables from ${localEnvPath}`);
+}
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -239,6 +254,7 @@ app.get(
       service: "ltc",
       message: "LTC API routes are available.",
       loginEndpoint: "POST /api/ltc/admin/login",
+      deploymentMarker: "ltc-login-route-v2",
     });
   }
 );
