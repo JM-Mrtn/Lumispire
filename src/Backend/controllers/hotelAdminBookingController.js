@@ -222,3 +222,6 @@ export const adminGetAllHotelBookings = async (req, res) => {
     });
   }
 };
+
+// Compatibility alias for admin routes expecting the generic booking loader name
+export const adminGetAllBookings = adminGetAllHotelBookings;

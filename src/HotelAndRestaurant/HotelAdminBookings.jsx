@@ -964,49 +964,47 @@ export default function HotelAdminBookings() {
     setStatus({ type: "", message: "" });
 
     try {
-      const combined = await fetchJson(`${API_BASE}/admin/bookings`);
+      const [combined, resortResult, eventResult, hotelResult] = await Promise.all([
+        fetchJson(`${API_BASE}/admin/bookings`),
+        fetchJson(`${API_BASE}/admin/resort-bookings`),
+        fetchJson(`${API_BASE}/admin/event-bookings`),
+        fetchJson(`${API_BASE}/admin/hotel-room-bookings`),
+      ]);
 
-      if (combined.authFailed) return;
-
-      let loadedBookings = [];
-
-      if (combined.ok) {
-        loadedBookings = extractBookings(combined.data);
+      if (
+        combined.authFailed ||
+        resortResult.authFailed ||
+        eventResult.authFailed ||
+        hotelResult.authFailed
+      ) {
+        return;
       }
 
-      if (!loadedBookings.length) {
-        const [resortResult, eventResult, hotelResult] = await Promise.all([
-          fetchJson(`${API_BASE}/admin/resort-bookings`),
-          fetchJson(`${API_BASE}/admin/event-bookings`),
-          fetchJson(`${API_BASE}/admin/hotel-room-bookings`),
-        ]);
+      const combinedBookings = combined.ok
+        ? extractBookings(combined.data)
+        : [];
 
-        if (
-          resortResult.authFailed ||
-          eventResult.authFailed ||
-          hotelResult.authFailed
-        ) {
-          return;
-        }
+      const resortBookings = resortResult.ok
+        ? extractBookings(resortResult.data, "resort")
+        : [];
 
-        const resortBookings = resortResult.ok
-          ? extractBookings(resortResult.data, "resort")
-          : [];
+      const eventBookings = eventResult.ok
+        ? extractBookings(eventResult.data, "event")
+        : [];
 
-        const eventBookings = eventResult.ok
-          ? extractBookings(eventResult.data, "event")
-          : [];
+      const hotelBookings = hotelResult.ok
+        ? extractBookings(hotelResult.data, "hotel_room")
+        : [];
 
-        const hotelBookings = hotelResult.ok
-          ? extractBookings(hotelResult.data, "hotel_room")
-          : [];
-
-        loadedBookings = [
-          ...resortBookings,
-          ...eventBookings,
-          ...hotelBookings,
-        ];
-      }
+      // Always merge individual service endpoints.
+      // Some backend responses do not include bookingType,
+      // causing Resort & Venue bookings to be classified incorrectly.
+      loadedBookings = [
+        ...combinedBookings,
+        ...resortBookings,
+        ...eventBookings,
+        ...hotelBookings,
+      ];
 
       const normalized = uniqueBookings(loadedBookings)
         .filter((item) => item._id)

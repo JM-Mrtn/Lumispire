@@ -1096,46 +1096,42 @@ export default function ResortSummary() {
     try {
       const formData = new FormData();
 
-      formData.append("serviceType", bookingData.serviceType || "Resort & Venue");
+      // Hotel room bookings must use the hotel-room-bookings API/model.
+      // The old flow accidentally submitted hotel bookings as Resort & Venue bookings.
+      formData.append("serviceType", "Hotel");
       formData.append(
         "packageId",
         bookingData.packageId || bookingData.selectedPackageId || ""
       );
       formData.append(
-        "venue",
-        bookingData.venue || bookingData.selectedPackageTitle || ""
-      );
-      formData.append("date", bookingData.date || "");
-      formData.append(
-        "category",
-        bookingData.category ||
-          bookingData.selectedVariantLabel ||
-          bookingData.selectedDuration ||
+        "packageTitle",
+        bookingData.packageTitle ||
+          bookingData.selectedPackageTitle ||
+          bookingData.selectedPackage ||
           ""
       );
+      formData.append(
+        "roomType",
+        bookingData.roomType || bookingData.selectedRoomType || ""
+      );
+      formData.append(
+        "duration",
+        bookingData.duration || bookingData.selectedDuration || ""
+      );
+      formData.append("date", bookingData.date || "");
       formData.append("time", bookingData.time || "");
       formData.append(
         "pax",
         String(bookingData.pax || bookingData.totalGuests || "")
       );
-      formData.append(
-        "totalGuests",
-        String(bookingData.totalGuests || bookingData.pax || "")
-      );
-
+      formData.append("maxPax", String(bookingData.maxPax || bookingData.baseMaxPax || ""));
       formData.append("price", String(fullTotalAmount));
-      formData.append("totalAmount", String(fullTotalAmount));
-      formData.append("amountToPay", String(amountToPay));
-      formData.append("paidAmount", String(amountToPay));
-      formData.append("balanceAmount", String(balanceAmount));
-      formData.append(
-        "paymentTerm",
-        isDownPayment ? "DOWN_PAYMENT" : "FULL_PAYMENT"
-      );
+      formData.append("basePrice", String(bookingData.basePrice || ""));
+      formData.append("baseAmount", String(bookingData.baseAmount || ""));
       formData.append("paymentMethod", paymentMethod);
       formData.append("proof", proofFile);
 
-      const response = await fetch(`${API_BASE}/resort-bookings`, {
+      const response = await fetch(`${API_BASE}/hotel-room-bookings`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
