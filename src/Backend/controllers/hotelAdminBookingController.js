@@ -4,6 +4,19 @@ import EventBooking from "../models/EventBooking.js";
 import HotelRoomBooking from "../models/HotelRoomBooking.js";
 import { requireHotelAdminAuth } from "../utils/hotelAuthHelpers.js";
 
+const ADMIN_BOOKINGS_PER_SERVICE_LIMIT = 500;
+
+async function readAdminBookingRows(Model) {
+  // Keep embedded payment proof binaries out of list responses. Using the
+  // native collection cursor also avoids Mongoose hydration/populate issues
+  // with legacy rows. _id is always indexed by MongoDB.
+  return Model.collection
+    .find({}, { projection: { "proof.data": 0 } })
+    .sort({ _id: -1 })
+    .limit(ADMIN_BOOKINGS_PER_SERVICE_LIMIT)
+    .toArray();
+}
+
 function normalizeStatus(value = "") {
   const status = String(value || "PENDING").toUpperCase();
 
@@ -176,26 +189,13 @@ export const adminGetAllHotelBookings = async (req, res) => {
   }
 
   try {
-    // Do not populate userId here. Booking documents already store the guest's
-    // name/email/phone, and legacy rows may contain an invalid or stale userId.
-    // A populate cast error on one old booking used to make this whole endpoint 500.
+    // Read bounded metadata-only lists. This is intentionally done with the
+    // native driver so embedded proof buffers and legacy Mongoose refs cannot
+    // make the Manage Bookings list fail.
     const results = await Promise.allSettled([
-      ResortBooking.find()
-        .select("-proof.data")
-        // _id is indexed by MongoDB automatically, so this cannot hit the
-        // 32 MB in-memory sort limit that createdAt sorting was hitting.
-        .sort({ _id: -1 })
-        .lean(),
-
-      EventBooking.find()
-        .select("-proof.data")
-        .sort({ _id: -1 })
-        .lean(),
-
-      HotelRoomBooking.find()
-        .select("-proof.data")
-        .sort({ _id: -1 })
-        .lean(),
+      readAdminBookingRows(ResortBooking),
+      readAdminBookingRows(EventBooking),
+      readAdminBookingRows(HotelRoomBooking),
     ]);
 
     const serviceResults = [
@@ -208,13 +208,24 @@ export const adminGetAllHotelBookings = async (req, res) => {
     const bookings = [];
 
     serviceResults.forEach(({ key, result, normalize }) => {
-      if (result.status === "fulfilled") {
-        bookings.push(...result.value.map(normalize));
+      if (result.status !== "fulfilled") {
+        failedServices.push(key);
+        console.error(`adminGetAllHotelBookings ${key} query error:`, result.reason);
         return;
       }
 
-      failedServices.push(key);
-      console.error(`adminGetAllHotelBookings ${key} query error:`, result.reason);
+      // Avoid spreading a potentially large array into push(), which can hit
+      // V8's maximum argument count. Normalize rows one at a time instead.
+      for (const row of result.value) {
+        try {
+          bookings.push(normalize(row));
+        } catch (normalizeError) {
+          console.error(
+            `adminGetAllHotelBookings ${key} row normalize error:`,
+            normalizeError
+          );
+        }
+      }
     });
 
     if (failedServices.length === serviceResults.length) {

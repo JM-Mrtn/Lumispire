@@ -1045,6 +1045,19 @@ export const getMyResortBookings = async (req, res) => {
   }
 };
 
+const ADMIN_RESORT_LIST_DEFAULT_LIMIT = 500;
+const ADMIN_RESORT_LIST_MAX_LIMIT = 1000;
+
+function getAdminResortListLimit(req) {
+  const parsed = Number.parseInt(String(req?.query?.limit || ""), 10);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return ADMIN_RESORT_LIST_DEFAULT_LIMIT;
+  }
+
+  return Math.min(parsed, ADMIN_RESORT_LIST_MAX_LIMIT);
+}
+
 export const adminGetAllResortBookings = async (req, res) => {
   const guard = requireHotelAdminAuth(req);
 
@@ -1052,21 +1065,33 @@ export const adminGetAllResortBookings = async (req, res) => {
     return res.status(guard.status).json({
       success: false,
       message: guard.message,
+      bookings: [],
     });
   }
 
   try {
-    const bookings = await ResortBooking.find()
-      .select("-proof.data")
-      // Use MongoDB's built-in _id index for newest-first traversal.
-      // This avoids an in-memory createdAt sort and the 32 MB sort limit.
-      // The frontend still sorts by createdAt for display, so behavior is preserved.
+    const limit = getAdminResortListLimit(req);
+
+    /*
+     * Use the native collection cursor for this admin list.
+     *
+     * Resort booking documents can contain multi-megabyte payment proof buffers.
+     * The list page never needs that binary data, so exclude proof.data at the
+     * database projection level. Sorting by _id uses MongoDB's built-in _id
+     * index and the hard limit prevents a very large collection from exhausting
+     * MongoDB/Node memory or producing an oversized JSON response.
+     */
+    const bookings = await ResortBooking.collection
+      .find({}, { projection: { "proof.data": 0 } })
       .sort({ _id: -1 })
-      .lean();
+      .limit(limit)
+      .toArray();
 
     return res.status(200).json({
       success: true,
       bookings,
+      limit,
+      hasMore: bookings.length === limit,
     });
   } catch (err) {
     console.error("adminGetAllResortBookings error:", err);
@@ -1075,6 +1100,7 @@ export const adminGetAllResortBookings = async (req, res) => {
       success: false,
       message: "Error fetching resort bookings.",
       bookings: [],
+      errorCode: err?.codeName || err?.code || "RESORT_BOOKINGS_READ_FAILED",
     });
   }
 };
