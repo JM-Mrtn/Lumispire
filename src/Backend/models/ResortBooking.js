@@ -95,6 +95,10 @@ resortBookingSchema.index({
   isActive: 1,
 });
 
+// Supports admin queries that sort the entire resort booking collection by newest first.
+// The userId + createdAt compound index cannot serve a global createdAt-only sort.
+resortBookingSchema.index({ createdAt: -1 });
+
 resortBookingSchema.index({ userId: 1, createdAt: -1 });
 
 const ResortBooking =

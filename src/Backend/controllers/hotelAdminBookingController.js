@@ -176,31 +176,58 @@ export const adminGetAllHotelBookings = async (req, res) => {
   }
 
   try {
-    const [resortRows, eventRows, hotelRows] = await Promise.all([
+    // Do not populate userId here. Booking documents already store the guest's
+    // name/email/phone, and legacy rows may contain an invalid or stale userId.
+    // A populate cast error on one old booking used to make this whole endpoint 500.
+    const results = await Promise.allSettled([
       ResortBooking.find()
-        .populate("userId", "firstName lastName username email phone contactNumber active")
         .select("-proof.data")
         .sort({ createdAt: -1 })
+        // Fallback protection while/if the createdAt index is still being built.
+        // The ResortBooking model now has a standalone createdAt index.
+        .allowDiskUse(true)
         .lean(),
 
       EventBooking.find()
-        .populate("userId", "firstName lastName username email phone contactNumber active")
         .select("-proof.data")
         .sort({ createdAt: -1 })
         .lean(),
 
       HotelRoomBooking.find()
-        .populate("userId", "firstName lastName username email phone contactNumber active")
         .select("-proof.data")
         .sort({ createdAt: -1 })
         .lean(),
     ]);
 
-    const bookings = [
-      ...resortRows.map(normalizeResortBooking),
-      ...eventRows.map(normalizeEventBooking),
-      ...hotelRows.map(normalizeHotelRoomBooking),
-    ].sort((a, b) => {
+    const serviceResults = [
+      { key: "resort", result: results[0], normalize: normalizeResortBooking },
+      { key: "event", result: results[1], normalize: normalizeEventBooking },
+      { key: "hotel_room", result: results[2], normalize: normalizeHotelRoomBooking },
+    ];
+
+    const failedServices = [];
+    const bookings = [];
+
+    serviceResults.forEach(({ key, result, normalize }) => {
+      if (result.status === "fulfilled") {
+        bookings.push(...result.value.map(normalize));
+        return;
+      }
+
+      failedServices.push(key);
+      console.error(`adminGetAllHotelBookings ${key} query error:`, result.reason);
+    });
+
+    if (failedServices.length === serviceResults.length) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load hotel bookings.",
+        bookings: [],
+        failedServices,
+      });
+    }
+
+    bookings.sort((a, b) => {
       const bTime = new Date(b.createdAt || b.date || 0).getTime();
       const aTime = new Date(a.createdAt || a.date || 0).getTime();
       return bTime - aTime;
@@ -208,9 +235,12 @@ export const adminGetAllHotelBookings = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Hotel bookings loaded successfully.",
+      message: failedServices.length
+        ? "Bookings loaded, but one or more booking sources could not be read."
+        : "Hotel bookings loaded successfully.",
       bookings,
       counts: buildCounts(bookings),
+      failedServices,
     });
   } catch (error) {
     console.error("adminGetAllHotelBookings error:", error);

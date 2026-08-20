@@ -1325,10 +1325,6 @@ export const adminGetAllEventBookings = async (req, res) => {
 
   try {
     const bookings = await EventBooking.find()
-      .populate(
-        "userId",
-        "firstName lastName fullName name email phone contactNumber"
-      )
       .select("-proof.data")
       .sort({ createdAt: -1 })
       .lean();

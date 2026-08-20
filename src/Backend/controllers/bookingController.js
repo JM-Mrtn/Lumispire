@@ -1057,12 +1057,11 @@ export const adminGetAllResortBookings = async (req, res) => {
 
   try {
     const bookings = await ResortBooking.find()
-      .populate(
-        "userId",
-        "firstName lastName fullName name email phone contactNumber"
-      )
       .select("-proof.data")
       .sort({ createdAt: -1 })
+      // Fallback protection while/if the createdAt index is still being built.
+      // The index remains the primary performance fix.
+      .allowDiskUse(true)
       .lean();
 
     return res.status(200).json({

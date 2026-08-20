@@ -999,7 +999,7 @@ export default function HotelAdminBookings() {
       // Always merge individual service endpoints.
       // Some backend responses do not include bookingType,
       // causing Resort & Venue bookings to be classified incorrectly.
-      loadedBookings = [
+      const loadedBookings = [
         ...combinedBookings,
         ...resortBookings,
         ...eventBookings,
