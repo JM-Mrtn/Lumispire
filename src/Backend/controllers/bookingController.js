@@ -1058,10 +1058,10 @@ export const adminGetAllResortBookings = async (req, res) => {
   try {
     const bookings = await ResortBooking.find()
       .select("-proof.data")
-      .sort({ createdAt: -1 })
-      // Fallback protection while/if the createdAt index is still being built.
-      // The index remains the primary performance fix.
-      .allowDiskUse(true)
+      // Use MongoDB's built-in _id index for newest-first traversal.
+      // This avoids an in-memory createdAt sort and the 32 MB sort limit.
+      // The frontend still sorts by createdAt for display, so behavior is preserved.
+      .sort({ _id: -1 })
       .lean();
 
     return res.status(200).json({

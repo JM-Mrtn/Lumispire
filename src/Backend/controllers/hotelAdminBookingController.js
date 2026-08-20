@@ -182,20 +182,19 @@ export const adminGetAllHotelBookings = async (req, res) => {
     const results = await Promise.allSettled([
       ResortBooking.find()
         .select("-proof.data")
-        .sort({ createdAt: -1 })
-        // Fallback protection while/if the createdAt index is still being built.
-        // The ResortBooking model now has a standalone createdAt index.
-        .allowDiskUse(true)
+        // _id is indexed by MongoDB automatically, so this cannot hit the
+        // 32 MB in-memory sort limit that createdAt sorting was hitting.
+        .sort({ _id: -1 })
         .lean(),
 
       EventBooking.find()
         .select("-proof.data")
-        .sort({ createdAt: -1 })
+        .sort({ _id: -1 })
         .lean(),
 
       HotelRoomBooking.find()
         .select("-proof.data")
-        .sort({ createdAt: -1 })
+        .sort({ _id: -1 })
         .lean(),
     ]);
 
