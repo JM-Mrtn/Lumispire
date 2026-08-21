@@ -964,25 +964,23 @@ export default function HotelAdminBookings() {
     setStatus({ type: "", message: "" });
 
     try {
-      const [combined, resortResult, eventResult, hotelResult] = await Promise.all([
-        fetchJson(`${API_BASE}/admin/bookings`),
+      // Load each service exactly once. The old implementation also called
+      // /admin/bookings, which queried Resort/Event/Hotel again on the backend.
+      // With large embedded Resort proof images that duplicate Resort query can
+      // make both requests stay pending for a long time.
+      const [resortResult, eventResult, hotelResult] = await Promise.all([
         fetchJson(`${API_BASE}/admin/resort-bookings`),
         fetchJson(`${API_BASE}/admin/event-bookings`),
         fetchJson(`${API_BASE}/admin/hotel-room-bookings`),
       ]);
 
       if (
-        combined.authFailed ||
         resortResult.authFailed ||
         eventResult.authFailed ||
         hotelResult.authFailed
       ) {
         return;
       }
-
-      const combinedBookings = combined.ok
-        ? extractBookings(combined.data)
-        : [];
 
       const resortBookings = resortResult.ok
         ? extractBookings(resortResult.data, "resort")
@@ -996,11 +994,7 @@ export default function HotelAdminBookings() {
         ? extractBookings(hotelResult.data, "hotel_room")
         : [];
 
-      // Always merge individual service endpoints.
-      // Some backend responses do not include bookingType,
-      // causing Resort & Venue bookings to be classified incorrectly.
       const loadedBookings = [
-        ...combinedBookings,
         ...resortBookings,
         ...eventBookings,
         ...hotelBookings,

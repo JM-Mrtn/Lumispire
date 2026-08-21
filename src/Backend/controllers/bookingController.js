@@ -1048,6 +1048,28 @@ export const getMyResortBookings = async (req, res) => {
 const ADMIN_RESORT_LIST_DEFAULT_LIMIT = 500;
 const ADMIN_RESORT_LIST_MAX_LIMIT = 1000;
 
+const ADMIN_RESORT_LIST_INDEX = "admin_resort_booking_list_v1";
+const ADMIN_RESORT_LIST_PROJECTION = {
+  _id: 1,
+  firstName: 1,
+  lastName: 1,
+  email: 1,
+  phone: 1,
+  venue: 1,
+  date: 1,
+  category: 1,
+  time: 1,
+  pax: 1,
+  totalGuests: 1,
+  adults: 1,
+  kids: 1,
+  price: 1,
+  paymentMethod: 1,
+  status: 1,
+  isActive: 1,
+  createdAt: 1,
+};
+
 function getAdminResortListLimit(req) {
   const parsed = Number.parseInt(String(req?.query?.limit || ""), 10);
 
@@ -1082,7 +1104,8 @@ export const adminGetAllResortBookings = async (req, res) => {
      * MongoDB/Node memory or producing an oversized JSON response.
      */
     const bookings = await ResortBooking.collection
-      .find({}, { projection: { "proof.data": 0 } })
+      .find({}, { projection: ADMIN_RESORT_LIST_PROJECTION })
+      .hint(ADMIN_RESORT_LIST_INDEX)
       .sort({ _id: -1 })
       .limit(limit)
       .toArray();

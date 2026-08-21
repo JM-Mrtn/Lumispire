@@ -99,6 +99,34 @@ resortBookingSchema.index({
 // The userId + createdAt compound index cannot serve a global createdAt-only sort.
 resortBookingSchema.index({ createdAt: -1 });
 
+// Lightweight covered index for the Hotel Admin Manage Bookings list.
+// Resort documents contain embedded proof.data buffers that can be several MB.
+// The admin list only needs these scalar fields, so this index lets MongoDB
+// return the list without fetching the large booking document body/proof image.
+resortBookingSchema.index(
+  {
+    _id: -1,
+    firstName: 1,
+    lastName: 1,
+    email: 1,
+    phone: 1,
+    venue: 1,
+    date: 1,
+    category: 1,
+    time: 1,
+    pax: 1,
+    totalGuests: 1,
+    adults: 1,
+    kids: 1,
+    price: 1,
+    paymentMethod: 1,
+    status: 1,
+    isActive: 1,
+    createdAt: -1,
+  },
+  { name: "admin_resort_booking_list_v1" }
+);
+
 resortBookingSchema.index({ userId: 1, createdAt: -1 });
 
 const ResortBooking =

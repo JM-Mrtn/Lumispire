@@ -6,7 +6,37 @@ import { requireHotelAdminAuth } from "../utils/hotelAuthHelpers.js";
 
 const ADMIN_BOOKINGS_PER_SERVICE_LIMIT = 500;
 
+const ADMIN_RESORT_LIST_INDEX = "admin_resort_booking_list_v1";
+const ADMIN_RESORT_LIST_PROJECTION = {
+  _id: 1,
+  firstName: 1,
+  lastName: 1,
+  email: 1,
+  phone: 1,
+  venue: 1,
+  date: 1,
+  category: 1,
+  time: 1,
+  pax: 1,
+  totalGuests: 1,
+  adults: 1,
+  kids: 1,
+  price: 1,
+  paymentMethod: 1,
+  status: 1,
+  isActive: 1,
+  createdAt: 1,
+};
+
 async function readAdminBookingRows(Model) {
+  if (Model === ResortBooking) {
+    return Model.collection
+      .find({}, { projection: ADMIN_RESORT_LIST_PROJECTION })
+      .hint(ADMIN_RESORT_LIST_INDEX)
+      .sort({ _id: -1 })
+      .limit(ADMIN_BOOKINGS_PER_SERVICE_LIMIT)
+      .toArray();
+  }
   // Keep embedded payment proof binaries out of list responses. Using the
   // native collection cursor also avoids Mongoose hydration/populate issues
   // with legacy rows. _id is always indexed by MongoDB.
