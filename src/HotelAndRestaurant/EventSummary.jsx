@@ -1104,7 +1104,7 @@ export default function EventSummary() {
 
     try {
       const formData = new FormData();
-      formData.append("serviceType", bookingData.serviceType || "Event Package");
+      formData.append("serviceType", "Event Package");
       formData.append("packageId", bookingData.packageId || bookingData.selectedPackageId || "");
       formData.append("variantId", bookingData.variantId || bookingData.selectedVariantId || "");
       formData.append("selectedVariantId", bookingData.selectedVariantId || bookingData.variantId || "");
@@ -1135,6 +1135,10 @@ export default function EventSummary() {
       formData.append("paidAmount", String(amountToPay));
       formData.append("balanceAmount", String(balanceAmount));
       formData.append("paymentTerm", isDownPayment ? "DOWN_PAYMENT" : "FULL_PAYMENT");
+      formData.append(
+        "paymentStatus",
+        isDownPayment ? "PARTIALLY_PAID" : "FULLY_PAID"
+      );
       formData.append("paymentMethod", paymentMethod);
       formData.append("proof", proofFile);
 
@@ -1317,7 +1321,7 @@ export default function EventSummary() {
                   </div>
 
                   <input
-                    value={bookingData.serviceType || "Event Package"}
+                    value="Event Package"
                     disabled
                     readOnly
                     className="ltc-service-pill"

@@ -1096,7 +1096,7 @@ export default function ResortSummary() {
     try {
       const formData = new FormData();
 
-      formData.append("serviceType", bookingData.serviceType || "Resort & Venue");
+      formData.append("serviceType", "Resort & Venue");
       formData.append(
         "packageId",
         bookingData.packageId || bookingData.selectedPackageId || ""
@@ -1131,6 +1131,10 @@ export default function ResortSummary() {
       formData.append(
         "paymentTerm",
         isDownPayment ? "DOWN_PAYMENT" : "FULL_PAYMENT"
+      );
+      formData.append(
+        "paymentStatus",
+        isDownPayment ? "PARTIALLY_PAID" : "FULLY_PAID"
       );
       formData.append("paymentMethod", paymentMethod);
       formData.append("proof", proofFile);
@@ -1324,7 +1328,7 @@ export default function ResortSummary() {
                   </div>
 
                   <input
-                    value={bookingData.serviceType || "Resort & Venue"}
+                    value="Resort & Venue"
                     disabled
                     readOnly
                     className="ltc-service-pill"

@@ -989,13 +989,13 @@ function formatDateMMDDYYYY(value) {
 
 function safeParseBookingDraft() {
   try {
-    return JSON.parse(sessionStorage.getItem("resortBookingDraft") || "null");
+    return JSON.parse(sessionStorage.getItem("hotelBookingDraft") || "null");
   } catch {
     return null;
   }
 }
 
-export default function ResortSummary() {
+export default function HotelBookingSummary() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
@@ -1098,7 +1098,7 @@ export default function ResortSummary() {
 
       // Hotel room bookings must use the hotel-room-bookings API/model.
       // The old flow accidentally submitted hotel bookings as Resort & Venue bookings.
-      formData.append("serviceType", "Hotel");
+      formData.append("serviceType", "Hotel & Condo");
       formData.append(
         "packageId",
         bookingData.packageId || bookingData.selectedPackageId || ""
@@ -1128,6 +1128,18 @@ export default function ResortSummary() {
       formData.append("price", String(fullTotalAmount));
       formData.append("basePrice", String(bookingData.basePrice || ""));
       formData.append("baseAmount", String(bookingData.baseAmount || ""));
+      formData.append("totalAmount", String(fullTotalAmount));
+      formData.append("amountToPay", String(amountToPay));
+      formData.append("paidAmount", String(amountToPay));
+      formData.append("balanceAmount", String(balanceAmount));
+      formData.append(
+        "paymentTerm",
+        isDownPayment ? "DOWN_PAYMENT" : "FULL_PAYMENT"
+      );
+      formData.append(
+        "paymentStatus",
+        isDownPayment ? "PARTIALLY_PAID" : "FULLY_PAID"
+      );
       formData.append("paymentMethod", paymentMethod);
       formData.append("proof", proofFile);
 
@@ -1151,32 +1163,42 @@ export default function ResortSummary() {
       if (!response.ok) {
         setStatus({
           type: "error",
-          message: data.message || "Resort booking failed.",
+          message: data.message || "Hotel & Condo booking failed.",
         });
         return;
       }
 
-      sessionStorage.removeItem("resortBookingDraft");
+      sessionStorage.removeItem("hotelBookingDraft");
 
       setStatus({
         type: "success",
         message: "Submitted! Waiting for admin approval.",
       });
 
+      const savedBooking = {
+        ...bookingData,
+        ...(data.booking || {}),
+        serviceType: "Hotel & Condo",
+      };
+      const savedTotalAmount = Number(data.booking?.price || fullTotalAmount || 0);
+      const savedAmountPaid = isDownPayment
+        ? Math.ceil(savedTotalAmount / 2)
+        : savedTotalAmount;
+
       setTimeout(() => {
         navigate("/booking-successful", {
           state: {
-            serviceType: "Resort & Venue",
-            booking: bookingData,
-            amountPaid: amountToPay,
-            totalAmount: fullTotalAmount,
+            serviceType: "Hotel & Condo",
+            booking: savedBooking,
+            amountPaid: savedAmountPaid,
+            totalAmount: savedTotalAmount,
             paymentTerm: isDownPayment ? "Down Payment" : "Full Payment",
             paymentMethod,
           },
         });
       }, 1000);
     } catch (error) {
-      console.error("submit resort booking error:", error);
+      console.error("submit hotel booking error:", error);
 
       setStatus({
         type: "error",
@@ -1202,7 +1224,7 @@ export default function ResortSummary() {
           <section className="ltc-hero">
             <img
               src={HERO_IMAGES[0]}
-              alt="Resort booking background"
+              alt="Hotel & Condo booking background"
               className="ltc-hero-slide"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
@@ -1211,7 +1233,7 @@ export default function ResortSummary() {
 
             <div className="ltc-container ltc-hero-content">
               <span className="ltc-eyebrow" style={fontMontserrat}>
-                Resort & Venue Booking
+                Hotel & Condo Booking
               </span>
 
               <h1 className="ltc-hero-title" style={fontMontserrat}>
@@ -1219,7 +1241,7 @@ export default function ResortSummary() {
               </h1>
 
               <p className="ltc-hero-text" style={fontPontano}>
-                Please complete the resort booking form first before reviewing your summary.
+                Please complete the Hotel & Condo booking form first before reviewing your summary.
               </p>
             </div>
           </section>
@@ -1237,7 +1259,7 @@ export default function ResortSummary() {
 
                 <div className="ltc-actions">
                   <button
-                    onClick={() => navigate("/resort-form")}
+                    onClick={() => navigate("/hotel-booking-form")}
                     type="button"
                     className="ltc-primary-button"
                     style={fontMontserrat}
@@ -1277,7 +1299,7 @@ export default function ResortSummary() {
         <section className="ltc-hero">
           <img
             src={HERO_IMAGES[0]}
-            alt="Resort booking background"
+            alt="Hotel & Condo booking background"
             className="ltc-hero-slide"
             onError={(event) => {
               event.currentTarget.style.display = "none";
@@ -1286,7 +1308,7 @@ export default function ResortSummary() {
 
           <div className="ltc-container ltc-hero-content">
             <span className="ltc-eyebrow" style={fontMontserrat}>
-              Resort & Venue Booking
+              Hotel & Condo Booking
             </span>
 
             <h1 className="ltc-hero-title" style={fontMontserrat}>
@@ -1294,7 +1316,7 @@ export default function ResortSummary() {
             </h1>
 
             <p className="ltc-hero-text" style={fontPontano}>
-              Review your resort and venue booking details, choose your payment option,
+              Review your Hotel & Condo booking details, choose your payment option,
               and upload your proof of payment before submitting.
             </p>
           </div>
@@ -1320,7 +1342,7 @@ export default function ResortSummary() {
                   </div>
 
                   <input
-                    value={bookingData.serviceType || "Resort & Venue"}
+                    value="Hotel & Condo"
                     disabled
                     readOnly
                     className="ltc-service-pill"
@@ -1332,15 +1354,15 @@ export default function ResortSummary() {
                   <ReadOnlyField
                     label="Package"
                     value={
+                      bookingData.packageTitle ||
                       bookingData.selectedPackageTitle ||
-                      bookingData.selectedPackage ||
-                      bookingData.venue
+                      bookingData.selectedPackage
                     }
                   />
 
                   <ReadOnlyField
-                    label="Venue"
-                    value={bookingData.venue || bookingData.selectedVenue}
+                    label="Room Type"
+                    value={bookingData.roomType || bookingData.selectedRoomType}
                   />
 
                   <ReadOnlyField
@@ -1350,11 +1372,7 @@ export default function ResortSummary() {
 
                   <ReadOnlyField
                     label="Variation"
-                    value={
-                      bookingData.category ||
-                      bookingData.selectedVariantLabel ||
-                      bookingData.selectedDuration
-                    }
+                    value={bookingData.duration || bookingData.selectedDuration}
                   />
 
                   <ReadOnlyField label="Time" value={bookingData.time} />
@@ -1382,11 +1400,11 @@ export default function ResortSummary() {
               <div className="ltc-price-card">
                 <div className="ltc-price-row">
                   <p className="ltc-price-label" style={fontMontserrat}>
-                    Total Amount:
+                    Total Booking Amount:
                   </p>
 
                   <p className="ltc-price-value" style={fontMontserrat}>
-                    {formatPeso(amountToPay)}
+                    {formatPeso(fullTotalAmount)}
                   </p>
                 </div>
 
@@ -1420,7 +1438,7 @@ export default function ResortSummary() {
                 </button>
 
                 <button
-                  onClick={() => navigate("/resort-form", { state: bookingData })}
+                  onClick={() => navigate("/hotel-booking-form", { state: bookingData })}
                   disabled={loading}
                   type="button"
                   className="ltc-secondary-button"

@@ -285,12 +285,18 @@ function getCustomerPhone(booking = {}) {
   return booking.phone || user.phone || user.contactNumber || "";
 }
 
+function getBookingSourceType(booking = {}) {
+  return booking.sourceType || booking.bookingType || "hotel_room";
+}
+
 function getProofEndpoint(apiBase, booking) {
-  if (booking.bookingType === "resort") {
+  const sourceType = getBookingSourceType(booking);
+
+  if (sourceType === "resort") {
     return `${apiBase}/admin/resort-bookings/${booking._id}/proof`;
   }
 
-  if (booking.bookingType === "event") {
+  if (sourceType === "event") {
     return `${apiBase}/admin/event-bookings/${booking._id}/proof`;
   }
 
@@ -298,11 +304,13 @@ function getProofEndpoint(apiBase, booking) {
 }
 
 function getStatusEndpoint(apiBase, booking) {
-  if (booking.bookingType === "resort") {
+  const sourceType = getBookingSourceType(booking);
+
+  if (sourceType === "resort") {
     return `${apiBase}/admin/resort-bookings/${booking._id}/status`;
   }
 
-  if (booking.bookingType === "event") {
+  if (sourceType === "event") {
     return `${apiBase}/admin/event-bookings/${booking._id}/status`;
   }
 
@@ -327,26 +335,12 @@ function extractPaymentInfo(booking = {}) {
   const explicitPaidAmount = firstMoneyValue(
     booking.paidAmount,
     booking.amountToPay,
-    booking.downPaymentAmount,
-    booking.downpaymentAmount,
-    booking.downPayment,
-    booking.downpayment,
-    booking.depositAmount,
-    booking.deposit,
     booking.payment?.paidAmount,
     booking.payment?.amountToPay,
-    booking.payment?.downPaymentAmount,
     raw.paidAmount,
     raw.amountToPay,
-    raw.downPaymentAmount,
-    raw.downpaymentAmount,
-    raw.downPayment,
-    raw.downpayment,
-    raw.depositAmount,
-    raw.deposit,
     raw.payment?.paidAmount,
-    raw.payment?.amountToPay,
-    raw.payment?.downPaymentAmount
+    raw.payment?.amountToPay
   );
 
   const explicitBalanceAmount = firstMoneyValue(
@@ -362,14 +356,24 @@ function extractPaymentInfo(booking = {}) {
     raw.payment?.balanceAmount
   );
 
+  const explicitPaymentStatus = String(
+    firstDefinedValue(
+      booking.paymentStatus,
+      booking.payment?.paymentStatus,
+      raw.paymentStatus,
+      raw.payment?.paymentStatus
+    ) || ""
+  )
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+
   const explicitPaymentTermRaw = firstDefinedValue(
     booking.paymentTerm,
     booking.paymentType,
-    booking.paymentStatus,
     booking.payment?.paymentTerm,
     raw.paymentTerm,
     raw.paymentType,
-    raw.paymentStatus,
     raw.payment?.paymentTerm
   );
 
@@ -383,39 +387,49 @@ function extractPaymentInfo(booking = {}) {
   let balanceAmount = explicitBalanceAmount;
   let isPaymentInferred = false;
 
-  /*
-    IMPORTANT FIX:
-    Older records in your database may only have paymentMethod + totalAmount.
-    Your summary pages submit amountToPay / paidAmount / balanceAmount / paymentTerm,
-    but if the backend model/controller did not save those fields yet, the admin page
-    receives no downpayment info. In that case, show the expected 50/50 downpayment
-    instead of "Not recorded".
-  */
-  if (totalAmount > 0 && !paymentTerm && paidAmount <= 0 && balanceAmount <= 0) {
+  // paymentStatus is the strongest signal. A FULLY_PAID booking must never be
+  // displayed/count as Down Payment even if an older paymentTerm is stale.
+  if (explicitPaymentStatus === "FULLY_PAID") {
+    paymentTerm = "FULL_PAYMENT";
+    if (totalAmount > 0) {
+      paidAmount = totalAmount;
+      balanceAmount = 0;
+    }
+  } else if (explicitPaymentStatus === "PARTIALLY_PAID") {
     paymentTerm = "DOWN_PAYMENT";
-    paidAmount = Math.ceil(totalAmount / 2);
-    balanceAmount = Math.max(0, totalAmount - paidAmount);
-    isPaymentInferred = true;
-  }
 
-  if (totalAmount > 0 && paymentTerm === "DOWN_PAYMENT" && paidAmount <= 0) {
-    paidAmount = Math.ceil(totalAmount / 2);
-    balanceAmount = Math.max(0, totalAmount - paidAmount);
-    isPaymentInferred = true;
-  }
+    if (totalAmount > 0 && paidAmount <= 0) {
+      paidAmount = Math.ceil(totalAmount / 2);
+      isPaymentInferred = true;
+    }
 
-  if (totalAmount > 0 && paymentTerm === "FULL_PAYMENT" && paidAmount <= 0) {
+    if (totalAmount > 0) {
+      balanceAmount = Math.max(0, totalAmount - paidAmount);
+    }
+  } else if (totalAmount > 0 && paidAmount >= totalAmount) {
+    paymentTerm = "FULL_PAYMENT";
     paidAmount = totalAmount;
     balanceAmount = 0;
-    isPaymentInferred = true;
-  }
-
-  if (totalAmount > 0 && paidAmount > 0 && balanceAmount <= 0) {
+  } else if (totalAmount > 0 && (balanceAmount > 0 || (paidAmount > 0 && paidAmount < totalAmount))) {
+    paymentTerm = "DOWN_PAYMENT";
     balanceAmount = Math.max(0, totalAmount - paidAmount);
+  } else if (totalAmount > 0 && paymentTerm === "DOWN_PAYMENT") {
+    if (paidAmount <= 0) {
+      paidAmount = Math.ceil(totalAmount / 2);
+      isPaymentInferred = true;
+    }
+    balanceAmount = Math.max(0, totalAmount - paidAmount);
+  } else if (totalAmount > 0 && paymentTerm === "FULL_PAYMENT") {
+    if (paidAmount <= 0) {
+      paidAmount = totalAmount;
+      isPaymentInferred = true;
+    }
+    balanceAmount = 0;
   }
 
-  if (!paymentTerm) {
-    paymentTerm = normalizePaymentTerm("", paidAmount, totalAmount);
+  // Never guess an unspecified legacy booking as a down payment.
+  if (!paymentTerm || !["DOWN_PAYMENT", "FULL_PAYMENT"].includes(paymentTerm)) {
+    paymentTerm = "";
   }
 
   return {
@@ -425,19 +439,50 @@ function extractPaymentInfo(booking = {}) {
     amountToPay: paidAmount,
     balanceAmount,
     totalAmount,
+    paymentStatus: explicitPaymentStatus,
     isPaymentInferred,
   };
 }
 
+function resolveSemanticBookingType(booking = {}, fallbackType = "") {
+  const raw = booking.raw || booking;
+  const serviceText = String(
+    booking.serviceType || raw.serviceType || booking.serviceLabel || raw.serviceLabel || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (serviceText.includes("hotel") || serviceText.includes("condo")) {
+    return "hotel_room";
+  }
+
+  if (serviceText.includes("event")) {
+    return "event";
+  }
+
+  if (serviceText.includes("resort") || serviceText.includes("venue")) {
+    return "resort";
+  }
+
+  const explicitType = String(booking.bookingType || raw.bookingType || "").toLowerCase();
+  if (["resort", "event", "hotel_room"].includes(explicitType)) {
+    return explicitType;
+  }
+
+  return fallbackType || "resort";
+}
+
 function normalizeBooking(booking = {}, fallbackType = "") {
   const raw = booking.raw || booking;
-  const bookingType = booking.bookingType || fallbackType || "resort";
+  const sourceType = fallbackType || booking.sourceType || booking.bookingType || "resort";
+  const bookingType = resolveSemanticBookingType(booking, sourceType);
 
   if (bookingType === "event") {
     const normalized = {
       _id: String(booking._id || booking.id || ""),
       bookingType: "event",
-      serviceLabel: booking.serviceLabel || "Event Package",
+      sourceType,
+      serviceLabel: "Event Package",
       title:
         booking.title ||
         booking.eventPackage ||
@@ -491,7 +536,8 @@ function normalizeBooking(booking = {}, fallbackType = "") {
     const normalized = {
       _id: String(booking._id || booking.id || ""),
       bookingType: "hotel_room",
-      serviceLabel: booking.serviceLabel || "Hotel & Condo",
+      sourceType,
+      serviceLabel: "Hotel & Condo",
       title:
         booking.title ||
         `${roomType}${duration ? ` - ${duration}` : ""}`,
@@ -521,7 +567,8 @@ function normalizeBooking(booking = {}, fallbackType = "") {
   const normalized = {
     _id: String(booking._id || booking.id || ""),
     bookingType: "resort",
-    serviceLabel: booking.serviceLabel || "Resort & Venue",
+    sourceType,
+    serviceLabel: "Resort & Venue",
     title:
       booking.title ||
       booking.venue ||
@@ -572,23 +619,20 @@ function uniqueBookings(rows = []) {
 }
 
 function extractBookings(data, fallbackType = "") {
-  if (Array.isArray(data)) {
-    return data.map((item) => normalizeBooking(item, fallbackType));
-  }
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.bookings)
+    ? data.bookings
+    : Array.isArray(data?.data)
+    ? data.data
+    : Array.isArray(data?.rows)
+    ? data.rows
+    : [];
 
-  if (Array.isArray(data?.bookings)) {
-    return data.bookings.map((item) => normalizeBooking(item, fallbackType));
-  }
-
-  if (Array.isArray(data?.data)) {
-    return data.data.map((item) => normalizeBooking(item, fallbackType));
-  }
-
-  if (Array.isArray(data?.rows)) {
-    return data.rows.map((item) => normalizeBooking(item, fallbackType));
-  }
-
-  return [];
+  // The endpoint tells us where the record is physically stored (sourceType),
+  // while serviceType tells us which service tab it belongs to. Keeping both
+  // prevents cross-service display bugs without breaking Proof/Approve/Reject.
+  return rows.map((item) => normalizeBooking(item, fallbackType));
 }
 
 function isImageMime(mimeType = "") {
