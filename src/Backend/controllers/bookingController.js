@@ -202,6 +202,34 @@ function cleanText(value = "") {
   return String(value || "").trim();
 }
 
+function normalizePaymentTerm(value = "") {
+  const normalized = cleanText(value)
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (normalized === "DOWN_PAYMENT" || normalized === "DOWNPAYMENT") {
+    return "DOWN_PAYMENT";
+  }
+
+  // Missing/unchecked Down Payment must always mean Full Payment.
+  return "FULL_PAYMENT";
+}
+
+function buildPaymentDetails(totalAmount, body = {}) {
+  const safeTotal = Math.max(0, Number(totalAmount) || 0);
+  const paymentTerm = normalizePaymentTerm(body.paymentTerm);
+  const isDownPayment = paymentTerm === "DOWN_PAYMENT";
+  const paidAmount = isDownPayment ? Math.ceil(safeTotal / 2) : safeTotal;
+
+  return {
+    paymentTerm,
+    paymentStatus: isDownPayment ? "PARTIALLY_PAID" : "FULLY_PAID",
+    amountToPay: paidAmount,
+    paidAmount,
+    balanceAmount: Math.max(0, safeTotal - paidAmount),
+  };
+}
+
 function normalizeVenue(value = "") {
   const v = cleanText(value).toUpperCase().replace(/\s+/g, " ");
 
@@ -858,6 +886,7 @@ export const createResortBooking = async (req, res) => {
     const additionalPax = capacityLimit ? Math.max(0, pax - capacityLimit) : 0;
     const additionalPaxCharge = additionalPax * ADDITIONAL_PAX_RATE;
     const price = baseAmount + additionalPaxCharge;
+    const paymentDetails = buildPaymentDetails(price, req.body);
 
     const conflict = await findConfirmedTimeConflict({
       venue,
@@ -905,6 +934,7 @@ export const createResortBooking = async (req, res) => {
       monthlyConfirmedBookings: dynamicPricing.monthlyConfirmedBookings,
       totalIncreasePercent: dynamicPricing.totalIncreasePercent,
       paymentMethod,
+      ...paymentDetails,
       proof: {
         data: req.file.buffer,
         contentType: req.file.mimetype,
@@ -937,6 +967,11 @@ export const createResortBooking = async (req, res) => {
         monthlyConfirmedBookings: booking.monthlyConfirmedBookings,
         totalIncreasePercent: booking.totalIncreasePercent,
         paymentMethod: booking.paymentMethod,
+        paymentTerm: booking.paymentTerm,
+        paymentStatus: booking.paymentStatus,
+        amountToPay: booking.amountToPay,
+        paidAmount: booking.paidAmount,
+        balanceAmount: booking.balanceAmount,
         status: booking.status,
         isActive: booking.isActive,
         createdAt: booking.createdAt,
@@ -1048,7 +1083,7 @@ export const getMyResortBookings = async (req, res) => {
 const ADMIN_RESORT_LIST_DEFAULT_LIMIT = 500;
 const ADMIN_RESORT_LIST_MAX_LIMIT = 1000;
 
-const ADMIN_RESORT_LIST_INDEX = "admin_resort_booking_list_v1";
+const ADMIN_RESORT_LIST_INDEX = "admin_resort_booking_list_v2";
 const ADMIN_RESORT_LIST_PROJECTION = {
   _id: 1,
   firstName: 1,
@@ -1065,6 +1100,11 @@ const ADMIN_RESORT_LIST_PROJECTION = {
   kids: 1,
   price: 1,
   paymentMethod: 1,
+  paymentTerm: 1,
+  paymentStatus: 1,
+  amountToPay: 1,
+  paidAmount: 1,
+  balanceAmount: 1,
   status: 1,
   isActive: 1,
   createdAt: 1,

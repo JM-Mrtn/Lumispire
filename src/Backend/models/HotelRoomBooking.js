@@ -136,6 +136,24 @@ const hotelRoomBookingSchema = new mongoose.Schema(
       required: true,
     },
 
+    paymentTerm: {
+      type: String,
+      enum: ["DOWN_PAYMENT", "FULL_PAYMENT"],
+      default: "FULL_PAYMENT",
+      index: true,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["PARTIALLY_PAID", "FULLY_PAID"],
+      default: "FULLY_PAID",
+      index: true,
+    },
+
+    amountToPay: { type: Number, default: 0, min: 0 },
+    paidAmount: { type: Number, default: 0, min: 0 },
+    balanceAmount: { type: Number, default: 0, min: 0 },
+
     proof: {
       data: { type: Buffer, select: false },
       contentType: { type: String, default: "" },

@@ -17,7 +17,7 @@ const WEEKEND_MARKUP_PERCENT = 5;
 const MONTHLY_BOOKING_MARKUP_PERCENT = 1;
 
 const MAX_ADDITIONAL_PAX = 20;
-const ADDITIONAL_PAX_RATE = 250;
+const ADDITIONAL_PAX_RATE = 500;
 
 function getDatePartsFromISO(dateString = "") {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ""))) return null;
@@ -157,6 +157,34 @@ function cleanText(value = "") {
 function toNumber(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+function normalizePaymentTerm(value = "") {
+  const normalized = cleanText(value)
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (normalized === "DOWN_PAYMENT" || normalized === "DOWNPAYMENT") {
+    return "DOWN_PAYMENT";
+  }
+
+  // Missing/unchecked Down Payment must always mean Full Payment.
+  return "FULL_PAYMENT";
+}
+
+function buildPaymentDetails(totalAmount, body = {}) {
+  const safeTotal = Math.max(0, Number(totalAmount) || 0);
+  const paymentTerm = normalizePaymentTerm(body.paymentTerm);
+  const isDownPayment = paymentTerm === "DOWN_PAYMENT";
+  const paidAmount = isDownPayment ? Math.ceil(safeTotal / 2) : safeTotal;
+
+  return {
+    paymentTerm,
+    paymentStatus: isDownPayment ? "PARTIALLY_PAID" : "FULLY_PAID",
+    amountToPay: paidAmount,
+    paidAmount,
+    balanceAmount: Math.max(0, safeTotal - paidAmount),
+  };
 }
 
 function normalizeDuration(value = "") {
@@ -706,6 +734,7 @@ export const createHotelRoomBooking = async (req, res) => {
     const additionalPax = Math.max(0, pax - baseMaxPax);
     const additionalPaxCharge = additionalPax * ADDITIONAL_PAX_RATE;
     const finalPrice = baseAmount + additionalPaxCharge;
+    const paymentDetails = buildPaymentDetails(finalPrice, req.body);
 
     const booking = await HotelRoomBooking.create({
       userId: user._id,
@@ -741,6 +770,7 @@ export const createHotelRoomBooking = async (req, res) => {
       monthlyConfirmedBookings: dynamicPricing.monthlyConfirmedBookings,
       totalIncreasePercent: dynamicPricing.totalIncreasePercent,
       paymentMethod,
+      ...paymentDetails,
 
       proof: {
         data: req.file.buffer,
@@ -777,6 +807,11 @@ export const createHotelRoomBooking = async (req, res) => {
         monthlyConfirmedBookings: booking.monthlyConfirmedBookings,
         totalIncreasePercent: booking.totalIncreasePercent,
         paymentMethod: booking.paymentMethod,
+        paymentTerm: booking.paymentTerm,
+        paymentStatus: booking.paymentStatus,
+        amountToPay: booking.amountToPay,
+        paidAmount: booking.paidAmount,
+        balanceAmount: booking.balanceAmount,
         status: booking.status,
         createdAt: booking.createdAt,
       },

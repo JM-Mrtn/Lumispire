@@ -917,6 +917,9 @@ export default function HotelAdminBookings() {
   const API_BASE = useMemo(() => getHotelApiBase(), []);
 
   const objectUrlsRef = useRef([]);
+  const initialFetchStartedRef = useRef(false);
+  const fetchRunRef = useRef(0);
+  const activeFetchControllerRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
@@ -969,10 +972,11 @@ export default function HotelAdminBookings() {
     navigate("/hotel-admin-login", { replace: true });
   };
 
-  const fetchJson = async (url) => {
+  const fetchJson = async (url, signal) => {
     const response = await fetch(url, {
       method: "GET",
       headers: getAdminHeaders(),
+      signal,
     });
 
     const data = await response.json().catch(() => ({}));
@@ -996,6 +1000,27 @@ export default function HotelAdminBookings() {
     };
   };
 
+  const sortBookingsByRecent = (rows = []) =>
+    uniqueBookings(rows)
+      .filter((item) => item._id)
+      .sort((a, b) => {
+        const bTime = new Date(b.createdAt || b.date || 0).getTime();
+        const aTime = new Date(a.createdAt || a.date || 0).getTime();
+        return bTime - aTime;
+      });
+
+  const replaceSourceBookings = (sourceType, sourceRows, runId) => {
+    if (runId !== fetchRunRef.current) return;
+
+    setBookings((current) => {
+      const otherSources = current.filter(
+        (booking) => getBookingSourceType(booking) !== sourceType
+      );
+
+      return sortBookingsByRecent([...otherSources, ...sourceRows]);
+    });
+  };
+
   const fetchBookings = async () => {
     const token = getAdminToken();
 
@@ -1004,57 +1029,91 @@ export default function HotelAdminBookings() {
       return;
     }
 
+    // Cancel an older refresh before starting a new one. This prevents manual
+    // refreshes or route remounts from stacking multiple expensive API reads.
+    activeFetchControllerRef.current?.abort();
+
+    const runId = fetchRunRef.current + 1;
+    fetchRunRef.current = runId;
+
+    const controller = new AbortController();
+    activeFetchControllerRef.current = controller;
+
+    // Do not allow one slow service (usually Resort) to freeze the entire page.
+    const timeoutId = window.setTimeout(() => controller.abort(), 10000);
+
     setLoading(true);
     setStatus({ type: "", message: "" });
 
+    const endpoints = [
+      {
+        sourceType: "resort",
+        label: "Resort & Venue",
+        url: `${API_BASE}/admin/resort-bookings`,
+      },
+      {
+        sourceType: "event",
+        label: "Event Package",
+        url: `${API_BASE}/admin/event-bookings`,
+      },
+      {
+        sourceType: "hotel_room",
+        label: "Hotel & Condo",
+        url: `${API_BASE}/admin/hotel-room-bookings`,
+      },
+    ];
+
+    const failedServices = [];
+    const successfulRows = [];
+    let authFailed = false;
+
     try {
-      // Load each service exactly once. The old implementation also called
-      // /admin/bookings, which queried Resort/Event/Hotel again on the backend.
-      // With large embedded Resort proof images that duplicate Resort query can
-      // make both requests stay pending for a long time.
-      const [resortResult, eventResult, hotelResult] = await Promise.all([
-        fetchJson(`${API_BASE}/admin/resort-bookings`),
-        fetchJson(`${API_BASE}/admin/event-bookings`),
-        fetchJson(`${API_BASE}/admin/hotel-room-bookings`),
-      ]);
+      // Load all services in parallel, but merge each successful response into
+      // the table immediately instead of waiting for the slowest endpoint.
+      const tasks = endpoints.map(async ({ sourceType, label, url }) => {
+        try {
+          const result = await fetchJson(url, controller.signal);
 
-      if (
-        resortResult.authFailed ||
-        eventResult.authFailed ||
-        hotelResult.authFailed
-      ) {
-        return;
-      }
+          if (runId !== fetchRunRef.current) return;
 
-      const resortBookings = resortResult.ok
-        ? extractBookings(resortResult.data, "resort")
-        : [];
+          if (result.authFailed) {
+            authFailed = true;
+            return;
+          }
 
-      const eventBookings = eventResult.ok
-        ? extractBookings(eventResult.data, "event")
-        : [];
+          if (!result.ok) {
+            failedServices.push(label);
+            return;
+          }
 
-      const hotelBookings = hotelResult.ok
-        ? extractBookings(hotelResult.data, "hotel_room")
-        : [];
+          const rows = extractBookings(result.data, sourceType);
+          rows.forEach((row) => successfulRows.push(row));
+          replaceSourceBookings(sourceType, rows, runId);
+        } catch (error) {
+          if (runId !== fetchRunRef.current) return;
 
-      const loadedBookings = [
-        ...resortBookings,
-        ...eventBookings,
-        ...hotelBookings,
-      ];
+          if (error?.name === "AbortError") {
+            failedServices.push(`${label} (timed out)`);
+            return;
+          }
 
-      const normalized = uniqueBookings(loadedBookings)
-        .filter((item) => item._id)
-        .sort((a, b) => {
-          const bTime = new Date(b.createdAt || b.date || 0).getTime();
-          const aTime = new Date(a.createdAt || a.date || 0).getTime();
-          return bTime - aTime;
+          console.error(`${label} bookings load error:`, error);
+          failedServices.push(label);
+        }
+      });
+
+      await Promise.allSettled(tasks);
+
+      if (runId !== fetchRunRef.current || authFailed) return;
+
+      if (failedServices.length) {
+        setStatus({
+          type: "warning",
+          message: `Loaded available bookings, but ${failedServices.join(
+            ", "
+          )} could not finish loading. Try Refresh again.`,
         });
-
-      setBookings(normalized);
-
-      if (!normalized.length) {
+      } else if (!successfulRows.length) {
         setStatus({
           type: "warning",
           message:
@@ -1062,20 +1121,37 @@ export default function HotelAdminBookings() {
         });
       }
     } catch (error) {
-      console.error("fetchBookings error:", error);
+      if (error?.name !== "AbortError") {
+        console.error("fetchBookings error:", error);
+      }
 
-      setBookings([]);
-      setStatus({
-        type: "error",
-        message:
-          "Network error while loading bookings. Make sure backend is running and VITE_API_URL is http://localhost:5000.",
-      });
+      if (runId === fetchRunRef.current) {
+        setStatus({
+          type: "error",
+          message:
+            "Network error while loading bookings. Check that the backend API is reachable, then try Refresh again.",
+        });
+      }
     } finally {
-      setLoading(false);
+      window.clearTimeout(timeoutId);
+
+      if (runId === fetchRunRef.current) {
+        setLoading(false);
+
+        if (activeFetchControllerRef.current === controller) {
+          activeFetchControllerRef.current = null;
+        }
+      }
     }
   };
 
   useEffect(() => {
+    // React StrictMode intentionally runs effects twice in local development.
+    // Guard the initial request so localhost does not hit all three admin APIs
+    // twice at the same time. Production behavior remains the same.
+    if (initialFetchStartedRef.current) return;
+
+    initialFetchStartedRef.current = true;
     fetchBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

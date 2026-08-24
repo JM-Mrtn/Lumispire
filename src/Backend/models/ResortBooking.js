@@ -60,6 +60,24 @@ const resortBookingSchema = new mongoose.Schema(
       required: true,
     },
 
+    paymentTerm: {
+      type: String,
+      enum: ["DOWN_PAYMENT", "FULL_PAYMENT"],
+      default: "FULL_PAYMENT",
+      index: true,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["PARTIALLY_PAID", "FULLY_PAID"],
+      default: "FULLY_PAID",
+      index: true,
+    },
+
+    amountToPay: { type: Number, default: 0, min: 0 },
+    paidAmount: { type: Number, default: 0, min: 0 },
+    balanceAmount: { type: Number, default: 0, min: 0 },
+
     proof: {
       data: { type: Buffer, select: false },
       contentType: { type: String },
@@ -120,11 +138,16 @@ resortBookingSchema.index(
     kids: 1,
     price: 1,
     paymentMethod: 1,
+    paymentTerm: 1,
+    paymentStatus: 1,
+    amountToPay: 1,
+    paidAmount: 1,
+    balanceAmount: 1,
     status: 1,
     isActive: 1,
     createdAt: -1,
   },
-  { name: "admin_resort_booking_list_v1" }
+  { name: "admin_resort_booking_list_v2" }
 );
 
 resortBookingSchema.index({ userId: 1, createdAt: -1 });

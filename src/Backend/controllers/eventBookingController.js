@@ -133,6 +133,34 @@ function toNumber(value, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function normalizePaymentTerm(value = "") {
+  const normalized = cleanText(value)
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (normalized === "DOWN_PAYMENT" || normalized === "DOWNPAYMENT") {
+    return "DOWN_PAYMENT";
+  }
+
+  // Missing/unchecked Down Payment must always mean Full Payment.
+  return "FULL_PAYMENT";
+}
+
+function buildPaymentDetails(totalAmount, body = {}) {
+  const safeTotal = Math.max(0, Number(totalAmount) || 0);
+  const paymentTerm = normalizePaymentTerm(body.paymentTerm);
+  const isDownPayment = paymentTerm === "DOWN_PAYMENT";
+  const paidAmount = isDownPayment ? Math.ceil(safeTotal / 2) : safeTotal;
+
+  return {
+    paymentTerm,
+    paymentStatus: isDownPayment ? "PARTIALLY_PAID" : "FULLY_PAID",
+    amountToPay: paidAmount,
+    paidAmount,
+    balanceAmount: Math.max(0, safeTotal - paidAmount),
+  };
+}
+
 function parsePaxFromLabel(label = "") {
   const match = String(label || "").match(/(\d+)/);
   return match ? Number(match[1]) : 0;
@@ -1183,6 +1211,8 @@ export const createEventBooking = async (req, res) => {
       });
     }
 
+    const paymentDetails = buildPaymentDetails(priceResult.totalAmount, req.body);
+
     const booking = await EventBooking.create({
       userId: user._id,
       firstName: user.firstName || "",
@@ -1228,6 +1258,7 @@ export const createEventBooking = async (req, res) => {
       dessert,
       drinks,
       paymentMethod,
+      ...paymentDetails,
       totalAmount: priceResult.totalAmount,
 
       proof: {
@@ -1269,6 +1300,11 @@ export const createEventBooking = async (req, res) => {
         additionalPaxCharge: booking.additionalPaxCharge,
         totalAmount: booking.totalAmount,
         paymentMethod: booking.paymentMethod,
+        paymentTerm: booking.paymentTerm,
+        paymentStatus: booking.paymentStatus,
+        amountToPay: booking.amountToPay,
+        paidAmount: booking.paidAmount,
+        balanceAmount: booking.balanceAmount,
         status: booking.status,
         createdAt: booking.createdAt,
       },
