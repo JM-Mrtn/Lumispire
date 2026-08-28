@@ -3,8 +3,49 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ChatbotWidget from "./ChatbotWidget";
 import { getPublicLtcContent, pickPublicLtcImage } from "./ltcContentApi";
 
-const LOGO = "/LTCLogo.jpg";
-const BANNER_SRC = "/LTCBanner.png";
+const LOGO = "/LTCLogo.webp";
+const BANNER_SRC = "/LTCBanner.webp";
+
+const preferOptimizedLtcAsset = (source) =>
+  String(source || "")
+    .replace(/LTCBanner\.png(?=([?#]|$))/i, "LTCBanner.webp")
+    .replace(/LTCLogo\.jpg(?=([?#]|$))/i, "LTCLogo.webp");
+
+const resizeRemoteImage = (source, width = 720) => {
+  if (!source) return source;
+
+  try {
+    const url = new URL(source);
+
+    if (url.hostname === "images.unsplash.com") {
+      url.searchParams.set("auto", "format");
+      url.searchParams.set("fit", "crop");
+      url.searchParams.set("w", String(width));
+      url.searchParams.set("q", "70");
+      return url.toString();
+    }
+
+    if (url.hostname === "images.pexels.com") {
+      url.searchParams.set("auto", "compress");
+      url.searchParams.set("cs", "tinysrgb");
+      url.searchParams.set("w", String(width));
+      return url.toString();
+    }
+  } catch {
+    // Local paths and non-URL values should be used unchanged.
+  }
+
+  return source;
+};
+
+const buildRemoteSrcSet = (source) => {
+  const widths = [360, 540, 720];
+  const candidates = widths.map((width) => resizeRemoteImage(source, width));
+
+  if (candidates.every((candidate) => candidate === source)) return undefined;
+
+  return candidates.map((candidate, index) => `${candidate} ${widths[index]}w`).join(", ");
+};
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -110,8 +151,12 @@ const AboutUs = () => {
     setIsSidebarOpen(false);
   };
 
-  const logoSrc = pickPublicLtcImage(ltcContent?.company?.logoUrl, LOGO);
-  const bannerSrc = pickPublicLtcImage(ltcContent?.company?.bannerUrl, BANNER_SRC);
+  const logoSrc = preferOptimizedLtcAsset(
+    pickPublicLtcImage(ltcContent?.company?.logoUrl, LOGO)
+  );
+  const bannerSrc = preferOptimizedLtcAsset(
+    pickPublicLtcImage(ltcContent?.company?.bannerUrl, BANNER_SRC)
+  );
 
   const navLinks = [
     { label: "HOME", to: "/" },
@@ -133,6 +178,34 @@ const AboutUs = () => {
 
     return () => {
       mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const canonicalUrl = "https://www.lumispire.online/about-us";
+    let canonical = document.querySelector('link[rel="canonical"]');
+    const previousCanonical = canonical?.getAttribute("href") || null;
+    const previousTitle = document.title;
+    let createdCanonical = false;
+
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+      createdCanonical = true;
+    }
+
+    canonical.setAttribute("href", canonicalUrl);
+    document.title = "About Us | LTC Group of Companies";
+
+    return () => {
+      document.title = previousTitle;
+
+      if (createdCanonical) {
+        canonical.remove();
+      } else if (previousCanonical) {
+        canonical.setAttribute("href", previousCanonical);
+      }
     };
   }, []);
 
@@ -243,44 +316,44 @@ const AboutUs = () => {
       subtitle: "Skills development and classroom sessions",
       category: "Training & Assessment",
       image:
-        "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=720",
       fallbackImage:
-        "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=720&q=70",
     },
     {
       title: "Hotel Operations",
       subtitle: "Hospitality and guest service area",
       category: "Hotel & Resort",
       image:
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=720&q=70",
     },
     {
       title: "Manpower Deployment",
       subtitle: "Reliable staffing support solutions",
       category: "Manpower",
       image:
-        "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=720&q=70",
     },
     {
       title: "Assessment Center",
       subtitle: "Evaluation and certification support",
       category: "Training & Assessment",
       image:
-        "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=720&q=70",
     },
     {
       title: "Workforce Support",
       subtitle: "Professional business assistance",
       category: "Manpower",
       image:
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=720&q=70",
     },
     {
       title: "Guest Experience",
       subtitle: "Hospitality-focused operations",
       category: "Hotel & Resort",
       image:
-        "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=720&q=70",
     },
   ];
 
@@ -328,8 +401,6 @@ const AboutUs = () => {
   return (
     <div className="ltc-about" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-about {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -1205,7 +1276,14 @@ const AboutUs = () => {
       <header className="ltc-header">
         <div className="ltc-container ltc-nav">
           <button type="button" onClick={() => goTo("/")} className="ltc-logo">
-            <img src={logoSrc} alt="LTC Logo" className="ltc-logo-icon" />
+            <img
+              src={logoSrc}
+              alt="LTC Logo"
+              className="ltc-logo-icon"
+              width="42"
+              height="42"
+              decoding="async"
+            />
 
             <div>
               <h1 style={fontMontserrat}>
@@ -1521,14 +1599,24 @@ const AboutUs = () => {
                   <article className="ltc-highlight-card">
                     <div className="ltc-highlight-media">
                       <img
-                        src={item.image}
+                        src={resizeRemoteImage(item.image)}
+                        srcSet={buildRemoteSrcSet(item.image)}
+                        sizes="(max-width: 760px) calc(100vw - 32px), 375px"
                         alt={item.title}
+                        loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
+                        width="720"
+                        height="420"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
-                          e.currentTarget.src =
+                          e.currentTarget.removeAttribute("srcset");
+                          e.currentTarget.src = resizeRemoteImage(
                             item.fallbackImage ||
-                            defaultHighlightItems[index % defaultHighlightItems.length].fallbackImage ||
-                            defaultHighlightItems[index % defaultHighlightItems.length].image;
+                              defaultHighlightItems[index % defaultHighlightItems.length]
+                                .fallbackImage ||
+                              defaultHighlightItems[index % defaultHighlightItems.length].image
+                          );
                         }}
                       />
                     </div>
