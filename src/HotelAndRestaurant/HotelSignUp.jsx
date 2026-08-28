@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const BACKGROUND_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const BACKGROUND_IMAGES = ["/HotelLanding1.webp", "/HotelLanding2.webp"];
 
 const PHONE_PLACEHOLDER = "Phone Number";
 const USERNAME_MIN_LENGTH = 5;
@@ -177,7 +177,7 @@ const HotelSignUp = () => {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -392,7 +392,7 @@ const HotelSignUp = () => {
   const CrownLogo = () => (
     <button type="button" onClick={() => navigate("/resort-venue")} className="ltc-logo" aria-label="Go to hotel home">
       <img
-        src="/HotelLogo.png"
+        src="/HotelLogo.webp"
         alt="Hotel logo"
         className="ltc-logo-icon"
         onError={(event) => {
@@ -411,7 +411,7 @@ const HotelSignUp = () => {
   return (
     <div className="ltc-hotel-signup-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+        
 
         .ltc-hotel-signup-page {
           --green-950: #071f14;
