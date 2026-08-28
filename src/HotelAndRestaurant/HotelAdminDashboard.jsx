@@ -1,5 +1,5 @@
 // HotelAdminDashboard.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { memo, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HotelAdminShell from "./HotelAdminShell";
 
@@ -693,7 +693,7 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
   );
 }
 
-export default function HotelAdminDashboard() {
+const HotelAdminDashboard = memo(function HotelAdminDashboard() {
   const navigate = useNavigate();
   const { adminBase, hotelBase } = useMemo(() => getApiBases(), []);
 
@@ -2724,4 +2724,4 @@ export default function HotelAdminDashboard() {
       </div>
     </HotelAdminShell>
   );
-}
+});
