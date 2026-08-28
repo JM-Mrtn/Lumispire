@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const HOTEL_LOGO = "/HotelLogo.png";
-const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const HOTEL_LOGO = "/HotelLogo.webp";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.webp";
+const HERO_IMAGES = [
+  "/HotelLanding1.webp",
+  "/HotelLanding2.webp",
+];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -76,11 +79,11 @@ const RevealOnScroll = ({ children, className = "", delay = 0, y = 18 }) => {
       ref={ref}
       className={className}
       style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
+        opacity: 1,
+        transform: "translateY(0px)",
         transition: "opacity 650ms ease, transform 650ms ease",
         transitionDelay: `${delay}ms`,
-        willChange: "opacity, transform",
+        willChange: "auto",
       }}
     >
       {children}
@@ -97,7 +100,7 @@ export default function HotelFaqs() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -109,7 +112,7 @@ export default function HotelFaqs() {
   return (
     <div className="ltc-hotel-faq-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+        
 
         .ltc-hotel-faq-page {
           --green-950: #071f14;
