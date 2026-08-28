@@ -1,0 +1,17 @@
+# Lumispire — LTC Group of Companies
+
+> Official website for LTC Group of Companies and its training, assessment, manpower, hotel, resort, and hospitality services.
+
+## Main pages
+
+- [Home](https://www.lumispire.online/)
+- [About Us](https://www.lumispire.online/about-us)
+- [Our Team](https://www.lumispire.online/team)
+- [Contact](https://www.lumispire.online/contact)
+
+## Services
+
+- [Training and Assessment](https://www.lumispire.online/training-assessment)
+- [Manpower Services](https://www.lumispire.online/manpower-services)
+- [Hotel and Resort Services](https://www.lumispire.online/hotel-resort)
+- [Resort and Venue Services](https://www.lumispire.online/resort-venue)

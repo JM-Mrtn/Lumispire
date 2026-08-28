@@ -7,8 +7,13 @@ const CONTACT_ROUTE = "/contact";
 const RESORT_AND_VENUE_ROUTE = "/resort-venue";
 const PROMO_SESSION_KEY = "ltc_home_promo_seen_session";
 
-const LOGO_SRC = "/LTCLogo.jpg";
-const BANNER_SRC = "/LTCBanner.png";
+const LOGO_SRC = "/LTCLogo.webp";
+const BANNER_SRC = "/LTCBanner.webp";
+
+const preferOptimizedHomeAsset = (source) =>
+  String(source || "")
+    .replace(/LTCLogo\.jpg(?=([?#]|$))/i, "LTCLogo.webp")
+    .replace(/LTCBanner\.png(?=([?#]|$))/i, "LTCBanner.webp");
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -39,21 +44,30 @@ const Home = () => {
 
   const promoItems = [
     {
-      image: "/HotelAds.png",
+      image: "/HotelAds.webp",
+      srcSet: "/HotelAds-640.webp 640w, /HotelAds.webp 1024w",
+      width: 1024,
+      height: 683,
       title: "Hotel & Resort Services",
       description:
         "Discover hospitality-focused services designed to deliver excellent guest experiences.",
       route: RESORT_AND_VENUE_ROUTE,
     },
     {
-      image: "/TrainingAds.png",
+      image: "/TrainingAds-HD.webp",
+      srcSet: "/TrainingAds-HD-768.webp 768w, /TrainingAds-HD.webp 1536w",
+      width: 1536,
+      height: 1024,
       title: "Training & Assessment",
       description:
         "Explore skills training, development programs, and assessment services for learners and professionals.",
       route: "/training-assessment",
     },
     {
-      image: "/ManpowerAds.png",
+      image: "/ManpowerAds.webp",
+      srcSet: "/ManpowerAds-640.webp 640w, /ManpowerAds.webp 1024w",
+      width: 1024,
+      height: 683,
       title: "Manpower Services",
       description:
         "Find reliable staffing and workforce support solutions tailored for your organization.",
@@ -71,18 +85,15 @@ const Home = () => {
   const defaultValues = [
     {
       title: "INTEGRITY",
-      body:
-        "We honor our word and keep our commitments. We keep ourselves objective, honest and balanced in making decisions and actions for the common good of our stakeholders.",
+      body: "We honor our word and keep our commitments. We keep ourselves objective, honest and balanced in making decisions and actions for the common good of our stakeholders.",
     },
     {
       title: "GOD-FEARING",
-      body:
-        "We put GOD first in everything that we do. We respect individual differences and take control to overcome issues that may affect a harmonious working relationship.",
+      body: "We put GOD first in everything that we do. We respect individual differences and take control to overcome issues that may affect a harmonious working relationship.",
     },
     {
       title: "HARDWORK",
-      body:
-        "We convert ideas into action, tackle tasks without delay as we respond rapidly to changing information or business needs.",
+      body: "We convert ideas into action, tackle tasks without delay as we respond rapidly to changing information or business needs.",
     },
   ];
 
@@ -129,7 +140,7 @@ const Home = () => {
 
     const interval = setInterval(() => {
       setCurrentPromoIndex(
-        (previousIndex) => (previousIndex + 1) % promoItems.length
+        (previousIndex) => (previousIndex + 1) % promoItems.length,
       );
     }, 5000);
 
@@ -145,8 +156,12 @@ const Home = () => {
   }, [isPromoOpen]);
 
   const company = ltcContent?.company || {};
-  const logoSrc = pickPublicLtcImage(company.logoUrl, LOGO_SRC);
-  const bannerSrc = pickPublicLtcImage(company.bannerUrl, BANNER_SRC);
+  const logoSrc = preferOptimizedHomeAsset(
+    pickPublicLtcImage(company.logoUrl, LOGO_SRC),
+  );
+  const bannerSrc = preferOptimizedHomeAsset(
+    pickPublicLtcImage(company.bannerUrl, BANNER_SRC),
+  );
 
   const heroTitle =
     company.heroTitle ||
@@ -226,8 +241,6 @@ const Home = () => {
   return (
     <div className="ltc-home" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-home {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -307,8 +320,8 @@ const Home = () => {
         }
 
         .ltc-logo-icon {
-          width: 42px;
-          height: 42px;
+          width: 44px;
+          height: 44px;
           display: grid;
           place-items: center;
           border-radius: 50%;
@@ -956,9 +969,16 @@ const Home = () => {
           cursor: pointer;
         }
 
-        .ltc-promo-card:focus-visible {
-          outline: 4px solid white;
-          outline-offset: 5px;
+        .ltc-promo-hit-area {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          width: 100%;
+          height: 100%;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
         }
 
         .ltc-promo-close {
@@ -1000,6 +1020,7 @@ const Home = () => {
           position: absolute;
           bottom: 22px;
           left: 50%;
+          z-index: 3;
           transform: translateX(-50%);
           display: flex;
           gap: 9px;
@@ -1010,18 +1031,40 @@ const Home = () => {
         }
 
         .ltc-promo-dot {
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          border-radius: 999px;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          padding: 0;
+        }
+
+        .ltc-promo-dot::before {
+          content: "";
           width: 10px;
           height: 10px;
           border-radius: 999px;
-          border: 0;
           background: rgba(255,255,255,.48);
-          cursor: pointer;
           transition: .2s var(--ease);
         }
 
-        .ltc-promo-dot.active {
+        .ltc-promo-dot.active::before {
           background: white;
           transform: scale(1.25);
+        }
+
+        .ltc-promo-hit-area:focus-visible {
+          outline: 4px solid white;
+          outline-offset: -7px;
+        }
+
+        .ltc-promo-close:focus-visible,
+        .ltc-promo-dot:focus-visible {
+          outline: 3px solid white;
+          outline-offset: 2px;
         }
 
         @keyframes ltcAppleReveal {
@@ -1153,18 +1196,9 @@ const Home = () => {
         <div className="ltc-promo-overlay">
           <div
             className="ltc-promo-card"
-            role="link"
-            tabIndex={0}
-            aria-label={`Open ${promoItems[currentPromoIndex].title}`}
-            onClick={goToPromoRoute}
-            onKeyDown={(event) => {
-              if (event.target !== event.currentTarget) return;
-
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                goToPromoRoute();
-              }
-            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={promoItems[currentPromoIndex].title}
           >
             <button
               type="button"
@@ -1190,13 +1224,27 @@ const Home = () => {
               </svg>
             </button>
 
+            <button
+              type="button"
+              className="ltc-promo-hit-area"
+              onClick={goToPromoRoute}
+              aria-label={`Open ${promoItems[currentPromoIndex].title}`}
+            />
+
             <div className="ltc-promo-media">
               <img
                 src={promoItems[currentPromoIndex].image}
+                srcSet={promoItems[currentPromoIndex].srcSet}
+                sizes="(max-width: 700px) calc(100vw - 32px), 1024px"
+                width={promoItems[currentPromoIndex].width}
+                height={promoItems[currentPromoIndex].height}
                 alt={promoItems[currentPromoIndex].title}
+                decoding="async"
+                fetchPriority="low"
                 onError={(event) => {
                   event.currentTarget.src =
                     "https://placehold.co/1600x900/355E3B/FFFFFF?text=Promotional+Ad";
+                  event.currentTarget.removeAttribute("srcset");
                 }}
               />
 
@@ -1210,6 +1258,9 @@ const Home = () => {
                       setCurrentPromoIndex(index);
                     }}
                     aria-label={`Go to ${item.title}`}
+                    aria-current={
+                      currentPromoIndex === index ? "true" : undefined
+                    }
                     className={`ltc-promo-dot ${
                       currentPromoIndex === index ? "active" : ""
                     }`}
@@ -1224,7 +1275,14 @@ const Home = () => {
       <header className="ltc-header">
         <div className="ltc-container ltc-nav">
           <button type="button" onClick={() => goTo("/")} className="ltc-logo">
-            <img src={logoSrc} alt="LTC Logo" className="ltc-logo-icon" />
+            <img
+              src={logoSrc}
+              alt="LTC Logo"
+              className="ltc-logo-icon"
+              width="160"
+              height="113"
+              decoding="async"
+            />
 
             <div>
               <h1 style={fontMontserrat}>
@@ -1324,9 +1382,7 @@ const Home = () => {
                     key={link.label}
                     type="button"
                     onClick={() => goTo(link.to)}
-                    className={`ltc-sidebar-link ${
-                      isActive ? "active" : ""
-                    }`}
+                    className={`ltc-sidebar-link ${isActive ? "active" : ""}`}
                   >
                     {link.label}
                   </button>
@@ -1392,23 +1448,21 @@ const Home = () => {
             </div>
 
             <div className="ltc-grid-3">
-              {serviceCards.map(
-                ({ title, description, route, Icon }) => (
-                  <button
-                    key={title}
-                    type="button"
-                    onClick={() => goTo(route)}
-                    className="ltc-card"
-                  >
-                    <div className="ltc-icon">
-                      <Icon />
-                    </div>
+              {serviceCards.map(({ title, description, route, Icon }) => (
+                <button
+                  key={title}
+                  type="button"
+                  onClick={() => goTo(route)}
+                  className="ltc-card"
+                >
+                  <div className="ltc-icon">
+                    <Icon />
+                  </div>
 
-                    <h4 style={fontMontserrat}>{title}</h4>
-                    <p style={fontPontano}>{description}</p>
-                  </button>
-                )
-              )}
+                  <h4 style={fontMontserrat}>{title}</h4>
+                  <p style={fontPontano}>{description}</p>
+                </button>
+              ))}
             </div>
           </div>
         </section>
@@ -1416,9 +1470,7 @@ const Home = () => {
         <section className="ltc-section ltc-band">
           <div className="ltc-container ltc-band-content">
             <div>
-              <div className="ltc-eyebrow">
-                Let&apos;s Meet Our Loyalty
-              </div>
+              <div className="ltc-eyebrow">Let&apos;s Meet Our Loyalty</div>
 
               <h3 style={fontMontserrat}>
                 Built on integrity, service excellence, and dependable
@@ -1461,9 +1513,7 @@ const Home = () => {
             <div className="ltc-section-title">
               <span>Work With Us</span>
 
-              <h3 style={fontMontserrat}>
-                Values that guide every service
-              </h3>
+              <h3 style={fontMontserrat}>Values that guide every service</h3>
 
               <p style={fontPontano}>
                 Our work is shaped by principles that help us build trust with
@@ -1512,8 +1562,8 @@ const Home = () => {
                 </h3>
 
                 <p style={fontPontano}>
-                  Join our growing list of satisfied clients and experience
-                  our exceptional services firsthand.
+                  Join our growing list of satisfied clients and experience our
+                  exceptional services firsthand.
                 </p>
               </div>
 
@@ -1558,9 +1608,7 @@ const Home = () => {
                 About Us
               </FooterLink>
 
-              <FooterLink onClick={() => goTo("/team")}>
-                Team
-              </FooterLink>
+              <FooterLink onClick={() => goTo("/team")}>Team</FooterLink>
 
               <FooterLink onClick={() => goTo(CONTACT_ROUTE)}>
                 Contact Us
@@ -1571,13 +1619,9 @@ const Home = () => {
           <div>
             <h5 style={fontMontserrat}>Contact</h5>
 
-            <p style={fontPontano}>
-              lornacastigador@ltcmultiservices.com
-            </p>
+            <p style={fontPontano}>lornacastigador@ltcmultiservices.com</p>
 
-            <p style={fontPontano}>
-              lorengladius@ltcmultiservices.com
-            </p>
+            <p style={fontPontano}>lorengladius@ltcmultiservices.com</p>
 
             <p style={fontPontano}>Admin@ltcmultiservices.com</p>
           </div>
@@ -1601,9 +1645,7 @@ const Home = () => {
             © 2026 LTC GROUP OF COMPANIES. All rights reserved.
           </span>
 
-          <span style={fontPontano}>
-            Developed by CRMS Tech Alliance
-          </span>
+          <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
         </div>
       </footer>
 
