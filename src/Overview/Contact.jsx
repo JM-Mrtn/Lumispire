@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ChatbotWidget from "./ChatbotWidget";
 
-const LOGO = "/LTCLogo.jpg";
-const BANNER_SRC = "/LTCBanner.png";
+const LOGO = "/LTCLogo.webp";
+const BANNER_SRC = "/LTCBanner.webp";
 const CONTACT_ROUTE = "/contact";
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
@@ -54,7 +54,7 @@ const RevealOnScroll = ({ children, className = "", delay = 0, y = 18 }) => {
         transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
         transition: "opacity 650ms ease, transform 650ms ease",
         transitionDelay: `${delay}ms`,
-        willChange: "opacity, transform",
+        willChange: isVisible ? "auto" : "opacity, transform",
       }}
     >
       {children}
@@ -132,6 +132,8 @@ const Contact = () => {
   }, []);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [shouldLoadMap, setShouldLoadMap] = useState(false);
+  const mapFrameRef = useRef(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -147,6 +149,59 @@ const Contact = () => {
     navigate(path);
     setIsSidebarOpen(false);
   };
+
+  useEffect(() => {
+    const canonicalUrl = "https://www.lumispire.online/contact";
+    let canonical = document.querySelector('link[rel="canonical"]');
+    const previousCanonical = canonical?.getAttribute("href") || null;
+    const previousTitle = document.title;
+    let createdCanonical = false;
+
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+      createdCanonical = true;
+    }
+
+    canonical.setAttribute("href", canonicalUrl);
+    document.title = "Contact Us | LTC Group of Companies";
+
+    return () => {
+      document.title = previousTitle;
+
+      if (createdCanonical) {
+        canonical.remove();
+      } else if (previousCanonical) {
+        canonical.setAttribute("href", previousCanonical);
+      } else {
+        canonical.removeAttribute("href");
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const frame = mapFrameRef.current;
+    if (!frame || shouldLoadMap) return;
+
+    if (!("IntersectionObserver" in window)) {
+      setShouldLoadMap(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoadMap(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.05, rootMargin: "0px" }
+    );
+
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, [shouldLoadMap]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -223,8 +278,6 @@ const Contact = () => {
   return (
     <div className="ltc-contact-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-contact-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -863,6 +916,33 @@ const Contact = () => {
           display: block;
         }
 
+        .ltc-map-placeholder {
+          width: 100%;
+          height: 100%;
+          display: grid;
+          place-items: center;
+          gap: 10px;
+          padding: 28px;
+          border: 0;
+          color: var(--green-800);
+          background:
+            radial-gradient(circle at 20% 20%, rgba(215,168,77,.16), transparent 34%),
+            linear-gradient(135deg, #f8fbf9, #e8f2eb);
+          cursor: pointer;
+          text-align: center;
+        }
+
+        .ltc-map-placeholder strong {
+          font-size: 18px;
+          font-weight: 900;
+        }
+
+        .ltc-map-placeholder span {
+          max-width: 420px;
+          color: var(--muted);
+          font-size: 13px;
+        }
+
         .ltc-footer {
           width: 100%;
           background: var(--footer-green);
@@ -1050,7 +1130,14 @@ const Contact = () => {
             className="ltc-logo"
             aria-label="Go to home page"
           >
-            <img src={LOGO} alt="LTC Logo" className="ltc-logo-icon" />
+            <img
+              src={LOGO}
+              alt="LTC Logo"
+              className="ltc-logo-icon"
+              width="42"
+              height="42"
+              decoding="async"
+            />
 
             <div>
               <h1 style={fontMontserrat}>
@@ -1367,14 +1454,26 @@ const Contact = () => {
                   </a>
                 </div>
 
-                <div className="ltc-map-frame">
-                  <iframe
-                    title="LTC Group of Companies Location Map"
-                    src={mapUrl}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
+                <div ref={mapFrameRef} className="ltc-map-frame">
+                  {shouldLoadMap ? (
+                    <iframe
+                      title="LTC Group of Companies Location Map"
+                      src={mapUrl}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="ltc-map-placeholder"
+                      onClick={() => setShouldLoadMap(true)}
+                      style={fontMontserrat}
+                    >
+                      <strong>Load Interactive Map</strong>
+                      <span>Open the map here when you need directions to our Makati office.</span>
+                    </button>
+                  )}
                 </div>
               </section>
             </RevealOnScroll>

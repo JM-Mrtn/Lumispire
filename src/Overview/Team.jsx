@@ -3,9 +3,23 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ChatbotWidget from "./ChatbotWidget";
 import { getPublicLtcContent, pickPublicLtcImage } from "./ltcContentApi";
 
-const LOGO = "/LTCLogo.jpg";
-const BANNER_SRC = "/LTCBanner.png";
+const LOGO = "/LTCLogo.webp";
+const BANNER_SRC = "/LTCBanner.webp";
 const CONTACT_ROUTE = "/contact";
+
+const AVATAR_PLACEHOLDER = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
+    <rect width="220" height="220" rx="110" fill="#f3f3f3"/>
+    <circle cx="110" cy="82" r="38" fill="#d8e7dc"/>
+    <path d="M45 198c8-45 31-68 65-68s57 23 65 68" fill="#d8e7dc"/>
+    <text x="110" y="207" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#355e3b">LTC</text>
+  </svg>
+`)}`;
+
+const preferOptimizedLtcAsset = (source) =>
+  String(source || "")
+    .replace(/LTCBanner\.png(?=([?#]|$))/i, "LTCBanner.webp")
+    .replace(/LTCLogo\.jpg(?=([?#]|$))/i, "LTCLogo.webp");
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -45,7 +59,7 @@ const RevealOnScroll = ({ children, className = "", delay = 0, y = 18 }) => {
         transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
         transition: "opacity 650ms ease, transform 650ms ease",
         transitionDelay: `${delay}ms`,
-        willChange: "opacity, transform",
+        willChange: isVisible ? "auto" : "opacity, transform",
       }}
     >
       {children}
@@ -91,8 +105,14 @@ const TeamProfileCard = ({ person, founder = false }) => {
               src={person.avatar}
               alt={person.name}
               className="ltc-team-avatar"
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width="220"
+              height="220"
               onError={(e) => {
-                e.currentTarget.src = "https://placehold.co/220x220/F3F3F3/355E3B?text=Avatar";
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = AVATAR_PLACEHOLDER;
               }}
             />
 
@@ -189,8 +209,12 @@ const Team = () => {
     setIsSidebarOpen(false);
   };
 
-  const logoSrc = pickPublicLtcImage(ltcContent?.company?.logoUrl, LOGO);
-  const bannerSrc = pickPublicLtcImage(ltcContent?.company?.bannerUrl, BANNER_SRC);
+  const logoSrc = preferOptimizedLtcAsset(
+    pickPublicLtcImage(ltcContent?.company?.logoUrl, LOGO)
+  );
+  const bannerSrc = preferOptimizedLtcAsset(
+    pickPublicLtcImage(ltcContent?.company?.bannerUrl, BANNER_SRC)
+  );
 
   const navLinks = [
     { label: "HOME", to: "/" },
@@ -215,6 +239,36 @@ const Team = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const canonicalUrl = "https://www.lumispire.online/team";
+    let canonical = document.querySelector('link[rel="canonical"]');
+    const previousCanonical = canonical?.getAttribute("href") || null;
+    const previousTitle = document.title;
+    let createdCanonical = false;
+
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+      createdCanonical = true;
+    }
+
+    canonical.setAttribute("href", canonicalUrl);
+    document.title = "Our Team | LTC Group of Companies";
+
+    return () => {
+      document.title = previousTitle;
+
+      if (createdCanonical) {
+        canonical.remove();
+      } else if (previousCanonical) {
+        canonical.setAttribute("href", previousCanonical);
+      } else {
+        canonical.removeAttribute("href");
+      }
+    };
+  }, []);
+
   const defaultFounder = {
     name: "Lorna T. Castigador",
     role: "Founder & President",
@@ -222,7 +276,7 @@ const Team = () => {
     title: "Founder, LTC Group of Companies",
     practiceAreas:
       "PRACTICE AREAS: Training, Marketing, Accounting, Realty, Manpower and Hotel & Restaurant Services",
-    avatar: "https://placehold.co/220x220/F3F3F3/355E3B?text=Avatar",
+    avatar: AVATAR_PLACEHOLDER,
     sections: [
       {
         heading: "PROFESSIONAL AFFILIATIONS:",
@@ -241,7 +295,7 @@ const Team = () => {
       name: "Loren Gladius T. Castigador",
       role: "General Manager for Manpower Services (TAMSI)",
       email: "lorengladius1224@yahoo.com",
-      avatar: "https://placehold.co/220x220/F3F3F3/355E3B?text=Avatar",
+      avatar: AVATAR_PLACEHOLDER,
       education:
         "Graduated from Adamson University with a Bachelor of Science degree in Business Administration major in Operation Management.",
       affiliations: [
@@ -254,7 +308,7 @@ const Team = () => {
       name: "Loren Narcissus T. Castigador",
       role: "General Manager for System Services",
       email: "lorengladius1224@yahoo.com",
-      avatar: "https://placehold.co/220x220/F3F3F3/355E3B?text=Avatar",
+      avatar: AVATAR_PLACEHOLDER,
       education:
         "He finished his course of Bachelor of Science in Information System from the De La Salle College of Saint Benilde.",
       affiliations: [
@@ -268,7 +322,7 @@ const Team = () => {
       name: "Loren Larkspur T. Castigador",
       role: "General Manager for Training & Assessment (TAMSI)",
       email: "lorengladius1224@yahoo.com",
-      avatar: "https://placehold.co/220x220/F3F3F3/355E3B?text=Avatar",
+      avatar: AVATAR_PLACEHOLDER,
       education:
         "Earned his Bachelor of Science in Business Administration Major in Computer Application from the De La Salle College of Saint Benilde.",
       affiliations: [
@@ -282,7 +336,7 @@ const Team = () => {
       name: "Loren Christian T. Castigador",
       role: "General Manager for Hotel & Restaurant",
       email: "christcastigador1220@gmail.com",
-      avatar: "https://placehold.co/220x220/F3F3F3/355E3B?text=Avatar",
+      avatar: AVATAR_PLACEHOLDER,
       education:
         "Earned his Bachelor of Science in Business Administration Major in Computer Application from the De La Salle College of Saint Benilde.",
       affiliations: [
@@ -299,7 +353,7 @@ const Team = () => {
         ...member,
         avatar: pickPublicLtcImage(
           member.avatar,
-          "https://placehold.co/220x220/F3F3F3/355E3B?text=Avatar"
+          AVATAR_PLACEHOLDER
         ),
         affiliations: Array.isArray(member.affiliations) ? member.affiliations : [],
         sections: Array.isArray(member.sections)
@@ -320,8 +374,6 @@ const Team = () => {
   return (
     <div className="ltc-team" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-team {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -822,6 +874,8 @@ const Team = () => {
         .ltc-team-list {
           display: grid;
           gap: 24px;
+          content-visibility: auto;
+          contain-intrinsic-size: auto 1800px;
         }
 
         .ltc-info-grid {
@@ -829,6 +883,8 @@ const Team = () => {
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 24px;
           margin-top: 34px;
+          content-visibility: auto;
+          contain-intrinsic-size: auto 700px;
         }
 
         .ltc-compact-card {
@@ -1103,7 +1159,14 @@ const Team = () => {
       <header className="ltc-header">
         <div className="ltc-container ltc-nav">
           <button type="button" onClick={() => goTo("/")} className="ltc-logo">
-            <img src={logoSrc} alt="LTC Logo" className="ltc-logo-icon" />
+            <img
+              src={logoSrc}
+              alt="LTC Logo"
+              className="ltc-logo-icon"
+              width="42"
+              height="42"
+              decoding="async"
+            />
 
             <div>
               <h1 style={fontMontserrat}>
