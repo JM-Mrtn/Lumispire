@@ -37,11 +37,11 @@ const ADMIN_NAV = [
 const HotelDashboardLayout = memo(function HotelDashboardLayout({children, title, subtitle, actions}) {
  const navigate = useNavigate();
  const logout=()=>{localStorage.removeItem("adminToken");localStorage.removeItem("hotelAdminToken");localStorage.removeItem("hotelAdmin");navigate("/hotel-admin-login",{replace:true});};
- return <div className="min-h-screen bg-[#f8fbf9] text-[#071f14] lg:flex">
+ return <div className="min-h-screen w-full overflow-hidden bg-[#f8fbf9] text-[#071f14] lg:flex">
   <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
    <div className="flex h-full flex-col">
     <button onClick={()=>navigate('/hotel-admin-dashboard')} className="mb-8 text-center text-white">
-     <img src="/Logo.webp" loading="lazy" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"/>
+     <img src="/HotelLogo.webp" loading="lazy" alt="Hotel Logo" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"/>
      <div className="text-xs font-bold tracking-widest text-[#f4d484]">HOTEL & RESORT ADMIN</div>
      <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
     </button>
@@ -51,7 +51,7 @@ const HotelDashboardLayout = memo(function HotelDashboardLayout({children, title
     <button onClick={logout} className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white">Sign out</button>
    </div>
   </aside>
-  <main className="min-w-0 flex-1 lg:pl-64">
+  <main className="min-w-0 w-full overflow-hidden lg:pl-64">
    <header className="sticky top-0 z-30 border-b bg-white/95 p-5"><h1 className="text-3xl font-extrabold">{title}</h1><p>{subtitle}</p></header>
    {actions ? <div className="px-5 pt-4">{actions}</div>:null}
    {children}
@@ -1166,7 +1166,16 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
         <style>{`
           @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
+          html, body, #root {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden !important;
+          }
+
           .ltc-admin-dashboard {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
             --green-950: #071f14;
             --green-900: #0e3321;
             --green-800: #174a30;

@@ -1,12 +1,21 @@
 // HotelAdminBookings.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelAdminShell from "./HotelAdminShell";
 
 const GREEN_DARK = "#082719";
 const GREEN_SOFT = "#174A30";
 const GOLD = "#D7A84D";
 const CARD_BG = "#F8FBF9";
+
+const ADMIN_NAV = [
+  ["Dashboard", "/hotel-admin-dashboard"],
+  ["Manage Accounts", "/hotel-admin-accounts"],
+  ["Manage Bookings", "/hotel-admin-bookings"],
+  ["Packages", "/hotel-admin-packages"],
+  ["Guest Reviews", "/hotel-admin-reviews"],
+  ["Chat Support", "/hotel-admin-chat"],
+  ["ID Verification", "/hotel-admin-id-verify"],
+];
 
 const SERVICE_FILTERS = [
   { id: "ALL", label: "All Services" },
@@ -1439,23 +1448,103 @@ export default function HotelAdminBookings() {
   };
 
   return (
-    <HotelAdminShell
-      title="Manage Bookings"
-      subtitle="View payment terms, downpayments, balances, and proof of payment for all bookings."
-      activePage="bookings"
-      maxWidth="max-w-7xl"
-      actions={
-        <button
-          type="button"
-          onClick={fetchBookings}
-          disabled={loading}
-          className="h-10 rounded-2xl bg-[#082719] px-5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-        >
-          {loading ? "REFRESHING..." : "REFRESH"}
-        </button>
-      }
-    >
-      {status.message ? (
+    <div className="h-screen w-full overflow-hidden bg-[#f8fbf9] lg:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
+        <div className="flex h-full flex-col">
+          <button
+            type="button"
+            onClick={() => navigate("/hotel-admin-dashboard")}
+            className="mb-8 text-center text-white"
+          >
+            <img
+              src="/HotelLogo.webp"
+              loading="lazy"
+              alt="Hotel Logo"
+              className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"
+            />
+            <div className="text-xs font-bold tracking-widest text-[#f4d484]">
+              HOTEL & RESORT ADMIN
+            </div>
+            <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
+          </button>
+
+          <nav className="space-y-3">
+            {ADMIN_NAV.map(([label, path]) => {
+              const active = path === "/hotel-admin-bookings";
+
+              return (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => navigate(path)}
+                  className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold text-white transition ${
+                    active ? "bg-white/15 ring-1 ring-white/10" : "hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("adminToken");
+              localStorage.removeItem("hotelAdminToken");
+              localStorage.removeItem("hotelAdmin");
+              navigate("/hotel-admin-login", { replace: true });
+            }}
+            className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white transition hover:bg-white/15"
+          >
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      <main className="min-w-0 h-screen w-full overflow-hidden lg:pl-64">
+        <div className="h-full w-full overflow-x-hidden overflow-y-auto">
+          <div className="min-h-full w-full p-[clamp(18px,2.2vw,28px)] text-[#101828]">
+            <style>{`
+              @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+              .ltc-bookings-page {
+                font-family: "Inter", Arial, sans-serif;
+                border-radius: 30px;
+                background:
+                  radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+                  radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+                  linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+              }
+
+              .ltc-bookings-page * { box-sizing: border-box; }
+            `}</style>
+
+            <div className="ltc-bookings-page min-h-full overflow-hidden p-0 sm:p-0">
+              <div className="mb-6 flex flex-col gap-4 rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(8,39,25,0.12)] backdrop-blur-xl md:flex-row md:items-center md:justify-between md:p-6">
+                <div>
+                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D7A84D]">
+                    Hotel & Resort Admin
+                  </p>
+                  <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-[#082719]">
+                    Manage Bookings
+                  </h1>
+                  <p className="mt-2 max-w-3xl text-sm font-semibold text-black/55">
+                    View payment terms, downpayments, balances, and proof of payment for all bookings.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={fetchBookings}
+                  disabled={loading}
+                  className="h-10 shrink-0 rounded-full bg-gradient-to-br from-[#F4D484] to-[#D7A84D] px-6 text-xs font-extrabold text-[#102418] shadow-[0_16px_35px_rgba(215,168,77,.24)] transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+                >
+                  {loading ? "REFRESHING..." : "REFRESH"}
+                </button>
+              </div>
+
+              {status.message ? (
         <div
           className={`mb-5 rounded-xl border px-4 py-3 text-sm font-semibold ${getStatusBoxClass(
             status.type
@@ -1767,16 +1856,20 @@ export default function HotelAdminBookings() {
         </div>
       </div>
 
-      {proofModal.open ? (
-        <ProofPreviewModal
-          booking={proofModal.booking}
-          url={proofModal.url}
-          mimeType={proofModal.mimeType}
-          loading={proofModal.loading}
-          error={proofModal.error}
-          onClose={closeProofModal}
-        />
-      ) : null}
-    </HotelAdminShell>
+              {proofModal.open ? (
+                <ProofPreviewModal
+                  booking={proofModal.booking}
+                  url={proofModal.url}
+                  mimeType={proofModal.mimeType}
+                  loading={proofModal.loading}
+                  error={proofModal.error}
+                  onClose={closeProofModal}
+                />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -1,7 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
-import HotelAdminShell from "./HotelAdminShell";
+
+const ADMIN_NAV = [
+  ["Dashboard", "/hotel-admin-dashboard"],
+  ["Manage Accounts", "/hotel-admin-accounts"],
+  ["Manage Bookings", "/hotel-admin-bookings"],
+  ["Packages", "/hotel-admin-packages"],
+  ["Guest Reviews", "/hotel-admin-reviews"],
+  ["Chat Support", "/hotel-admin-chat"],
+  ["ID Verification", "/hotel-admin-id-verify"],
+];
 
 function getHotelApiBase() {
   const raw =
@@ -436,14 +445,61 @@ export default function HotelAdminChat() {
   const isBot = (msg) => msg.senderRole === "bot" || msg.isAutoReply === true;
 
   return (
-    <HotelAdminShell
-      title="Guest Conversations"
-      subtitle="Filter guest chats by concern type, search by Booking ID or guest, and reply in real time."
-      activePage="chat"
-      maxWidth="max-w-[1500px]"
-      contentClassName="min-h-[calc(100vh-120px)]"
-    >
-      <div className="ltc-admin-chat">
+    <div className="h-screen w-full overflow-hidden bg-[#f8fbf9] lg:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
+        <div className="flex h-full flex-col">
+          <button
+            type="button"
+            onClick={() => navigate("/hotel-admin-dashboard")}
+            className="mb-8 text-center text-white"
+          >
+            <img
+              src="/HotelLogo.webp"
+              loading="lazy"
+              alt="Hotel Logo"
+              className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"
+            />
+            <div className="text-xs font-bold tracking-widest text-[#f4d484]">
+              HOTEL & RESORT ADMIN
+            </div>
+            <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
+          </button>
+
+          <nav className="space-y-3">
+            {ADMIN_NAV.map(([label, path]) => {
+              const active = path === "/hotel-admin-chat";
+              return (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => navigate(path)}
+                  className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold text-white transition ${
+                    active ? "bg-white/10 ring-1 ring-white/10" : "hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("adminToken");
+              localStorage.removeItem("hotelAdminToken");
+              navigate("/hotel-admin-login", { replace: true });
+            }}
+            className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white transition hover:bg-white/15"
+          >
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      <main className="min-w-0 h-screen w-full overflow-hidden lg:pl-64">
+        <div className="h-full w-full overflow-x-hidden">
+          <div className="ltc-admin-chat">
         <style>{`
           @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
@@ -464,8 +520,9 @@ export default function HotelAdminChat() {
             --radius: 24px;
             --ease: cubic-bezier(.22,1,.36,1);
 
-            min-height: calc(100vh - 150px);
-            margin: -8px;
+            height: 100%;
+            min-height: 100%;
+            margin: 0;
             padding: clamp(16px, 2vw, 24px);
             border-radius: 30px;
             background:
@@ -504,7 +561,7 @@ export default function HotelAdminChat() {
             overflow: hidden;
             display: grid;
             grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
-            height: calc(100vh - 190px);
+            height: calc(100vh - 48px);
             min-height: 620px;
             border-radius: var(--radius);
             background: var(--glass);
@@ -515,7 +572,7 @@ export default function HotelAdminChat() {
           }
 
           .ltc-chat-panel.with-notice {
-            height: calc(100vh - 250px);
+            height: calc(100vh - 112px);
           }
 
           .ltc-chat-panel::before {
@@ -1035,8 +1092,11 @@ export default function HotelAdminChat() {
 
           @media (max-width: 900px) {
             .ltc-admin-chat {
-              margin: -4px;
+              height: auto;
+              min-height: 100%;
+              margin: 0;
               padding: 14px;
+              overflow: visible;
             }
 
             .ltc-chat-panel,
@@ -1287,7 +1347,9 @@ export default function HotelAdminChat() {
             )}
           </section>
         </div>
-      </div>
-    </HotelAdminShell>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

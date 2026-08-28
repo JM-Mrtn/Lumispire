@@ -1,7 +1,6 @@
 // HotelAdminReviews.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelAdminShell from "./HotelAdminShell";
 
 const REVIEW_TABS = [
   { id: "ALL", label: "All" },
@@ -218,23 +217,98 @@ const HotelAdminReviews = () => {
       ? "border-rose-200 bg-rose-50 text-rose-700"
       : "border-slate-200 bg-slate-50 text-slate-700";
 
+  const ADMIN_NAV = [
+    ["Dashboard", "/hotel-admin-dashboard"],
+    ["Manage Accounts", "/hotel-admin-accounts"],
+    ["Manage Bookings", "/hotel-admin-bookings"],
+    ["Packages", "/hotel-admin-packages"],
+    ["Guest Reviews", "/hotel-admin-reviews"],
+    ["Chat Support", "/hotel-admin-chat"],
+    ["ID Verification", "/hotel-admin-id-verify"],
+  ];
+
+  const handleSignOut = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("hotelAdminToken");
+    localStorage.removeItem("hotelAdmin");
+    navigate("/hotel-admin-login", { replace: true });
+  };
+
   return (
-    <HotelAdminShell
-      title="Guest Reviews"
-      subtitle="Read guest feedback, filter by rating, and save admin replies."
-      activePage="reviews"
-      maxWidth="max-w-7xl"
-      actions={
-        <button
-          type="button"
-          onClick={() => fetchReviews({ targetPage: page, targetTab: tab })}
-          disabled={loading}
-          className="ltc-admin-refresh"
-        >
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
-      }
-    >
+    <div className="h-screen w-full overflow-hidden bg-[#f8fbf9] lg:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
+        <div className="flex h-full flex-col">
+          <button
+            type="button"
+            onClick={() => navigate("/hotel-admin-dashboard")}
+            className="mb-8 text-center text-white"
+          >
+            <img
+              src="/HotelLogo.webp"
+              loading="lazy"
+              alt="Hotel Logo"
+              className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"
+            />
+            <div className="text-xs font-bold tracking-widest text-[#f4d484]">
+              HOTEL & RESORT ADMIN
+            </div>
+            <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
+          </button>
+
+          <nav className="space-y-3">
+            {ADMIN_NAV.map(([label, path]) => {
+              const active = path === "/hotel-admin-reviews";
+              return (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => navigate(path)}
+                  className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold text-white transition ${
+                    active ? "bg-white/15 ring-1 ring-white/10" : "hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white transition hover:bg-white/15"
+          >
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      <main className="h-screen min-w-0 w-full overflow-hidden lg:pl-64">
+        <div className="h-full w-full overflow-y-auto overflow-x-hidden">
+          <div className="min-h-full p-4 sm:p-5 lg:p-7">
+            <div className="ltc-reviews-page-shell">
+              <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="m-0 text-xs font-black uppercase tracking-[0.18em] text-black/40">
+                    Guest Feedback
+                  </p>
+                  <h1 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#071f14] sm:text-4xl">
+                    Guest Reviews
+                  </h1>
+                  <p className="mt-2 max-w-2xl text-sm font-semibold text-[#667085]">
+                    Read guest feedback, filter by rating, and save admin replies.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => fetchReviews({ targetPage: page, targetTab: tab })}
+                  disabled={loading}
+                  className="ltc-admin-refresh shrink-0"
+                >
+                  {loading ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
       <style>{`
         .ltc-reviews-page {
           --green-950: #071f14;
@@ -249,6 +323,18 @@ const HotelAdminReviews = () => {
           --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
           --radius: 24px;
           --ease: cubic-bezier(.22,1,.36,1);
+        }
+
+        .ltc-reviews-page-shell {
+          min-height: 100%;
+          padding: clamp(18px, 2.2vw, 28px);
+          border-radius: 30px;
+          background:
+            radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+            radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+            linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+          color: #101828;
+          overflow: hidden;
         }
 
         .ltc-reviews-page * {
@@ -824,7 +910,11 @@ const HotelAdminReviews = () => {
           />
         ) : null}
       </div>
-    </HotelAdminShell>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 

@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelAdminShell from "./HotelAdminShell";
+
+
+const ADMIN_NAV = [
+  ["Dashboard","/hotel-admin-dashboard"],
+  ["Manage Accounts","/hotel-admin-accounts"],
+  ["Manage Bookings","/hotel-admin-bookings"],
+  ["Packages","/hotel-admin-packages"],
+  ["Guest Reviews","/hotel-admin-reviews"],
+  ["Chat Support","/hotel-admin-chat"],
+  ["ID Verification","/hotel-admin-id-verify"]
+];
 
 const EMPTY_EDIT_FORM = {
   firstName: "",
@@ -516,23 +526,27 @@ const AdminAccounts = () => {
       : "border-slate-200 bg-slate-50 text-slate-700";
 
   return (
-    <HotelAdminShell
-      title="Manage Accounts"
-      subtitle="View, edit, activate, and deactivate registered hotel user accounts."
-      activePage="accounts"
-      maxWidth="max-w-6xl"
-      actions={
-        <button
-          type="button"
-          onClick={fetchAccounts}
-          disabled={loading}
-          className="ltc-admin-refresh"
-        >
-          {loading ? "REFRESHING..." : "REFRESH"}
-        </button>
-      }
-    >
-      <div className="ltc-admin-accounts">
+    <div className="h-screen w-full overflow-hidden bg-[#f8fbf9] lg:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
+        <div className="flex h-full flex-col">
+          <button onClick={() => navigate('/hotel-admin-dashboard')} className="mb-8 text-center text-white">
+            <img src="/HotelLogo.webp" loading="lazy" alt="Hotel Logo" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover" />
+            <div className="text-xs font-bold tracking-widest text-[#f4d484]">HOTEL & RESORT ADMIN</div>
+            <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
+          </button>
+          <nav className="space-y-3">
+            {ADMIN_NAV.map(([label, path]) => (
+              <button key={path} onClick={() => navigate(path)} className="flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold text-white hover:bg-white/10">
+                {label}
+              </button>
+            ))}
+          </nav>
+          <button onClick={() => { localStorage.removeItem('adminToken'); localStorage.removeItem('hotelAdminToken'); navigate('/hotel-admin-login', {replace:true}); }} className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white">Sign out</button>
+        </div>
+      </aside>
+      <main className="min-w-0 h-screen w-full overflow-hidden lg:pl-64">
+        <div className="h-full w-full overflow-x-hidden">
+          <div className="ltc-admin-accounts">
         <style>{`
           @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
@@ -551,8 +565,8 @@ const AdminAccounts = () => {
             --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
             --radius: 24px;
             --ease: cubic-bezier(.22,1,.36,1);
-            min-height: calc(100vh - 120px);
-            margin: -8px;
+            min-height: 100%;
+            margin: 0;
             padding: clamp(18px, 2.2vw, 28px);
             border-radius: 30px;
             color: var(--dark);
@@ -1218,8 +1232,10 @@ const AdminAccounts = () => {
           </div>
         </div>
       )}
-      </div>
-    </HotelAdminShell>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 

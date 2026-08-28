@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelAdminShell from "./HotelAdminShell";
+
+const ADMIN_NAV = [
+  ["Dashboard", "/hotel-admin-dashboard"],
+  ["Manage Accounts", "/hotel-admin-accounts"],
+  ["Manage Bookings", "/hotel-admin-bookings"],
+  ["Packages", "/hotel-admin-packages"],
+  ["Guest Reviews", "/hotel-admin-reviews"],
+  ["Chat Support", "/hotel-admin-chat"],
+  ["ID Verification", "/hotel-admin-id-verify"],
+];
 
 function getApiBase() {
   const raw = (
@@ -726,18 +735,79 @@ export default function HotelAdminPackages() {
   };
 
   return (
-    <HotelAdminShell
-      title="Package Management"
-      subtitle="Manage resort, hotel, condo, and event package rates with a simpler modal form."
-      activePage="packages"
-      maxWidth="max-w-7xl"
-      actions={
-        <button type="button" onClick={startCreate} className="ltc-admin-btn">
-          ADD PACKAGE
-        </button>
-      }
-    >
-      <div className="ltc-admin-packages-surface">
+    <div className="h-screen w-full overflow-hidden bg-[#f8fbf9] lg:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
+        <div className="flex h-full flex-col">
+          <button
+            type="button"
+            onClick={() => navigate("/hotel-admin-dashboard")}
+            className="mb-8 text-center text-white"
+          >
+            <img
+              src="/HotelLogo.webp"
+              loading="lazy"
+              alt="Hotel Logo"
+              className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"
+            />
+            <div className="text-xs font-bold tracking-widest text-[#f4d484]">
+              HOTEL & RESORT ADMIN
+            </div>
+            <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
+          </button>
+
+          <nav className="space-y-3">
+            {ADMIN_NAV.map(([label, path]) => {
+              const active = path === "/hotel-admin-packages";
+              return (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => navigate(path)}
+                  className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold text-white transition ${
+                    active
+                      ? "bg-white/15 ring-1 ring-white/10"
+                      : "hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("adminToken");
+              localStorage.removeItem("hotelAdminToken");
+              localStorage.removeItem("hotelAdmin");
+              navigate("/hotel-admin-login", { replace: true });
+            }}
+            className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white transition hover:bg-white/15"
+          >
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      <main className="min-w-0 h-screen w-full overflow-hidden lg:pl-64">
+        <div className="h-full w-full overflow-y-auto overflow-x-hidden">
+          <div className="ltc-admin-packages-page">
+            <div className="ltc-admin-packages-header">
+              <div>
+                <p className="ltc-admin-page-kicker">Hotel & Resort Admin</p>
+                <h1 className="ltc-admin-page-title">Package Management</h1>
+                <p className="ltc-admin-page-subtitle">
+                  Manage resort, hotel, condo, and event package rates with a simpler modal form.
+                </p>
+              </div>
+
+              <button type="button" onClick={startCreate} className="ltc-admin-btn">
+                ADD PACKAGE
+              </button>
+            </div>
+
+            <div className="ltc-admin-packages-surface">
         <style>{adminPackageStyles}</style>
 
         {status.message ? (
@@ -808,8 +878,11 @@ export default function HotelAdminPackages() {
             submitForm={submitForm}
           />
         ) : null}
-      </div>
-    </HotelAdminShell>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
 
@@ -1167,6 +1240,52 @@ function SectionCard({ title, description, action, children }) {
 }
 
 const adminPackageStyles = `
+  .ltc-admin-packages-page {
+    min-height: 100%;
+    padding: clamp(18px, 2.2vw, 28px);
+    color: #101828;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+      radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+    font-family: "Inter", Arial, sans-serif;
+  }
+
+  .ltc-admin-packages-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .ltc-admin-page-kicker {
+    margin: 0;
+    color: rgba(16,24,40,.46);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+  }
+
+  .ltc-admin-page-title {
+    margin: 6px 0 0;
+    color: #071f14;
+    font-size: clamp(30px, 4vw, 44px);
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: -.055em;
+  }
+
+  .ltc-admin-page-subtitle {
+    max-width: 760px;
+    margin: 10px 0 0;
+    color: #667085;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.65;
+  }
+
   .ltc-admin-packages-surface {
     --green-950: #071f14;
     --green-900: #0e3321;
@@ -1690,6 +1809,9 @@ const adminPackageStyles = `
   }
 
   @media (max-width: 640px) {
+    .ltc-admin-packages-page { padding: 14px; }
+    .ltc-admin-packages-header { flex-direction: column; }
+    .ltc-admin-packages-header > .ltc-admin-btn { width: 100%; }
     .ltc-admin-panel,
     .ltc-admin-section-card,
     .ltc-admin-preset-box,
