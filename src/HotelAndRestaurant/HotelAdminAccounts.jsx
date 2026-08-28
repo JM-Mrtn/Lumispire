@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 
@@ -28,6 +28,7 @@ const AdminAccounts = () => {
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [sortBy, setSortBy] = useState("Recent");
 
   const pageSize = 10;
@@ -69,10 +70,6 @@ const AdminAccounts = () => {
     navigate("/hotel-admin-login", { replace: true });
   };
 
-  useEffect(() => {
-    if (!getAdminToken()) navigate("/hotel-admin-login");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const fetchAccounts = async () => {
     setLoading(true);
@@ -114,7 +111,7 @@ const AdminAccounts = () => {
   }, [search, sortBy]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
 
     let list = accounts.filter((a) => {
       const username = a.username || "";
@@ -144,7 +141,7 @@ const AdminAccounts = () => {
     }
 
     return list;
-  }, [accounts, search, sortBy]);
+  }, [accounts, deferredSearch, sortBy]);
 
   const activeAccounts = useMemo(() => filtered.filter((u) => u.active !== false), [filtered]);
   const deactivatedAccounts = useMemo(() => filtered.filter((u) => u.active === false), [filtered]);
@@ -340,7 +337,7 @@ const AdminAccounts = () => {
     setShowConfirmPassword(false);
   };
 
-  const openEditModal = async (user) => {
+  const openEditModal = (user) => {
     if (!user?._id) return;
 
     setEditingUser(user);
@@ -355,43 +352,9 @@ const AdminAccounts = () => {
     });
     setEditErrors({});
     setEditStatus({ type: "", message: "" });
-    setEditLoading(true);
+    setEditLoading(false);
     setShowPassword(false);
     setShowConfirmPassword(false);
-
-    try {
-      const token = getAdminToken();
-      if (!token) return handleAuthFail();
-
-      const res = await fetch(`${API_BASE}/hotel-users/${user._id}`, {
-        method: "GET",
-        headers: adminHeaders(),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 401 || res.status === 403) return handleAuthFail();
-
-      if (!res.ok) {
-        setEditStatus({ type: "error", message: data.message || "Failed to load account." });
-        return;
-      }
-
-      setEditingUser(data?._id ? data : user);
-      setEditForm({
-        firstName: data.firstName || "",
-        lastName: data.lastName || "",
-        username: data.username || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        password: "",
-        confirmPassword: "",
-      });
-    } catch (err) {
-      console.error(err);
-      setEditStatus({ type: "error", message: "Network error while loading account." });
-    } finally {
-      setEditLoading(false);
-    }
   };
 
   const onEditChange = (key, value) => {
@@ -469,7 +432,6 @@ const AdminAccounts = () => {
       );
 
       setEditStatus({ type: "success", message: "Account updated successfully." });
-      await fetchAccounts();
       closeEditModal();
     } catch (err) {
       console.error(err);
@@ -530,13 +492,22 @@ const AdminAccounts = () => {
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
         <div className="flex h-full flex-col">
           <button onClick={() => navigate('/hotel-admin-dashboard')} className="mb-8 text-center text-white">
-            <img src="/HotelLogo.webp" loading="lazy" alt="Hotel Logo" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover" />
+            <img src="/HotelLogo.webp" width="56" height="56" loading="eager" fetchPriority="high" decoding="async" alt="Hotel Logo" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover" />
             <div className="text-xs font-bold tracking-widest text-[#f4d484]">HOTEL & RESORT ADMIN</div>
             <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
           </button>
           <nav className="space-y-3">
             {ADMIN_NAV.map(([label, path]) => (
-              <button key={path} onClick={() => navigate(path)} className="flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold text-white hover:bg-white/10">
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                aria-current={path === "/hotel-admin-accounts" ? "page" : undefined}
+                className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold transition ${
+                  path === "/hotel-admin-accounts"
+                    ? "bg-white/15 text-[#f4d484]"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
                 {label}
               </button>
             ))}
@@ -545,358 +516,377 @@ const AdminAccounts = () => {
         </div>
       </aside>
       <main className="min-w-0 h-screen w-full overflow-hidden lg:pl-64">
-        <div className="h-full w-full overflow-x-hidden">
+        <div className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-contain">
           <div className="ltc-admin-accounts">
-        <style>{`
-          @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+            <style>{`
+.ltc-admin-accounts {
+  --green-950: #071f14;
+  --green-900: #0e3321;
+  --green-800: #174a30;
+  --green-700: #235f3e;
+  --green-600: #2f754c;
+  --gold: #d7a84d;
+  --gold-soft: #f4d484;
+  --dark: #101828;
+  --muted: #667085;
+  --glass: rgba(255,255,255,.96);
+  --shadow-md: 0 10px 28px rgba(8,39,25,.09);
+  --shadow-lg: 0 22px 56px rgba(8,39,25,.14);
+  --radius: 24px;
+  --ease: cubic-bezier(.22,1,.36,1);
+  min-height: 100%;
+  margin: 0;
+  padding: clamp(18px, 2.2vw, 28px);
+  border-radius: 30px;
+  color: var(--dark);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
+    radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
+    linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
+  line-height: 1.65;
+  letter-spacing: -.01em;
+  overflow: hidden;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
-          .ltc-admin-accounts {
-            --green-950: #071f14;
-            --green-900: #0e3321;
-            --green-800: #174a30;
-            --green-700: #235f3e;
-            --green-600: #2f754c;
-            --gold: #d7a84d;
-            --gold-soft: #f4d484;
-            --dark: #101828;
-            --muted: #667085;
-            --glass: rgba(255,255,255,.78);
-            --shadow-md: 0 18px 45px rgba(8,39,25,.12);
-            --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
-            --radius: 24px;
-            --ease: cubic-bezier(.22,1,.36,1);
-            min-height: 100%;
-            margin: 0;
-            padding: clamp(18px, 2.2vw, 28px);
-            border-radius: 30px;
-            color: var(--dark);
-            background:
-              radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
-              radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
-              linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
-            line-height: 1.65;
-            letter-spacing: -.01em;
-            overflow: hidden;
-            font-family: "Inter", Arial, sans-serif;
-          }
+.ltc-admin-accounts * { box-sizing: border-box; }
 
-          .ltc-admin-accounts * { box-sizing: border-box; }
+.ltc-admin-refresh,
+.ltc-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 999px;
+  border: 0;
+  color: #102418;
+  background: linear-gradient(135deg,#f4d484,#d7a84d);
+  box-shadow: 0 16px 35px rgba(215,168,77,.24);
+  padding: 0 22px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: .28s var(--ease);
+}
 
-          .ltc-admin-refresh,
-          .ltc-admin-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 42px;
-            border-radius: 999px;
-            border: 0;
-            color: #102418;
-            background: linear-gradient(135deg,#f4d484,#d7a84d);
-            box-shadow: 0 16px 35px rgba(215,168,77,.24);
-            padding: 0 22px;
-            font-size: 12px;
-            font-weight: 900;
-            cursor: pointer;
-            transition: .28s var(--ease);
-          }
+.ltc-admin-refresh:hover,
+.ltc-admin-btn:hover { transform: translateY(-3px); }
+.ltc-admin-refresh:disabled { cursor: not-allowed; opacity: .6; transform: none; }
 
-          .ltc-admin-refresh:hover,
-          .ltc-admin-btn:hover { transform: translateY(-3px); }
-          .ltc-admin-refresh:disabled { cursor: not-allowed; opacity: .6; transform: none; }
+.ltc-admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
 
-          .ltc-admin-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 18px;
-            margin-bottom: 22px;
-          }
+.ltc-admin-stat-card,
+.ltc-admin-panel,
+.ltc-admin-account-row,
+.ltc-admin-empty {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--glass);
+  border: 1px solid rgba(255,255,255,.76);
+  box-shadow: var(--shadow-md);
+}
 
-          .ltc-admin-stat-card,
-          .ltc-admin-panel,
-          .ltc-admin-account-row,
-          .ltc-admin-empty {
-            position: relative;
-            overflow: hidden;
-            border-radius: var(--radius);
-            background: var(--glass);
-            border: 1px solid rgba(255,255,255,.76);
-            box-shadow: var(--shadow-md);
-            backdrop-filter: blur(18px);
-            animation: ltcAppleReveal .7s var(--ease) both;
-          }
+.ltc-admin-stat-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 132px;
+  padding: 24px;
+  transition: .38s var(--ease);
+}
 
-          .ltc-admin-stat-card {
-            padding: 24px;
-            transition: .38s var(--ease);
-          }
+.ltc-admin-stat-card::before,
+.ltc-admin-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  background: linear-gradient(90deg,var(--green-700),var(--gold));
+}
 
-          .ltc-admin-stat-card::before,
-          .ltc-admin-panel::before {
-            content: "";
-            position: absolute;
-            inset: 0 0 auto;
-            height: 6px;
-            background: linear-gradient(90deg,var(--green-700),var(--gold));
-          }
+.ltc-admin-stat-card::after {
+  content: "";
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  right: -80px;
+  bottom: -80px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(215,168,77,.22), transparent 58%),
+    radial-gradient(circle, rgba(47,117,76,.18), transparent 66%);
+  opacity: .85;
+  transition: transform .45s var(--ease), opacity .45s var(--ease);
+}
 
-          .ltc-admin-stat-card::after {
-            content: "";
-            position: absolute;
-            width: 170px;
-            height: 170px;
-            right: -80px;
-            bottom: -80px;
-            border-radius: 50%;
-            background:
-              radial-gradient(circle, rgba(215,168,77,.22), transparent 58%),
-              radial-gradient(circle, rgba(47,117,76,.18), transparent 66%);
-            opacity: .85;
-            transition: transform .45s var(--ease), opacity .45s var(--ease);
-          }
+.ltc-admin-stat-card:hover {
+  transform: translateY(-10px) scale(1.01);
+  box-shadow: 0 34px 85px rgba(8,39,25,.20);
+  border-color: rgba(215,168,77,.54);
+  background: rgba(255,255,255,.92);
+}
 
-          .ltc-admin-stat-card:hover {
-            transform: translateY(-10px) scale(1.01);
-            box-shadow: 0 34px 85px rgba(8,39,25,.20);
-            border-color: rgba(215,168,77,.54);
-            background: rgba(255,255,255,.92);
-          }
+.ltc-admin-stat-card:hover::after { transform: translate(-18px, -16px) scale(1.18); }
 
-          .ltc-admin-stat-card:hover::after { transform: translate(-18px, -16px) scale(1.18); }
+.ltc-admin-stat-title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: rgba(16,24,40,.46);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+}
 
-          .ltc-admin-stat-title {
-            position: relative;
-            z-index: 1;
-            margin: 0;
-            color: rgba(16,24,40,.46);
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: .18em;
-          }
+.ltc-admin-stat-value {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 0;
+  color: var(--green-800);
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -.055em;
+}
 
-          .ltc-admin-stat-value {
-            position: relative;
-            z-index: 1;
-            margin: 12px 0 0;
-            color: var(--green-800);
-            font-size: 40px;
-            line-height: 1;
-            font-weight: 900;
-            letter-spacing: -.055em;
-          }
+.ltc-admin-stat-note {
+  position: relative;
+  z-index: 1;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
 
-          .ltc-admin-stat-note {
-            position: relative;
-            z-index: 1;
-            margin: 10px 0 0;
-            color: var(--muted);
-            font-size: 13px;
-            font-weight: 700;
-          }
+.ltc-admin-panel {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1100px;
+  padding: 24px;
+}
 
-          .ltc-admin-panel {
-            padding: 24px;
-          }
+.ltc-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
 
-          .ltc-admin-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 22px;
-          }
+.ltc-admin-search-group,
+.ltc-admin-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-          .ltc-admin-search-group,
-          .ltc-admin-sort-wrap {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-          }
+.ltc-admin-search-box { position: relative; width: min(100%, 340px); }
 
-          .ltc-admin-search-box { position: relative; width: min(100%, 340px); }
+.ltc-admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  border: 1px solid rgba(35,95,62,.14);
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 10px 22px rgba(8,39,25,.08);
+  transition: .25s var(--ease);
+}
 
-          .ltc-admin-icon-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 42px;
-            height: 42px;
-            border-radius: 16px;
-            border: 1px solid rgba(35,95,62,.14);
-            background: rgba(255,255,255,.88);
-            box-shadow: 0 10px 22px rgba(8,39,25,.08);
-            transition: .25s var(--ease);
-          }
+.ltc-admin-icon-btn:hover { transform: translateY(-2px); background: white; }
 
-          .ltc-admin-icon-btn:hover { transform: translateY(-2px); background: white; }
+.ltc-admin-input,
+.ltc-admin-select {
+  min-height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(35,95,62,.14);
+  background: rgba(255,255,255,.88);
+  color: var(--green-950);
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 800;
+  outline: none;
+  transition: .25s var(--ease);
+}
 
-          .ltc-admin-input,
-          .ltc-admin-select {
-            min-height: 42px;
-            border-radius: 999px;
-            border: 1px solid rgba(35,95,62,.14);
-            background: rgba(255,255,255,.88);
-            color: var(--green-950);
-            padding: 0 16px;
-            font-size: 13px;
-            font-weight: 800;
-            outline: none;
-            transition: .25s var(--ease);
-          }
+.ltc-admin-input { width: 100%; min-width: 260px; }
+.ltc-admin-select { min-width: 130px; }
 
-          .ltc-admin-input { width: 100%; min-width: 260px; }
-          .ltc-admin-select { min-width: 130px; }
+.ltc-admin-input:focus,
+.ltc-admin-select:focus {
+  border-color: rgba(215,168,77,.58);
+  box-shadow: 0 0 0 4px rgba(215,168,77,.16);
+  background: white;
+}
 
-          .ltc-admin-input:focus,
-          .ltc-admin-select:focus {
-            border-color: rgba(215,168,77,.58);
-            box-shadow: 0 0 0 4px rgba(215,168,77,.16);
-            background: white;
-          }
+.ltc-admin-section-heading {
+  margin: 24px 0 0;
+  color: var(--green-950) !important;
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -.045em;
+}
 
-          .ltc-admin-section-heading {
-            margin: 24px 0 0;
-            color: var(--green-950) !important;
-            font-size: clamp(24px, 3vw, 32px);
-            line-height: 1.1;
-            font-weight: 900;
-            letter-spacing: -.045em;
-          }
+.ltc-admin-section-heading-spaced { margin-top: 34px; }
 
-          .ltc-admin-section-heading-spaced { margin-top: 34px; }
+.ltc-admin-table-head {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 18px;
+  color: rgba(16,24,40,.48);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
 
-          .ltc-admin-table-head {
-            margin-top: 14px;
-            display: grid;
-            grid-template-columns: repeat(12, minmax(0, 1fr));
-            gap: 12px;
-            padding: 0 18px;
-            color: rgba(16,24,40,.48);
-            font-size: 11px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: .12em;
-          }
+.ltc-admin-account-list {
+  margin-top: 10px;
+  display: grid;
+  gap: 12px;
+}
 
-          .ltc-admin-account-list {
-            margin-top: 10px;
-            display: grid;
-            gap: 12px;
-          }
+.ltc-admin-account-row {
+  contain: layout paint;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(255,255,255,.88) !important;
+  border: 1px solid rgba(35,95,62,.08) !important;
+  box-shadow: 0 12px 26px rgba(8,39,25,.06) !important;
+  transition: .25s var(--ease);
+}
 
-          .ltc-admin-account-row {
-            display: grid;
-            grid-template-columns: repeat(12, minmax(0, 1fr));
-            align-items: center;
-            gap: 12px;
-            padding: 14px 18px;
-            background: rgba(255,255,255,.88) !important;
-            border: 1px solid rgba(35,95,62,.08) !important;
-            box-shadow: 0 12px 26px rgba(8,39,25,.06) !important;
-            transition: .25s var(--ease);
-          }
+.ltc-admin-account-row:hover {
+  transform: translateY(-3px);
+  border-color: rgba(215,168,77,.42) !important;
+  background: rgba(255,255,255,.96) !important;
+}
 
-          .ltc-admin-account-row:hover {
-            transform: translateY(-3px);
-            border-color: rgba(215,168,77,.42) !important;
-            background: rgba(255,255,255,.96) !important;
-          }
+.ltc-admin-account-name {
+  color: var(--green-800) !important;
+  font-size: 14px;
+  font-weight: 900;
+}
 
-          .ltc-admin-account-name {
-            color: var(--green-800) !important;
-            font-size: 14px;
-            font-weight: 900;
-          }
+.ltc-admin-account-sub,
+.ltc-admin-account-info {
+  color: rgba(16,24,40,.55);
+  font-size: 12px;
+  font-weight: 800;
+}
 
-          .ltc-admin-account-sub,
-          .ltc-admin-account-info {
-            color: rgba(16,24,40,.55);
-            font-size: 12px;
-            font-weight: 800;
-          }
+.ltc-admin-actions-cell { flex-wrap: wrap; }
 
-          .ltc-admin-actions-cell { flex-wrap: wrap; }
+.ltc-admin-action-btn,
+.ltc-admin-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0 14px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: .25s var(--ease);
+}
 
-          .ltc-admin-action-btn,
-          .ltc-admin-page-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 32px;
-            border-radius: 999px;
-            border: 1px solid transparent;
-            padding: 0 14px;
-            font-size: 11px;
-            font-weight: 900;
-            cursor: pointer;
-            transition: .25s var(--ease);
-          }
+.ltc-admin-action-btn:hover,
+.ltc-admin-page-btn:hover { transform: translateY(-2px); }
 
-          .ltc-admin-action-btn:hover,
-          .ltc-admin-page-btn:hover { transform: translateY(-2px); }
+.ltc-admin-action-edit { background: rgba(244,212,132,.78); color: var(--green-900); }
+.ltc-admin-action-success { background: var(--green-800); color: white; }
+.ltc-admin-action-danger { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
 
-          .ltc-admin-action-edit { background: rgba(244,212,132,.78); color: var(--green-900); }
-          .ltc-admin-action-success { background: var(--green-800); color: white; }
-          .ltc-admin-action-danger { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+.ltc-admin-pagination {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 
-          .ltc-admin-pagination {
-            margin-top: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-          }
+.ltc-admin-page-count {
+  color: rgba(16,24,40,.56);
+  font-size: 12px;
+  font-weight: 800;
+}
 
-          .ltc-admin-page-count {
-            color: rgba(16,24,40,.56);
-            font-size: 12px;
-            font-weight: 800;
-          }
+.ltc-admin-page-btn {
+  background: rgba(255,255,255,.9);
+  border-color: rgba(35,95,62,.12);
+  color: var(--green-800);
+}
 
-          .ltc-admin-page-btn {
-            background: rgba(255,255,255,.9);
-            border-color: rgba(35,95,62,.12);
-            color: var(--green-800);
-          }
+.ltc-admin-page-btn:disabled { opacity: .48; cursor: not-allowed; transform: none; }
 
-          .ltc-admin-page-btn:disabled { opacity: .48; cursor: not-allowed; transform: none; }
+.ltc-admin-empty {
+  padding: 20px;
+  text-align: center;
+  border-style: dashed;
+  color: var(--muted) !important;
+  font-size: 13px;
+  font-weight: 800;
+}
 
-          .ltc-admin-empty {
-            padding: 20px;
-            text-align: center;
-            border-style: dashed;
-            color: var(--muted) !important;
-            font-size: 13px;
-            font-weight: 800;
-          }
 
-          @keyframes ltcAppleReveal {
-            from { opacity: 0; transform: translateY(34px) scale(.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-          }
+@media (max-width: 1120px) {
+  .ltc-admin-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
-          @media (max-width: 1120px) {
-            .ltc-admin-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-          }
+@media (max-width: 760px) {
 
-          @media (max-width: 760px) {
-            .ltc-admin-accounts { margin: -12px; padding: 14px; border-radius: 20px; }
-            .ltc-admin-stats-grid { grid-template-columns: 1fr; }
-            .ltc-admin-toolbar,
-            .ltc-admin-search-group,
-            .ltc-admin-sort-wrap { align-items: stretch; flex-direction: column; width: 100%; }
-            .ltc-admin-search-box,
-            .ltc-admin-input,
-            .ltc-admin-select { width: 100%; min-width: 0; }
-            .ltc-admin-table-head { display: none; }
-            .ltc-admin-account-row { grid-template-columns: 1fr; gap: 8px; }
-            .ltc-admin-account-row > div { grid-column: auto !important; }
-            .ltc-admin-actions-cell { justify-content: flex-start !important; }
-          }
-        `}</style>
+  .ltc-admin-stat-card,
+  .ltc-admin-panel,
+  .ltc-admin-account-row,
+  .ltc-admin-empty {
+    box-shadow: 0 8px 20px rgba(8,39,25,.07);
+  }
 
+  .ltc-admin-stat-card:hover,
+  .ltc-admin-account-row:hover {
+    transform: none;
+  }
+  .ltc-admin-accounts { margin: -12px; padding: 14px; border-radius: 20px; }
+  .ltc-admin-stats-grid { grid-template-columns: 1fr; }
+  .ltc-admin-toolbar,
+  .ltc-admin-search-group,
+  .ltc-admin-sort-wrap { align-items: stretch; flex-direction: column; width: 100%; }
+  .ltc-admin-search-box,
+  .ltc-admin-input,
+  .ltc-admin-select { width: 100%; min-width: 0; }
+  .ltc-admin-table-head { display: none; }
+  .ltc-admin-account-row { grid-template-columns: 1fr; gap: 8px; }
+  .ltc-admin-account-row > div { grid-column: auto !important; }
+  .ltc-admin-actions-cell { justify-content: flex-start !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ltc-admin-accounts *,
+  .ltc-admin-accounts *::before,
+  .ltc-admin-accounts *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+`}</style>
         <div className="ltc-admin-stats-grid">
           <div className="ltc-admin-stat-card">
             <p className="ltc-admin-stat-title">Total Accounts</p>
@@ -959,6 +949,7 @@ const AdminAccounts = () => {
 
           <div className="ltc-admin-search-box">
             <input
+              type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search username here"
