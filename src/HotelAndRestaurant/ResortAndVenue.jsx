@@ -1,8 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const PLACEHOLDER_IMAGE = "https://placehold.co/900x500?text=Image";
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='500' viewBox='0 0 900 500'%3E%3Crect width='900' height='500' fill='%23e8efe9'/%3E%3Cpath d='M0 390 210 210l135 116 160-163 395 227v110H0Z' fill='%23b7cbbd'/%3E%3Ctext x='450' y='455' text-anchor='middle' font-family='Arial,sans-serif' font-size='30' fill='%23235f3e'%3EResort image%3C/text%3E%3C/svg%3E";
+const HERO_IMAGES = [
+  {
+    src: "/HotelLanding1.webp",
+    srcSet: "/HotelLanding1-768.webp 768w, /HotelLanding1.webp 1536w",
+  },
+  {
+    src: "/HotelLanding2.webp",
+    srcSet: "/HotelLanding2-768.webp 768w, /HotelLanding2.webp 1536w",
+  },
+];
 const RESORT_UNLOCK_SESSION_KEY = "lumispireResortVenueUnlocked";
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
@@ -68,6 +78,40 @@ const ResortAndVenue = () => {
     return sessionStorage.getItem(RESORT_UNLOCK_SESSION_KEY) === "true";
   });
   const contentRef = useRef(null);
+
+  useEffect(() => {
+    const previousTitle = document.title;
+    const description =
+      "Explore Lumispire resort venues, hotel stays, and event packages in Makati and Bacoor, Cavite.";
+    const canonicalUrl = "https://www.lumispire.online/resort-venue";
+    let canonical = document.querySelector('link[rel="canonical"]');
+    let metaDescription = document.querySelector('meta[name="description"]');
+
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+
+    if (!metaDescription) {
+      metaDescription = document.createElement("meta");
+      metaDescription.name = "description";
+      document.head.appendChild(metaDescription);
+    }
+
+    const previousCanonical = canonical.getAttribute("href");
+    const previousDescription = metaDescription.getAttribute("content");
+
+    document.title = "Resort & Venue | Lumispire";
+    canonical.href = canonicalUrl;
+    metaDescription.content = description;
+
+    return () => {
+      document.title = previousTitle;
+      if (previousCanonical) canonical.href = previousCanonical;
+      if (previousDescription) metaDescription.content = previousDescription;
+    };
+  }, []);
 
   const unlockPage = () => {
     sessionStorage.setItem(RESORT_UNLOCK_SESSION_KEY, "true");
@@ -399,8 +443,6 @@ const ResortAndVenue = () => {
   return (
     <div className="ltc-resort-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-resort-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -1769,10 +1811,17 @@ const ResortAndVenue = () => {
         <section className="ltc-unlock-intro" aria-label="Unlock intro">
           {HERO_IMAGES.map((image, index) => (
             <img
-              key={`unlock-${image}`}
-              src={image}
+              key={`unlock-${image.src}`}
+              src={image.src}
+              srcSet={image.srcSet}
+              sizes="100vw"
               alt={`Hotel and Resort background ${index + 1}`}
               className={`ltc-unlock-bg ${heroIndex === index ? "active" : ""}`}
+              width="1536"
+              height="1024"
+              loading={index === 0 ? "eager" : "lazy"}
+              fetchPriority={index === 0 ? "high" : "low"}
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
@@ -1820,10 +1869,17 @@ const ResortAndVenue = () => {
           <section className="ltc-hero">
             {HERO_IMAGES.map((image, index) => (
               <img
-                key={image}
-                src={image}
+                key={image.src}
+                src={image.src}
+                srcSet={image.srcSet}
+                sizes="100vw"
                 alt="Hotel and resort background"
                 className={`ltc-hero-slide ${heroIndex === index ? "active" : ""}`}
+                width="1536"
+                height="1024"
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "low"}
+                decoding="async"
                 onError={(event) => {
                   event.currentTarget.style.display = "none";
                 }}
@@ -2042,9 +2098,12 @@ function Header({ navigate, goToProfile, openMenu }) {
           aria-label="Go to home"
         >
           <img
-            src="/HotelLogo.png"
+            src="/HotelLogo.webp"
             alt="Hotel logo"
             className="ltc-logo-icon"
+            width="42"
+            height="42"
+            decoding="async"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
@@ -2128,6 +2187,10 @@ function ServiceCard({ item, imageSrc, onDetails }) {
         <img
           src={imageSrc}
           alt={item.title}
+          width="900"
+          height="500"
+          loading="lazy"
+          decoding="async"
           onError={(event) => {
             event.currentTarget.src = PLACEHOLDER_IMAGE;
           }}
@@ -2323,8 +2386,12 @@ function Footer() {
         <div>
           <div className="ltc-footer-brand">
             <img
-              src="/HotelLumispireLogo.png"
+              src="/HotelLumispireLogo.webp"
               alt="Lumispire logo"
+              width="42"
+              height="42"
+              loading="lazy"
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
@@ -2566,6 +2633,10 @@ function DetailsModal({
           src={getImageSrc(item)}
           alt={item.title}
           className="ltc-modal-image"
+          width="900"
+          height="500"
+          loading="lazy"
+          decoding="async"
           onError={(event) => {
             event.currentTarget.src = PLACEHOLDER_IMAGE;
           }}

@@ -9,6 +9,44 @@ import {
 } from "react-router-dom";
 import "./Main.css";
 
+/*
+ * Vite gives lazy-loaded files a new hash after every deployment. If someone
+ * keeps an older tab open, that tab can request a chunk that no longer exists.
+ * Reload once so the browser receives the current index and current chunk map.
+ */
+const CHUNK_RECOVERY_KEY = "lumispireChunkRecovery";
+
+if (typeof window !== "undefined" && !window.__lumispireChunkRecoveryInstalled) {
+  window.__lumispireChunkRecoveryInstalled = true;
+
+  const currentUrl = new URL(window.location.href);
+  if (currentUrl.searchParams.has("refresh")) {
+    currentUrl.searchParams.delete("refresh");
+    window.history.replaceState(null, "", currentUrl.toString());
+  }
+
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault();
+
+    try {
+      const now = Date.now();
+      const lastRecovery = Number(sessionStorage.getItem(CHUNK_RECOVERY_KEY) || 0);
+
+      if (now - lastRecovery < 30_000) {
+        sessionStorage.removeItem(CHUNK_RECOVERY_KEY);
+        return;
+      }
+
+      sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(now));
+      const freshUrl = new URL(window.location.href);
+      freshUrl.searchParams.set("refresh", String(now));
+      window.location.replace(freshUrl.toString());
+    } catch {
+      window.location.reload();
+    }
+  });
+}
+
 /* ===================== OVERVIEW ===================== */
 import Home from "./Overview/Home";
 const AboutUs = lazy(() => import("./Overview/AboutUs"));
