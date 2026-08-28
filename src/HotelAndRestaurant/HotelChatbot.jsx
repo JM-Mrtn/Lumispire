@@ -317,9 +317,12 @@ export default function HotelChatbot() {
             title="Home"
           >
             <img
-              src="/LTCLogo.jpg"
+              src="/LTCLogo.webp"
               alt="LTC logo"
               className="h-full w-full rounded-full object-cover"
+              width="56"
+              height="56"
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}

@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, lazy, useEffect } from "react";
+import { StrictMode, Suspense, lazy, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter as Router,
@@ -48,7 +48,7 @@ if (typeof window !== "undefined" && !window.__lumispireChunkRecoveryInstalled) 
 }
 
 /* ===================== OVERVIEW ===================== */
-import Home from "./Overview/Home";
+const Home = lazy(() => import("./Overview/Home"));
 const AboutUs = lazy(() => import("./Overview/AboutUs"));
 const Team = lazy(() => import("./Overview/Team"));
 const Contact = lazy(() => import("./Overview/Contact"));
@@ -425,6 +425,25 @@ const HOTEL_CHAT_BLOCKED_PATH_PREFIXES = [
 
 const FloatingAssistants = () => {
   const { pathname } = useLocation();
+  const [assistantsReady, setAssistantsReady] = useState(false);
+
+  useEffect(() => {
+    let idleId;
+    let timeoutId;
+
+    const enable = () => setAssistantsReady(true);
+
+    if ("requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(enable, { timeout: 1800 });
+    } else {
+      timeoutId = window.setTimeout(enable, 1000);
+    }
+
+    return () => {
+      if (idleId && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   const showHotelChatButton =
     HOTEL_CHAT_ALLOWED_PATHS.some(
@@ -438,8 +457,8 @@ const FloatingAssistants = () => {
 
   return (
     <>
-      {showHotelChatButton ? <HotelChatbot /> : null}
-      {showManpowerChatbot ? <ManpowerChatbot /> : null}
+      {assistantsReady && showHotelChatButton ? <HotelChatbot /> : null}
+      {assistantsReady && showManpowerChatbot ? <ManpowerChatbot /> : null}
     </>
   );
 };
@@ -1103,6 +1122,9 @@ createRoot(document.getElementById("root")).render(
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
+      </Suspense>
+
+      <Suspense fallback={null}>
         <FloatingAssistants />
       </Suspense>
     </Router>

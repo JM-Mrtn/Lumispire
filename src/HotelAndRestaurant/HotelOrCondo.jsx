@@ -1,12 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const PLACEHOLDER_IMAGE = "https://placehold.co/900x500?text=Hotel+Room";
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const PLACEHOLDER_IMAGE = "/hotel-placeholder.svg";
+const HERO_IMAGES = [
+  { desktop: "/HotelLanding1.webp", mobile: "/HotelLanding1-768.webp" },
+  { desktop: "/HotelLanding2.webp", mobile: "/HotelLanding2-768.webp" },
+];
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const SYSTEM_FONT = '"Segoe UI", Arial, Helvetica, sans-serif';
+const fontMontserrat = { fontFamily: SYSTEM_FONT };
+const fontPontano = { fontFamily: SYSTEM_FONT };
+const fontPoppins = { fontFamily: SYSTEM_FONT };
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 0,
+});
 
 function getHotelToken() {
   return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
@@ -17,11 +26,7 @@ function formatPeso(value) {
 
   if (!num) return "Contact for price";
 
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(num);
+  return pesoFormatter.format(num);
 }
 
 function normalizeDuration(value = "") {
@@ -381,7 +386,7 @@ export default function HotelOrCondo() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -393,7 +398,7 @@ export default function HotelOrCondo() {
 
     const timer = window.setInterval(() => {
       setCurrentPage((prev) => (prev + 1) % pageCount);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, [pageCount, loadingPackages, packageError, roomCards.length]);
@@ -448,7 +453,34 @@ export default function HotelOrCondo() {
   };
 
   useEffect(() => {
-    fetchPackages();
+    let idleId;
+    let timeoutId;
+    let cancelled = false;
+
+    const loadPackages = () => {
+      if (!cancelled) fetchPackages();
+    };
+
+    const scheduleFetch = () => {
+      if ("requestIdleCallback" in window) {
+        idleId = window.requestIdleCallback(loadPackages, { timeout: 1200 });
+      } else {
+        timeoutId = window.setTimeout(loadPackages, 250);
+      }
+    };
+
+    if (document.readyState === "complete") {
+      scheduleFetch();
+    } else {
+      window.addEventListener("load", scheduleFetch, { once: true });
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("load", scheduleFetch);
+      if (idleId && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -481,8 +513,6 @@ export default function HotelOrCondo() {
   return (
     <div className="ltc-hotel-condo-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-hotel-condo-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -508,7 +538,7 @@ export default function HotelOrCondo() {
           line-height: 1.65;
           letter-spacing: -.01em;
           overflow-x: hidden;
-          font-family: "Inter", Arial, sans-serif;
+          font-family: "Segoe UI", Arial, Helvetica, sans-serif;
         }
 
         .ltc-hotel-condo-page * {
@@ -1185,6 +1215,8 @@ export default function HotelOrCondo() {
           color: white;
           padding: 30px 0 12px;
           margin: 0;
+          content-visibility: auto;
+          contain-intrinsic-size: 520px;
         }
 
         .ltc-footer .ltc-container {
@@ -1641,20 +1673,29 @@ export default function HotelOrCondo() {
 
       <main>
         <section className="ltc-hero">
-          {HERO_IMAGES.map((image, index) => (
+          <picture key={HERO_IMAGES[heroIndex].desktop}>
+            <source
+              media="(max-width: 800px)"
+              srcSet={HERO_IMAGES[heroIndex].mobile}
+            />
             <img
-              key={image}
-              src={image}
-              alt="Hotel and resort background"
-              className={`ltc-hero-slide ${heroIndex === index ? "active" : ""}`}
+              src={HERO_IMAGES[heroIndex].desktop}
+              alt=""
+              aria-hidden="true"
+              className="ltc-hero-slide active"
+              width="1536"
+              height="1024"
+              loading="eager"
+              fetchPriority={heroIndex === 0 ? "high" : "auto"}
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
             />
-          ))}
+          </picture>
 
           <div className="ltc-container ltc-hero-content">
-            <RevealOnScroll>
+            <div>
               <h2 style={fontMontserrat}>
                 Hotel &amp; <span>Condo</span>
               </h2>
@@ -1681,7 +1722,7 @@ export default function HotelOrCondo() {
                   onClick={() => navigate("/event-package")}
                 />
               </div>
-            </RevealOnScroll>
+            </div>
           </div>
         </section>
 
@@ -1820,9 +1861,12 @@ function Header({ navigate, goToProfile, openMenu }) {
           aria-label="Go to home"
         >
           <img
-            src="/HotelLogo.png"
+            src="/HotelLogo.webp"
             alt="Hotel logo"
             className="ltc-logo-icon"
+            width="42"
+            height="42"
+            decoding="async"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
@@ -1906,6 +1950,9 @@ function ServiceCard({ item, imageSrc, onDetails }) {
         <img
           src={imageSrc}
           alt={item.title}
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           onError={(event) => {
             event.currentTarget.src = PLACEHOLDER_IMAGE;
           }}
@@ -2101,8 +2148,12 @@ function Footer() {
         <div>
           <div className="ltc-footer-brand">
             <img
-              src="/HotelLumispireLogo.png"
+              src="/HotelLumispireLogo.webp"
               alt="Lumispire logo"
+              width="42"
+              height="42"
+              loading="lazy"
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
@@ -2344,6 +2395,7 @@ function PackageDetailsModal({ item, onClose, onBook, getImageSrc, formatPeso, A
           src={getImageSrc(item)}
           alt={item.title}
           className="ltc-modal-image"
+          decoding="async"
           onError={(event) => {
             event.currentTarget.src = PLACEHOLDER_IMAGE;
           }}
