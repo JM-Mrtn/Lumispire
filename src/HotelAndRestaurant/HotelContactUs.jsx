@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const HOTEL_LOGO = "/HotelLogo.png";
-const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const HOTEL_LOGO = "/HotelLogo.webp";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.webp";
+const HERO_IMAGES = ["/HotelLanding1.webp", "/HotelLanding2.webp"];
 
 const MAP_EMBED_URL =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3863.765198406772!2d120.96799167484153!3d14.440690780972236!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397d30043932aff%3A0x196265023d83cdf4!2sPatio%20de%20lorenzo!5e0!3m2!1sen!2sph!4v1778489406858!5m2!1sen!2sph";
@@ -97,7 +97,7 @@ export default function HotelContactUs() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -1292,7 +1292,7 @@ export default function HotelContactUs() {
                 height="100%"
                 className="ltc-map-frame"
                 allowFullScreen
-                loading="lazy"
+                loading="lazy" decoding="async"
                 referrerPolicy="no-referrer-when-downgrade"
               />
             </RevealOnScroll>
