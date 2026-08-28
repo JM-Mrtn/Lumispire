@@ -1,12 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const PLACEHOLDER_IMAGE = "https://placehold.co/900x500?text=Event+Package";
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const PLACEHOLDER_IMAGE = "/hotel-placeholder.svg";
+const HERO_IMAGES = [
+  { desktop: "/HotelLanding1.webp", mobile: "/HotelLanding1-768.webp" },
+  { desktop: "/HotelLanding2.webp", mobile: "/HotelLanding2-768.webp" },
+];
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const SYSTEM_FONT = '"Segoe UI", Arial, Helvetica, sans-serif';
+const fontMontserrat = { fontFamily: SYSTEM_FONT };
+const fontPontano = { fontFamily: SYSTEM_FONT };
+const fontPoppins = { fontFamily: SYSTEM_FONT };
+const pesoFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 0,
+});
 
 function getHotelToken() {
   return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
@@ -17,11 +26,7 @@ function formatPeso(value) {
 
   if (!num) return "Contact for price";
 
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(num);
+  return pesoFormatter.format(num);
 }
 
 function parsePaxFromLabel(value = "") {
@@ -171,7 +176,6 @@ const RevealOnScroll = ({ children, className = "", delay = 0, y = 18 }) => {
         transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
         transition: "opacity 650ms ease, transform 650ms ease",
         transitionDelay: `${delay}ms`,
-        willChange: "opacity, transform",
       }}
     >
       {children}
@@ -219,7 +223,7 @@ export default function EventPackage() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -231,7 +235,7 @@ export default function EventPackage() {
 
     const timer = window.setInterval(() => {
       setCurrentPage((prev) => (prev + 1) % pageCount);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, [pageCount, loadingPackages, packageError, eventPackages.length]);
@@ -291,7 +295,34 @@ export default function EventPackage() {
   };
 
   useEffect(() => {
-    fetchPackages();
+    let idleId;
+    let timeoutId;
+    let cancelled = false;
+
+    const loadPackages = () => {
+      if (!cancelled) fetchPackages();
+    };
+
+    const scheduleFetch = () => {
+      if ("requestIdleCallback" in window) {
+        idleId = window.requestIdleCallback(loadPackages, { timeout: 1200 });
+      } else {
+        timeoutId = window.setTimeout(loadPackages, 250);
+      }
+    };
+
+    if (document.readyState === "complete") {
+      scheduleFetch();
+    } else {
+      window.addEventListener("load", scheduleFetch, { once: true });
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("load", scheduleFetch);
+      if (idleId && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -324,8 +355,6 @@ export default function EventPackage() {
   return (
     <div className="ltc-event-package-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-event-package-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -1028,6 +1057,8 @@ export default function EventPackage() {
           color: white;
           padding: 30px 0 12px;
           margin: 0;
+          content-visibility: auto;
+          contain-intrinsic-size: 1px 430px;
         }
 
         .ltc-footer .ltc-container {
@@ -1483,20 +1514,29 @@ export default function EventPackage() {
 
       <main>
         <section className="ltc-hero">
-          {HERO_IMAGES.map((image, index) => (
+          <picture key={HERO_IMAGES[heroIndex].desktop}>
+            <source
+              media="(max-width: 800px)"
+              srcSet={HERO_IMAGES[heroIndex].mobile}
+            />
             <img
-              key={image}
-              src={image}
-              alt="Hotel and resort background"
-              className={`ltc-hero-slide ${heroIndex === index ? "active" : ""}`}
+              src={HERO_IMAGES[heroIndex].desktop}
+              alt=""
+              aria-hidden="true"
+              className="ltc-hero-slide active"
+              width="1536"
+              height="1024"
+              loading="eager"
+              fetchPriority={heroIndex === 0 ? "high" : "auto"}
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
             />
-          ))}
+          </picture>
 
           <div className="ltc-container ltc-hero-content">
-            <RevealOnScroll>
+            <div>
               <h2 style={fontMontserrat}>
                 Event <span>Packages</span>
               </h2>
@@ -1515,7 +1555,7 @@ export default function EventPackage() {
                   onClick={() => navigate("/event-package")}
                 />
               </div>
-            </RevealOnScroll>
+            </div>
           </div>
         </section>
 
@@ -1655,9 +1695,12 @@ function Header({ navigate, goToProfile, openMenu }) {
           aria-label="Go to home"
         >
           <img
-            src="/HotelLogo.png"
+            src="/HotelLogo.webp"
             alt="Hotel logo"
             className="ltc-logo-icon"
+            width="312"
+            height="247"
+            decoding="async"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
@@ -1741,6 +1784,11 @@ function ServiceCard({ title, imageSrc, feedback, onDetails }) {
         <img
           src={imageSrc}
           alt={title}
+          width="600"
+          height="390"
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           onError={(event) => {
             event.currentTarget.src = PLACEHOLDER_IMAGE;
           }}
@@ -1936,8 +1984,12 @@ function Footer() {
         <div>
           <div className="ltc-footer-brand">
             <img
-              src="/HotelLumispireLogo.png"
+              src="/HotelLumispireLogo.webp"
               alt="Lumispire logo"
+              width="597"
+              height="418"
+              loading="lazy"
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
@@ -2180,6 +2232,9 @@ function PackageModal({ data, onClose, onBook, getImageSrc, API_BASE }) {
           src={getImageSrc(data)}
           alt={data.name}
           className="ltc-modal-image"
+          width="900"
+          height="500"
+          decoding="async"
           onError={(event) => {
             event.currentTarget.src = PLACEHOLDER_IMAGE;
           }}
