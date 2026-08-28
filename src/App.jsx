@@ -48,12 +48,19 @@ if (typeof window !== "undefined" && !window.__lumispireChunkRecoveryInstalled) 
 }
 
 /* ===================== OVERVIEW ===================== */
-const Home = lazy(() => import("./Overview/Home"));
-const AboutUs = lazy(() => import("./Overview/AboutUs"));
-const Team = lazy(() => import("./Overview/Team"));
-const Contact = lazy(() => import("./Overview/Contact"));
-const LTCAdminLogin = lazy(() => import("./Overview/LTCAdminLogin"));
-const LTCAdminDashboard = lazy(() => import("./Overview/LTCAdminDashboard"));
+const lazyImport = (loader) =>
+  lazy(() =>
+    loader().then((module) => ({
+      default: module.default || module,
+    }))
+  );
+
+const Home = lazyImport(() => import("./Overview/Home"));
+const AboutUs = lazyImport(() => import("./Overview/AboutUs"));
+const Team = lazyImport(() => import("./Overview/Team"));
+const Contact = lazyImport(() => import("./Overview/Contact"));
+const LTCAdminLogin = lazyImport(() => import("./Overview/LTCAdminLogin"));
+const LTCAdminDashboard = lazyImport(() => import("./Overview/LTCAdminDashboard"));
 
 /* ===================== HOTEL & RESTAURANT ===================== */
 const HotelAndResortPage = lazy(
@@ -62,13 +69,13 @@ const HotelAndResortPage = lazy(
 const ResortAndVenue = lazy(
   () => import("./HotelAndRestaurant/ResortAndVenue"),
 );
-const HotelOrCondo = lazy(() => import("./HotelAndRestaurant/HotelOrCondo"));
-const EventPackage = lazy(() => import("./HotelAndRestaurant/EventPackage"));
-const VirtualTour = lazy(() => import("./HotelAndRestaurant/VirtualTour"));
-const EventForm = lazy(() => import("./HotelAndRestaurant/EventForm"));
-const EventSummary = lazy(() => import("./HotelAndRestaurant/EventSummary"));
-const ResortForm = lazy(() => import("./HotelAndRestaurant/ResortForm"));
-const ResortSummary = lazy(() => import("./HotelAndRestaurant/ResortSummary"));
+const HotelOrCondo = lazyImport(() => import("./HotelAndRestaurant/HotelOrCondo"));
+const EventPackage = lazyImport(() => import("./HotelAndRestaurant/EventPackage"));
+const VirtualTour = lazyImport(() => import("./HotelAndRestaurant/VirtualTour"));
+const EventForm = lazyImport(() => import("./HotelAndRestaurant/EventForm"));
+const EventSummary = lazyImport(() => import("./HotelAndRestaurant/EventSummary"));
+const ResortForm = lazyImport(() => import("./HotelAndRestaurant/ResortForm"));
+const ResortSummary = lazyImport(() => import("./HotelAndRestaurant/ResortSummary"));
 const HotelBookingForm = lazy(
   () => import("./HotelAndRestaurant/HotelBookingForm"),
 );
@@ -84,19 +91,19 @@ const HotelGuestReviews = lazy(
 const HotelAdminReviews = lazy(
   () => import("./HotelAndRestaurant/HotelAdminReviews"),
 );
-const HotelChat = lazy(() => import("./HotelAndRestaurant/HotelChat"));
+const HotelChat = lazyImport(() => import("./HotelAndRestaurant/HotelChat"));
 const HotelAdminChat = lazy(
   () => import("./HotelAndRestaurant/HotelAdminChat"),
 );
-const HotelFaqs = lazy(() => import("./HotelAndRestaurant/HotelFaqs"));
-const HotelChatbot = lazy(() => import("./HotelAndRestaurant/HotelChatbot"));
+const HotelFaqs = lazyImport(() => import("./HotelAndRestaurant/HotelFaqs"));
+const HotelChatbot = lazyImport(() => import("./HotelAndRestaurant/HotelChatbot"));
 const BookingSuccessful = lazy(
   () => import("./HotelAndRestaurant/BookingSuccessful"),
 );
 
 /* ===================== HOTEL AUTH ===================== */
-const HotelLogIn = lazy(() => import("./HotelAndRestaurant/HotelLogIn"));
-const HotelSignUp = lazy(() => import("./HotelAndRestaurant/HotelSignUp"));
+const HotelLogIn = lazyImport(() => import("./HotelAndRestaurant/HotelLogIn"));
+const HotelSignUp = lazyImport(() => import("./HotelAndRestaurant/HotelSignUp"));
 const EmailConfirmation = lazy(
   () => import("./HotelAndRestaurant/EmailConfirmation"),
 );
@@ -111,7 +118,7 @@ const HotelChangePassword = lazy(
 );
 
 /* ===================== HOTEL PROFILE ===================== */
-const HotelProfile = lazy(() => import("./HotelAndRestaurant/HotelProfile"));
+const HotelProfile = lazyImport(() => import("./HotelAndRestaurant/HotelProfile"));
 const HotelContactUs = lazy(
   () => import("./HotelAndRestaurant/HotelContactUs"),
 );
@@ -155,20 +162,20 @@ const TrainingContactUs = lazy(
 const TrainingSubmit = lazy(
   () => import("./TrainingAndAssessment/TrainingSubmit"),
 );
-const TrainingFaqs = lazy(() => import("./TrainingAndAssessment/TrainingFaqs"));
+const TrainingFaqs = lazyImport(() => import("./TrainingAndAssessment/TrainingFaqs"));
 const TrainingCertificateValidation = lazy(
   () => import("./TrainingAndAssessment/TrainingCertificateValidation"),
 );
 
 /* ===================== TRAINEE ===================== */
-const TraineeLogIn = lazy(() => import("./TrainingAndAssessment/TraineeLogIn"));
+const TraineeLogIn = lazyImport(() => import("./TrainingAndAssessment/TraineeLogIn"));
 const TraineeProfile = lazy(
   () => import("./TrainingAndAssessment/TraineeProfile"),
 );
 const TraineeModules = lazy(
   () => import("./TrainingAndAssessment/TraineeModules"),
 );
-const TraineeHome = lazy(() => import("./TrainingAndAssessment/TraineeHome"));
+const TraineeHome = lazyImport(() => import("./TrainingAndAssessment/TraineeHome"));
 const TraineeAssignment = lazy(
   () => import("./TrainingAndAssessment/TraineeAssignment"),
 );
@@ -253,8 +260,8 @@ const ManpowerPositions = lazy(
 const ManpowerRequirements = lazy(
   () => import("./ManpowerServices/ManpowerRequirements"),
 );
-const ManpowerApply = lazy(() => import("./ManpowerServices/ManpowerApply"));
-const ManpowerFaqs = lazy(() => import("./ManpowerServices/ManpowerFaqs"));
+const ManpowerApply = lazyImport(() => import("./ManpowerServices/ManpowerApply"));
+const ManpowerFaqs = lazyImport(() => import("./ManpowerServices/ManpowerFaqs"));
 const ManpowerHrLogin = lazy(
   () => import("./ManpowerServices/ManpowerHrLogin"),
 );
@@ -303,7 +310,7 @@ const ManpowerEmployeeProfile = lazy(
 const ManpowerEmployeeLeave = lazy(
   () => import("./ManpowerServices/ManpowerEmployeeLeave"),
 );
-const ManpowerExam = lazy(() => import("./ManpowerServices/ManpowerExam"));
+const ManpowerExam = lazyImport(() => import("./ManpowerServices/ManpowerExam"));
 const ManpowerChatbot = lazy(
   () => import("./ManpowerServices/ManpowerChatbot"),
 );
