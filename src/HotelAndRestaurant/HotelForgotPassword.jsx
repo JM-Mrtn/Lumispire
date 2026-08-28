@@ -2,9 +2,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const HOTEL_LOGO = "/HotelLogo.png";
-const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const HOTEL_LOGO = "/HotelLogo.webp";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.webp";
+const HERO_IMAGES = ["/HotelLanding1.webp", "/HotelLanding2.webp"];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -95,7 +95,7 @@ const HotelForgotPassword = () => {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -1102,8 +1102,8 @@ function NavButton({ label, onClick, active = false, className = "" }) {
 
 function Footer() {
   return (
-    <footer className="ltc-footer">
-      <div className="ltc-container ltc-footer-grid">
+    <footer className="ltc-footer" style={{background:"#082719", color:"#ffffff", width:"100%", display:"block"}}>
+      <div className="ltc-container ltc-footer-grid" style={{color:"#ffffff"}}>
         <div>
           <div className="ltc-footer-brand">
             <img
@@ -1152,7 +1152,7 @@ function Footer() {
         </FooterColumn>
       </div>
 
-      <div className="ltc-container ltc-copyright">
+      <div className="ltc-container ltc-copyright" style={{color:"rgba(255,255,255,.7)"}}>
         <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
         <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
@@ -1171,14 +1171,14 @@ function FooterColumn({ title, children }) {
 
 function FooterLink({ children, onClick }) {
   return (
-    <button onClick={onClick} type="button" className="ltc-footer-link" style={fontPontano}>
+    <button onClick={onClick} type="button" className="ltc-footer-link" style={{...fontPontano, color:"rgba(255,255,255,.68)"}}>
       {children}
     </button>
   );
 }
 
 function FooterText({ children }) {
-  return <p style={fontPontano}>{children}</p>;
+  return <p style={{...fontPontano, color:"rgba(255,255,255,.68)"}}>{children}</p>;
 }
 
 function MobileMenu({ onClose, navigate, goToProfile }) {
