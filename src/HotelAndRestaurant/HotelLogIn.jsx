@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const BACKGROUND_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const BACKGROUND_IMAGES = ["/HotelLanding1.webp", "/HotelLanding2.webp"];
 const USERNAME_MIN_LENGTH = 5;
 const USERNAME_MAX_LENGTH = 20;
 const PASSWORD_MIN_LENGTH = 6;
@@ -78,7 +78,7 @@ const HotelLogIn = () => {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(timer);
   }, []);
