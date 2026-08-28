@@ -99,6 +99,9 @@ const HotelAdminShell = memo(function HotelAdminShell({
         className="flex w-full shrink-0 flex-col items-center justify-center rounded-3xl px-4 py-3 text-center transition hover:bg-white/5"
       >
         <img
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
           src="/Logo.webp"
           alt="Patio De Lorenzo Logo"
           className="mb-3 h-14 w-14 shrink-0 rounded-full bg-white object-cover shadow-sm ring-2 ring-white/10"
