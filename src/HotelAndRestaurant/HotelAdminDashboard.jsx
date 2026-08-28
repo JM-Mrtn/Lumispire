@@ -2725,3 +2725,5 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
     </HotelAdminShell>
   );
 });
+
+export default HotelAdminDashboard;

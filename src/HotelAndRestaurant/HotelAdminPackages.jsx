@@ -218,11 +218,11 @@ function makeDefaultVariants(type) {
 
 function normalizeVariantForForm(variant = {}, type = "resort_venue") {
   if (isEventPackage(type)) {
-    const pax = Number(variant.pax || parsePaxFromLabel(variant.label) || 0);
+    const pax = Number(variant.pax || parsePaxFromLabel( safeText(variant.label)) || 0);
     const timeSlots =
       Array.isArray(variant.timeSlots) && variant.timeSlots.length
         ? variant.timeSlots
-        : getDefaultTimeSlots(variant.timeVariationLabel || variant.duration || variant.label || "8 Hours");
+        : getDefaultTimeSlots(variant.timeVariationLabel || variant.duration ||  safeText(variant.label) || "8 Hours");
     const timeVariationLabel = variant.timeVariationLabel || inferTimeLabelFromSlots(timeSlots);
     return makeEventVariant({
       pax: pax ? String(pax) : "",
@@ -232,7 +232,7 @@ function normalizeVariantForForm(variant = {}, type = "resort_venue") {
     });
   }
 
-  const label = normalizeTimeLabel(variant.label || "8 Hours");
+  const label = normalizeTimeLabel( safeText(variant.label) || "8 Hours");
   return {
     label,
     timeSlots: getDefaultTimeSlots(label),
@@ -243,7 +243,7 @@ function normalizeVariantForForm(variant = {}, type = "resort_venue") {
 
 function normalizeVariantForPayload(variant = {}, index = 0, type = "resort_venue") {
   if (isEventPackage(type)) {
-    const eventPax = Number(variant.pax || parsePaxFromLabel(variant.label) || 0);
+    const eventPax = Number(variant.pax || parsePaxFromLabel( safeText(variant.label)) || 0);
     const timeVariationLabel = normalizeTimeLabel(variant.timeVariationLabel || "8 Hours");
     const timeSlots = getDefaultTimeSlots(timeVariationLabel);
     return {
@@ -257,7 +257,7 @@ function normalizeVariantForPayload(variant = {}, index = 0, type = "resort_venu
     };
   }
 
-  const label = normalizeTimeLabel(variant.label || "8 Hours");
+  const label = normalizeTimeLabel( safeText(variant.label) || "8 Hours");
   return {
     label,
     pax: 0,
@@ -288,7 +288,7 @@ function getPackageImageUrl(imageUrl = "") {
 
 function getDurationSummary(variants = []) {
   const labels = variants
-    .map((variant) => normalizeTimeLabel(variant.timeVariationLabel || variant.label || ""))
+    .map((variant) => normalizeTimeLabel(variant.timeVariationLabel ||  safeText(variant.label) || ""))
     .filter(Boolean);
   return [...new Set(labels)].join(" / ");
 }
@@ -296,7 +296,7 @@ function getDurationSummary(variants = []) {
 function getCapacitySummary(type, capacityNumber, variants = []) {
   if (isEventPackage(type)) {
     const paxValues = variants
-      .map((variant) => Number(variant.pax || parsePaxFromLabel(variant.label) || 0))
+      .map((variant) => Number(variant.pax || parsePaxFromLabel( safeText(variant.label)) || 0))
       .filter((num) => num > 0)
       .sort((a, b) => a - b);
     return paxValues.length ? `${[...new Set(paxValues)].join(" / ")} pax` : "";
@@ -518,7 +518,7 @@ export default function HotelAdminPackages() {
 
         if (field === "timeVariationLabel" && isEventPackage(prev.type)) {
           const timeLabel = normalizeTimeLabel(value);
-          const cleanPax = onlyDigits(variant.pax || parsePaxFromLabel(variant.label) || "");
+          const cleanPax = onlyDigits(variant.pax || parsePaxFromLabel( safeText(variant.label)) || "");
           return {
             ...variant,
             timeVariationLabel: timeLabel,
@@ -598,7 +598,7 @@ export default function HotelAdminPackages() {
 
     const variants = form.variants
       .map((variant, index) => normalizeVariantForPayload(variant, index, form.type))
-      .filter((variant) => variant.label);
+      .filter((variant) =>  safeText(variant.label));
 
     if (!variants.length) {
       setStatus({ type: "error", message: "At least one variation/rate is required." });
@@ -610,7 +610,7 @@ export default function HotelAdminPackages() {
       if (isEventPackage(form.type)) {
         return !variant.pax || !variant.timeSlots?.length || invalidPrice;
       }
-      return !variant.label || !variant.timeSlots?.length || invalidPrice;
+      return ! safeText(variant.label) || !variant.timeSlots?.length || invalidPrice;
     });
 
     if (invalidVariant) {
@@ -987,7 +987,7 @@ function PackageModal({
                   <div className="grid gap-4">
                     {form.variants.map((variant, index) => (
                       <VariationRow
-                        key={`${index}-${variant.label}-${variant.timeVariationLabel}`}
+                        key={`${index}-${ safeText(variant.label)}-${variant.timeVariationLabel}`}
                         type={form.type}
                         variant={variant}
                         index={index}
@@ -1028,9 +1028,9 @@ function PackageModal({
 }
 
 function VariationRow({ type, variant, index, updateVariant, removeVariant, canRemove }) {
-  const timeLabel = isEventPackage(type) ? (variant.timeVariationLabel || "8 Hours") : (variant.label || "8 Hours");
+  const timeLabel = isEventPackage(type) ? (variant.timeVariationLabel || "8 Hours") : ( safeText(variant.label) || "8 Hours");
   const timeSlots = getDefaultTimeSlots(timeLabel);
-  const pax = variant.pax || parsePaxFromLabel(variant.label) || "";
+  const pax = variant.pax || parsePaxFromLabel( safeText(variant.label)) || "";
 
   return (
     <div className="ltc-variation-card">
@@ -1081,6 +1081,14 @@ function VariationRow({ type, variant, index, updateVariant, removeVariant, canR
   );
 }
 
+function safeText(value, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  if (typeof value === "object") {
+    return value.en || value.name || value.title || value.label || JSON.stringify(value);
+  }
+  return String(value);
+}
+
 function PackageCard({ pkg, onEdit, onToggle, onDelete }) {
   const imageUrl = getPackageImageUrl(pkg.imageUrl || "");
   const variants = Array.isArray(pkg.variants) ? pkg.variants : [];
@@ -1088,7 +1096,7 @@ function PackageCard({ pkg, onEdit, onToggle, onDelete }) {
   return (
     <article className={`ltc-admin-package-card ${pkg.isActive === false ? "inactive" : ""}`}>
       <div className="ltc-admin-package-image">
-        {imageUrl ? <img src={imageUrl} alt={pkg.title || "Package"} /> : <span>No Image</span>}
+        {imageUrl ? <img src={imageUrl} alt={safeText(pkg.title, "Package")} /> : <span>No Image</span>}
       </div>
 
       <div className="ltc-admin-chip-row">
@@ -1097,20 +1105,20 @@ function PackageCard({ pkg, onEdit, onToggle, onDelete }) {
         <span className="ltc-admin-chip">Order {pkg.displayOrder || 0}</span>
       </div>
 
-      <h3 className="ltc-admin-package-title">{pkg.title || "Untitled Package"}</h3>
-      <p className="ltc-admin-muted">{pkg.subtitle || pkg.description || "No subtitle."}</p>
+      <h3 className="ltc-admin-package-title">{safeText(pkg.title, "Untitled Package")}</h3>
+      <p className="ltc-admin-muted">{safeText(pkg.subtitle || pkg.description, "No subtitle.")}</p>
 
       <div className="ltc-admin-package-summary">
         <div className="ltc-admin-inner-box">
-          <p><strong>Duration:</strong> {pkg.duration || "-"}</p>
-          <p><strong>Capacity:</strong> {pkg.capacity || "-"}</p>
+          <p><strong>Duration:</strong> {safeText(pkg.duration, "-")}</p>
+          <p><strong>Capacity:</strong> {safeText(pkg.capacity, "-")}</p>
           <p><strong>Default Price:</strong> {formatPeso(pkg.price)}</p>
         </div>
         {variants.length ? (
           <div className="ltc-admin-inner-box">
             <strong>Rates</strong>
             {variants.map((variant, index) => (
-              <p key={`${variant.label}-${index}`}>{variant.label}: {formatPeso(variant.price)}</p>
+              <p key={`${ safeText(variant.label)}-${index}`}>{ safeText(variant.label)}: {formatPeso(variant.price)}</p>
             ))}
           </div>
         ) : null}

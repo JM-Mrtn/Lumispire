@@ -63,10 +63,10 @@ const LTCAdminLogin = lazyImport(() => import("./Overview/LTCAdminLogin"));
 const LTCAdminDashboard = lazyImport(() => import("./Overview/LTCAdminDashboard"));
 
 /* ===================== HOTEL & RESTAURANT ===================== */
-const HotelAndResortPage = lazy(
+const HotelAndResortPage = lazyImport(
   () => import("./HotelAndRestaurant/HotelAndResortPage"),
 );
-const ResortAndVenue = lazy(
+const ResortAndVenue = lazyImport(
   () => import("./HotelAndRestaurant/ResortAndVenue"),
 );
 const HotelOrCondo = lazyImport(() => import("./HotelAndRestaurant/HotelOrCondo"));
@@ -76,248 +76,248 @@ const EventForm = lazyImport(() => import("./HotelAndRestaurant/EventForm"));
 const EventSummary = lazyImport(() => import("./HotelAndRestaurant/EventSummary"));
 const ResortForm = lazyImport(() => import("./HotelAndRestaurant/ResortForm"));
 const ResortSummary = lazyImport(() => import("./HotelAndRestaurant/ResortSummary"));
-const HotelBookingForm = lazy(
+const HotelBookingForm = lazyImport(
   () => import("./HotelAndRestaurant/HotelBookingForm"),
 );
-const HotelBookingSummary = lazy(
+const HotelBookingSummary = lazyImport(
   () => import("./HotelAndRestaurant/HotelBookingSummary"),
 );
-const HotelRecommendations = lazy(
+const HotelRecommendations = lazyImport(
   () => import("./HotelAndRestaurant/HotelRecommendations"),
 );
-const HotelGuestReviews = lazy(
+const HotelGuestReviews = lazyImport(
   () => import("./HotelAndRestaurant/HotelGuestReviews"),
 );
-const HotelAdminReviews = lazy(
+const HotelAdminReviews = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminReviews"),
 );
 const HotelChat = lazyImport(() => import("./HotelAndRestaurant/HotelChat"));
-const HotelAdminChat = lazy(
+const HotelAdminChat = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminChat"),
 );
 const HotelFaqs = lazyImport(() => import("./HotelAndRestaurant/HotelFaqs"));
 const HotelChatbot = lazyImport(() => import("./HotelAndRestaurant/HotelChatbot"));
-const BookingSuccessful = lazy(
+const BookingSuccessful = lazyImport(
   () => import("./HotelAndRestaurant/BookingSuccessful"),
 );
 
 /* ===================== HOTEL AUTH ===================== */
 const HotelLogIn = lazyImport(() => import("./HotelAndRestaurant/HotelLogIn"));
 const HotelSignUp = lazyImport(() => import("./HotelAndRestaurant/HotelSignUp"));
-const EmailConfirmation = lazy(
+const EmailConfirmation = lazyImport(
   () => import("./HotelAndRestaurant/EmailConfirmation"),
 );
-const HotelForgotPassword = lazy(
+const HotelForgotPassword = lazyImport(
   () => import("./HotelAndRestaurant/HotelForgotPassword"),
 );
-const HotelResetPassword = lazy(
+const HotelResetPassword = lazyImport(
   () => import("./HotelAndRestaurant/HotelResetPassword"),
 );
-const HotelChangePassword = lazy(
+const HotelChangePassword = lazyImport(
   () => import("./HotelAndRestaurant/HotelChangePassword"),
 );
 
 /* ===================== HOTEL PROFILE ===================== */
 const HotelProfile = lazyImport(() => import("./HotelAndRestaurant/HotelProfile"));
-const HotelContactUs = lazy(
+const HotelContactUs = lazyImport(
   () => import("./HotelAndRestaurant/HotelContactUs"),
 );
 
 /* ===================== HOTEL ADMIN ===================== */
-const HotelAdminLogIn = lazy(
+const HotelAdminLogIn = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminLogIn"),
 );
-const HotelAdminDashboard = lazy(
+const HotelAdminDashboard = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminDashboard"),
 );
-const HotelAdminAccounts = lazy(
+const HotelAdminAccounts = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminAccounts"),
 );
-const HotelAdminBookings = lazy(
+const HotelAdminBookings = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminBookings"),
 );
-const HotelAdminIDVerify = lazy(
+const HotelAdminIDVerify = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminIDVerify"),
 );
-const HotelAdminPackages = lazy(
+const HotelAdminPackages = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminPackages"),
 );
 
 /* ===================== TRAINING & ASSESSMENT ===================== */
-const TrainingAndAssessmentPage = lazy(
+const TrainingAndAssessmentPage = lazyImport(
   () => import("./TrainingAndAssessment/TrainingAndAssessmentPage"),
 );
-const TrainingCourse = lazy(
+const TrainingCourse = lazyImport(
   () => import("./TrainingAndAssessment/TrainingCourse"),
 );
-const TrainingEnrollmentForm = lazy(
+const TrainingEnrollmentForm = lazyImport(
   () => import("./TrainingAndAssessment/TrainingEnrollmentForm"),
 );
-const TrainingRequirements = lazy(
+const TrainingRequirements = lazyImport(
   () => import("./TrainingAndAssessment/TrainingRequirements"),
 );
-const TrainingContactUs = lazy(
+const TrainingContactUs = lazyImport(
   () => import("./TrainingAndAssessment/TrainingContactUs"),
 );
-const TrainingSubmit = lazy(
+const TrainingSubmit = lazyImport(
   () => import("./TrainingAndAssessment/TrainingSubmit"),
 );
 const TrainingFaqs = lazyImport(() => import("./TrainingAndAssessment/TrainingFaqs"));
-const TrainingCertificateValidation = lazy(
+const TrainingCertificateValidation = lazyImport(
   () => import("./TrainingAndAssessment/TrainingCertificateValidation"),
 );
 
 /* ===================== TRAINEE ===================== */
 const TraineeLogIn = lazyImport(() => import("./TrainingAndAssessment/TraineeLogIn"));
-const TraineeProfile = lazy(
+const TraineeProfile = lazyImport(
   () => import("./TrainingAndAssessment/TraineeProfile"),
 );
-const TraineeModules = lazy(
+const TraineeModules = lazyImport(
   () => import("./TrainingAndAssessment/TraineeModules"),
 );
 const TraineeHome = lazyImport(() => import("./TrainingAndAssessment/TraineeHome"));
-const TraineeAssignment = lazy(
+const TraineeAssignment = lazyImport(
   () => import("./TrainingAndAssessment/TraineeAssignment"),
 );
-const TraineeProgress = lazy(
+const TraineeProgress = lazyImport(
   () => import("./TrainingAndAssessment/TraineeProgress"),
 );
-const TraineeAttendance = lazy(
+const TraineeAttendance = lazyImport(
   () => import("./TrainingAndAssessment/TraineeAttendance"),
 );
-const TraineeRoadmap = lazy(
+const TraineeRoadmap = lazyImport(
   () => import("./TrainingAndAssessment/TraineeRoadmap"),
 );
-const TraineeForgotPassword = lazy(
+const TraineeForgotPassword = lazyImport(
   () => import("./TrainingAndAssessment/TraineeForgotPassword"),
 );
-const TrainingChangePassword = lazy(
+const TrainingChangePassword = lazyImport(
   () => import("./TrainingAndAssessment/TraineeChangePassword"),
 );
-const TraineeRfidScan = lazy(
+const TraineeRfidScan = lazyImport(
   () => import("./TrainingAndAssessment/TraineeRfidScan"),
 );
-const TraineeCertificate = lazy(
+const TraineeCertificate = lazyImport(
   () => import("./TrainingAndAssessment/TraineeCertificate"),
 );
 
 /* ===================== TRAINING ADMIN ===================== */
-const TrainingAdminLogin = lazy(
+const TrainingAdminLogin = lazyImport(
   () => import("./TrainingAndAssessment/TrainingAdminLogin"),
 );
-const TrainingAdminEnrollments = lazy(
+const TrainingAdminEnrollments = lazyImport(
   () => import("./TrainingAndAssessment/TrainingAdminEnrollments"),
 );
-const TrainingAdminProfessors = lazy(
+const TrainingAdminProfessors = lazyImport(
   () => import("./TrainingAndAssessment/TrainingAdminProfessors"),
 );
-const TrainingAdminCourses = lazy(
+const TrainingAdminCourses = lazyImport(
   () => import("./TrainingAndAssessment/TrainingAdminCourses"),
 );
-const TrainingAdminBatches = lazy(
+const TrainingAdminBatches = lazyImport(
   () => import("./TrainingAndAssessment/TrainingAdminBatches"),
 );
-const TrainingAdminRoadmap = lazy(
+const TrainingAdminRoadmap = lazyImport(
   () => import("./TrainingAndAssessment/TrainingAdminRoadmap"),
 );
-const TrainingAdminRegisterRfid = lazy(
+const TrainingAdminRegisterRfid = lazyImport(
   () => import("./TrainingAndAssessment/TrainingAdminRegisterRfid"),
 );
 
 /* ===================== PROFESSOR ===================== */
-const ProfessorLogin = lazy(
+const ProfessorLogin = lazyImport(
   () => import("./TrainingAndAssessment/ProfessorLogin"),
 );
-const ProfessorDashboard = lazy(
+const ProfessorDashboard = lazyImport(
   () => import("./TrainingAndAssessment/ProfessorDashboard"),
 );
-const ProfessorAttendance = lazy(
+const ProfessorAttendance = lazyImport(
   () => import("./TrainingAndAssessment/ProfessorAttendance"),
 );
-const ProfessorProgress = lazy(
+const ProfessorProgress = lazyImport(
   () => import("./TrainingAndAssessment/ProfessorProgress"),
 );
-const ProfessorAssignments = lazy(
+const ProfessorAssignments = lazyImport(
   () => import("./TrainingAndAssessment/ProfessorAssignments"),
 );
-const ProfessorModules = lazy(
+const ProfessorModules = lazyImport(
   () => import("./TrainingAndAssessment/ProfessorModules"),
 );
-const ProfessorBatches = lazy(
+const ProfessorBatches = lazyImport(
   () => import("./TrainingAndAssessment/ProfessorBatches"),
 );
 
 /* ===================== MANPOWER SERVICES ===================== */
-const ManpowerServicesPage = lazy(
+const ManpowerServicesPage = lazyImport(
   () => import("./ManpowerServices/ManpowerServicesPage"),
 );
-const ManpowerContact = lazy(
+const ManpowerContact = lazyImport(
   () => import("./ManpowerServices/ManpowerContact"),
 );
-const ManpowerPositions = lazy(
+const ManpowerPositions = lazyImport(
   () => import("./ManpowerServices/ManpowerPositions"),
 );
-const ManpowerRequirements = lazy(
+const ManpowerRequirements = lazyImport(
   () => import("./ManpowerServices/ManpowerRequirements"),
 );
 const ManpowerApply = lazyImport(() => import("./ManpowerServices/ManpowerApply"));
 const ManpowerFaqs = lazyImport(() => import("./ManpowerServices/ManpowerFaqs"));
-const ManpowerHrLogin = lazy(
+const ManpowerHrLogin = lazyImport(
   () => import("./ManpowerServices/ManpowerHrLogin"),
 );
-const ManpowerHrDashboard = lazy(
+const ManpowerHrDashboard = lazyImport(
   () => import("./ManpowerServices/ManpowerHrDashboard"),
 );
-const ManpowerHrApplications = lazy(
+const ManpowerHrApplications = lazyImport(
   () => import("./ManpowerServices/ManpowerHrApplications"),
 );
-const ManpowerHrPayroll = lazy(
+const ManpowerHrPayroll = lazyImport(
   () => import("./ManpowerServices/ManpowerHrPayroll"),
 );
-const ManpowerHrBilling = lazy(
+const ManpowerHrBilling = lazyImport(
   () => import("./ManpowerServices/ManpowerHrBilling"),
 );
-const ManpowerHrLeaves = lazy(
+const ManpowerHrLeaves = lazyImport(
   () => import("./ManpowerServices/ManpowerHrLeaves"),
 );
-const ManpowerAdminLogin = lazy(
+const ManpowerAdminLogin = lazyImport(
   () => import("./ManpowerServices/ManpowerAdminLogin"),
 );
-const ManpowerAdminDashboard = lazy(
+const ManpowerAdminDashboard = lazyImport(
   () => import("./ManpowerServices/ManpowerAdminDashboard"),
 );
-const ManpowerAdminAccounts = lazy(
+const ManpowerAdminAccounts = lazyImport(
   () => import("./ManpowerServices/ManpowerAdminAccounts"),
 );
-const ManpowerAdminJobs = lazy(
+const ManpowerAdminJobs = lazyImport(
   () => import("./ManpowerServices/ManpowerAdminJobs"),
 );
-const ManpowerAdminHighlights = lazy(
+const ManpowerAdminHighlights = lazyImport(
   () => import("./ManpowerServices/ManpowerAdminHighlights"),
 );
-const ManpowerEmployeeLogin = lazy(
+const ManpowerEmployeeLogin = lazyImport(
   () => import("./ManpowerServices/ManpowerEmployeeLogin"),
 );
-const ManpowerEmployeeHome = lazy(
+const ManpowerEmployeeHome = lazyImport(
   () => import("./ManpowerServices/ManpowerEmployeeHome"),
 );
-const ManpowerEmployeePayroll = lazy(
+const ManpowerEmployeePayroll = lazyImport(
   () => import("./ManpowerServices/ManpowerEmployeePayroll"),
 );
-const ManpowerEmployeeProfile = lazy(
+const ManpowerEmployeeProfile = lazyImport(
   () => import("./ManpowerServices/ManpowerEmployeeProfile"),
 );
-const ManpowerEmployeeLeave = lazy(
+const ManpowerEmployeeLeave = lazyImport(
   () => import("./ManpowerServices/ManpowerEmployeeLeave"),
 );
 const ManpowerExam = lazyImport(() => import("./ManpowerServices/ManpowerExam"));
-const ManpowerChatbot = lazy(
+const ManpowerChatbot = lazyImport(
   () => import("./ManpowerServices/ManpowerChatbot"),
 );
-const ManpowerAdminDeductions = lazy(
+const ManpowerAdminDeductions = lazyImport(
   () => import("./ManpowerServices/ManpowerAdminDeductions"),
 );
-const ManpowerEmployeeChangePassword = lazy(
+const ManpowerEmployeeChangePassword = lazyImport(
   () => import("./ManpowerServices/ManpowerEmployeeChangePassword"),
 );
 
