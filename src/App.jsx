@@ -47,6 +47,12 @@ if (typeof window !== "undefined" && !window.__lumispireChunkRecoveryInstalled) 
   });
 }
 
+const LazyFallback = () => (
+  <div style={{ minHeight: "60vh", display: "grid", placeItems: "center" }}>
+    Loading...
+  </div>
+);
+
 /* ===================== OVERVIEW ===================== */
 const lazyImport = (loader) =>
   lazy(() =>

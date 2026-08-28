@@ -1,7 +1,6 @@
 // HotelAdminDashboard.jsx
 import React, { memo, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HotelAdminShell from "./HotelAdminShell";
 
 const GREEN_DARK = "#2A4F33";
 const GREEN_MID = "#355E3B";
@@ -29,6 +28,36 @@ const CHART_STATUS_FILTERS = [
   { value: "CONFIRMED", label: "Confirmed" },
   { value: "CANCELLED", label: "Cancelled" },
 ];
+
+
+const ADMIN_NAV = [
+  ["Dashboard","/hotel-admin-dashboard"],["Manage Accounts","/hotel-admin-accounts"],["Manage Bookings","/hotel-admin-bookings"],["Packages","/hotel-admin-packages"],["Guest Reviews","/hotel-admin-reviews"],["Chat Support","/hotel-admin-chat"],["ID Verification","/hotel-admin-id-verify"]
+];
+
+const HotelDashboardLayout = memo(function HotelDashboardLayout({children, title, subtitle, actions}) {
+ const navigate = useNavigate();
+ const logout=()=>{localStorage.removeItem("adminToken");localStorage.removeItem("hotelAdminToken");localStorage.removeItem("hotelAdmin");navigate("/hotel-admin-login",{replace:true});};
+ return <div className="min-h-screen bg-[#f8fbf9] text-[#071f14] lg:flex">
+  <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
+   <div className="flex h-full flex-col">
+    <button onClick={()=>navigate('/hotel-admin-dashboard')} className="mb-8 text-center text-white">
+     <img src="/Logo.webp" loading="lazy" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"/>
+     <div className="text-xs font-bold tracking-widest text-[#f4d484]">HOTEL & RESORT ADMIN</div>
+     <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
+    </button>
+    <nav className="space-y-3">
+     {ADMIN_NAV.map(([label,path])=><button key={path} onClick={()=>navigate(path)} className="flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold text-white hover:bg-white/10">{label}</button>)}
+    </nav>
+    <button onClick={logout} className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white">Sign out</button>
+   </div>
+  </aside>
+  <main className="min-w-0 flex-1 lg:pl-64">
+   <header className="sticky top-0 z-30 border-b bg-white/95 p-5"><h1 className="text-3xl font-extrabold">{title}</h1><p>{subtitle}</p></header>
+   {actions ? <div className="px-5 pt-4">{actions}</div>:null}
+   {children}
+  </main>
+ </div>;
+});
 
 function getCurrentYear() {
   return new Date().getFullYear();
@@ -1119,11 +1148,9 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
   const monthTitle = `${MONTH_NAMES[monthDate.getMonth()]} ${monthDate.getFullYear()}`;
 
   return (
-    <HotelAdminShell
+    <HotelDashboardLayout
       title="Dashboard"
       subtitle="Monitor hotel activity, booking updates, guest conversations, and booked dates from one place."
-      activePage="dashboard"
-      maxWidth="max-w-7xl"
       actions={
         <button
           type="button"
@@ -2722,7 +2749,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           </div>
         </section>
       </div>
-    </HotelAdminShell>
+    </HotelDashboardLayout>
   );
 });
 
