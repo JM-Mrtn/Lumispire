@@ -47,11 +47,6 @@ if (typeof window !== "undefined" && !window.__lumispireChunkRecoveryInstalled) 
   });
 }
 
-const LazyFallback = () => (
-  <div style={{ minHeight: "60vh", display: "grid", placeItems: "center" }}>
-    Loading...
-  </div>
-);
 
 /* ===================== OVERVIEW ===================== */
 const lazyImport = (loader) =>
@@ -348,7 +343,7 @@ const PageFallback = () => (
       placeItems: "center",
       background: "#f5f8f6",
       color: "#155f3b",
-      fontFamily: "'Poppins', sans-serif",
+      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       fontWeight: 600,
     }}
   >
@@ -440,7 +435,23 @@ const FloatingAssistants = () => {
   const { pathname } = useLocation();
   const [assistantsReady, setAssistantsReady] = useState(false);
 
+  const showHotelChatButton =
+    HOTEL_CHAT_ALLOWED_PATHS.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`),
+    ) &&
+    !HOTEL_CHAT_BLOCKED_PATH_PREFIXES.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`),
+    );
+
+  const showManpowerChatbot = pathname.startsWith("/manpower");
+  const shouldLoadAssistant = showHotelChatButton || showManpowerChatbot;
+
   useEffect(() => {
+    if (!shouldLoadAssistant) {
+      setAssistantsReady(false);
+      return undefined;
+    }
+
     let idleId;
     let timeoutId;
 
@@ -456,22 +467,14 @@ const FloatingAssistants = () => {
       if (idleId && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
       if (timeoutId) window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [shouldLoadAssistant]);
 
-  const showHotelChatButton =
-    HOTEL_CHAT_ALLOWED_PATHS.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
-    ) &&
-    !HOTEL_CHAT_BLOCKED_PATH_PREFIXES.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
-    );
-
-  const showManpowerChatbot = pathname.startsWith("/manpower");
+  if (!shouldLoadAssistant || !assistantsReady) return null;
 
   return (
     <>
-      {assistantsReady && showHotelChatButton ? <HotelChatbot /> : null}
-      {assistantsReady && showManpowerChatbot ? <ManpowerChatbot /> : null}
+      {showHotelChatButton ? <HotelChatbot /> : null}
+      {showManpowerChatbot ? <ManpowerChatbot /> : null}
     </>
   );
 };

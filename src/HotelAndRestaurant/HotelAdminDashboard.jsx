@@ -1,10 +1,7 @@
 // HotelAdminDashboard.jsx
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { memo, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const GREEN_DARK = "#2A4F33";
-const GREEN_MID = "#355E3B";
-const SOFT_BG = "#F6F6F1";
 
 const STATUS_FILTERS = [
   { value: "BOOKED", label: "Booked Dates" },
@@ -37,11 +34,11 @@ const ADMIN_NAV = [
 const HotelDashboardLayout = memo(function HotelDashboardLayout({children, title, subtitle, actions}) {
  const navigate = useNavigate();
  const logout=()=>{localStorage.removeItem("adminToken");localStorage.removeItem("hotelAdminToken");localStorage.removeItem("hotelAdmin");navigate("/hotel-admin-login",{replace:true});};
- return <div className="min-h-screen w-full overflow-hidden bg-[#f8fbf9] text-[#071f14] lg:flex">
+ return <div className="min-h-screen w-full overflow-x-hidden bg-[#f8fbf9] text-[#071f14] lg:flex">
   <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
    <div className="flex h-full flex-col">
     <button onClick={()=>navigate('/hotel-admin-dashboard')} className="mb-8 text-center text-white">
-     <img src="/HotelLogo.webp" loading="lazy" alt="Hotel Logo" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"/>
+     <img src="/HotelLogo.webp" width="56" height="56" loading="eager" fetchPriority="high" decoding="async" alt="Hotel Logo" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"/>
      <div className="text-xs font-bold tracking-widest text-[#f4d484]">HOTEL & RESORT ADMIN</div>
      <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
     </button>
@@ -51,7 +48,7 @@ const HotelDashboardLayout = memo(function HotelDashboardLayout({children, title
     <button onClick={logout} className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white">Sign out</button>
    </div>
   </aside>
-  <main className="min-w-0 w-full overflow-hidden lg:pl-64">
+  <main className="min-w-0 w-full overflow-x-hidden lg:pl-64">
    <header className="sticky top-0 z-30 border-b bg-white/95 p-5"><h1 className="text-3xl font-extrabold">{title}</h1><p>{subtitle}</p></header>
    {actions ? <div className="px-5 pt-4">{actions}</div>:null}
    {children}
@@ -91,7 +88,7 @@ const MONTH_NAMES = [
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function getApiBases() {
+function getHotelApiBase() {
   const raw = (
     import.meta.env.VITE_HOTEL_API_BASE ||
     import.meta.env.VITE_API_BASE ||
@@ -99,31 +96,16 @@ function getApiBases() {
     "http://localhost:5000"
   ).replace(/\/+$/, "");
 
+  if (raw.endsWith("/api/hotel")) return raw;
   if (raw.endsWith("/api/hotel-admin")) {
-    return {
-      adminBase: raw,
-      hotelBase: raw.replace(/\/api\/hotel-admin$/, "/api/hotel"),
-    };
+    return raw.replace(/\/api\/hotel-admin$/, "/api/hotel");
   }
-
-  if (raw.endsWith("/api/hotel")) {
-    return {
-      adminBase: raw.replace(/\/api\/hotel$/, "/api/hotel-admin"),
-      hotelBase: raw,
-    };
+  if (raw.endsWith("/api")) return `${raw}/hotel`;
+  if (raw.includes("/api/hotel-admin")) {
+    return raw.replace("/api/hotel-admin", "/api/hotel");
   }
-
-  if (raw.endsWith("/api")) {
-    return {
-      adminBase: `${raw}/hotel-admin`,
-      hotelBase: `${raw}/hotel`,
-    };
-  }
-
-  return {
-    adminBase: `${raw}/api/hotel-admin`,
-    hotelBase: `${raw}/api/hotel`,
-  };
+  if (raw.includes("/api/hotel")) return raw;
+  return `${raw}/api/hotel`;
 }
 
 function getAdminToken() {
@@ -453,15 +435,6 @@ function buildLinePath(points = []) {
     .join(" ");
 }
 
-function buildAreaPath(points = [], baseline = 0) {
-  if (!points.length) return "";
-
-  const line = buildLinePath(points);
-  const last = points[points.length - 1];
-  const first = points[0];
-
-  return `${line} L ${last.x} ${baseline} L ${first.x} ${baseline} Z`;
-}
 
 function getServiceShortLabel(type) {
   if (type === "event") return "Event";
@@ -724,7 +697,7 @@ function BookingLineChart({ data = [], activeService = "ALL" }) {
 
 const HotelAdminDashboard = memo(function HotelAdminDashboard() {
   const navigate = useNavigate();
-  const { adminBase, hotelBase } = useMemo(() => getApiBases(), []);
+  const API_BASE = useMemo(() => getHotelApiBase(), []);
 
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
@@ -735,6 +708,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
   const [chartStatusFilter, setChartStatusFilter] = useState("BOOKED");
   const [chartYear, setChartYear] = useState(getCurrentYear());
   const [chartSearch, setChartSearch] = useState("");
+  const deferredChartSearch = useDeferredValue(chartSearch);
 
   const [monthDate, setMonthDate] = useState(() => {
     const today = new Date();
@@ -788,75 +762,46 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
   };
 
   const fetchAllBookings = async () => {
-    const combinedUrls = [
-      `${adminBase}/admin/bookings`,
-      `${hotelBase}/admin/bookings`,
+    const endpoints = [
+      { type: "resort", url: `${API_BASE}/admin/resort-bookings` },
+      { type: "event", url: `${API_BASE}/admin/event-bookings` },
+      { type: "hotel_room", url: `${API_BASE}/admin/hotel-room-bookings` },
     ];
 
-    for (const url of combinedUrls) {
-      try {
-        const result = await fetchJson(url);
+    const results = await Promise.allSettled(
+      endpoints.map(({ url }) => fetchJson(url))
+    );
 
-        if (result.authFailed) return [];
+    const rows = [];
 
-        if (result.ok) {
-          const rows = extractBookings(result.data);
+    for (let index = 0; index < results.length; index += 1) {
+      const result = results[index];
+      const fallbackType = endpoints[index].type;
 
-          if (rows.length) {
-            return rows;
-          }
-        }
-      } catch (error) {
-        console.error("combined bookings fetch error:", error);
-      }
-    }
-
-    try {
-      const [resortResult, eventResult, hotelRoomResult] = await Promise.all([
-        fetchJson(`${hotelBase}/admin/resort-bookings`),
-        fetchJson(`${hotelBase}/admin/event-bookings`),
-        fetchJson(`${hotelBase}/admin/hotel-room-bookings`),
-      ]);
-
-      if (
-        resortResult.authFailed ||
-        eventResult.authFailed ||
-        hotelRoomResult.authFailed
-      ) {
-        return [];
+      if (result.status !== "fulfilled") {
+        console.error(`${fallbackType} bookings fetch error:`, result.reason);
+        continue;
       }
 
-      return [
-        ...(resortResult.ok ? extractBookings(resortResult.data, "resort") : []),
-        ...(eventResult.ok ? extractBookings(eventResult.data, "event") : []),
-        ...(hotelRoomResult.ok
-          ? extractBookings(hotelRoomResult.data, "hotel_room")
-          : []),
-      ];
-    } catch (error) {
-      console.error("separate bookings fetch error:", error);
-      return [];
+      if (result.value.authFailed) return [];
+      if (!result.value.ok) continue;
+
+      rows.push(...extractBookings(result.value.data, fallbackType));
     }
+
+    return rows;
   };
 
   const fetchUsers = async () => {
-    const urls = [`${adminBase}/hotel-users`, `${hotelBase}/hotel-users`];
+    try {
+      const result = await fetchJson(`${API_BASE}/hotel-users`);
 
-    for (const url of urls) {
-      try {
-        const result = await fetchJson(url);
-
-        if (result.authFailed) return [];
-
-        if (result.ok && Array.isArray(result.data)) {
-          return result.data;
-        }
-      } catch (error) {
-        console.error("users fetch error:", error);
-      }
+      if (result.authFailed) return [];
+      return result.ok && Array.isArray(result.data) ? result.data : [];
+    } catch (error) {
+      console.error("users fetch error:", error);
+      return [];
     }
-
-    return [];
   };
 
   const loadDashboard = async () => {
@@ -978,9 +923,9 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
         return false;
       }
 
-      return bookingMatchesSearch(booking, chartSearch);
+      return bookingMatchesSearch(booking, deferredChartSearch);
     });
-  }, [bookings, chartServiceFilter, chartStatusFilter, chartSearch]);
+  }, [bookings, chartServiceFilter, chartStatusFilter, deferredChartSearch]);
 
   const bookingTrendData = useMemo(() => {
     const monthKeys = getYearMonthKeys(chartYear);
@@ -1164,8 +1109,6 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
     >
       <div className="ltc-admin-dashboard">
         <style>{`
-          @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
           html, body, #root {
             width: 100%;
             max-width: 100%;
@@ -1187,7 +1130,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             --white: #ffffff;
             --dark: #101828;
             --muted: #667085;
-            --glass: rgba(255,255,255,.78);
+            --glass: rgba(255,255,255,.96);
             --shadow-md: 0 18px 45px rgba(8,39,25,.12);
             --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
             --radius: 24px;
@@ -1205,105 +1148,17 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             line-height: 1.65;
             letter-spacing: -.01em;
             overflow: hidden;
-            font-family: "Inter", Arial, sans-serif;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           }
 
           .ltc-admin-dashboard * {
             box-sizing: border-box;
           }
 
-          .ltc-admin-hero {
-            position: relative;
-            overflow: hidden;
-            display: grid;
-            grid-template-columns: 1.4fr .8fr;
-            align-items: center;
-            gap: 24px;
-            margin-bottom: 22px;
-            padding: clamp(28px, 4vw, 44px);
-            border-radius: 32px;
-            color: white;
-            isolation: isolate;
-            background:
-              linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%),
-              radial-gradient(circle at 86% 18%, rgba(244,212,132,.18), transparent 30%);
-            box-shadow: var(--shadow-lg);
-            animation: ltcAppleReveal .8s var(--ease) both;
-          }
-
-          .ltc-admin-hero::before {
-            content: "";
-            position: absolute;
-            inset: -20% -12%;
-            z-index: -1;
-            background:
-              radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
-              radial-gradient(circle at 70% 16%, rgba(244,212,132,.16), transparent 28%),
-              radial-gradient(circle at 90% 84%, rgba(22,108,66,.32), transparent 26%);
-            filter: blur(24px);
-          }
-
-          .ltc-admin-eyebrow,
-          .ltc-admin-card-eyebrow {
-            color: var(--gold-soft);
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: .2em;
-            margin: 0;
-          }
-
-          .ltc-admin-hero h2 {
-            margin: 10px 0 0;
-            max-width: 860px;
-            font-size: clamp(34px, 4.8vw, 62px);
-            line-height: 1;
-            font-weight: 900;
-            letter-spacing: -.06em;
-            text-shadow: 0 8px 26px rgba(0,0,0,.22);
-          }
-
-          .ltc-admin-hero h2 span {
-            color: var(--gold-soft);
-          }
-
-          .ltc-admin-hero p:last-child {
-            max-width: 720px;
-            margin: 16px 0 0;
-            color: rgba(255,255,255,.80);
-            font-size: 15px;
-          }
-
-          .ltc-admin-hero-metrics {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
-          }
-
-          .ltc-admin-hero-metric {
-            min-height: 118px;
-            padding: 20px;
-            border-radius: 22px;
-            background: rgba(255,255,255,.10);
-            border: 1px solid rgba(255,255,255,.16);
-            backdrop-filter: blur(8px);
-          }
-
-          .ltc-admin-hero-metric strong {
-            display: block;
-            color: var(--gold-soft);
-            font-size: 32px;
-            line-height: 1;
-            font-weight: 900;
-            letter-spacing: -.05em;
-          }
-
-          .ltc-admin-hero-metric span {
-            display: block;
-            margin-top: 8px;
-            color: rgba(255,255,255,.76);
-            font-size: 12px;
-            font-weight: 800;
+          /* Skip layout/paint work for large sections until they approach the viewport. */
+          .ltc-perf-defer {
+            content-visibility: auto;
+            contain-intrinsic-size: 760px;
           }
 
           .ltc-admin-refresh,
@@ -1380,13 +1235,11 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             background: var(--glass);
             border: 1px solid rgba(255,255,255,.76);
             box-shadow: var(--shadow-md);
-            backdrop-filter: blur(18px);
           }
 
           .ltc-admin-stat-card,
           .ltc-admin-card,
           .ltc-admin-panel {
-            animation: ltcAppleReveal .7s var(--ease) both;
           }
 
           .ltc-admin-stat-card,
@@ -2120,7 +1973,6 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             background: var(--glass);
             border: 1px solid rgba(255,255,255,.76);
             box-shadow: var(--shadow-md);
-            backdrop-filter: blur(18px);
           }
 
           .ltc-admin-row,
@@ -2196,9 +2048,15 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             background: rgba(35,95,62,.35);
           }
 
-          @keyframes ltcAppleReveal {
-            from { opacity: 0; transform: translateY(34px) scale(.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+          @media (prefers-reduced-motion: reduce) {
+            .ltc-admin-dashboard *,
+            .ltc-admin-dashboard *::before,
+            .ltc-admin-dashboard *::after {
+              scroll-behavior: auto !important;
+              transition-duration: .01ms !important;
+              animation-duration: .01ms !important;
+              animation-iteration-count: 1 !important;
+            }
           }
 
           @media (max-width: 1120px) {
@@ -2327,7 +2185,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           />
         </div>
 
-        <section className="ltc-admin-panel ltc-admin-chart-panel">
+        <section className="ltc-admin-panel ltc-admin-chart-panel ltc-perf-defer">
           <div className="ltc-admin-chart-header">
             <div>
               <p className="ltc-admin-panel-kicker">Booking Trend</p>
@@ -2509,7 +2367,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           </div>
         </section>
 
-        <section className="ltc-admin-panel">
+        <section className="ltc-admin-panel ltc-perf-defer">
           <div className="ltc-admin-panel-head">
             <div>
               <p className="ltc-admin-panel-kicker">Booking Calendar</p>
@@ -2664,7 +2522,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           </div>
         </section>
 
-        <section className="ltc-admin-summary-grid">
+        <section className="ltc-admin-summary-grid ltc-perf-defer">
           <div className="ltc-admin-summary-card">
             <p className="ltc-admin-card-kicker">Booking Summary</p>
 
