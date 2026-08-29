@@ -7,9 +7,10 @@ const PHONE_PLACEHOLDER = "Phone Number";
 const USERNAME_MIN_LENGTH = 5;
 const USERNAME_MAX_LENGTH = 20;
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const SYSTEM_FONT = 'system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Arial, sans-serif';
+const fontMontserrat = { fontFamily: SYSTEM_FONT };
+const fontPontano = { fontFamily: SYSTEM_FONT };
+const fontPoppins = { fontFamily: SYSTEM_FONT };
 
 function getHotelToken() {
   return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
@@ -378,7 +379,15 @@ const HotelSignUp = () => {
   );
 
   const EyeIcon = ({ open }) => (
-    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      viewBox="0 0 24 24"
+      className="ltc-input-icon-svg"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+      focusable="false"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -401,7 +410,7 @@ const HotelSignUp = () => {
       />
 
       <div>
-        <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+        <span className="ltc-logo-title" style={fontMontserrat}>Hotel &amp; Resort</span>
         <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
       </div>
     </button>
@@ -545,7 +554,7 @@ const HotelSignUp = () => {
           box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
         }
 
-        .ltc-logo h1 {
+        .ltc-logo-title {
           font-size: 18px;
           line-height: 1;
           font-weight: 900;
@@ -774,7 +783,7 @@ const HotelSignUp = () => {
 
         .ltc-field-wrap {
           display: grid;
-          grid-template-rows: 46px minmax(14px, auto);
+          grid-template-rows: 48px minmax(14px, auto);
           gap: 5px;
           min-width: 0;
           align-content: start;
@@ -783,16 +792,16 @@ const HotelSignUp = () => {
         .ltc-input-shell {
           position: relative;
           min-width: 0;
-          height: 46px;
-          min-height: 46px;
-          flex: 0 0 46px;
+          height: 48px;
+          min-height: 48px;
+          flex: 0 0 48px;
         }
 
         .ltc-input-icon {
           pointer-events: none;
           position: absolute;
           left: 15px;
-          top: 23px;
+          top: 24px;
           transform: translateY(-50%);
           color: var(--green-700);
           display: grid;
@@ -805,40 +814,57 @@ const HotelSignUp = () => {
           height: 18px;
         }
 
+        .ltc-password-control {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 48px;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+          min-width: 0;
+          height: 48px;
+        }
+
         .ltc-eye-button {
-          position: absolute;
-          right: 15px;
-          top: 23px;
-          transform: translateY(-50%);
-          border: 0;
-          background: transparent;
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          min-height: 48px;
+          border: 1px solid rgba(35,95,62,.12);
+          border-radius: 999px;
+          background: rgba(255,255,255,.92);
           color: var(--green-700);
           cursor: pointer;
           display: grid;
           place-items: center;
           padding: 0;
           transition: .25s var(--ease);
-          z-index: 2;
+          box-shadow: 0 8px 18px rgba(8,39,25,.045);
         }
 
         .ltc-eye-button:hover {
           color: var(--green-950);
-          transform: translateY(-50%) scale(1.05);
+          border-color: rgba(35,95,62,.28);
+          background: #fff;
+        }
+
+        .ltc-eye-button:focus-visible {
+          outline: 3px solid rgba(215,168,77,.55);
+          outline-offset: 2px;
         }
 
         .ltc-input,
         .ltc-select {
           display: block;
           width: 100%;
-          height: 46px;
-          min-height: 46px;
-          max-height: 46px;
+          height: 48px;
+          min-height: 48px;
+          max-height: 48px;
           border: 1px solid rgba(35,95,62,.10);
           background: rgba(255,255,255,.92);
           color: var(--dark);
           border-radius: 999px;
           font-size: 13.5px;
-          line-height: 46px;
+          line-height: 48px;
           outline: none;
           transition: .25s var(--ease);
           font-family: inherit;
@@ -856,7 +882,7 @@ const HotelSignUp = () => {
         }
 
         .ltc-input.has-eye {
-          padding-right: 48px;
+          padding-right: 15px;
         }
 
         .ltc-input::placeholder {
@@ -993,7 +1019,7 @@ const HotelSignUp = () => {
           object-fit: cover;
         }
 
-        .ltc-footer h4 {
+        .ltc-footer-brand-name {
           color: white;
           font-weight: 900;
           font-size: 20px;
@@ -1002,7 +1028,7 @@ const HotelSignUp = () => {
           text-transform: uppercase;
         }
 
-        .ltc-footer h5 {
+        .ltc-footer-heading {
           color: #f4d484;
           font-size: 12px;
           line-height: 1.2;
@@ -1084,6 +1110,17 @@ const HotelSignUp = () => {
           line-height: 1.4;
         }
 
+        @media (prefers-reduced-motion: reduce) {
+          .ltc-login-bg,
+          .ltc-nav-link,
+          .ltc-eye-button,
+          .ltc-submit-button,
+          .ltc-auth-links button,
+          .ltc-facebook-link {
+            transition: none !important;
+          }
+        }
+
         @media (max-width: 900px) {
           .ltc-header .ltc-container {
             padding-left: 22px;
@@ -1140,7 +1177,7 @@ const HotelSignUp = () => {
             padding-right: 16px;
           }
 
-          .ltc-logo h1 {
+          .ltc-logo-title {
             font-size: 14px;
           }
 
@@ -1241,11 +1278,8 @@ const HotelSignUp = () => {
         <main className="ltc-container ltc-signup-main">
           <section className="ltc-login-card">
             <div className="ltc-card-title">
-              <p style={fontMontserrat}>Create Your Account</p>
-
-              <h1 style={fontMontserrat}>
-                 <span></span>
-              </h1>
+              <p style={fontMontserrat}>Hotel &amp; Resort Account</p>
+              <h1 style={fontMontserrat}>Create Your Account</h1>
             </div>
 
             {errorMessage ? (
@@ -1416,66 +1450,80 @@ const HotelSignUp = () => {
 
               <div className="ltc-form-grid two">
                 <div className="ltc-field-wrap">
-                  <div className="ltc-input-shell">
-                    <span className="ltc-input-icon">
-                      <LockIcon />
-                    </span>
+                  <div className="ltc-password-control">
+                    <div className="ltc-input-shell">
+                      <span className="ltc-input-icon">
+                        <LockIcon />
+                      </span>
 
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      maxLength={20}
-                      placeholder="Password"
-                      className={`ltc-input has-eye ${fieldError("password") ? "error" : ""}`}
-                      style={fontPoppins}
-                      value={form.password}
-                      onChange={(e) => setField("password", e.target.value)}
-                    />
+                      <input
+                        id="hotel-signup-password"
+                        type={showPassword ? "text" : "password"}
+                        maxLength={20}
+                        placeholder="Password"
+                        className={`ltc-input has-eye ${fieldError("password") ? "error" : ""}`}
+                        style={fontPoppins}
+                        value={form.password}
+                        onChange={(e) => setField("password", e.target.value)}
+                        autoComplete="new-password"
+                        aria-invalid={fieldError("password") ? "true" : "false"}
+                        aria-describedby={fieldError("password") ? "hotel-signup-password-error" : undefined}
+                      />
+                    </div>
 
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
                       className="ltc-eye-button"
                       aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-controls="hotel-signup-password"
                     >
                       <EyeIcon open={showPassword} />
                     </button>
                   </div>
 
                   {fieldError("password") ? (
-                    <p className="ltc-field-error" style={fontPoppins}>
+                    <p id="hotel-signup-password-error" className="ltc-field-error" style={fontPoppins}>
                       {fieldError("password")}
                     </p>
                   ) : null}
                 </div>
 
                 <div className="ltc-field-wrap">
-                  <div className="ltc-input-shell">
-                    <span className="ltc-input-icon">
-                      <LockIcon />
-                    </span>
+                  <div className="ltc-password-control">
+                    <div className="ltc-input-shell">
+                      <span className="ltc-input-icon">
+                        <LockIcon />
+                      </span>
 
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      maxLength={20}
-                      placeholder="Confirm Password"
-                      className={`ltc-input has-eye ${fieldError("confirmPassword") ? "error" : ""}`}
-                      style={fontPoppins}
-                      value={form.confirmPassword}
-                      onChange={(e) => setField("confirmPassword", e.target.value)}
-                    />
+                      <input
+                        id="hotel-signup-confirm-password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        maxLength={20}
+                        placeholder="Confirm Password"
+                        className={`ltc-input has-eye ${fieldError("confirmPassword") ? "error" : ""}`}
+                        style={fontPoppins}
+                        value={form.confirmPassword}
+                        onChange={(e) => setField("confirmPassword", e.target.value)}
+                        autoComplete="new-password"
+                        aria-invalid={fieldError("confirmPassword") ? "true" : "false"}
+                        aria-describedby={fieldError("confirmPassword") ? "hotel-signup-confirm-password-error" : undefined}
+                      />
+                    </div>
 
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword((v) => !v)}
                       className="ltc-eye-button"
                       aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                      aria-controls="hotel-signup-confirm-password"
                     >
                       <EyeIcon open={showConfirmPassword} />
                     </button>
                   </div>
 
                   {fieldError("confirmPassword") ? (
-                    <p className="ltc-field-error" style={fontPoppins}>
+                    <p id="hotel-signup-confirm-password-error" className="ltc-field-error" style={fontPoppins}>
                       {fieldError("confirmPassword")}
                     </p>
                   ) : null}
@@ -1567,14 +1615,14 @@ function Footer() {
         <div>
           <div className="ltc-footer-brand">
             <img
-              src="/HotelLumispireLogo.png"
+              src="/HotelLumispireLogo.webp"
               alt="Lumispire logo"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
             />
 
-            <h4 style={fontMontserrat}>Lumispire</h4>
+            <p className="ltc-footer-brand-name" style={fontMontserrat}>Lumispire</p>
           </div>
         </div>
 
@@ -1667,10 +1715,10 @@ function FacebookLink() {
 
 function FooterColumn({ title, children }) {
   return (
-    <div>
-      <h5 style={fontMontserrat}>{title}</h5>
+    <section>
+      <h2 className="ltc-footer-heading" style={fontMontserrat}>{title}</h2>
       <div>{children}</div>
-    </div>
+    </section>
   );
 }
 
