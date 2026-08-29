@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
+const HERO_IMAGE = "/ManpowerBanner.webp";
 
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 
@@ -29,41 +29,41 @@ const DEFAULT_VACANCIES = [
 
 const JOB_IMAGE_LINKS = {
   "accounting clerk":
-    "https://images.pexels.com/photos/6863183/pexels-photo-6863183.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/6863183/pexels-photo-6863183.jpeg?auto=compress&cs=tinysrgb&w=640",
   "general clerk":
-    "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=640",
   "money sorter":
-    "https://images.pexels.com/photos/4386366/pexels-photo-4386366.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/4386366/pexels-photo-4386366.jpeg?auto=compress&cs=tinysrgb&w=640",
   "data encoder":
-    "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=640",
   "admin assistant":
-    "https://images.pexels.com/photos/3760067/pexels-photo-3760067.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/3760067/pexels-photo-3760067.jpeg?auto=compress&cs=tinysrgb&w=640",
   "hr assistant":
-    "https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=640",
   "production worker":
-    "https://images.pexels.com/photos/3862365/pexels-photo-3862365.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/3862365/pexels-photo-3862365.jpeg?auto=compress&cs=tinysrgb&w=640",
   warehouseman:
-    "https://images.pexels.com/photos/4483610/pexels-photo-4483610.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/4483610/pexels-photo-4483610.jpeg?auto=compress&cs=tinysrgb&w=640",
   stockman:
-    "https://images.pexels.com/photos/4483775/pexels-photo-4483775.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/4483775/pexels-photo-4483775.jpeg?auto=compress&cs=tinysrgb&w=640",
   "sales coordinator":
-    "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=640",
   "financial advisor":
-    "https://images.pexels.com/photos/7654579/pexels-photo-7654579.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/7654579/pexels-photo-7654579.jpeg?auto=compress&cs=tinysrgb&w=640",
   engineer:
-    "https://images.pexels.com/photos/3862627/pexels-photo-3862627.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/3862627/pexels-photo-3862627.jpeg?auto=compress&cs=tinysrgb&w=640",
   driver:
-    "https://images.pexels.com/photos/13861/IMG_3496bfree.jpg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/13861/IMG_3496bfree.jpg?auto=compress&cs=tinysrgb&w=640",
   promodiser:
-    "https://images.pexels.com/photos/264507/pexels-photo-264507.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/264507/pexels-photo-264507.jpeg?auto=compress&cs=tinysrgb&w=640",
   merchandiser:
-    "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=640",
   messenger:
-    "https://images.pexels.com/photos/439366/pexels-photo-439366.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/439366/pexels-photo-439366.jpeg?auto=compress&cs=tinysrgb&w=640",
   "forklift operator":
-    "https://images.pexels.com/photos/1267324/pexels-photo-1267324.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/1267324/pexels-photo-1267324.jpeg?auto=compress&cs=tinysrgb&w=640",
   janitor:
-    "https://images.pexels.com/photos/6195129/pexels-photo-6195129.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/6195129/pexels-photo-6195129.jpeg?auto=compress&cs=tinysrgb&w=640",
 };
 
 function getJobImageLink(title = "") {
@@ -118,44 +118,9 @@ const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Inter', sans-serif" };
 const fontPoppins = { fontFamily: "'Inter', sans-serif" };
 
-const RevealOnScroll = ({ children, className = "", delay = 0, y = 22 }) => {
-  const ref = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(element);
-        }
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
-        transition: "opacity 650ms ease, transform 650ms ease",
-        transitionDelay: `${delay}ms`,
-        willChange: "opacity, transform",
-      }}
-    >
-      {children}
-    </div>
-  );
-};
+const RevealOnScroll = ({ children, className = "" }) => (
+  <div className={className}>{children}</div>
+);
 
 function HeaderNavLink({ to, children, active = false }) {
   return (
@@ -205,7 +170,15 @@ function VacancyCard({ job, index, onOpen }) {
       >
         <div className="mp-card-media">
           {imageSrc ? (
-            <img src={imageSrc} alt={job.title} />
+            <img
+              src={imageSrc}
+              alt={job.title}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width="640"
+              height="360"
+            />
           ) : (
             <div className="mp-empty-media">
               <JobIcon />
@@ -240,7 +213,7 @@ function JobModal({ job, onClose, onApply }) {
 
   return (
     <div className="mp-modal-overlay">
-      <div className="mp-modal-card">
+      <div className="mp-modal-card" role="dialog" aria-modal="true" aria-labelledby="mp-job-modal-title">
         <button
           type="button"
           onClick={onClose}
@@ -253,7 +226,13 @@ function JobModal({ job, onClose, onApply }) {
         <div className="mp-modal-scroll">
           <div className="mp-modal-hero">
             {imageSrc ? (
-              <img src={imageSrc} alt={job.title} />
+              <img
+                src={imageSrc}
+                alt={job.title}
+                decoding="async"
+                width="1200"
+                height="675"
+              />
             ) : (
               <div className="mp-modal-empty">
                 <JobIcon />
@@ -263,7 +242,7 @@ function JobModal({ job, onClose, onApply }) {
 
             <div className="mp-modal-title">
               <p style={fontPoppins}>Position Details</p>
-              <h2 style={fontMontserrat}>{job.title}</h2>
+              <h2 id="mp-job-modal-title" style={fontMontserrat}>{job.title}</h2>
             </div>
           </div>
 
@@ -389,7 +368,7 @@ function FloatingHomeIconButton({ onClick }) {
         aria-label="Back to Home"
       >
         <span className="ltc-floating-home-tooltip">LTC GROUP OF COMPANIES</span>
-        <img src="/LTCLogo.jpg" alt="" aria-hidden="true" />
+        <img src="/LTCLogo.webp" alt="" aria-hidden="true" width="56" height="56" decoding="async" />
       </button>
     </>
   );
@@ -518,7 +497,6 @@ export default function ManpowerPositions() {
   return (
     <div className="mp-about-style" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
 
         .mp-about-style {
           --green-950: #071f14;
@@ -551,6 +529,25 @@ export default function ManpowerPositions() {
         }
 
         .mp-about-style * { box-sizing: border-box; }
+
+
+        .mp-sr-only {
+          position: absolute !important;
+          width: 1px !important;
+          height: 1px !important;
+          padding: 0 !important;
+          margin: -1px !important;
+          overflow: hidden !important;
+          clip: rect(0, 0, 0, 0) !important;
+          white-space: nowrap !important;
+          border: 0 !important;
+        }
+
+        #job-offers,
+        .mp-band {
+          content-visibility: auto;
+          contain-intrinsic-size: auto 900px;
+        }
 
         .mp-container {
           width: min(1180px, 92%);
@@ -704,8 +701,8 @@ export default function ManpowerPositions() {
         }
 
         .mp-sidebar-close {
-          width: 38px;
-          height: 38px;
+          width: 44px;
+          height: 44px;
           border-radius: 12px;
           border: 0;
           background: #f2f4f7;
@@ -744,17 +741,24 @@ export default function ManpowerPositions() {
           background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
         }
 
+        .mp-hero-bg {
+          position: absolute;
+          inset: 0;
+          z-index: -4;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          transform: scale(1.02);
+        }
+
         .mp-hero::before {
           content: "";
           position: absolute;
           inset: 0;
           z-index: -3;
-          background:
-            linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.72) 100%),
-            url("${HERO_IMAGE}") center center / cover no-repeat;
-          background-blend-mode: multiply;
+          background: linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.72) 100%);
           opacity: .96;
-          transform: scale(1.02);
         }
 
         .mp-hero::after {
@@ -1316,8 +1320,8 @@ export default function ManpowerPositions() {
           right: 14px;
           top: 14px;
           z-index: 3;
-          width: 42px;
-          height: 42px;
+          width: 44px;
+          height: 44px;
           display: grid;
           place-items: center;
           border-radius: 999px;
@@ -1683,8 +1687,8 @@ export default function ManpowerPositions() {
         }
 
         .mp-sidebar-close {
-          width: 40px !important;
-          height: 40px !important;
+          width: 44px !important;
+          height: 44px !important;
           border: 0 !important;
           border-radius: 13px !important;
           color: #101828 !important;
@@ -1983,14 +1987,14 @@ export default function ManpowerPositions() {
       <header className="mp-header">
         <div className="mp-container mp-nav">
           <Link to={MANPOWER_HOME_ROUTE} className="mp-logo">
-            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" />
+            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" width="42" height="42" decoding="async" />
             <div>
               <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
               <p style={fontPontano}>Professional staffing and workforce solutions.</p>
             </div>
           </Link>
 
-          <nav className="mp-desktop-nav" style={fontPoppins}>
+          <nav className="mp-desktop-nav" style={fontPoppins} aria-label="Manpower navigation">
             <HeaderNavLink to={MANPOWER_HOME_ROUTE}>Home</HeaderNavLink>
             <HeaderNavLink to="/manpower-positions" active>Job Offer</HeaderNavLink>
             <HeaderNavLink to="/manpower-requirements">Requirements</HeaderNavLink>
@@ -2037,6 +2041,17 @@ export default function ManpowerPositions() {
 
       <main>
         <section className="mp-hero">
+          <img
+            src={HERO_IMAGE}
+            alt=""
+            aria-hidden="true"
+            className="mp-hero-bg"
+            width="1672"
+            height="941"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
           <div className="mp-container mp-hero-content">
             <div className="mp-eyebrow" style={fontPoppins}>Manpower Services</div>
             <h2 style={fontMontserrat}>
@@ -2068,11 +2083,11 @@ export default function ManpowerPositions() {
               </button>
             </div>
 
-            {loadingJobs && (
-              <p className="mt-5 text-[13px] font-bold text-white/85" style={fontPontano}>
+            {loadingJobs ? (
+              <span className="mp-sr-only" role="status" aria-live="polite">
                 Loading job offers...
-              </p>
-            )}
+              </span>
+            ) : null}
           </div>
         </section>
 
@@ -2090,8 +2105,15 @@ export default function ManpowerPositions() {
               <div className="mp-search-panel">
                 <div className="mp-search-grid">
                   <div className="mp-search-box">
+                    <label htmlFor="mp-job-search" className="mp-sr-only">
+                      Search job opportunities
+                    </label>
                     <SearchIcon />
                     <input
+                      id="mp-job-search"
+                      name="jobSearch"
+                      type="search"
+                      autoComplete="off"
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       placeholder="Search by title, description, or qualification..."
@@ -2099,7 +2121,13 @@ export default function ManpowerPositions() {
                     />
                   </div>
 
-                  <select
+                  <div>
+                    <label htmlFor="mp-letter-filter" className="mp-sr-only">
+                      Filter jobs by first letter
+                    </label>
+                    <select
+                    id="mp-letter-filter"
+                    name="letterFilter"
                     value={letterFilter}
                     onChange={(event) => setLetterFilter(event.target.value)}
                     className="mp-filter-select"
@@ -2112,9 +2140,16 @@ export default function ManpowerPositions() {
                         Starts with {letter}
                       </option>
                     ))}
-                  </select>
+                    </select>
+                  </div>
 
-                  <select
+                  <div>
+                    <label htmlFor="mp-sort-order" className="mp-sr-only">
+                      Sort job opportunities
+                    </label>
+                    <select
+                    id="mp-sort-order"
+                    name="sortOrder"
                     value={sortOrder}
                     onChange={(event) => setSortOrder(event.target.value)}
                     className="mp-filter-select"
@@ -2123,9 +2158,10 @@ export default function ManpowerPositions() {
                   >
                     <option value="az">Sort A to Z</option>
                     <option value="za">Sort Z to A</option>
-                  </select>
+                    </select>
+                  </div>
 
-                  <div className="mp-count-pill" style={fontPoppins}>
+                  <div className="mp-count-pill" style={fontPoppins} aria-live="polite">
                     Showing {visibleJobs.length} of {filteredJobs.length}
                   </div>
                 </div>
@@ -2230,7 +2266,7 @@ export default function ManpowerPositions() {
         <div className="mp-container mp-footer-grid">
           <div>
             <Link to={MANPOWER_HOME_ROUTE} className="mp-logo">
-              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" />
+              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" width="42" height="42" decoding="async" />
               <div>
                 <h4 style={fontMontserrat}>LTC Manpower</h4>
                 <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
