@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
+const HERO_IMAGE = "/ManpowerBanner.webp";
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 
 const FAQS = [
@@ -178,7 +178,7 @@ function FloatingHomeIconButton({ onClick }) {
         aria-label="Back to Home"
       >
         <span className="ltc-floating-home-tooltip">LTC GROUP OF COMPANIES</span>
-        <img src="/LTCLogo.jpg" alt="" aria-hidden="true" />
+        <img src="/LTCLogo.webp" alt="" aria-hidden="true" width="160" height="113" decoding="async" />
       </button>
     </>
   );
@@ -197,8 +197,6 @@ export default function ManpowerFaqs() {
   return (
     <div className="mp-faq-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
-
         .mp-faq-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -383,8 +381,8 @@ export default function ManpowerFaqs() {
         }
 
         .mp-sidebar-close {
-          width: 38px;
-          height: 38px;
+          width: 44px;
+          height: 44px;
           border-radius: 12px;
           border: 0;
           background: #f2f4f7;
@@ -663,12 +661,42 @@ export default function ManpowerFaqs() {
           overflow: hidden;
         }
 
-        .mp-help-visual img {
-          width: 100%;
-          height: 100%;
-          display: block;
-          object-fit: cover;
-          object-position: center;
+        .mp-help-visual {
+          position: relative;
+          display: grid;
+          place-items: center;
+          background:
+            radial-gradient(circle at 28% 28%, rgba(244,212,132,.30), transparent 22%),
+            radial-gradient(circle at 72% 66%, rgba(255,255,255,.14), transparent 30%),
+            linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
+        }
+
+        .mp-help-visual::before {
+          content: "?";
+          width: 96px;
+          height: 96px;
+          display: grid;
+          place-items: center;
+          border-radius: 999px;
+          color: var(--green-950);
+          background: linear-gradient(135deg,#f4d484,#d7a84d);
+          box-shadow: 0 18px 45px rgba(0,0,0,.22), 0 0 0 12px rgba(255,255,255,.08);
+          font-family: "Montserrat", "Inter", Arial, sans-serif;
+          font-size: 52px;
+          font-weight: 900;
+          line-height: 1;
+        }
+
+        .mp-help-visual::after {
+          content: "SUPPORT";
+          position: absolute;
+          left: 50%;
+          bottom: 24px;
+          transform: translateX(-50%);
+          color: rgba(255,255,255,.78);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: .18em;
         }
 
         .mp-help-copy { flex: 1 1 auto; }
@@ -1085,8 +1113,8 @@ export default function ManpowerFaqs() {
         }
 
         .mp-sidebar-close {
-          width: 40px !important;
-          height: 40px !important;
+          width: 44px !important;
+          height: 44px !important;
           border: 0 !important;
           border-radius: 13px !important;
           color: #101828 !important;
@@ -1379,6 +1407,17 @@ export default function ManpowerFaqs() {
           .mp-footer-grid { padding-bottom: 20px !important; }
         }
 
+        @media (prefers-reduced-motion: reduce) {
+          .mp-faq-page *,
+          .mp-faq-page *::before,
+          .mp-faq-page *::after {
+            scroll-behavior: auto !important;
+            animation-duration: .01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: .01ms !important;
+          }
+        }
+
       `}</style>
 
       <Header goTo={goTo} openMenu={() => setMobileOpen(true)} />
@@ -1387,23 +1426,27 @@ export default function ManpowerFaqs() {
         <section className="mp-hero">
           <img
             src={HERO_IMAGE}
-            alt="Manpower services background"
+            alt=""
+            aria-hidden="true"
             className="mp-hero-bg"
+            width="1672"
+            height="941"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
           />
 
           <div className="mp-container mp-hero-content">
-            <RevealOnScroll>
-              <h2 style={fontMontserrat}>
-                Frequently Asked <span>Questions</span>
-              </h2>
+            <h2 style={fontMontserrat}>
+              Frequently Asked <span>Questions</span>
+            </h2>
 
-              <p style={fontPontano}>
-                Find answers to common questions about applications, job offers, requirements, and employee access.
-              </p>
-            </RevealOnScroll>
+            <p style={fontPontano}>
+              Find answers to common questions about applications, job offers, requirements, and employee access.
+            </p>
           </div>
         </section>
 
@@ -1425,6 +1468,9 @@ export default function ManpowerFaqs() {
                       <article key={item.question} className="mp-faq-item">
                         <button
                           type="button"
+                          id={`faq-question-${index}`}
+                          aria-expanded={isActive}
+                          aria-controls={`faq-answer-${index}`}
                           onClick={() => setOpenIndex(isActive ? -1 : index)}
                           className={`mp-faq-question ${isActive ? "active" : ""}`}
                         >
@@ -1433,7 +1479,13 @@ export default function ManpowerFaqs() {
                         </button>
 
                         {isActive ? (
-                          <div className="mp-faq-answer" style={fontPontano}>
+                          <div
+                            id={`faq-answer-${index}`}
+                            role="region"
+                            aria-labelledby={`faq-question-${index}`}
+                            className="mp-faq-answer"
+                            style={fontPontano}
+                          >
                             {item.answer}
                           </div>
                         ) : null}
@@ -1445,12 +1497,7 @@ export default function ManpowerFaqs() {
 
               <RevealOnScroll className="mp-help-card" delay={80}>
                 <div className="mp-help-card-content">
-                  <div className="mp-help-visual">
-                    <img
-                      src="/ManpowerFaqSupport.png"
-                      alt="Manpower support representative assisting a job applicant"
-                    />
-                  </div>
+                  <div className="mp-help-visual" aria-hidden="true" />
 
                   <div className="mp-help-copy">
                     <h4 style={fontMontserrat}>Still need assistance?</h4>
@@ -1492,6 +1539,9 @@ function Header({ goTo, openMenu }) {
             src={LOGO_IMAGE}
             alt="Manpower logo"
             className="mp-logo-icon"
+            width="156"
+            height="132"
+            decoding="async"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
@@ -1550,7 +1600,7 @@ function Footer() {
       <div className="mp-container mp-footer-grid">
         <div>
           <Link to={MANPOWER_HOME_ROUTE} className="mp-logo">
-            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" />
+            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" width="156" height="132" loading="lazy" decoding="async" />
             <div>
               <h4 style={fontMontserrat}>LTC Manpower</h4>
               <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
