@@ -7,9 +7,10 @@ const USERNAME_MAX_LENGTH = 20;
 const PASSWORD_MIN_LENGTH = 6;
 const PASSWORD_MAX_LENGTH = 20;
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const SYSTEM_FONT_STACK = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+const fontMontserrat = { fontFamily: SYSTEM_FONT_STACK };
+const fontPontano = { fontFamily: SYSTEM_FONT_STACK };
+const fontPoppins = { fontFamily: SYSTEM_FONT_STACK };
 
 function getHotelToken() {
   return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
@@ -213,7 +214,7 @@ const HotelLogIn = () => {
   );
 
   const EyeIcon = ({ open }) => (
-    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className="ltc-input-icon-svg" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" focusable="false">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -234,7 +235,7 @@ const HotelLogIn = () => {
   const CrownLogo = () => (
     <button type="button" onClick={() => navigate("/resort-venue")} className="ltc-logo" aria-label="Go to hotel home">
       <img
-        src="/HotelLogo.png"
+        src="/HotelLogo.webp"
         alt="Hotel logo"
         className="ltc-logo-icon"
         onError={(event) => {
@@ -243,7 +244,7 @@ const HotelLogIn = () => {
       />
 
       <div>
-        <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+        <p className="ltc-logo-title" style={fontMontserrat}>Hotel &amp; Resort</p>
         <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
       </div>
     </button>
@@ -252,8 +253,6 @@ const HotelLogIn = () => {
   return (
     <div className="ltc-hotel-login-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-hotel-login-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -279,7 +278,7 @@ const HotelLogIn = () => {
           line-height: 1.65;
           letter-spacing: -.01em;
           overflow-x: hidden;
-          font-family: "Inter", Arial, sans-serif;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
         }
 
         .ltc-hotel-login-page * {
@@ -394,7 +393,7 @@ const HotelLogIn = () => {
           box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
         }
 
-        .ltc-logo h1 {
+        .ltc-logo-title {
           font-size: 18px;
           line-height: 1;
           font-weight: 900;
@@ -555,7 +554,7 @@ const HotelLogIn = () => {
           backdrop-filter: blur(8px);
         }
 
-        .ltc-login-copy h2 {
+        .ltc-login-copy h1 {
           margin: 22px 0 0;
           color: white;
           font-size: clamp(42px, 6vw, 72px);
@@ -565,7 +564,7 @@ const HotelLogIn = () => {
           text-shadow: 0 8px 26px rgba(0,0,0,.22);
         }
 
-        .ltc-login-copy h2 span {
+        .ltc-login-copy h1 span {
           color: var(--gold-soft);
         }
 
@@ -654,7 +653,7 @@ const HotelLogIn = () => {
           letter-spacing: .18em;
         }
 
-        .ltc-card-title h1 {
+        .ltc-card-title h2 {
           margin: 8px 0 0;
           color: var(--green-950);
           font-size: clamp(32px, 4vw, 44px);
@@ -663,7 +662,7 @@ const HotelLogIn = () => {
           letter-spacing: -.055em;
         }
 
-        .ltc-card-title h1 span {
+        .ltc-card-title h2 span {
           color: var(--gold);
         }
 
@@ -747,24 +746,46 @@ const HotelLogIn = () => {
           height: 20px;
         }
 
+        .ltc-password-shell {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 48px;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .ltc-password-shell .ltc-input {
+          grid-column: 1;
+          grid-row: 1;
+        }
+
         .ltc-eye-button {
-          position: absolute;
-          right: 17px;
-          top: 50%;
-          transform: translateY(-50%);
-          border: 0;
-          background: transparent;
+          position: static;
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          min-height: 48px;
+          border: 1px solid rgba(35,95,62,.14);
+          border-radius: 999px;
+          background: rgba(255,255,255,.92);
           color: var(--green-700);
           cursor: pointer;
           display: grid;
           place-items: center;
           padding: 0;
-          transition: .25s var(--ease);
+          transition: color .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease);
+          touch-action: manipulation;
         }
 
-        .ltc-eye-button:hover {
+        .ltc-eye-button:hover,
+        .ltc-eye-button:focus-visible {
           color: var(--green-950);
-          transform: translateY(-50%) scale(1.05);
+          border-color: rgba(35,95,62,.30);
+          background: #fff;
+          outline: none;
+        }
+
+        .ltc-eye-button:focus-visible {
+          box-shadow: 0 0 0 4px rgba(35,95,62,.12);
         }
 
         .ltc-input {
@@ -779,10 +800,6 @@ const HotelLogIn = () => {
           outline: none;
           transition: .25s var(--ease);
           font-family: inherit;
-        }
-
-        .ltc-input.has-eye {
-          padding-right: 52px;
         }
 
         .ltc-input::placeholder {
@@ -902,7 +919,7 @@ const HotelLogIn = () => {
           object-fit: cover;
         }
 
-        .ltc-footer h4 {
+        .ltc-footer-brand-title {
           color: white;
           font-weight: 900;
           font-size: 20px;
@@ -911,7 +928,7 @@ const HotelLogIn = () => {
           text-transform: uppercase;
         }
 
-        .ltc-footer h5 {
+        .ltc-footer-section-title {
           color: #f4d484;
           font-size: 12px;
           line-height: 1.2;
@@ -1067,7 +1084,7 @@ const HotelLogIn = () => {
             padding-right: 16px;
           }
 
-          .ltc-logo h1 {
+          .ltc-logo-title {
             font-size: 14px;
           }
 
@@ -1096,7 +1113,7 @@ const HotelLogIn = () => {
             letter-spacing: .18em;
           }
 
-          .ltc-login-copy h2 {
+          .ltc-login-copy h1 {
             font-size: clamp(36px, 12vw, 48px);
             letter-spacing: -.045em;
           }
@@ -1115,7 +1132,7 @@ const HotelLogIn = () => {
             padding: 28px 20px;
           }
 
-          .ltc-card-title h1 {
+          .ltc-card-title h2 {
             font-size: 34px;
           }
 
@@ -1199,9 +1216,9 @@ const HotelLogIn = () => {
               WELCOME TO
             </div>
 
-            <h2 style={fontMontserrat}>
+            <h1 style={fontMontserrat}>
               Patio de <span>Lorenzo</span>
-            </h2>
+            </h1>
 
             <p style={fontPontano}>
               Sign in to continue your resort, venue, hotel, condo, and event package booking
@@ -1212,7 +1229,7 @@ const HotelLogIn = () => {
               <PinIcon />
 
               <div>
-                <h3 style={fontMontserrat}>Bacoor, Cavite</h3>
+                <h2 style={fontMontserrat}>Bacoor, Cavite</h2>
                 <p style={fontPoppins}>Eco Trend Subdivision</p>
               </div>
             </div>
@@ -1221,7 +1238,7 @@ const HotelLogIn = () => {
               <PinIcon />
 
               <div>
-                <h3 style={fontMontserrat}>Palanan, Makati</h3>
+                <h2 style={fontMontserrat}>Palanan, Makati</h2>
                 <p style={fontPoppins}>Building II, Curie Street</p>
               </div>
             </div>
@@ -1230,9 +1247,7 @@ const HotelLogIn = () => {
           <section className="ltc-login-card">
             <div className="ltc-card-title">
               <p style={fontMontserrat}>Hotel & Resort Account</p>
-              <h1 style={fontMontserrat}>
-                 <span></span>
-              </h1>
+              <h2 style={fontMontserrat}>Sign In</h2>
             </div>
 
             {errorMessage ? (
@@ -1257,7 +1272,7 @@ const HotelLogIn = () => {
             >
               <div className="ltc-field-wrap">
                 <div className="ltc-input-shell">
-                  <span className="ltc-input-icon">
+                  <span className="ltc-input-icon" aria-hidden="true">
                     <UserIcon />
                   </span>
 
@@ -1269,22 +1284,24 @@ const HotelLogIn = () => {
                     onChange={(e) => setUsernameField(e.target.value)}
                     onBlur={() => setTouched((prev) => ({ ...prev, username: true }))}
                     autoComplete="username"
+                    aria-label="Username"
                     aria-invalid={fieldError("username") ? "true" : "false"}
+                    aria-describedby={fieldError("username") ? "hotel-login-username-error" : undefined}
                     className={`ltc-input ${fieldError("username") ? "error" : ""}`}
                     style={fontPoppins}
                   />
                 </div>
 
                 {fieldError("username") ? (
-                  <p className="ltc-field-error" style={fontPoppins}>
+                  <p id="hotel-login-username-error" className="ltc-field-error" style={fontPoppins}>
                     {fieldError("username")}
                   </p>
                 ) : null}
               </div>
 
               <div className="ltc-field-wrap">
-                <div className="ltc-input-shell">
-                  <span className="ltc-input-icon">
+                <div className="ltc-input-shell ltc-password-shell">
+                  <span className="ltc-input-icon" aria-hidden="true">
                     <LockIcon />
                   </span>
 
@@ -1296,8 +1313,10 @@ const HotelLogIn = () => {
                     onChange={(e) => setPasswordField(e.target.value)}
                     onBlur={() => {}}
                     autoComplete="current-password"
+                    aria-label="Password"
                     aria-invalid={fieldError("password") ? "true" : "false"}
-                    className={`ltc-input has-eye ${fieldError("password") ? "error" : ""}`}
+                    aria-describedby={fieldError("password") ? "hotel-login-password-error" : undefined}
+                    className={`ltc-input ${fieldError("password") ? "error" : ""}`}
                     style={fontPoppins}
                   />
 
@@ -1312,7 +1331,7 @@ const HotelLogIn = () => {
                 </div>
 
                 {fieldError("password") ? (
-                  <p className="ltc-field-error" style={fontPoppins}>
+                  <p id="hotel-login-password-error" className="ltc-field-error" style={fontPoppins}>
                     {fieldError("password")}
                   </p>
                 ) : null}
@@ -1444,14 +1463,14 @@ function Footer() {
         <div>
           <div className="ltc-footer-brand">
             <img
-              src="/HotelLumispireLogo.png"
+              src="/HotelLumispireLogo.webp"
               alt="Lumispire logo"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
             />
 
-            <h4 style={fontMontserrat}>Lumispire</h4>
+            <p className="ltc-footer-brand-title" style={fontMontserrat}>Lumispire</p>
           </div>
         </div>
 
@@ -1550,7 +1569,7 @@ function FacebookLink() {
 function FooterColumn({ title, children }) {
   return (
     <div>
-      <h5 style={fontMontserrat}>{title}</h5>
+      <h2 className="ltc-footer-section-title" style={fontMontserrat}>{title}</h2>
       <div>{children}</div>
     </div>
   );
