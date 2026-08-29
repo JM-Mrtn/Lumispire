@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
+const HERO_IMAGE = "/ManpowerBanner.webp";
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
@@ -221,7 +221,7 @@ function FloatingHomeIconButton({ onClick }) {
         aria-label="Back to Home"
       >
         <span className="ltc-floating-home-tooltip">LTC GROUP OF COMPANIES</span>
-        <img src="/LTCLogo.jpg" alt="" aria-hidden="true" />
+        <img src="/LTCLogo.webp" alt="" aria-hidden="true" width="56" height="56" decoding="async" />
       </button>
     </>
   );
@@ -344,8 +344,6 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
   return (
     <div className="mp-contact-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
-
         .mp-contact-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -474,12 +472,18 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
 
         .mp-menu-button {
           display: none;
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          min-height: 44px;
+          place-items: center;
           color: white;
           border: 0;
           background: rgba(255,255,255,.1);
           border-radius: 12px;
-          padding: 10px;
+          padding: 0;
           cursor: pointer;
+          touch-action: manipulation;
         }
 
         .mp-menu-button svg { width: 24px; height: 24px; }
@@ -520,8 +524,10 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
         }
 
         .mp-sidebar-close {
-          width: 38px;
-          height: 38px;
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          min-height: 44px;
           border-radius: 12px;
           border: 0;
           background: #f2f4f7;
@@ -556,17 +562,29 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
           padding: 82px 0 78px;
         }
 
+        .mp-contact-hero-image {
+          position: absolute;
+          inset: 0;
+          z-index: -4;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          transform: scale(1.02);
+        }
+
         .mp-contact-hero::before {
           content: "";
           position: absolute;
           inset: 0;
           z-index: -3;
-          background:
-            linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.76) 100%),
-            var(--hero-image) center center / cover no-repeat;
-          background-blend-mode: multiply;
+          background: linear-gradient(
+            120deg,
+            rgba(2,18,11,.96) 0%,
+            rgba(5,37,23,.88) 42%,
+            rgba(12,64,39,.76) 100%
+          );
           opacity: .96;
-          transform: scale(1.02);
         }
 
         .mp-contact-hero::after {
@@ -1525,7 +1543,7 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
       <header className="mp-header">
         <div className="mp-container mp-nav">
           <Link to={MANPOWER_HOME_ROUTE} className="mp-logo">
-            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" />
+            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" width="42" height="42" decoding="async" />
             <div>
               <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
               <p style={fontPontano}>Professional staffing and workforce solutions.</p>
@@ -1585,19 +1603,24 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
       )}
 
       <main>
-        <section
-          className="mp-contact-hero"
-          style={{ "--hero-image": `url('${HERO_IMAGE}')` }}
-        >
+        <section className="mp-contact-hero">
+          <img
+            src={HERO_IMAGE}
+            alt=""
+            aria-hidden="true"
+            className="mp-contact-hero-image"
+            width="1672"
+            height="941"
+            fetchPriority="high"
+            decoding="async"
+          />
           <div className="mp-container mp-contact-hero-content">
-            <RevealOnScroll>
-              <h2 style={fontMontserrat}>
-                Contact <span>Manpower</span>
-              </h2>
-              <p style={fontPontano}>
-                Reach out to LTC Manpower Services for inquiries, applications, requirements, and employment concerns.
-              </p>
-            </RevealOnScroll>
+            <h2 style={fontMontserrat}>
+              Contact <span>Manpower</span>
+            </h2>
+            <p style={fontPontano}>
+              Reach out to LTC Manpower Services for inquiries, applications, requirements, and employment concerns.
+            </p>
           </div>
         </section>
 
@@ -1679,6 +1702,8 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                         <label htmlFor="name" style={fontMontserrat}>Your Name</label>
                         <input
                           id="name"
+                          name="name"
+                          autoComplete="name"
                           type="text"
                           required
                           minLength={2}
@@ -1693,6 +1718,8 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                         <label htmlFor="email" style={fontMontserrat}>Email Address</label>
                         <input
                           id="email"
+                          name="email"
+                          autoComplete="email"
                           type="email"
                           required
                           maxLength={254}
@@ -1707,6 +1734,7 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                       <label htmlFor="subject" style={fontMontserrat}>Subject</label>
                       <input
                         id="subject"
+                        name="subject"
                         type="text"
                         required
                         minLength={3}
@@ -1721,6 +1749,7 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                       <label htmlFor="message" style={fontMontserrat}>Message</label>
                       <textarea
                         id="message"
+                        name="message"
                         rows={4}
                         required
                         minLength={10}
@@ -1731,8 +1760,8 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
                       />
                     </div>
 
-                    {status.error ? <div className="mp-status-error">{status.error}</div> : null}
-                    {status.success ? <div className="mp-status-success">{status.success}</div> : null}
+                    {status.error ? <div className="mp-status-error" role="alert">{status.error}</div> : null}
+                    {status.success ? <div className="mp-status-success" role="status" aria-live="polite">{status.success}</div> : null}
 
                     <div className="mp-form-footer">
                       <p style={fontPontano}>Please make sure your contact details are correct.</p>
@@ -1786,7 +1815,7 @@ export default function ManpowerContactPage({ onSubmitMessage }) {
         <div className="mp-container mp-footer-grid">
           <div>
             <Link to={MANPOWER_HOME_ROUTE} className="mp-logo">
-              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" />
+              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" width="42" height="42" loading="lazy" decoding="async" />
               <div>
                 <h4 style={fontMontserrat}>LTC Manpower</h4>
                 <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
