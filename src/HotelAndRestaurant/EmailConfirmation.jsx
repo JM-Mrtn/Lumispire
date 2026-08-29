@@ -2,10 +2,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const HERO_IMAGES = ["/HotelLanding1.webp", "/HotelLanding2.webp"];
+const SYSTEM_FONT =
+  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+
+const fontMontserrat = { fontFamily: SYSTEM_FONT };
+const fontPontano = { fontFamily: SYSTEM_FONT };
+const fontPoppins = { fontFamily: SYSTEM_FONT };
 
 function getHotelApiBase() {
   const raw = (
@@ -63,7 +66,7 @@ export default function EmailConfirmation() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setHeroIndex((current) => (current + 1) % HERO_IMAGES.length);
-    }, 6000);
+    }, 15000);
 
     return () => window.clearInterval(interval);
   }, []);
@@ -191,8 +194,6 @@ export default function EmailConfirmation() {
   return (
     <div className="ltc-email-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Pontano+Sans&family=Poppins:wght@500;600;700&display=swap");
-
         .ltc-email-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -266,7 +267,7 @@ export default function EmailConfirmation() {
           box-shadow: 0 0 0 5px rgba(255,255,255,.08),0 12px 24px rgba(0,0,0,.12);
         }
 
-        .ltc-logo h1 {
+        .ltc-logo-title {
           margin: 0;
           font-size: 18px;
           line-height: 1;
@@ -290,6 +291,7 @@ export default function EmailConfirmation() {
         .ltc-nav-link {
           border: 0;
           border-radius: 999px;
+          min-height: 44px;
           padding: 10px 14px;
           background: transparent;
           color: rgba(255,255,255,.78);
@@ -365,8 +367,8 @@ export default function EmailConfirmation() {
         }
 
         .ltc-sidebar-close {
-          width: 38px;
-          height: 38px;
+          width: 44px;
+          height: 44px;
           border: 0;
           border-radius: 12px;
           background: #f2f4f7;
@@ -424,7 +426,7 @@ export default function EmailConfirmation() {
           object-fit: cover;
         }
 
-        .ltc-footer h4 {
+        .ltc-footer-brand-title {
           margin: 0;
           color: white;
           font-size: 20px;
@@ -433,7 +435,7 @@ export default function EmailConfirmation() {
           text-transform: uppercase;
         }
 
-        .ltc-footer h5 {
+        .ltc-footer-heading {
           margin: 0 0 10px;
           color: #f4d484;
           font-size: 12px;
@@ -464,8 +466,9 @@ export default function EmailConfirmation() {
         }
 
         .ltc-footer-link {
+          min-height: 44px;
           border: 0;
-          padding: 0;
+          padding: 8px 0;
           background: transparent;
           text-align: left;
           cursor: pointer;
@@ -480,8 +483,8 @@ export default function EmailConfirmation() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 34px;
-          height: 34px;
+          width: 44px;
+          height: 44px;
           margin-top: 6px;
           border: 1px solid rgba(255,255,255,.16);
           border-radius: 999px;
@@ -518,103 +521,6 @@ export default function EmailConfirmation() {
         .ltc-email-container {
           width: min(1180px, calc(100% - 40px));
           margin: 0 auto;
-        }
-
-        .ltc-email-header {
-          position: relative;
-          z-index: 30;
-          background: rgba(255,255,255,.92);
-          border-bottom: 1px solid rgba(14,51,33,.09);
-          box-shadow: 0 12px 38px rgba(7,31,20,.08);
-          backdrop-filter: blur(18px);
-        }
-
-        .ltc-email-nav {
-          min-height: 78px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 28px;
-        }
-
-        .ltc-email-logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          border: 0;
-          padding: 0;
-          background: transparent;
-          text-align: left;
-          cursor: pointer;
-        }
-
-        .ltc-email-logo img {
-          width: 46px;
-          height: 46px;
-          border-radius: 14px;
-          object-fit: contain;
-        }
-
-        .ltc-email-logo h1 {
-          margin: 0;
-          color: var(--green-950);
-          font-size: 16px;
-          font-weight: 900;
-          letter-spacing: -.025em;
-        }
-
-        .ltc-email-logo p {
-          margin: 2px 0 0;
-          color: var(--muted);
-          font-size: 11px;
-        }
-
-        .ltc-email-links {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .ltc-email-nav-button {
-          min-height: 40px;
-          border: 0;
-          border-radius: 999px;
-          padding: 0 15px;
-          background: transparent;
-          color: var(--green-800);
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: .25s ease;
-        }
-
-        .ltc-email-nav-button:hover {
-          color: var(--green-950);
-          background: rgba(35,95,62,.08);
-        }
-
-        .ltc-email-nav-button.primary {
-          padding: 0 20px;
-          color: white;
-          background: var(--green-800);
-          box-shadow: 0 12px 24px rgba(23,74,48,.18);
-        }
-
-        .ltc-email-menu-button {
-          display: none;
-          width: 44px;
-          height: 44px;
-          place-items: center;
-          border: 0;
-          border-radius: 14px;
-          background: rgba(35,95,62,.09);
-          color: var(--green-900);
-          cursor: pointer;
-        }
-
-        .ltc-email-menu-button svg {
-          width: 23px;
-          height: 23px;
         }
 
         .ltc-email-main {
@@ -675,7 +581,6 @@ export default function EmailConfirmation() {
           background: rgba(255,255,255,.96);
           box-shadow: 0 38px 100px rgba(0,0,0,.28);
           overflow: hidden;
-          backdrop-filter: blur(22px);
         }
 
         .ltc-email-content {
@@ -711,7 +616,7 @@ export default function EmailConfirmation() {
           background: var(--gold);
         }
 
-        .ltc-email-content h2 {
+        .ltc-email-content h1 {
           margin: 14px 0 0;
           color: var(--green-950);
           font-size: clamp(32px,4vw,48px);
@@ -720,7 +625,7 @@ export default function EmailConfirmation() {
           letter-spacing: -.055em;
         }
 
-        .ltc-email-content h2 span {
+        .ltc-email-content h1 span {
           color: var(--gold);
         }
 
@@ -812,7 +717,7 @@ export default function EmailConfirmation() {
         }
 
         .ltc-email-action {
-          min-height: 46px;
+          min-height: 48px;
           border-radius: 999px;
           padding: 0 21px;
           border: 1px solid rgba(35,95,62,.18);
@@ -902,7 +807,6 @@ export default function EmailConfirmation() {
           border-radius: 42px;
           background: rgba(255,255,255,.11);
           box-shadow: inset 0 1px 0 rgba(255,255,255,.28),0 30px 60px rgba(0,0,0,.2);
-          backdrop-filter: blur(12px);
           transform: rotate(-3deg);
         }
 
@@ -929,7 +833,7 @@ export default function EmailConfirmation() {
           font-weight: 900;
         }
 
-        .ltc-email-visual h3 {
+        .ltc-email-visual h2 {
           margin: 30px 0 0;
           font-size: 23px;
           line-height: 1.2;
@@ -969,133 +873,20 @@ export default function EmailConfirmation() {
           color: var(--green-950);
         }
 
-        .ltc-email-footer {
-          padding: 34px 0 18px;
-          color: rgba(255,255,255,.72);
-          background: var(--green-950);
+        @media (prefers-reduced-motion: reduce) {
+          .ltc-email-page *,
+          .ltc-email-page *::before,
+          .ltc-email-page *::after {
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+          }
         }
 
-        .ltc-email-footer-grid {
-          display: grid;
-          grid-template-columns: 1.2fr .8fr .9fr;
-          gap: 50px;
-        }
-
-        .ltc-email-footer-brand {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .ltc-email-footer-brand img {
-          width: 48px;
-          height: 48px;
-          object-fit: contain;
-        }
-
-        .ltc-email-footer h4,
-        .ltc-email-footer h5 {
-          margin: 0;
-          color: white;
-          font-size: 15px;
-          font-weight: 900;
-        }
-
-        .ltc-email-footer h5 {
-          color: var(--gold-soft);
-          font-size: 12px;
-          letter-spacing: .13em;
-          text-transform: uppercase;
-        }
-
-        .ltc-email-footer p {
-          margin: 10px 0 0;
-          font-size: 12px;
-          line-height: 1.7;
-        }
-
-        .ltc-email-footer button {
-          display: block;
-          margin-top: 8px;
-          border: 0;
-          padding: 0;
-          background: transparent;
-          color: rgba(255,255,255,.72);
-          font-size: 12px;
-          cursor: pointer;
-        }
-
-        .ltc-email-footer button:hover {
-          color: var(--gold-soft);
-        }
-
-        .ltc-email-copyright {
-          margin-top: 26px;
-          border-top: 1px solid rgba(255,255,255,.1);
-          padding-top: 16px;
-          text-align: center;
-          font-size: 11px;
-          color: rgba(255,255,255,.45);
-        }
-
-        .ltc-email-mobile {
-          position: fixed;
-          inset: 0;
-          z-index: 60;
-          display: flex;
-          justify-content: flex-end;
-          background: rgba(0,0,0,.48);
-          backdrop-filter: blur(3px);
-        }
-
-        .ltc-email-mobile-panel {
-          width: min(330px,86vw);
-          min-height: 100%;
-          padding: 24px;
-          background: white;
-          box-shadow: -20px 0 50px rgba(0,0,0,.2);
-        }
-
-        .ltc-email-mobile-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 24px;
-        }
-
-        .ltc-email-mobile-top strong {
-          color: var(--green-950);
-          font-size: 17px;
-        }
-
-        .ltc-email-mobile-close {
-          width: 38px;
-          height: 38px;
-          border: 0;
-          border-radius: 12px;
-          background: #f2f4f7;
-          cursor: pointer;
-        }
-
-        .ltc-email-mobile-link {
-          display: block;
-          width: 100%;
-          min-height: 46px;
-          margin-top: 8px;
-          border: 0;
-          border-radius: 14px;
-          padding: 0 15px;
-          background: #f7f9f8;
-          color: var(--green-800);
-          text-align: left;
-          font-size: 13px;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .ltc-email-mobile-link.primary {
-          background: var(--green-800);
-          color: white;
+        .ltc-footer {
+          content-visibility: auto;
+          contain-intrinsic-size: 360px;
         }
 
         @media (max-width: 900px) {
@@ -1178,7 +969,7 @@ export default function EmailConfirmation() {
             padding-right: 16px;
           }
 
-          .ltc-logo h1 {
+          .ltc-logo-title {
             font-size: 14px;
           }
 
@@ -1212,7 +1003,7 @@ export default function EmailConfirmation() {
             padding: 34px 24px 30px;
           }
 
-          .ltc-email-content h2 {
+          .ltc-email-content h1 {
             font-size: 32px;
           }
 
@@ -1244,15 +1035,19 @@ export default function EmailConfirmation() {
             aria-label="Go to hotel home"
           >
             <img
-              src="/HotelLogo.png"
+              src="/HotelLogo.webp"
               alt="Hotel logo"
+              width="42"
+              height="42"
+              loading="eager"
+              decoding="async"
               className="ltc-logo-icon"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
             />
             <div>
-              <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+              <span className="ltc-logo-title" style={fontMontserrat}>Hotel &amp; Resort</span>
               <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
             </div>
           </button>
@@ -1289,15 +1084,16 @@ export default function EmailConfirmation() {
       </header>
 
       <main className="ltc-email-main">
-        {HERO_IMAGES.map((image, index) => (
-          <img
-            key={image}
-            src={image}
-            alt=""
-            aria-hidden="true"
-            className={`ltc-email-bg ${heroIndex === index ? "active" : ""}`}
-          />
-        ))}
+        <img
+          key={HERO_IMAGES[heroIndex]}
+          src={HERO_IMAGES[heroIndex]}
+          alt=""
+          aria-hidden="true"
+          className="ltc-email-bg active"
+          loading="eager"
+          fetchPriority={heroIndex === 0 ? "high" : "auto"}
+          decoding="async"
+        />
 
         <div className="ltc-email-container">
           <section className="ltc-email-card" aria-labelledby="email-verification-title">
@@ -1305,9 +1101,9 @@ export default function EmailConfirmation() {
               <p className="ltc-email-eyebrow" style={fontMontserrat}>
                 Account Security
               </p>
-              <h2 id="email-verification-title" style={fontMontserrat}>
+              <h1 id="email-verification-title" style={fontMontserrat}>
                 Verify your <span>email.</span>
-              </h2>
+              </h1>
               <p className="ltc-email-intro" style={fontPontano}>
                 {finalToken
                   ? "Please wait while we securely confirm your verification link."
@@ -1316,7 +1112,7 @@ export default function EmailConfirmation() {
 
               {!finalToken ? (
                 <div className="ltc-email-address" style={fontMontserrat}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 6.75l9 6 9-6M4.5 5.25h15A1.5 1.5 0 0121 6.75v10.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.25V6.75a1.5 1.5 0 011.5-1.5z" />
                   </svg>
                   {maskedEmail}
@@ -1324,7 +1120,7 @@ export default function EmailConfirmation() {
               ) : null}
 
               <div className={`ltc-email-status ${status.type}`} role="status" aria-live="polite">
-                <span className="ltc-email-status-icon">
+                <span className="ltc-email-status-icon" aria-hidden="true">
                   {loading || resending ? "•" : status.type === "success" ? "✓" : status.type === "error" ? "!" : "i"}
                 </span>
                 <p style={fontPoppins}>{status.message}</p>
@@ -1357,12 +1153,12 @@ export default function EmailConfirmation() {
             <aside className="ltc-email-visual">
               <div className="ltc-email-visual-inner">
                 <div className="ltc-email-icon-wrap">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75l8.25 5.5 8.25-5.5M5.25 5.25h13.5a1.5 1.5 0 011.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V6.75a1.5 1.5 0 011.5-1.5z" />
                   </svg>
                   <span className="ltc-email-check">✓</span>
                 </div>
-                <h3 style={fontMontserrat}>One last step</h3>
+                <h2 style={fontMontserrat}>One last step</h2>
                 <p style={fontPontano}>
                   Confirming your email protects your account and allows us to send important booking updates securely.
                 </p>
@@ -1397,13 +1193,17 @@ function Footer({ navigate }) {
         <div>
           <div className="ltc-footer-brand">
             <img
-              src="/HotelLumispireLogo.png"
+              src="/HotelLumispireLogo.webp"
               alt="Lumispire logo"
+              width="42"
+              height="42"
+              loading="lazy"
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
             />
-            <h4 style={fontMontserrat}>Lumispire</h4>
+            <span className="ltc-footer-brand-title" style={fontMontserrat}>Lumispire</span>
           </div>
         </div>
 
@@ -1479,7 +1279,7 @@ function FacebookLink() {
 function FooterColumn({ title, children }) {
   return (
     <div>
-      <h5 style={fontMontserrat}>{title}</h5>
+      <h2 className="ltc-footer-heading" style={fontMontserrat}>{title}</h2>
       <div>{children}</div>
     </div>
   );
