@@ -910,7 +910,7 @@ function Header({ navigate }) {
         </button>
 
         <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />

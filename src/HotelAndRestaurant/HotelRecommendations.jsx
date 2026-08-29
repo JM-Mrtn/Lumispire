@@ -1081,7 +1081,7 @@ const HotelRecommendations = () => {
 
                 <button
                   type="button"
-                  onClick={() => navigate("/hotel-resort")}
+                  onClick={() => navigate("/resort-venue")}
                   className="ltc-secondary-button"
                   style={fontMontserrat}
                 >
@@ -1255,7 +1255,7 @@ function RecommendationCard({ item, navigate }) {
 
         <button
           type="button"
-          onClick={() => navigate(item.route || "/hotel-resort")}
+          onClick={() => navigate(item.route || "/resort-venue")}
           className="ltc-primary-button ltc-card-button"
           style={fontMontserrat}
         >
@@ -1341,7 +1341,7 @@ function Header({ navigate, goToProfile, openMenu }) {
         </button>
 
         <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
@@ -1408,7 +1408,7 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>
             Home
           </FooterLink>
           <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
@@ -1509,7 +1509,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           </button>
         </div>
 
-        <MobileLink label="Home" onClick={() => navigate("/hotel-resort")} />
+        <MobileLink label="Home" onClick={() => navigate("/resort-venue")} />
         <MobileLink label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
         <MobileLink label="Contact" onClick={() => navigate("/hotel-contact-us")} />
         <MobileLink label="FAQs" onClick={() => navigate("/hotel-faqs")} />

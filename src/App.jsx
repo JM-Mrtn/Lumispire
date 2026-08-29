@@ -64,9 +64,6 @@ const LTCAdminLogin = lazyImport(() => import("./Overview/LTCAdminLogin"));
 const LTCAdminDashboard = lazyImport(() => import("./Overview/LTCAdminDashboard"));
 
 /* ===================== HOTEL & RESTAURANT ===================== */
-const HotelAndResortPage = lazyImport(
-  () => import("./HotelAndRestaurant/HotelAndResortPage"),
-);
 const ResortAndVenue = lazyImport(
   () => import("./HotelAndRestaurant/ResortAndVenue"),
 );
@@ -502,7 +499,6 @@ createRoot(document.getElementById("root")).render(
           />
 
           {/* ===================== HOTEL & RESTAURANT ROUTES ===================== */}
-          <Route path="/hotel-resort" element={<HotelAndResortPage />} />
           <Route path="/resort-venue" element={<ResortAndVenue />} />
           <Route path="/hotel-condo" element={<HotelOrCondo />} />
           <Route path="/event-package" element={<EventPackage />} />

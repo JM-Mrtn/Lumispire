@@ -1196,7 +1196,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           label="HOME"
           onClick={() => {
             onClose();
-            navigate("/hotel-resort");
+            navigate("/resort-venue");
           }}
         />
 

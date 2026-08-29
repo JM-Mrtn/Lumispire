@@ -1061,7 +1061,7 @@ function Header({ navigate, goToProfile, openMenu }) {
         </button>
 
         <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/hotel-resort")} />
+          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
@@ -1119,7 +1119,7 @@ function Footer() {
         </div>
 
         <FooterColumn title="Menu">
-          <FooterLink onClick={() => (window.location.href = "/hotel-resort")}>Home</FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>Home</FooterLink>
           <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>Virtual Tour</FooterLink>
           <FooterLink onClick={() => (window.location.href = "/hotel-contact-us")}>Contact</FooterLink>
           <FooterLink onClick={() => (window.location.href = "/hotel-faqs")}>FAQs</FooterLink>
@@ -1208,7 +1208,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
           label="HOME"
           onClick={() => {
             onClose();
-            navigate("/hotel-resort");
+            navigate("/resort-venue");
           }}
         />
 
