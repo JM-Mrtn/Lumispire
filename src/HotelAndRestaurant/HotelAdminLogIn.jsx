@@ -6,13 +6,12 @@ const HOTEL_LOGO = "/HotelLogo.webp";
 const LUMISPIRE_LOGO = "/HotelLumispireLogo.webp";
 const HERO_IMAGES = ["/HotelLanding1.webp", "/HotelLanding2.webp"];
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const SYSTEM_FONT = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+const fontMontserrat = { fontFamily: SYSTEM_FONT };
+const fontPontano = { fontFamily: SYSTEM_FONT };
+const fontPoppins = { fontFamily: SYSTEM_FONT };
 
 const pageStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
   .ltc-admin-login-page {
     --green-950: #071f14;
     --green-900: #0e3321;
@@ -37,7 +36,7 @@ const pageStyles = `
       radial-gradient(circle at 92% 8%, rgba(35,95,62,.16), transparent 32%),
       linear-gradient(180deg,#f8fbf9 0%,#fff 45%,#f5faf7 100%);
     overflow: hidden;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   }
 
   .ltc-admin-login-page * {
@@ -585,6 +584,9 @@ export default function HotelAdminLogIn() {
           src={HERO_IMAGES[0]}
           alt="Hotel and resort background"
           className="ltc-admin-login-bg"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
           onError={(event) => {
             event.currentTarget.style.display = "none";
           }}
@@ -597,6 +599,10 @@ export default function HotelAdminLogIn() {
                 <img
                   src={HOTEL_LOGO}
                   alt="Hotel logo"
+                  width="54"
+                  height="54"
+                  loading="eager"
+                  decoding="async"
                   onError={(event) => {
                     event.currentTarget.src = LUMISPIRE_LOGO;
                   }}
@@ -647,6 +653,10 @@ export default function HotelAdminLogIn() {
               <img
                 src={HOTEL_LOGO}
                 alt="Hotel logo"
+                width="48"
+                height="48"
+                loading="eager"
+                decoding="async"
                 onError={(event) => {
                   event.currentTarget.src = LUMISPIRE_LOGO;
                 }}

@@ -546,7 +546,7 @@ const AdminAccounts = () => {
   line-height: 1.65;
   letter-spacing: -.01em;
   overflow: hidden;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
 
 .ltc-admin-accounts * { box-sizing: border-box; }
