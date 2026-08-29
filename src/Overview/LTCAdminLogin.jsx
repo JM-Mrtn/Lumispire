@@ -36,7 +36,7 @@ const LTCAdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F3] text-gray-900" style={fontPontano}>
+    <main className="min-h-screen bg-[#F5F5F3] text-gray-900" style={fontPontano}>
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="relative hidden overflow-hidden bg-[#355E3B] text-white lg:block">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_38%),linear-gradient(135deg,#355E3B,#173B26)]" />
@@ -165,7 +165,7 @@ const LTCAdminLogin = () => {
           </div>
         </section>
       </div>
-    </div>
+    </main>
   );
 };
 
