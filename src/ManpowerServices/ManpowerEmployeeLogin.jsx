@@ -6,7 +6,6 @@ const LOGO_IMAGE = "/ManpowerLogo.png";
 
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
-const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
 const REMEMBER_EMAIL_KEY = "manpowerEmployeeRememberedEmail";
 
 function normalizeApiBase(raw) {
@@ -638,12 +637,7 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
         const employee = data?.employee || null;
         localStorage.setItem("manpowerEmployeeUser", JSON.stringify(employee));
         if (!active) return;
-        navigate(
-          employee?.mustChangePassword
-            ? EMPLOYEE_CHANGE_PASSWORD_ROUTE
-            : EMPLOYEE_HOME_ROUTE,
-          { replace: true }
-        );
+        navigate(EMPLOYEE_HOME_ROUTE, { replace: true });
       } catch {
         if (active) setCheckingSession(false);
       }
@@ -728,11 +722,6 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
           token,
           employee,
         });
-      }
-
-      if (employee?.mustChangePassword) {
-        navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
-        return;
       }
 
       navigate(EMPLOYEE_HOME_ROUTE, { replace: true });
