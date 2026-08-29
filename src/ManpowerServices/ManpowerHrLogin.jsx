@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const BACKGROUND_IMAGES = ["/ManpowerBanner.png"];
+const BACKGROUND_IMAGES = ["/ManpowerBanner.webp"];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -145,7 +145,7 @@ export default function ManpowerHrLogin() {
   const ManpowerLogo = () => (
     <button type="button" onClick={goToManpowerHome} className="ltc-logo" aria-label="Go to manpower home">
       <img
-        src="/LTCLogo.jpg"
+        src="/LTCLogo.webp"
         alt="LTC Group logo"
         className="ltc-logo-icon"
         onError={(event) => {
