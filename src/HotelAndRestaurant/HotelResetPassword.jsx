@@ -342,7 +342,7 @@ const HotelResetPassword = () => {
               </form>
 
               <p className="mt-5 text-xs font-semibold leading-5 text-[#667085]">
-                For your security, this reset link may expire. If it no longer works,
+                For your security, this reset link may expire. If it is no longer works,
                 request a new password-reset email from the login page.
               </p>
             </div>
