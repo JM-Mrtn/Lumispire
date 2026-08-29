@@ -290,7 +290,7 @@ export default function TrainingAdminProfessors() {
         }
 
         .ta-prof-pill {
-          min-height: 42px;
+          min-height: 44px;
           border-radius: 999px;
           padding: 0 18px;
           font-size: 12px;
@@ -329,7 +329,7 @@ export default function TrainingAdminProfessors() {
 
         .ta-prof-avatar {
           display: inline-flex;
-          height: 38px;
+          height: 44px;
           width: 38px;
           align-items: center;
           justify-content: center;
@@ -371,7 +371,7 @@ export default function TrainingAdminProfessors() {
         }
 
         .ta-prof-password-button {
-          height: 30px;
+          height: 44px;
           border-radius: 9px;
           border: 1px solid rgba(8, 39, 25, 0.14);
           background: #fff;
@@ -382,7 +382,7 @@ export default function TrainingAdminProfessors() {
         }
 
         .ta-prof-action {
-          height: 38px;
+          height: 44px;
           min-width: 82px;
           border-radius: 999px;
           font-size: 11px;
@@ -495,6 +495,7 @@ export default function TrainingAdminProfessors() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-12 w-full rounded-2xl border border-black/10 bg-[#F6F6F1] px-4 text-sm font-bold text-[#2A4F33] outline-none transition focus:border-[#2A4F33]/40 focus:bg-white focus:ring-4 focus:ring-[#2A4F33]/10"
+                aria-label="Search training professors"
                 placeholder="Search professor, username, email, or course"
               />
 
@@ -661,7 +662,7 @@ export default function TrainingAdminProfessors() {
               type="button"
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={page <= 1}
-              className="h-10 rounded-2xl border border-black/10 bg-white px-4 text-xs font-extrabold text-[#2A4F33] hover:bg-[#F6F6F1] disabled:opacity-30"
+              className="h-11 rounded-2xl border border-black/10 bg-white px-4 text-xs font-extrabold text-[#2A4F33] hover:bg-[#F6F6F1] disabled:opacity-30"
             >
               Previous
             </button>
@@ -670,7 +671,7 @@ export default function TrainingAdminProfessors() {
               type="button"
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={page >= totalPages}
-              className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-30"
+              className="h-11 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-30"
             >
               Next Page
             </button>

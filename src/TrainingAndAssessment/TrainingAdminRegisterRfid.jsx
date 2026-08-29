@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import TrainingAdminLayout from "./TrainingAdminLayout";
 
 function normalizeApiOrigin(raw) {
@@ -18,6 +17,16 @@ const ROWS_PER_PAGE = 5;
 
 function getAdminToken() {
   return localStorage.getItem("trainingAdminToken") || "";
+}
+
+
+async function readJsonSafe(res) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
 }
 
 function normalizeUid(value = "") {
@@ -87,18 +96,15 @@ export default function TrainingAdminRegisterRfid() {
     try {
       setLoading(true);
 
-      const { data } = await axios.get(
-        `${API_ORIGIN}/api/training/rfid/trainees`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${API_ORIGIN}/api/training/rfid/trainees`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await readJsonSafe(res);
+      if (!res.ok) throw new Error(data?.message || "Failed to load trainees.");
 
       setTrainees(Array.isArray(data) ? data : []);
     } catch (error) {
-      setMessage(error?.response?.data?.message || "Failed to load trainees.");
+      setMessage(error?.message || "Failed to load trainees.");
     } finally {
       setLoading(false);
     }
@@ -188,26 +194,25 @@ export default function TrainingAdminRegisterRfid() {
     try {
       setSubmitting(true);
 
-      const { data } = await axios.post(
-        `${API_ORIGIN}/api/training/rfid/register`,
-        {
+      const res = await fetch(`${API_ORIGIN}/api/training/rfid/register`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           traineeId: selectedTraineeId,
           uid: cleanUid,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+        }),
+      });
+      const data = await readJsonSafe(res);
+      if (!res.ok) throw new Error(data?.message || "Failed to register RFID card.");
 
       setMessage(data?.message || "RFID card registered successfully.");
       setUid("");
       await fetchTrainees();
     } catch (error) {
-      setMessage(
-        error?.response?.data?.message || "Failed to register RFID card."
-      );
+      setMessage(error?.message || "Failed to register RFID card.");
     } finally {
       setSubmitting(false);
     }
@@ -217,14 +222,12 @@ export default function TrainingAdminRegisterRfid() {
     const token = getAdminToken();
 
     try {
-      const { data } = await axios.delete(
-        `${API_ORIGIN}/api/training/rfid/remove/${traineeId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${API_ORIGIN}/api/training/rfid/remove/${traineeId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await readJsonSafe(res);
+      if (!res.ok) throw new Error(data?.message || "Failed to remove RFID card.");
 
       setMessage(data?.message || "RFID card removed successfully.");
 
@@ -234,9 +237,7 @@ export default function TrainingAdminRegisterRfid() {
 
       await fetchTrainees();
     } catch (error) {
-      setMessage(
-        error?.response?.data?.message || "Failed to remove RFID card."
-      );
+      setMessage(error?.message || "Failed to remove RFID card.");
     }
   }
 
@@ -273,7 +274,7 @@ export default function TrainingAdminRegisterRfid() {
           ))}
         </section>
 
-        <div className="rounded-[24px] border border-[#235f3e]/15 bg-[#f8fbf9] px-5 py-4 text-sm font-extrabold text-[#235f3e] shadow-[0_12px_28px_rgba(8,39,25,.08)]">
+        <div role="status" aria-live="polite" className="rounded-[24px] border border-[#235f3e]/15 bg-[#f8fbf9] px-5 py-4 text-sm font-extrabold text-[#235f3e] shadow-[0_12px_28px_rgba(8,39,25,.08)]">
           {message}
         </div>
 
@@ -446,7 +447,7 @@ export default function TrainingAdminRegisterRfid() {
                             <button
                               type="button"
                               onClick={() => handleSelectTrainee(trainee)}
-                              className={`inline-flex h-9 w-[88px] items-center justify-center rounded-full text-[11px] font-extrabold transition hover:-translate-y-0.5 ${
+                              className={`inline-flex h-11 w-[88px] items-center justify-center rounded-full text-[11px] font-extrabold transition hover:-translate-y-0.5 ${
                                 isSelected
                                   ? "bg-gradient-to-r from-[#f4d484] to-[#d7a84d] text-[#071f14] shadow-[0_10px_24px_rgba(215,168,77,.22)]"
                                   : "border border-[#235f3e]/18 bg-white text-[#235f3e] shadow-[0_8px_18px_rgba(8,39,25,.08)] hover:bg-[#f8fbf9]"
@@ -459,7 +460,7 @@ export default function TrainingAdminRegisterRfid() {
                               <button
                                 type="button"
                                 onClick={() => handleRemove(trainee._id)}
-                                className="inline-flex h-9 w-[88px] items-center justify-center rounded-full border border-[#d7a84d]/45 bg-[#fff4d7] text-[11px] font-extrabold text-[#8a5b00] shadow-[0_8px_18px_rgba(215,168,77,.12)] transition hover:-translate-y-0.5 hover:bg-[#f4d484]/45"
+                                className="inline-flex h-11 w-[88px] items-center justify-center rounded-full border border-[#d7a84d]/45 bg-[#fff4d7] text-[11px] font-extrabold text-[#8a5b00] shadow-[0_8px_18px_rgba(215,168,77,.12)] transition hover:-translate-y-0.5 hover:bg-[#f4d484]/45"
                               >
                                 Remove
                               </button>
@@ -491,7 +492,7 @@ export default function TrainingAdminRegisterRfid() {
               type="button"
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={page <= 1}
-              className="h-10 rounded-full border border-[#071f14]/10 bg-white px-5 text-sm font-extrabold text-[#235f3e] transition hover:bg-[#f8fbf9] disabled:cursor-not-allowed disabled:opacity-40"
+              className="h-11 rounded-full border border-[#071f14]/10 bg-white px-5 text-sm font-extrabold text-[#235f3e] transition hover:bg-[#f8fbf9] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Previous
             </button>
@@ -500,7 +501,7 @@ export default function TrainingAdminRegisterRfid() {
               type="button"
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={page >= totalPages}
-              className="h-10 rounded-full bg-[#235f3e] px-5 text-sm font-extrabold text-white transition hover:bg-[#174a30] disabled:cursor-not-allowed disabled:opacity-40"
+              className="h-11 rounded-full bg-[#235f3e] px-5 text-sm font-extrabold text-white transition hover:bg-[#174a30] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next Page
             </button>

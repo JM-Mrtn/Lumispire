@@ -35,10 +35,10 @@ function ModalShell({ open, onClose, title, children }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 px-4 py-6" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-[28px] bg-white text-[#395345] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={title} className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-[28px] bg-white text-[#395345] shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#e8ece2] px-6 py-4">
           <h3 className="text-xl font-black">{title}</h3>
-          <button type="button" onClick={onClose} className="rounded-full border border-[#d7ddd0] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#395345]">Close</button>
+          <button type="button" onClick={onClose} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[#d7ddd0] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#395345]">Close</button>
         </div>
         <div className="max-h-[calc(90vh-80px)] overflow-y-auto p-6">{children}</div>
       </div>
@@ -274,7 +274,7 @@ export default function TrainingAdminCourses() {
         }
 
         .ta-course-pill {
-          min-height: 42px;
+          min-height: 44px;
           border-radius: 999px;
           padding: 0 18px;
           font-size: 12px;
@@ -344,7 +344,7 @@ export default function TrainingAdminCourses() {
 
         .ta-course-action {
           width: 78px;
-          height: 38px;
+          height: 44px;
           border-radius: 999px;
           font-size: 10px;
           font-weight: 900;
@@ -445,6 +445,7 @@ export default function TrainingAdminCourses() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-12 w-full rounded-2xl border border-black/10 bg-[#F6F6F1] px-4 text-sm font-bold text-[#2A4F33] outline-none transition focus:border-[#2A4F33]/40 focus:bg-white focus:ring-4 focus:ring-[#2A4F33]/10"
+                aria-label="Search training courses"
                 placeholder="Search course name, description, or image URL"
               />
 
@@ -517,6 +518,10 @@ export default function TrainingAdminCourses() {
                             <img
                               src={course.imageUrl}
                               alt={course.name || "Course"}
+                              width="48"
+                              height="48"
+                              loading="lazy"
+                              decoding="async"
                               onError={(event) => {
                                 event.currentTarget.style.display = "none";
                               }}
@@ -585,7 +590,7 @@ export default function TrainingAdminCourses() {
               type="button"
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={page <= 1}
-              className="h-10 rounded-2xl border border-black/10 bg-white px-4 text-xs font-extrabold text-[#2A4F33] hover:bg-[#F6F6F1] disabled:opacity-30"
+              className="h-11 rounded-2xl border border-black/10 bg-white px-4 text-xs font-extrabold text-[#2A4F33] hover:bg-[#F6F6F1] disabled:opacity-30"
             >
               Previous
             </button>
@@ -594,7 +599,7 @@ export default function TrainingAdminCourses() {
               type="button"
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={page >= totalPages}
-              className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-30"
+              className="h-11 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-30"
             >
               Next Page
             </button>

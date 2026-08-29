@@ -297,6 +297,9 @@ function ModalShell({ open, onClose, title, children, maxWidth = "max-w-6xl" }) 
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={`max-h-[90vh] w-full ${maxWidth} overflow-hidden rounded-[28px] bg-white text-[#2A4F33] shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -306,7 +309,7 @@ function ModalShell({ open, onClose, title, children, maxWidth = "max-w-6xl" }) 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[#d7ddd0] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#395345]"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[#d7ddd0] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#395345]"
           >
             Close
           </button>
@@ -761,7 +764,7 @@ export default function TrainingAdminEnrollments() {
         }
 
         .ta-enroll-pill {
-          min-height: 42px;
+          min-height: 44px;
           border-radius: 999px;
           padding: 0 18px;
           font-size: 12px;
@@ -811,7 +814,7 @@ export default function TrainingAdminEnrollments() {
 
         .ta-enroll-action {
           width: 112px;
-          height: 38px;
+          height: 44px;
           border-radius: 999px;
           font-size: 11px;
           font-weight: 900;
@@ -917,6 +920,7 @@ export default function TrainingAdminEnrollments() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-12 w-full rounded-2xl border border-black/10 bg-[#F6F6F1] px-4 text-sm font-bold text-[#2A4F33] outline-none transition focus:border-[#2A4F33]/40 focus:bg-white focus:ring-4 focus:ring-[#2A4F33]/10"
+                aria-label="Search training enrollments"
                 placeholder="Search applicant, email, course, or status"
               />
 
@@ -1076,7 +1080,7 @@ export default function TrainingAdminEnrollments() {
               type="button"
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={page <= 1}
-              className="h-10 rounded-2xl border border-black/10 bg-white px-4 text-xs font-extrabold text-[#2A4F33] hover:bg-[#F6F6F1] disabled:opacity-30"
+              className="h-11 rounded-2xl border border-black/10 bg-white px-4 text-xs font-extrabold text-[#2A4F33] hover:bg-[#F6F6F1] disabled:opacity-30"
             >
               Previous
             </button>
@@ -1085,7 +1089,7 @@ export default function TrainingAdminEnrollments() {
               type="button"
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={page >= totalPages}
-              className="h-10 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-30"
+              className="h-11 rounded-2xl bg-[#2A4F33] px-5 text-xs font-extrabold text-white hover:opacity-90 disabled:opacity-30"
             >
               Next Page
             </button>
@@ -1294,6 +1298,7 @@ export default function TrainingAdminEnrollments() {
                 <img
                   src={fileModal.url}
                   alt={fileModal.fileName}
+                  decoding="async"
                   className="max-h-[70vh] max-w-full rounded-2xl object-contain"
                   onError={() =>
                     setFileModal((prev) => ({
@@ -1307,6 +1312,7 @@ export default function TrainingAdminEnrollments() {
               <iframe
                 src={fileModal.url}
                 title={fileModal.fileName}
+                loading="lazy"
                 className="h-[70vh] w-full rounded-2xl border border-[#2A4F33]/10"
                 onError={() =>
                   setFileModal((prev) => ({
@@ -1549,6 +1555,10 @@ function DocumentPreview({ file, onPreview }) {
           <img
             src={thumbnailUrl}
             alt={fileName}
+            width="320"
+            height="160"
+            loading="lazy"
+            decoding="async"
             className="h-[160px] w-full object-contain"
             onError={() => setImgFailed(true)}
           />

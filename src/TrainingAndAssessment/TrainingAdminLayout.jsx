@@ -97,8 +97,11 @@ export default function TrainingAdminLayout({
         className="flex w-full shrink-0 flex-col items-center justify-center rounded-[26px] px-4 py-4 text-center transition hover:bg-white/5"
       >
         <img
-          src="/LTCLogo.jpg"
+          src="/LTCLogo.webp"
           alt="LTC Training Logo"
+          width="64"
+          height="64"
+          decoding="async"
           className="mb-3 h-16 w-16 shrink-0 rounded-full bg-white object-cover shadow-sm ring-2 ring-white/10"
           onError={(event) => {
             event.currentTarget.style.display = "none";
@@ -161,7 +164,7 @@ export default function TrainingAdminLayout({
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fbf9] text-[#071f14] lg:flex">
+    <div className="min-h-screen bg-[#f8fbf9] text-[#071f14] lg:flex" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
       <aside
         className="fixed left-0 top-0 z-40 hidden h-screen w-[280px] shrink-0 overflow-hidden px-6 py-6 lg:flex"
         style={{ backgroundColor: COLORS.sidebar }}
@@ -187,7 +190,7 @@ export default function TrainingAdminLayout({
       ) : null}
 
       <section className="min-w-0 flex-1 lg:pl-[280px]">
-        <header className="sticky top-0 z-30 border-b border-black/10 bg-white/95 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-black/10 bg-white">
           <div
             className={`mx-auto flex ${maxWidth} flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between`}
           >
@@ -195,7 +198,7 @@ export default function TrainingAdminLayout({
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
-                className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-black/10 bg-white text-lg font-extrabold lg:hidden"
+                className="mt-1 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-black/10 bg-white text-lg font-extrabold lg:hidden"
                 aria-label="Open menu"
               >
                 ☰

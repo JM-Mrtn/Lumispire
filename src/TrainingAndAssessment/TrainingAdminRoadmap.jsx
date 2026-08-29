@@ -721,11 +721,10 @@ export default function TrainingAdminRoadmap() {
     >
       <div className="ta-roadmap-compact-buttons">
         <style>{`
-          @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap");
 
           .ta-roadmap-compact-buttons,
           .ta-roadmap-compact-buttons * {
-            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-family: Arial, Helvetica, sans-serif !important;
           }
 
           .ta-roadmap-compact-buttons p,
@@ -737,7 +736,7 @@ export default function TrainingAdminRoadmap() {
           }
 
           .ta-roadmap-compact-buttons textarea {
-            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-family: Arial, Helvetica, sans-serif !important;
             font-weight: 400 !important;
             line-height: 1.65 !important;
             letter-spacing: 0 !important;
@@ -747,13 +746,13 @@ export default function TrainingAdminRoadmap() {
 
           .ta-roadmap-compact-buttons input,
           .ta-roadmap-compact-buttons select {
-            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-family: Arial, Helvetica, sans-serif !important;
             font-weight: 600 !important;
             letter-spacing: 0 !important;
           }
 
           .ta-roadmap-compact-buttons button {
-            min-height: 36px !important;
+            min-height: 44px !important;
             padding: 0 14px !important;
             border-radius: 999px !important;
             font-size: 12px !important;
@@ -769,7 +768,7 @@ export default function TrainingAdminRoadmap() {
           }
 
           .ta-roadmap-compact-buttons label {
-            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-family: Arial, Helvetica, sans-serif !important;
             letter-spacing: 0.08em !important;
             font-weight: 700 !important;
           }
@@ -796,7 +795,7 @@ export default function TrainingAdminRoadmap() {
           }
 
           .ta-roadmap-compact-buttons {
-            font-family: "Open Sans", Arial, Helvetica, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
           }
 
           .ta-roadmap-competency-grid {
@@ -825,7 +824,7 @@ export default function TrainingAdminRoadmap() {
           .ta-group-title-button {
             max-width: 100%;
             min-width: 0;
-            min-height: 34px !important;
+            min-height: 44px !important;
             padding: 8px 13px !important;
             border-radius: 999px !important;
             background: #ffffff !important;
@@ -834,7 +833,7 @@ export default function TrainingAdminRoadmap() {
             overflow-wrap: anywhere !important;
             word-break: normal !important;
             box-shadow: 0 8px 18px rgba(8, 39, 25, 0.06) !important;
-            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-family: Arial, Helvetica, sans-serif !important;
             font-size: 12px !important;
             line-height: 1.25 !important;
           }
@@ -867,7 +866,7 @@ export default function TrainingAdminRoadmap() {
             white-space: normal !important;
             overflow-wrap: anywhere !important;
             word-break: break-word !important;
-            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-family: Arial, Helvetica, sans-serif !important;
             font-size: 11px !important;
             line-height: 1.25 !important;
             font-weight: 800 !important;
@@ -884,7 +883,7 @@ export default function TrainingAdminRoadmap() {
             white-space: normal !important;
             overflow-wrap: anywhere !important;
             word-break: normal !important;
-            font-family: "Open Sans", Arial, Helvetica, sans-serif !important;
+            font-family: Arial, Helvetica, sans-serif !important;
             font-size: 12px !important;
             line-height: 1.35 !important;
             font-weight: 700 !important;
@@ -898,7 +897,7 @@ export default function TrainingAdminRoadmap() {
           }
 
           .ta-group-action-row button {
-            min-height: 34px !important;
+            min-height: 44px !important;
             padding: 0 12px !important;
             font-size: 11px !important;
           }
@@ -910,7 +909,7 @@ export default function TrainingAdminRoadmap() {
           .ta-roadmap-compact-buttons input,
           .ta-roadmap-compact-buttons select,
           .ta-roadmap-compact-buttons textarea {
-            font-family: "Open Sans", Arial, Helvetica, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
           }
 
           @media (max-width: 1024px) {
@@ -922,7 +921,7 @@ export default function TrainingAdminRoadmap() {
           @media (max-width: 640px) {
             .ta-roadmap-compact-buttons button {
               width: 100%;
-              min-height: 36px !important;
+              min-height: 44px !important;
             }
 
             .ta-roadmap-compact-buttons .ta-competency-item-btn {
@@ -980,6 +979,8 @@ export default function TrainingAdminRoadmap() {
 
         {msg.text ? (
           <div
+            role={msg.type === "success" ? "status" : "alert"}
+            aria-live={msg.type === "success" ? "polite" : "assertive"}
             className={`mt-5 rounded-2xl px-4 py-3 text-sm font-semibold ${
               msg.type === "success"
                 ? "bg-green-50 text-green-800 ring-1 ring-green-200"

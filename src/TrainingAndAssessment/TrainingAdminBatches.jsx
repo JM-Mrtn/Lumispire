@@ -75,10 +75,10 @@ function ModalShell({ open, onClose, title, children }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 px-4 py-6" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-[28px] bg-white text-[#395345] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={title} className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-[28px] bg-white text-[#395345] shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#e8ece2] px-6 py-4">
           <h3 className="text-xl font-black">{title}</h3>
-          <button type="button" onClick={onClose} className="rounded-full border border-[#d7ddd0] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#395345]">Close</button>
+          <button type="button" onClick={onClose} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[#d7ddd0] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#395345]">Close</button>
         </div>
         <div className="max-h-[calc(90vh-80px)] overflow-y-auto p-6">{children}</div>
       </div>
@@ -365,7 +365,6 @@ export default function TrainingAdminBatches() {
           border: 1px solid rgba(255, 255, 255, 0.78);
           background: var(--card);
           box-shadow: 0 18px 45px rgba(8, 39, 25, 0.10);
-          backdrop-filter: blur(18px);
         }
 
         .ta-batch-card::before {
@@ -400,7 +399,7 @@ export default function TrainingAdminBatches() {
         }
 
         .ta-batch-pill {
-          min-height: 42px;
+          min-height: 44px;
           border-radius: 999px;
           padding: 0 18px;
           font-size: 12px;
@@ -573,7 +572,7 @@ export default function TrainingAdminBatches() {
 
         .ta-batch-action {
           width: 64px;
-          height: 36px;
+          height: 44px;
           border-radius: 999px;
           font-size: 10px;
           font-weight: 900;
@@ -696,10 +695,12 @@ export default function TrainingAdminBatches() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="ta-batch-control"
+              aria-label="Search training batches"
               placeholder="Search batch name, code, course, or status"
             />
 
             <select
+              aria-label="Filter batches by course"
               value={courseFilter}
               onChange={(e) => setCourseFilter(e.target.value)}
               className="ta-batch-control"
@@ -713,6 +714,7 @@ export default function TrainingAdminBatches() {
             </select>
 
             <select
+              aria-label="Filter batches by view"
               value={view}
               onChange={(e) => setView(e.target.value)}
               className="ta-batch-control"
@@ -858,7 +860,7 @@ export default function TrainingAdminBatches() {
               type="button"
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={page <= 1}
-              className="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20 disabled:opacity-30"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20 disabled:opacity-30"
             >
               Previous
             </button>
@@ -866,7 +868,7 @@ export default function TrainingAdminBatches() {
               type="button"
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={page >= totalPages}
-              className="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20 disabled:opacity-30"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20 disabled:opacity-30"
             >
               Next
             </button>
