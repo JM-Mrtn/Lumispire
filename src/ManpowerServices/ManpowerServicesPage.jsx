@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { API_BASE, manpowerUrl } from "./manpowerApi";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
+const HERO_IMAGE = "/ManpowerBanner.webp";
 
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 const API_ORIGIN = API_BASE.replace(/\/api$/i, "");
@@ -13,9 +13,9 @@ const fontPontano = { fontFamily: "'Inter', sans-serif" };
 const fontPoppins = { fontFamily: "'Inter', sans-serif" };
 
 const FALLBACK_HIGHLIGHT_IMAGES = [
-  "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1200&q=82",
-  "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=82",
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=82",
+  "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=640&q=72",
+  "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=640&q=72",
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=640&q=72",
 ];
 
 const FALLBACK_HIGHLIGHTS = [
@@ -66,7 +66,7 @@ function resolveImageSource(value = "") {
 
 function DocumentPenIcon(props) {
   return (
-    <svg viewBox="0 0 64 64" fill="none" {...props}>
+    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true" focusable="false" {...props}>
       <path
         d="M17 10h25l8 8v35a4 4 0 0 1-4 4H17a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4Z"
         stroke="currentColor"
@@ -97,7 +97,7 @@ function DocumentPenIcon(props) {
 
 function ArrowIcon(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" {...props}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true" focusable="false" {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
       <path strokeLinecap="round" strokeLinejoin="round" d="m13 6 6 6-6 6" />
     </svg>
@@ -191,7 +191,7 @@ function FloatingHomeIconButton({ onClick }) {
         aria-label="Back to Home"
       >
         <span className="ltc-floating-home-tooltip">LTC GROUP OF COMPANIES</span>
-        <img src="/LTCLogo.jpg" alt="" aria-hidden="true" />
+        <img src="/LTCLogo.webp" alt="" aria-hidden="true" width="160" height="160" decoding="async" />
       </button>
     </>
   );
@@ -241,6 +241,11 @@ function HighlightCard({ highlight, index }) {
           <img
             src={imageSrc}
             alt={highlight?.title || `Manpower highlight ${index + 1}`}
+            width="640"
+            height="420"
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
             onError={(event) => {
               event.currentTarget.onerror = null;
               event.currentTarget.src =
@@ -358,8 +363,6 @@ export default function ManpowerServicesPage() {
   return (
     <div className="ltc-about ltc-manpower-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
-
         .ltc-about {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -555,8 +558,8 @@ export default function ManpowerServicesPage() {
         }
 
         .ltc-sidebar-close {
-          width: 38px;
-          height: 38px;
+          width: 44px;
+          height: 44px;
           border-radius: 12px;
           border: 0;
           background: #f2f4f7;
@@ -599,15 +602,22 @@ export default function ManpowerServicesPage() {
           background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
         }
 
+        .ltc-hero-bg {
+          position: absolute;
+          inset: 0;
+          z-index: -4;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+        }
+
         .ltc-about-hero::before {
           content: "";
           position: absolute;
           inset: 0;
           z-index: -3;
-          background:
-            linear-gradient(120deg, rgba(2,18,11,.96), rgba(5,37,23,.89), rgba(12,64,39,.78)),
-            var(--hero-image) center center / cover no-repeat;
-          background-blend-mode: multiply;
+          background: linear-gradient(120deg, rgba(2,18,11,.96), rgba(5,37,23,.89), rgba(12,64,39,.78));
           opacity: .98;
         }
 
@@ -628,7 +638,6 @@ export default function ManpowerServicesPage() {
           width: min(960px, 92%);
           margin: 0 auto;
           text-align: center;
-          animation: ltcAppleReveal .8s var(--ease) both;
         }
 
         .ltc-eyebrow {
@@ -711,6 +720,13 @@ export default function ManpowerServicesPage() {
 
         .ltc-section {
           padding: 84px 0;
+        }
+
+        .ltc-section,
+        .ltc-cta-section,
+        .ltc-footer {
+          content-visibility: auto;
+          contain-intrinsic-size: 1px 760px;
         }
 
         .ltc-section-title {
@@ -1041,7 +1057,10 @@ export default function ManpowerServicesPage() {
           padding: clamp(30px,5vw,48px);
           border-radius: 32px;
           color: white;
-          background: linear-gradient(135deg,rgba(14,51,33,.96),rgba(47,117,76,.9)), url("https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1500&q=80") center/cover;
+          background:
+            radial-gradient(circle at 88% 18%, rgba(244,212,132,.22), transparent 28%),
+            radial-gradient(circle at 12% 90%, rgba(255,255,255,.08), transparent 30%),
+            linear-gradient(135deg,rgba(14,51,33,.98),rgba(47,117,76,.94));
           box-shadow: var(--shadow-lg);
         }
 
@@ -1462,8 +1481,9 @@ export default function ManpowerServicesPage() {
           border-radius: 32px !important;
           color: #fff !important;
           background:
-            linear-gradient(135deg,rgba(14,51,33,.96),rgba(47,117,76,.88)),
-            url("https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1500&q=82") center / cover no-repeat !important;
+            radial-gradient(circle at 88% 18%, rgba(244,212,132,.22), transparent 28%),
+            radial-gradient(circle at 12% 90%, rgba(255,255,255,.08), transparent 30%),
+            linear-gradient(135deg,rgba(14,51,33,.98),rgba(47,117,76,.94)) !important;
           box-shadow: var(--shadow-lg) !important;
         }
         .ltc-cta-box h3 { color: #fff !important; }
@@ -1507,7 +1527,7 @@ export default function ManpowerServicesPage() {
       <header className="ltc-header">
         <div className="ltc-container ltc-nav">
           <Link to={MANPOWER_HOME_ROUTE} className="ltc-logo">
-            <img src={LOGO_IMAGE} alt="Manpower Logo" className="ltc-logo-icon" />
+            <img src={LOGO_IMAGE} alt="Manpower Logo" className="ltc-logo-icon" width="128" height="128" decoding="async" />
             <div>
               <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
               <p style={fontPontano}>Professional staffing and workforce solutions.</p>
@@ -1541,6 +1561,8 @@ export default function ManpowerServicesPage() {
             onClick={() => setIsSidebarOpen(true)}
             className="ltc-menu-button"
             aria-label="Open menu"
+            aria-expanded={isSidebarOpen}
+            aria-controls="manpower-mobile-menu"
             type="button"
           >
             <svg
@@ -1563,7 +1585,13 @@ export default function ManpowerServicesPage() {
             onClick={() => setIsSidebarOpen(false)}
           />
 
-          <div className="ltc-sidebar-panel">
+          <div
+            id="manpower-mobile-menu"
+            className="ltc-sidebar-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Manpower navigation menu"
+          >
             <div className="ltc-sidebar-top">
               <p className="ltc-sidebar-title" style={fontPoppins}>MENU</p>
               <button
@@ -1613,12 +1641,18 @@ export default function ManpowerServicesPage() {
       )}
 
       <main>
-        <section
-          className="ltc-about-hero"
-          style={{
-            "--hero-image": `url('${HERO_IMAGE}')`,
-          }}
-        >
+        <section className="ltc-about-hero">
+          <img
+            src={HERO_IMAGE}
+            alt=""
+            aria-hidden="true"
+            className="ltc-hero-bg"
+            width="1672"
+            height="941"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
           <div className="ltc-container ltc-about-hero-content">
             <h2 style={fontMontserrat}>
               Begin your journey with <span>LTC Manpower Services</span> today.
@@ -1746,7 +1780,7 @@ export default function ManpowerServicesPage() {
         <div className="ltc-container ltc-footer-grid">
           <div>
             <Link to={MANPOWER_HOME_ROUTE} className="ltc-logo">
-              <img src={LOGO_IMAGE} alt="Manpower Logo" className="ltc-logo-icon" />
+              <img src={LOGO_IMAGE} alt="Manpower Logo" className="ltc-logo-icon" width="128" height="128" decoding="async" />
               <div>
                 <h4 style={fontMontserrat}>LTC Manpower</h4>
                 <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
