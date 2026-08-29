@@ -23,8 +23,11 @@ function BrandLogo() {
   return (
     <div className="flex items-center gap-3">
       <img
-        src="/ManpowerLogo.png"
+        src="/ManpowerLogo.webp"
         alt="Manpower Logo"
+        width="128"
+        height="128"
+        decoding="async"
         className="h-10 w-10 rounded-full object-cover"
       />
       <h1 className="text-[22px] font-black tracking-wide text-[#2f5a45] md:text-[28px]">
@@ -38,8 +41,12 @@ function FooterLogo() {
   return (
     <div className="flex items-center gap-3">
       <img
-        src="/ManpowerLogo.png"
+        src="/ManpowerLogo.webp"
         alt="Manpower Logo"
+        width="128"
+        height="128"
+        loading="lazy"
+        decoding="async"
         className="h-9 w-9 rounded-full object-cover"
       />
       <p className="text-2xl font-black tracking-wide text-white">LTC MANPOWER</p>
@@ -49,7 +56,28 @@ function FooterLogo() {
 
 function ExamLayout({ children }) {
   return (
-    <div className="min-h-screen bg-[#efefed] text-[#24372d]">
+    <div className="manpower-exam-page min-h-screen bg-[#efefed] text-[#24372d]">
+      <style>{`
+        .manpower-exam-page,
+        .manpower-exam-page * {
+          font-family: Arial, Helvetica, sans-serif !important;
+        }
+        .manpower-exam-page .exam-deferred-section,
+        .manpower-exam-page footer {
+          content-visibility: auto;
+          contain-intrinsic-size: 1px 760px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .manpower-exam-page *,
+          .manpower-exam-page *::before,
+          .manpower-exam-page *::after {
+            scroll-behavior: auto !important;
+            transition-duration: .001ms !important;
+            animation-duration: .001ms !important;
+            animation-iteration-count: 1 !important;
+          }
+        }
+      `}</style>
       <header className="border-b border-[#d7ddd5] bg-[#f7f7f5]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
           <Link to="/manpower-services" className="no-underline">
@@ -150,17 +178,32 @@ function ExamLayout({ children }) {
 function ExamHero({ title = "Qualifying Exam", subtitle = "Complete your manpower screening assessment to continue your application." }) {
   return (
     <section className="mx-auto max-w-7xl px-4 pt-0 md:px-6">
-      <div
-        className="relative min-h-[180px] overflow-hidden md:min-h-[230px]"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, rgba(42,82,61,0.9) 0%, rgba(64,94,77,0.66) 38%, rgba(64,94,77,0.24) 100%), url('/ManpowerBanner.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundColor: "#64766c",
-        }}
-      >
-        <div className="flex min-h-[180px] items-center px-5 py-8 md:min-h-[230px] md:px-8">
+      <div className="relative min-h-[180px] overflow-hidden bg-[#64766c] md:min-h-[230px]">
+        <picture aria-hidden="true">
+          <source media="(max-width: 960px)" srcSet="/ManpowerBanner-960.webp" />
+          <source media="(max-width: 1440px)" srcSet="/ManpowerBanner-1440.webp" />
+          <img
+            src="/ManpowerBanner.webp"
+            srcSet="/ManpowerBanner-960.webp 960w, /ManpowerBanner-1440.webp 1440w, /ManpowerBanner.webp 1672w"
+            sizes="100vw"
+            alt=""
+            width="1672"
+            height="941"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </picture>
+        <div
+          className="absolute inset-0"
+          aria-hidden="true"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(42,82,61,0.9) 0%, rgba(64,94,77,0.66) 38%, rgba(64,94,77,0.24) 100%)",
+          }}
+        />
+        <div className="relative z-10 flex min-h-[180px] items-center px-5 py-8 md:min-h-[230px] md:px-8">
           <div className="text-white">
             <p className="text-xs font-bold uppercase tracking-[0.32em] text-white/85">
               Manpower Assessment
@@ -321,8 +364,12 @@ export default function ManpowerExam() {
     return (
       <ExamLayout>
         <ExamHero title="Qualifying Exam" subtitle="Preparing your manpower assessment." />
-        <section className="mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
-          <div className="rounded-[28px] border border-[#d7decf] bg-[#f4f4f1] p-8 text-[#24372d] shadow-sm">
+        <section className="exam-deferred-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
+          <div
+            className="rounded-[28px] border border-[#d7decf] bg-[#f4f4f1] p-8 text-[#24372d] shadow-sm"
+            role="status"
+            aria-live="polite"
+          >
             Loading qualifying exam...
           </div>
         </section>
@@ -334,9 +381,9 @@ export default function ManpowerExam() {
     return (
       <ExamLayout>
         <ExamHero title="Qualifying Exam" subtitle="We could not load your assessment right now." />
-        <section className="mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
+        <section className="exam-deferred-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
           <div className="rounded-[28px] border border-[#efc9c9] bg-white p-8 shadow-sm">
-            <p className="text-sm font-semibold text-[#912f2f]">{error}</p>
+            <p className="text-sm font-semibold text-[#912f2f]" role="alert">{error}</p>
             <button
               type="button"
               onClick={() => navigate("/manpower-services")}
@@ -358,7 +405,7 @@ export default function ManpowerExam() {
           subtitle="Your manpower qualifying exam result has been recorded."
         />
 
-        <section className="mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
+        <section className="exam-deferred-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
           <div className="bg-[#f4f4f1] px-4 py-5 md:px-6 md:py-6">
             <section>
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2f5a45]">
@@ -439,7 +486,7 @@ export default function ManpowerExam() {
         subtitle="Answer the questions below and submit your assessment to continue your application."
       />
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
+      <section className="exam-deferred-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
         <div className="bg-[#f4f4f1] px-4 py-5 md:px-6 md:py-6">
           <section>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2f5a45]">
@@ -471,8 +518,19 @@ export default function ManpowerExam() {
                 {unansweredQuestions.length ? `${unansweredQuestions.length} remaining` : "Ready to submit"}
               </span>
             </div>
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-[#e7ece8]">
-              <div className="h-full rounded-full bg-[#315b42] transition-all" style={{ width: `${questions.length ? (answeredCount / questions.length) * 100 : 0}%` }} />
+            <div
+              className="mt-4 h-3 overflow-hidden rounded-full bg-[#e7ece8]"
+              role="progressbar"
+              aria-label="Exam completion progress"
+              aria-valuemin={0}
+              aria-valuemax={questions.length}
+              aria-valuenow={answeredCount}
+              aria-valuetext={`${answeredCount} of ${questions.length} questions answered`}
+            >
+              <div
+                className="h-full rounded-full bg-[#315b42] transition-all"
+                style={{ width: `${questions.length ? (answeredCount / questions.length) * 100 : 0}%` }}
+              />
             </div>
           </div>
 
@@ -490,7 +548,10 @@ export default function ManpowerExam() {
                     className={`rounded-2xl border bg-white p-5 shadow-sm ${String(answers[question.id] || "").trim() ? "border-[#9ac2a8]" : "border-[#d7decf]"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <h2 className="font-semibold text-[#24352c]">
+                      <h2
+                        id={`exam-question-label-${question.id}`}
+                        className="font-semibold text-[#24352c]"
+                      >
                         {index + 1}. {question.questionText}
                       </h2>
                       <span className="shrink-0 rounded-full bg-[#eef3ea] px-3 py-1 text-xs font-semibold text-[#395345]">
@@ -500,7 +561,11 @@ export default function ManpowerExam() {
 
                     {question.questionType === "multiple_choice" ||
                     question.questionType === "true_false" ? (
-                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div
+                        className="mt-4 grid gap-3 md:grid-cols-2"
+                        role="radiogroup"
+                        aria-labelledby={`exam-question-label-${question.id}`}
+                      >
                         {(question.choices || []).map((choice) => (
                           <label
                             key={choice}
@@ -508,7 +573,7 @@ export default function ManpowerExam() {
                           >
                             <input
                               type="radio"
-                              name={question.id}
+                              name={`exam-question-${question.id}`}
                               value={choice}
                               checked={answers[question.id] === choice}
                               onChange={(e) => updateAnswer(question.id, e.target.value)}
@@ -520,9 +585,12 @@ export default function ManpowerExam() {
                       </div>
                     ) : (
                       <textarea
+                        id={`exam-answer-${question.id}`}
+                        name={`exam-answer-${question.id}`}
                         rows={5}
                         value={answers[question.id] || ""}
                         onChange={(e) => updateAnswer(question.id, e.target.value)}
+                        aria-labelledby={`exam-question-label-${question.id}`}
                         className="mt-4 w-full rounded-xl border border-[#c6ccb9] bg-[#fbfdf9] px-4 py-3 text-sm outline-none transition focus:border-[#395345] focus:bg-white"
                         placeholder="Type your answer here..."
                       />
@@ -533,7 +601,11 @@ export default function ManpowerExam() {
             </section>
 
             {error ? (
-              <div className="rounded-md border border-[#efc9c9] bg-[#fff2f2] px-4 py-3 text-sm text-[#912f2f]">
+              <div
+                className="rounded-md border border-[#efc9c9] bg-[#fff2f2] px-4 py-3 text-sm text-[#912f2f]"
+                role="alert"
+                aria-live="assertive"
+              >
                 {error}
               </div>
             ) : null}
@@ -561,10 +633,16 @@ export default function ManpowerExam() {
 
       {showSubmitConfirm ? (
         <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-5 backdrop-blur-sm">
-          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-[26px] bg-white p-7 shadow-2xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="exam-submit-dialog-title"
+            aria-describedby="exam-submit-dialog-description"
+            className="w-full max-w-lg rounded-[26px] bg-white p-7 shadow-2xl"
+          >
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b1812f]">Final submission</p>
-            <h2 className="mt-2 text-2xl font-black text-[#24352c]">Submit your qualifying exam?</h2>
-            <p className="mt-3 text-sm leading-6 text-[#56695b]">You answered all {questions.length} questions. After submission, your answers cannot be changed.</p>
+            <h2 id="exam-submit-dialog-title" className="mt-2 text-2xl font-black text-[#24352c]">Submit your qualifying exam?</h2>
+            <p id="exam-submit-dialog-description" className="mt-3 text-sm leading-6 text-[#56695b]">You answered all {questions.length} questions. After submission, your answers cannot be changed.</p>
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               <button type="button" onClick={() => setShowSubmitConfirm(false)} className="rounded-xl border border-[#91a691] px-5 py-2.5 text-sm font-bold text-[#345240]">Review Answers</button>
               <button type="button" onClick={performSubmitExam} disabled={submitting} className="rounded-xl bg-[#315b42] px-5 py-2.5 text-sm font-black text-white disabled:opacity-60">{submitting ? "Submitting..." : "Confirm Submission"}</button>
