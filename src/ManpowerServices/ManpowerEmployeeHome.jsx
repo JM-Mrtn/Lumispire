@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
+const HERO_IMAGE = "/ManpowerBanner.webp";
 
 
 const EMPLOYEE_LOGIN_ROUTE = "/manpower-employee-login";
-const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
-
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
 const EMPLOYEE_PAYROLL_ROUTE = "/manpower-employee-payroll";
 const EMPLOYEE_LEAVE_ROUTE = "/manpower-employee-leave";
@@ -28,17 +26,9 @@ const EMPLOYEE_NAV_ITEMS = [
   { key: "leave", label: "Leave", path: EMPLOYEE_LEAVE_ROUTE },
 ];
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
-
-function getEmployeeUser() {
-  try {
-    return JSON.parse(localStorage.getItem("manpowerEmployeeUser") || "null");
-  } catch {
-    return null;
-  }
-}
+const fontMontserrat = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPontano = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPoppins = { fontFamily: "Arial, Helvetica, sans-serif" };
 
 function getEmployeeToken() {
   return localStorage.getItem("manpowerEmployeeToken") || "";
@@ -69,8 +59,6 @@ function LeaveIcon() {
 }
 
 const pageStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
   .ltc-manpower-employee-home {
     --green-950: #071f14;
     --green-900: #0e3321;
@@ -95,7 +83,7 @@ const pageStyles = `
     line-height: 1.65;
     letter-spacing: -.01em;
     overflow-x: hidden;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
   }
 
   .ltc-manpower-employee-home * { box-sizing: border-box; }
@@ -257,7 +245,6 @@ const pageStyles = `
       radial-gradient(circle at 72% 18%, rgba(28,108,68,.28), transparent 30%),
       radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
       radial-gradient(circle at 90% 84%, rgba(22,108,66,.30), transparent 26%);
-    filter: blur(30px);
     pointer-events: none;
   }
 
@@ -267,7 +254,6 @@ const pageStyles = `
     max-width: 980px;
     margin: 0 auto;
     text-align: center;
-    animation: ltcAppleReveal .9s var(--ease) both;
   }
 
   .ltc-eyebrow {
@@ -281,7 +267,6 @@ const pageStyles = `
     font-weight: 900;
     letter-spacing: .22em;
     text-transform: uppercase;
-    backdrop-filter: blur(8px);
   }
 
   .ltc-hero-title {
@@ -304,7 +289,7 @@ const pageStyles = `
     line-height: 1.8;
   }
 
-  .ltc-section { padding: 74px 0; }
+  .ltc-section { padding: 74px 0; min-height: 640px; }
 
   .ltc-home-shell {
     position: relative;
@@ -313,7 +298,6 @@ const pageStyles = `
     background: var(--glass);
     border: 1px solid rgba(255,255,255,.76);
     box-shadow: var(--shadow-md);
-    backdrop-filter: blur(18px);
     padding: 34px;
     transition: .25s var(--ease);
   }
@@ -555,7 +539,7 @@ const pageStyles = `
   .ltc-sidebar-panel { position: absolute; right: 0; top: 0; height: 100%; width: min(310px,86vw); background: white; box-shadow: -20px 0 60px rgba(0,0,0,.25); padding: 20px; }
   .ltc-sidebar-top { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(16,24,40,.1); padding-bottom: 16px; margin-bottom: 16px; }
   .ltc-sidebar-title { color: var(--green-950); font-weight: 900; letter-spacing: .14em; font-size: 12px; margin: 0; }
-  .ltc-sidebar-close { width: 38px; height: 38px; border-radius: 12px; border: 0; background: #f2f4f7; color: #101828; cursor: pointer; }
+  .ltc-sidebar-close { width: 44px; height: 44px; border-radius: 12px; border: 0; background: #f2f4f7; color: #101828; cursor: pointer; }
   .ltc-sidebar-link { display: block; width: 100%; border: 0; background: transparent; color: #101828; text-align: left; border-radius: 14px; padding: 13px 14px; font-weight: 800; margin-bottom: 8px; cursor: pointer; text-decoration: none; }
   .ltc-sidebar-link:hover,
   .ltc-sidebar-link.active { background: var(--green-800); color: white; }
@@ -619,6 +603,9 @@ function Header({ goTo, onOpenMenu }) {
           >
             <img
               src={LOGO_IMAGE}
+              width="128"
+              height="128"
+              decoding="async"
               alt="Manpower Logo"
               className="ltc-logo-icon"
               onError={(event) => {
@@ -704,6 +691,9 @@ function Footer({ goTo }) {
           >
             <img
               src={LOGO_IMAGE}
+              width="128"
+              height="128"
+              decoding="async"
               alt="Manpower Logo"
               onError={(event) => {
                 event.currentTarget.src = "https://placehold.co/80x80/ffffff/4d6f55?text=M";
@@ -836,11 +826,6 @@ export default function ManpowerEmployeeHome() {
       navigate(EMPLOYEE_LOGIN_ROUTE, { replace: true });
       return;
     }
-
-    const employee = getEmployeeUser();
-    if (employee?.mustChangePassword) {
-      navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
-    }
   }, [navigate]);
 
   function goTo(path) {
@@ -860,6 +845,13 @@ export default function ManpowerEmployeeHome() {
             src={HERO_IMAGE}
             alt="Manpower Banner"
             className="ltc-hero-slide"
+            width="1672"
+            height="941"
+            srcSet="/ManpowerBanner-960.webp 960w, /ManpowerBanner-1440.webp 1440w, /ManpowerBanner.webp 1672w"
+            sizes="100vw"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}

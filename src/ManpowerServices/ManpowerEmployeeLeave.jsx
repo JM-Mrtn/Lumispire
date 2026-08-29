@@ -1,15 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
 
 const EMPLOYEE_LOGIN_ROUTE = "/manpower-employee-login";
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
 const EMPLOYEE_PAYROLL_ROUTE = "/manpower-employee-payroll";
 const EMPLOYEE_LEAVE_ROUTE = "/manpower-employee-leave";
 const EMPLOYEE_PROFILE_ROUTE = "/manpower-employee-profile";
-const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
 
 function normalizeApiBase(raw) {
   const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
@@ -35,9 +33,9 @@ const LEAVE_TYPES = [
   "Other",
 ];
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const fontMontserrat = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPontano = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPoppins = { fontFamily: "Arial, Helvetica, sans-serif" };
 
 function HeaderNavLink({ to, children, active = false }) {
   return (
@@ -288,11 +286,6 @@ export default function ManpowerEmployeeLeave() {
       }
 
       const nextEmployee = data.employee || null;
-      if (nextEmployee?.mustChangePassword) {
-        localStorage.setItem("manpowerEmployeeUser", JSON.stringify(nextEmployee));
-        navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
-        return;
-      }
       setEmployee(nextEmployee);
       localStorage.setItem("manpowerEmployeeUser", JSON.stringify(nextEmployee));
     } catch (error) {
@@ -427,8 +420,6 @@ export default function ManpowerEmployeeLeave() {
   return (
     <div className="mp-leave-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .mp-leave-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -454,7 +445,7 @@ export default function ManpowerEmployeeLeave() {
           line-height: 1.65;
           letter-spacing: -.01em;
           overflow-x: hidden;
-          font-family: "Inter", Arial, sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
         }
 
         .mp-leave-page * { box-sizing: border-box; }
@@ -616,8 +607,8 @@ export default function ManpowerEmployeeLeave() {
         }
 
         .mp-leave-sidebar-close {
-          width: 38px;
-          height: 38px;
+          width: 44px;
+          height: 44px;
           border-radius: 12px;
           border: 0;
           background: #f2f4f7;
@@ -661,9 +652,7 @@ export default function ManpowerEmployeeLeave() {
           inset: 0;
           z-index: -3;
           background:
-            linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.76) 100%),
-            url("${HERO_IMAGE}") center center / cover no-repeat;
-          background-blend-mode: multiply;
+            linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.76) 100%);
           opacity: .96;
           transform: scale(1.02);
         }
@@ -680,7 +669,6 @@ export default function ManpowerEmployeeLeave() {
             radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
             radial-gradient(circle at 90% 84%, rgba(22,108,66,.30), transparent 26%),
             linear-gradient(135deg, rgba(3,24,15,.34), rgba(8,56,34,.08));
-          filter: blur(30px);
           pointer-events: none;
         }
 
@@ -690,7 +678,6 @@ export default function ManpowerEmployeeLeave() {
           max-width: 900px;
           margin: 0 auto;
           text-align: center;
-          animation: mpLeaveReveal .8s var(--ease) both;
         }
 
         .mp-leave-eyebrow {
@@ -758,10 +745,9 @@ export default function ManpowerEmployeeLeave() {
           color: white;
           background: rgba(255,255,255,.1);
           border: 1px solid rgba(255,255,255,.18);
-          backdrop-filter: blur(8px);
         }
 
-        .mp-leave-section { padding: 84px 0; }
+        .mp-leave-section { padding: 84px 0; min-height: 760px; }
 
         .mp-leave-section-title {
           text-align: center;
@@ -806,7 +792,6 @@ export default function ManpowerEmployeeLeave() {
           background: var(--glass);
           border: 1px solid rgba(255,255,255,.76);
           box-shadow: var(--shadow-md);
-          backdrop-filter: blur(18px);
           transition: .38s var(--ease);
         }
 
@@ -1245,7 +1230,8 @@ export default function ManpowerEmployeeLeave() {
       <header className="mp-leave-header">
         <div className="mp-leave-container mp-leave-nav">
           <Link to={EMPLOYEE_HOME_ROUTE} className="mp-leave-logo">
-            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-leave-logo-icon" />
+            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-leave-logo-icon" width="128" height="128" decoding="async" />
+
             <div>
               <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
               <p style={fontPontano}>Professional staffing and workforce solutions.</p>
@@ -1578,7 +1564,8 @@ export default function ManpowerEmployeeLeave() {
         <div className="mp-leave-container mp-leave-footer-grid">
           <div>
             <Link to={EMPLOYEE_HOME_ROUTE} className="mp-leave-logo">
-              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-leave-logo-icon" />
+              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-leave-logo-icon" width="128" height="128" decoding="async" />
+
               <div>
                 <h4 style={fontMontserrat}>LTC Manpower</h4>
                 <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
@@ -1620,7 +1607,7 @@ export default function ManpowerEmployeeLeave() {
         <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "grid", placeItems: "center", padding: 20, background: "rgba(3,24,15,.72)", backdropFilter: "blur(6px)" }}>
           <div role="dialog" aria-modal="true" aria-labelledby="leave-confirm-title" style={{ width: "min(520px,100%)", borderRadius: 24, background: "white", padding: 26, boxShadow: "0 30px 80px rgba(0,0,0,.28)" }}>
             <p style={{ margin: 0, color: "#d7a84d", fontWeight: 900, textTransform: "uppercase", letterSpacing: ".12em", fontSize: 12 }}>Confirm request</p>
-            <h2 id="leave-confirm-title" style={{ margin: "8px 0 14px", color: "#0e3321", fontFamily: "'Montserrat', sans-serif" }}>Submit this leave request?</h2>
+            <h2 id="leave-confirm-title" style={{ margin: "8px 0 14px", color: "#0e3321", fontFamily: "Arial, Helvetica, sans-serif" }}>Submit this leave request?</h2>
             <div style={{ borderRadius: 16, background: "#f6faf7", border: "1px solid #dce9df", padding: 16, color: "#344b3d" }}>
               <strong>{form.leaveType}</strong>
               <p style={{ margin: "6px 0 0" }}>{formatDate(form.startDate)} - {formatDate(form.endDate)}</p>

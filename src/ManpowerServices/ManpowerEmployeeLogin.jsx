@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const HERO_IMAGE = "/ManpowerBanner.png";
-const LOGO_IMAGE = "/ManpowerLogo.png";
+const HERO_IMAGE = "/ManpowerBanner.webp";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
 
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
@@ -66,8 +66,6 @@ function EyeOffIcon() {
 }
 
 const manpowerLoginStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&display=swap");
-
   .manpower-employee-login-page {
     --green-950: #071f14;
     --green-900: #0e3321;
@@ -90,7 +88,7 @@ const manpowerLoginStyles = `
     line-height: 1.65;
     letter-spacing: -.01em;
     overflow-x: hidden;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
   }
 
   .manpower-employee-login-page * { box-sizing: border-box; }
@@ -204,6 +202,7 @@ const manpowerLoginStyles = `
     border: 0;
     background: rgba(255,255,255,.1);
     border-radius: 12px;
+    min-height: 44px;
     padding: 10px 14px;
     cursor: pointer;
     font-size: 12px;
@@ -278,7 +277,6 @@ const manpowerLoginStyles = `
       radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
       radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
       radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
-    filter: blur(30px);
     pointer-events: none;
   }
 
@@ -304,7 +302,6 @@ const manpowerLoginStyles = `
     font-weight: 900;
     letter-spacing: .28em;
     text-transform: uppercase;
-    backdrop-filter: blur(10px);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
   }
 
@@ -341,7 +338,6 @@ const manpowerLoginStyles = `
     border-radius: 20px;
     background: rgba(255,255,255,.09);
     padding: 16px;
-    backdrop-filter: blur(10px);
   }
 
   .manpower-employee-login-point strong {
@@ -369,8 +365,6 @@ const manpowerLoginStyles = `
     box-shadow: var(--shadow-lg);
     padding: 34px;
     color: var(--dark);
-    backdrop-filter: blur(18px);
-    animation: loginFadeUp .7s var(--ease) both;
   }
 
   .manpower-employee-login-card::before {
@@ -452,7 +446,7 @@ const manpowerLoginStyles = `
     transition: .22s var(--ease);
   }
 
-  .manpower-employee-login-input.password { padding-right: 58px; }
+  .manpower-employee-login-input.password { padding-right: 68px; }
 
   .manpower-employee-login-input:focus {
     border-color: rgba(215,168,77,.8);
@@ -469,7 +463,11 @@ const manpowerLoginStyles = `
     background: transparent;
     color: var(--green-800);
     cursor: pointer;
-    padding: 6px;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
     border-radius: 999px;
     transition: .22s var(--ease);
   }
@@ -753,6 +751,9 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
             >
               <img
                 src={LOGO_IMAGE}
+                width="128"
+                height="128"
+                decoding="async"
                 alt="LTC Manpower Logo"
                 className="manpower-employee-login-logo-icon"
                 onError={(event) => {
@@ -813,6 +814,13 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
             src={HERO_IMAGE}
             alt="LTC Manpower"
             className="manpower-employee-login-hero-bg"
+            width="1672"
+            height="941"
+            srcSet="/ManpowerBanner-960.webp 960w, /ManpowerBanner-1440.webp 1440w, /ManpowerBanner.webp 1672w"
+            sizes="100vw"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             onError={(event) => {
               event.currentTarget.src =
                 "https://placehold.co/1600x900/082719/f4d484?text=LTC+Manpower+Services";

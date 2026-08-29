@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
 
 export const EMPLOYEE_ROUTES = {
   home: "/manpower-employee-home",
@@ -66,9 +66,13 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
           <Link to={EMPLOYEE_ROUTES.home} className="flex items-center gap-3">
             <img
               src={LOGO_IMAGE}
+
               alt="Manpower Logo"
               className="h-12 w-12 shrink-0 rounded-full object-contain"
-            />
+              width="128"
+              height="128"
+              decoding="async"
+              />
 
             <span className="text-[24px] font-black tracking-wide text-[#315b42] sm:text-[28px]">
               MANPOWER
@@ -105,7 +109,7 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
             <button
               type="button"
               onClick={() => setShowLogoutConfirm(true)}
-              className="hidden rounded-full bg-[#315b42] px-5 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-[#254934] lg:inline-flex"
+              className="hidden min-h-11 rounded-full bg-[#315b42] px-5 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-[#254934] lg:inline-flex"
             >
               Logout
             </button>
@@ -113,7 +117,7 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
-              className="rounded-md border border-[#cfd6ca] px-3 py-2 text-xs font-black uppercase tracking-wide text-[#405549] lg:hidden"
+              className="min-h-11 min-w-11 rounded-md border border-[#cfd6ca] px-3 py-2 text-xs font-black uppercase tracking-wide text-[#405549] lg:hidden"
             >
               Menu
             </button>
@@ -196,9 +200,14 @@ export default function ManpowerEmployeeShell({ active = "home", children }) {
               >
                 <img
                   src={LOGO_IMAGE}
+                  loading="lazy"
+
                   alt="Manpower Logo"
                   className="h-12 w-12 shrink-0 rounded-full object-contain"
-                />
+                  width="128"
+                  height="128"
+                  decoding="async"
+                  />
 
                 <h3 className="text-[24px] font-black tracking-wide text-[#315b42]">
                   MANPOWER

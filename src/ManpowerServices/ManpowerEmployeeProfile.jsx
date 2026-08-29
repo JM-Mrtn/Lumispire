@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
+const HERO_IMAGE = "/ManpowerBanner.webp";
 
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
 const EMPLOYEE_PAYROLL_ROUTE = "/manpower-employee-payroll";
@@ -11,9 +11,9 @@ const EMPLOYEE_PROFILE_ROUTE = "/manpower-employee-profile";
 const EMPLOYEE_LOGIN_ROUTE = "/manpower-employee-login";
 const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const fontMontserrat = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPontano = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPoppins = { fontFamily: "Arial, Helvetica, sans-serif" };
 
 function normalizeApiBase(raw) {
   const clean = String(raw || "http://localhost:5000").replace(/\/+$/, "");
@@ -174,12 +174,6 @@ export default function ManpowerEmployeeProfile() {
       }
 
       const nextEmployee = data?.employee || null;
-
-      if (nextEmployee?.mustChangePassword) {
-        saveEmployeeSession(token, nextEmployee);
-        navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
-        return;
-      }
       setEmployee(nextEmployee);
       saveEmployeeSession(token, nextEmployee);
     } catch (err) {
@@ -318,8 +312,6 @@ export default function ManpowerEmployeeProfile() {
   }
 
   const profileStyles = `
-    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
     .ltc-manpower-employee-home {
       --green-950: #071f14;
       --green-900: #0e3321;
@@ -344,7 +336,7 @@ export default function ManpowerEmployeeProfile() {
       line-height: 1.65;
       letter-spacing: -.01em;
       overflow-x: hidden;
-      font-family: "Inter", Arial, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
     }
 
     .ltc-manpower-employee-home * { box-sizing: border-box; }
@@ -503,8 +495,8 @@ export default function ManpowerEmployeeProfile() {
     }
 
     .ltc-sidebar-close {
-      width: 38px;
-      height: 38px;
+      width: 44px;
+      height: 44px;
       border-radius: 12px;
       border: 0;
       background: #f2f4f7;
@@ -571,7 +563,6 @@ export default function ManpowerEmployeeProfile() {
         radial-gradient(circle at 72% 18%, rgba(28,108,68,.28), transparent 30%),
         radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
         radial-gradient(circle at 90% 84%, rgba(22,108,66,.30), transparent 26%);
-      filter: blur(30px);
       pointer-events: none;
     }
 
@@ -581,7 +572,6 @@ export default function ManpowerEmployeeProfile() {
       max-width: 980px;
       margin: 0 auto;
       text-align: center;
-      animation: ltcAppleReveal .9s var(--ease) both;
     }
 
     .ltc-eyebrow {
@@ -595,7 +585,6 @@ export default function ManpowerEmployeeProfile() {
       font-weight: 900;
       letter-spacing: .22em;
       text-transform: uppercase;
-      backdrop-filter: blur(8px);
     }
 
     .ltc-hero-title {
@@ -627,7 +616,6 @@ export default function ManpowerEmployeeProfile() {
       background: var(--glass);
       border: 1px solid rgba(255,255,255,.76);
       box-shadow: var(--shadow-md);
-      backdrop-filter: blur(18px);
       padding: 34px;
       transition: .25s var(--ease);
     }
@@ -760,7 +748,6 @@ export default function ManpowerEmployeeProfile() {
       font-weight: 900;
       letter-spacing: .08em;
       text-transform: uppercase;
-      backdrop-filter: blur(8px);
     }
 
     .ltc-profile-details {
@@ -1199,7 +1186,6 @@ export default function ManpowerEmployeeProfile() {
       background:
         radial-gradient(circle at 18% 82%, rgba(19,120,72,.35), transparent 24%),
         radial-gradient(circle at 88% 44%, rgba(244,212,132,.15), transparent 28%);
-      filter: blur(30px);
       z-index: 1;
       pointer-events: none;
     }
@@ -1214,7 +1200,6 @@ export default function ManpowerEmployeeProfile() {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      animation: ltcFadeUp .75s var(--ease) both;
     }
 
     .ltc-hero-kicker {
@@ -1254,7 +1239,8 @@ export default function ManpowerEmployeeProfile() {
       text-align: center;
     }
 
-    .ltc-profile-overview { padding: 32px 0 52px; }
+    .ltc-profile-overview {
+      min-height: 760px; padding: 32px 0 52px; }
     .ltc-profile-overview .ltc-container { width: min(1040px, 92%); }
 
     .ltc-profile-shell {
@@ -1264,7 +1250,6 @@ export default function ManpowerEmployeeProfile() {
       border: 1px solid rgba(35,95,62,.12);
       box-shadow: 0 22px 54px rgba(8,39,25,.14);
       padding: 18px;
-      animation: ltcFadeUp .72s var(--ease) both;
     }
 
     .ltc-profile-header-row {
@@ -1389,7 +1374,6 @@ export default function ManpowerEmployeeProfile() {
       background: #f8fbf9;
       padding: 14px;
       transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease), background .25s var(--ease);
-      animation: ltcFadeUp .65s var(--ease) both;
     }
 
     .ltc-info-card:hover {
@@ -1446,7 +1430,6 @@ export default function ManpowerEmployeeProfile() {
       padding: 14px 16px;
       font-size: 14px;
       font-weight: 800;
-      animation: ltcFadeUp .45s var(--ease) both;
     }
     .ltc-alert-success { background: #ecfdf3; color: #067647; border: 1px solid #abefc6; }
     .ltc-alert-error { background: #fef3f2; color: #b42318; border: 1px solid #fecdca; }
@@ -1484,7 +1467,8 @@ export default function ManpowerEmployeeProfile() {
     @media (max-width: 720px) {
       .ltc-manpower-employee-home .ltc-hero { min-height: 190px; }
       .ltc-manpower-employee-home .ltc-hero-content { padding: 34px 0 38px; }
-      .ltc-profile-overview { padding: 26px 0 44px; }
+      .ltc-profile-overview {
+      min-height: 760px; padding: 26px 0 44px; }
       .ltc-profile-shell { padding: 15px; border-radius: 24px; }
       .ltc-profile-card, .ltc-profile-info-panel { padding: 20px; border-radius: 22px; min-height: auto; }
       .ltc-info-grid, .ltc-action-row { grid-template-columns: 1fr; }
@@ -1508,6 +1492,9 @@ export default function ManpowerEmployeeProfile() {
             <Link to={EMPLOYEE_HOME_ROUTE} className="ltc-logo" aria-label="Manpower Employee Home">
               <img
                 src={LOGO_IMAGE}
+                width="128"
+                height="128"
+                decoding="async"
                 alt="Manpower Logo"
                 className="ltc-logo-icon"
                 onError={(event) => {
@@ -1591,6 +1578,13 @@ export default function ManpowerEmployeeProfile() {
             src={HERO_IMAGE}
             alt="Manpower banner"
             className="ltc-hero-slide"
+            width="1672"
+            height="941"
+            srcSet="/ManpowerBanner-960.webp 960w, /ManpowerBanner-1440.webp 1440w, /ManpowerBanner.webp 1672w"
+            sizes="100vw"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
@@ -1734,6 +1728,9 @@ export default function ManpowerEmployeeProfile() {
             <Link to={EMPLOYEE_HOME_ROUTE} className="ltc-footer-brand">
               <img
                 src={LOGO_IMAGE}
+                width="128"
+                height="128"
+                decoding="async"
                 alt="Manpower Logo"
                 onError={(event) => {
                   event.currentTarget.src =
@@ -1777,7 +1774,7 @@ export default function ManpowerEmployeeProfile() {
       {showLogoutConfirm ? (
         <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "grid", placeItems: "center", padding: 20, background: "rgba(3,24,15,.72)", backdropFilter: "blur(6px)" }}>
           <div role="dialog" aria-modal="true" style={{ width: "min(440px,100%)", borderRadius: 24, background: "white", padding: 26, boxShadow: "0 30px 80px rgba(0,0,0,.28)" }}>
-            <h2 style={{ margin: 0, color: "#0e3321", fontFamily: "'Montserrat', sans-serif" }}>Sign out of the Employee Portal?</h2>
+            <h2 style={{ margin: 0, color: "#0e3321", fontFamily: "Arial, Helvetica, sans-serif" }}>Sign out of the Employee Portal?</h2>
             <p style={{ color: "#667085" }}>You will need to enter your employee email and password again.</p>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
               <button type="button" onClick={() => setShowLogoutConfirm(false)} className="ltc-action-button light">Stay Signed In</button>

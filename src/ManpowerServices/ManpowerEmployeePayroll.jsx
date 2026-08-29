@@ -15,25 +15,22 @@ function normalizeApiBase(raw) {
 
 const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
 
 const EMPLOYEE_LOGIN_ROUTE = "/manpower-employee-login";
 const EMPLOYEE_HOME_ROUTE = "/manpower-employee-home";
 const EMPLOYEE_PAYROLL_ROUTE = "/manpower-employee-payroll";
 const EMPLOYEE_LEAVE_ROUTE = "/manpower-employee-leave";
 const EMPLOYEE_PROFILE_ROUTE = "/manpower-employee-profile";
-const EMPLOYEE_CHANGE_PASSWORD_ROUTE = "/manpower-employee-change-password";
 
 const COMPANY_NAME = "LTC Manpower Services";
 const COMPANY_ADDRESS = "2/F 5441 Currie Street, Palanan, Makati City";
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const fontMontserrat = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPontano = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPoppins = { fontFamily: "Arial, Helvetica, sans-serif" };
 
 const employeePayrollAssignmentStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
   .manpower-employee-payroll-page {
     --green-950: #071f14;
     --green-900: #0e3321;
@@ -58,7 +55,7 @@ const employeePayrollAssignmentStyles = `
     line-height: 1.65;
     letter-spacing: -.01em;
     overflow-x: hidden;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
   }
 
   .manpower-employee-payroll-page * { box-sizing: border-box; }
@@ -217,8 +214,8 @@ const employeePayrollAssignmentStyles = `
   }
 
   .ltc-sidebar-close {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
     border: 0;
     background: #f2f4f7;
@@ -277,7 +274,6 @@ const employeePayrollAssignmentStyles = `
       radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
       radial-gradient(circle at 88% 44%, rgba(244,212,132,.14), transparent 28%),
       linear-gradient(135deg, rgba(3,24,15,.34), rgba(8,56,34,.08));
-    filter: blur(30px);
     pointer-events: none;
   }
 
@@ -290,7 +286,6 @@ const employeePayrollAssignmentStyles = `
     display: flex;
     flex-direction: column;
     align-items: center;
-    animation: ltcAppleReveal .9s var(--ease) both;
   }
 
   .ltc-hero-title {
@@ -314,6 +309,7 @@ const employeePayrollAssignmentStyles = `
   }
 
   .ltc-payroll-overview {
+    min-height: 760px;
     padding: 64px 0 84px;
   }
 
@@ -324,9 +320,7 @@ const employeePayrollAssignmentStyles = `
     background: var(--glass);
     border: 1px solid rgba(255,255,255,.82);
     box-shadow: var(--shadow-md);
-    backdrop-filter: blur(18px);
     padding: 28px;
-    animation: ltcAppleReveal .75s var(--ease) both;
   }
 
   .ltc-payroll-panel::before {
@@ -1807,10 +1801,6 @@ export default function ManpowerEmployeePayroll() {
 
       if (data?.employee) {
         localStorage.setItem("manpowerEmployeeUser", JSON.stringify(data.employee));
-        if (data.employee.mustChangePassword) {
-          navigate(EMPLOYEE_CHANGE_PASSWORD_ROUTE, { replace: true });
-          return;
-        }
         setEmployee(data.employee);
       }
 
@@ -1930,6 +1920,9 @@ export default function ManpowerEmployeePayroll() {
             <Link to={EMPLOYEE_HOME_ROUTE} className="ltc-logo" aria-label="Manpower Employee Home">
               <img
                 src={LOGO_IMAGE}
+                width="128"
+                height="128"
+                decoding="async"
                 alt="Manpower Logo"
                 className="ltc-logo-icon"
                 onError={(event) => {
@@ -2190,6 +2183,9 @@ export default function ManpowerEmployeePayroll() {
             <Link to={EMPLOYEE_HOME_ROUTE} className="ltc-footer-brand">
               <img
                 src={LOGO_IMAGE}
+                width="128"
+                height="128"
+                decoding="async"
                 alt="Manpower Logo"
                 onError={(event) => {
                   event.currentTarget.src =

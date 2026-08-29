@@ -10,16 +10,14 @@ function normalizeApiBase(raw) {
 
 const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
+const HERO_IMAGE = "/ManpowerBanner.webp";
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const fontMontserrat = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPontano = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPoppins = { fontFamily: "Arial, Helvetica, sans-serif" };
 
 const pageStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
   .ltc-change-password-page {
     --green-950: #071f14;
     --green-900: #0e3321;
@@ -43,7 +41,7 @@ const pageStyles = `
     line-height: 1.65;
     letter-spacing: -.01em;
     overflow-x: hidden;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
   }
 
   .ltc-change-password-page * { box-sizing: border-box; }
@@ -190,7 +188,6 @@ const pageStyles = `
     z-index: 1;
     text-align: center;
     max-width: 900px;
-    animation: ltcFadeUp .72s var(--ease) both;
   }
 
   .ltc-eyebrow {
@@ -227,7 +224,7 @@ const pageStyles = `
     font-size: clamp(16px, 2vw, 21px);
   }
 
-  .ltc-section { padding: 54px 0 70px; }
+  .ltc-section { padding: 54px 0 70px; min-height: 760px; }
 
   .ltc-form-shell {
     position: relative;
@@ -239,8 +236,6 @@ const pageStyles = `
     background: var(--glass);
     border: 1px solid rgba(8,39,25,.1);
     box-shadow: var(--shadow-lg);
-    backdrop-filter: blur(18px);
-    animation: ltcFadeUp .78s var(--ease) .08s both;
     transition: transform .28s var(--ease), box-shadow .28s var(--ease);
   }
 
@@ -374,7 +369,6 @@ const pageStyles = `
     font-size: 14px;
     font-weight: 700;
     border: 1px solid transparent;
-    animation: ltcFadeUp .42s var(--ease) both;
   }
 
   .ltc-status-success { color: #067647; background: #ecfdf3; border-color: #abefc6; }
@@ -441,7 +435,7 @@ function BrandLogo() {
   return (
     <div className="flex items-center gap-3">
       <img
-        src="/logo.png"
+        src="/ManpowerLogo.webp"
         alt="Manpower Logo"
         className="h-10 w-10 rounded-full object-cover"
       />
@@ -456,7 +450,7 @@ function FooterLogo() {
   return (
     <div className="flex items-center gap-3">
       <img
-        src="/logo.png"
+        src="/ManpowerLogo.webp"
         alt="Lumispire Logo"
         className="h-9 w-9 rounded-full object-cover"
       />
@@ -835,6 +829,9 @@ export default function ManpowerEmployeeChangePassword() {
           >
             <img
               src={LOGO_IMAGE}
+              width="128"
+              height="128"
+              decoding="async"
               alt="Manpower Logo"
               className="ltc-logo-icon"
               onError={(event) => {
@@ -887,6 +884,13 @@ export default function ManpowerEmployeeChangePassword() {
             src={HERO_IMAGE}
             alt="Manpower banner"
             className="ltc-hero-slide"
+            width="1672"
+            height="941"
+            srcSet="/ManpowerBanner-960.webp 960w, /ManpowerBanner-1440.webp 1440w, /ManpowerBanner.webp 1672w"
+            sizes="100vw"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
@@ -969,8 +973,10 @@ export default function ManpowerEmployeeChangePassword() {
 
                   <form onSubmit={changePassword} className="ltc-form-grid">
                     <div className="ltc-field">
-                      <label style={fontPoppins}>Current Password</label>
+                      <label htmlFor="current-password" style={fontPoppins}>Current Password</label>
                       <input
+                        id="current-password"
+                        name="current-password"
                         type="password"
                         value={passwordForm.currentPassword}
                         onChange={(e) =>
@@ -986,8 +992,10 @@ export default function ManpowerEmployeeChangePassword() {
                     </div>
 
                     <div className="ltc-field">
-                      <label style={fontPoppins}>New Password</label>
+                      <label htmlFor="new-password" style={fontPoppins}>New Password</label>
                       <input
+                        id="new-password"
+                        name="new-password"
                         type="password"
                         value={passwordForm.newPassword}
                         onChange={(e) =>
@@ -1018,8 +1026,10 @@ export default function ManpowerEmployeeChangePassword() {
                     </div>
 
                     <div className="ltc-field">
-                      <label style={fontPoppins}>Confirm New Password</label>
+                      <label htmlFor="confirm-new-password" style={fontPoppins}>Confirm New Password</label>
                       <input
+                        id="confirm-new-password"
+                        name="confirm-new-password"
                         type="password"
                         value={passwordForm.confirmPassword}
                         onChange={(e) =>
@@ -1035,8 +1045,10 @@ export default function ManpowerEmployeeChangePassword() {
                     </div>
 
                     <div className="ltc-field">
-                      <label style={fontPoppins}>OTP Code</label>
+                      <label htmlFor="otp-code" style={fontPoppins}>OTP Code</label>
                       <input
+                        id="otp-code"
+                        name="otp-code"
                         type="text"
                         inputMode="numeric"
                         maxLength={6}
