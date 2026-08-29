@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const LOGO_IMAGE = "/ManpowerLogo.png";
-const HERO_IMAGE = "/ManpowerBanner.png";
+const LOGO_IMAGE = "/ManpowerLogo.webp";
+const HERO_IMAGE = "/ManpowerBanner.webp";
 
 const MANPOWER_HOME_ROUTE = "/manpower-services";
 
@@ -23,44 +23,10 @@ const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Inter', sans-serif" };
 const fontPoppins = { fontFamily: "'Inter', sans-serif" };
 
-const RevealOnScroll = ({ children, className = "", delay = 0, y = 22 }) => {
-  const ref = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
+const RevealOnScroll = ({ children, className = "" }) => (
+  <div className={className}>{children}</div>
+);
 
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(element);
-        }
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0px)" : `translateY(${y}px)`,
-        transition: "opacity 650ms ease, transform 650ms ease",
-        transitionDelay: `${delay}ms`,
-        willChange: "opacity, transform",
-      }}
-    >
-      {children}
-    </div>
-  );
-};
 
 function HeaderNavLink({ to, children, active = false }) {
   return (
@@ -82,7 +48,15 @@ function FooterColumn({ title, children }) {
 }
 
 const RequirementIcon = () => (
-  <svg viewBox="0 0 24 24" className="mp-svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    viewBox="0 0 24 24"
+    className="mp-svg-icon"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    aria-hidden="true"
+    focusable="false"
+  >
     <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h8" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M8 14h5" />
@@ -177,7 +151,7 @@ function FloatingHomeIconButton({ onClick }) {
         aria-label="Back to Home"
       >
         <span className="ltc-floating-home-tooltip">LTC GROUP OF COMPANIES</span>
-        <img src="/LTCLogo.jpg" alt="" aria-hidden="true" />
+        <img src="/LTCLogo.webp" alt="" aria-hidden="true" width="56" height="56" decoding="async" />
       </button>
     </>
   );
@@ -195,8 +169,6 @@ export default function ManpowerRequirements() {
   return (
     <div className="mp-about-style" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
-
         .mp-about-style {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -381,8 +353,8 @@ export default function ManpowerRequirements() {
         }
 
         .mp-sidebar-close {
-          width: 38px;
-          height: 38px;
+          width: 44px;
+          height: 44px;
           border-radius: 12px;
           border: 0;
           background: #f2f4f7;
@@ -421,24 +393,31 @@ export default function ManpowerRequirements() {
           background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
         }
 
+        .mp-hero-bg {
+          position: absolute;
+          inset: 0;
+          z-index: -3;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+        }
+
         .mp-hero::before {
           content: "";
           position: absolute;
           inset: 0;
-          z-index: -3;
-          background:
-            linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.72) 100%),
-            url("${HERO_IMAGE}") center center / cover no-repeat;
-          background-blend-mode: multiply;
+          z-index: -2;
+          background: linear-gradient(120deg, rgba(2,18,11,.96) 0%, rgba(5,37,23,.88) 42%, rgba(12,64,39,.72) 100%);
           opacity: .96;
-          transform: scale(1.02);
+          pointer-events: none;
         }
 
         .mp-hero::after {
           content: "";
           position: absolute;
           inset: -16% -10% -24% -10%;
-          z-index: -2;
+          z-index: -1;
           background:
             radial-gradient(circle at 16% 82%, rgba(19,120,72,.36), transparent 24%),
             radial-gradient(circle at 36% 92%, rgba(7,76,47,.46), transparent 30%),
@@ -454,7 +433,6 @@ export default function ManpowerRequirements() {
           z-index: 2;
           width: min(960px, 100%);
           padding: 88px 0 100px;
-          animation: mpAppleReveal .9s var(--ease) both;
         }
 
         .mp-eyebrow {
@@ -520,10 +498,23 @@ export default function ManpowerRequirements() {
 
         .mp-section { padding: 84px 0; }
 
+        #requirements-list,
+        .mp-band {
+          content-visibility: auto;
+          contain-intrinsic-size: 900px;
+        }
+
+        .mp-menu-button:focus-visible,
+        .mp-sidebar-close:focus-visible,
+        .mp-btn:focus-visible,
+        .mp-nav-link:focus-visible {
+          outline: 3px solid rgba(244,212,132,.95);
+          outline-offset: 3px;
+        }
+
         .mp-section-title {
           text-align: center;
           margin-bottom: 34px;
-          animation: mpAppleReveal .7s var(--ease) both;
         }
 
         .mp-section-title span {
@@ -1094,8 +1085,8 @@ export default function ManpowerRequirements() {
         }
 
         .mp-sidebar-close {
-          width: 40px !important;
-          height: 40px !important;
+          width: 44px !important;
+          height: 44px !important;
           border: 0 !important;
           border-radius: 13px !important;
           color: #101828 !important;
@@ -1394,7 +1385,7 @@ export default function ManpowerRequirements() {
       <header className="mp-header">
         <div className="mp-container mp-nav">
           <Link to={MANPOWER_HOME_ROUTE} className="mp-logo">
-            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" />
+            <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" width="42" height="42" decoding="async" />
             <div>
               <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
               <p style={fontPontano}>Professional staffing and workforce solutions.</p>
@@ -1414,6 +1405,8 @@ export default function ManpowerRequirements() {
             onClick={() => setMobileOpen(true)}
             className="mp-menu-button"
             aria-label="Open menu"
+            aria-expanded={mobileOpen}
+            aria-controls="manpower-mobile-menu"
             type="button"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1426,7 +1419,7 @@ export default function ManpowerRequirements() {
       {mobileOpen && (
         <div className="mp-sidebar-overlay">
           <div style={{ position: "absolute", inset: 0 }} onClick={() => setMobileOpen(false)} />
-          <div className="mp-sidebar-panel">
+          <div className="mp-sidebar-panel" id="manpower-mobile-menu" role="dialog" aria-modal="true" aria-label="Manpower navigation menu">
             <div className="mp-sidebar-top">
               <p className="mp-sidebar-title" style={fontPoppins}>MENU</p>
               <button onClick={() => setMobileOpen(false)} className="mp-sidebar-close" aria-label="Close menu" type="button">
@@ -1448,6 +1441,17 @@ export default function ManpowerRequirements() {
 
       <main>
         <section className="mp-hero">
+          <img
+            src={HERO_IMAGE}
+            alt=""
+            aria-hidden="true"
+            className="mp-hero-bg"
+            width="1672"
+            height="941"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
           <div className="mp-container mp-hero-content">
             <div className="mp-eyebrow" style={fontPoppins}>Manpower Services</div>
             <h2 style={fontMontserrat}>
@@ -1565,7 +1569,7 @@ export default function ManpowerRequirements() {
         <div className="mp-container mp-footer-grid">
           <div>
             <Link to={MANPOWER_HOME_ROUTE} className="mp-logo">
-              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" />
+              <img src={LOGO_IMAGE} alt="Manpower Logo" className="mp-logo-icon" width="42" height="42" decoding="async" />
               <div>
                 <h4 style={fontMontserrat}>LTC Manpower</h4>
                 <p style={fontPontano}>Professional staffing and workforce support solutions.</p>
