@@ -136,7 +136,7 @@ function BrandLogo() {
   return (
     <div className="flex items-center gap-3">
       <img
-        src="/ManpowerLogo.png"
+        src="/ManpowerLogo.webp"
         alt="Manpower Logo"
         className="h-10 w-10 rounded-full object-cover"
       />
@@ -151,7 +151,7 @@ function FooterLogo() {
   return (
     <div className="flex items-center gap-3">
       <img
-        src="/ManpowerLogo.png"
+        src="/ManpowerLogo.webp"
         alt="Lumispire Logo"
         className="h-9 w-9 rounded-full object-cover"
       />
@@ -665,7 +665,7 @@ const manpowerApplyEnrollmentStyles = `
   .ltc-enrollment-page main > section:first-child > div {
     background:
       linear-gradient(120deg, rgba(2,18,11,.95) 0%, rgba(5,37,23,.88) 44%, rgba(12,64,39,.72) 100%),
-      url('/ManpowerBanner.png') center center / cover no-repeat !important;
+      url('/ManpowerBanner.webp') center center / cover no-repeat !important;
   }
   .ltc-enrollment-page main > section:first-child h2::after { content: none !important; }
 
@@ -1100,7 +1100,7 @@ export default function ManpowerApplyPage() {
 
     return (
       <div className="flex items-center justify-between gap-3">
-        <label className="text-[13px] font-medium text-[#45604f]">{label}</label>
+        <label htmlFor={`mp-${key}`} className="text-[13px] font-medium text-[#45604f]">{label}</label>
         {message ? (
           <span className={`text-[11px] font-semibold ${messageColor}`}>{message}</span>
         ) : null}
@@ -1114,7 +1114,7 @@ export default function ManpowerApplyPage() {
       <header className="mp-header">
         <div className="mp-container mp-nav">
           <Link to="/manpower-services" className="mp-logo">
-            <img src="/ManpowerLogo.png" alt="Manpower Logo" className="mp-logo-icon" />
+            <img src="/ManpowerLogo.webp" alt="Manpower Logo" className="mp-logo-icon" />
             <div>
               <h1>LTC MANPOWER SERVICES</h1>
               <p>Professional staffing and workforce solutions.</p>
@@ -1179,7 +1179,7 @@ export default function ManpowerApplyPage() {
             className="relative min-h-[180px] overflow-hidden md:min-h-[230px]"
             style={{
               backgroundImage:
-                "linear-gradient(90deg, rgba(42,82,61,0.88) 0%, rgba(64,94,77,0.58) 38%, rgba(64,94,77,0.18) 100%), url('/ManpowerBanner.png')",
+                "linear-gradient(90deg, rgba(42,82,61,0.88) 0%, rgba(64,94,77,0.58) 38%, rgba(64,94,77,0.18) 100%), url('/ManpowerBanner.webp')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundColor: "#64766c",
@@ -1210,6 +1210,8 @@ export default function ManpowerApplyPage() {
                   <div className="md:col-span-3">
                     {labelRow("Job Offer", "vacancy")}
                     <select
+                      id="mp-vacancy"
+                      name="vacancy"
                       value={form.vacancy}
                       onChange={(e) => updateField("vacancy", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, vacancy: true }))}
@@ -1227,6 +1229,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("First Name", "firstName")}
                     <input
+                      id="mp-firstName"
+                      name="firstName"
                       value={form.firstName}
                       onChange={(e) => updateField("firstName", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, firstName: true }))}
@@ -1238,6 +1242,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Last Name", "lastName")}
                     <input
+                      id="mp-lastName"
+                      name="lastName"
                       value={form.lastName}
                       onChange={(e) => updateField("lastName", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, lastName: true }))}
@@ -1249,6 +1255,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Middle Name", "middleName")}
                     <input
+                      id="mp-middleName"
+                      name="middleName"
                       value={form.middleName}
                       onChange={(e) => updateField("middleName", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, middleName: true }))}
@@ -1260,6 +1268,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Phone Number", "contactNo")}
                     <input
+                      id="mp-contactNo"
+                      name="contactNo"
                       value={form.contactNo}
                       onChange={(e) => updateField("contactNo", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, contactNo: true }))}
@@ -1272,6 +1282,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Email", "email")}
                     <input
+                      id="mp-email"
+                      name="email"
                       type="email"
                       value={form.email}
                       onChange={(e) => updateField("email", e.target.value)}
@@ -1283,6 +1295,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Birth Place", "birthPlace")}
                     <input
+                      id="mp-birthPlace"
+                      name="birthPlace"
                       value={form.birthPlace}
                       onChange={(e) => updateField("birthPlace", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, birthPlace: true }))}
@@ -1294,6 +1308,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Age", "age")}
                     <input
+                      id="mp-age"
+                      name="age"
                       type="text"
                       inputMode="numeric"
                       value={form.age}
@@ -1307,6 +1323,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Gender", "gender")}
                     <select
+                      id="mp-gender"
+                      name="gender"
                       value={form.gender}
                       onChange={(e) => updateField("gender", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, gender: true }))}
@@ -1324,6 +1342,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Status", "civilStatus")}
                     <select
+                      id="mp-civilStatus"
+                      name="civilStatus"
                       value={form.civilStatus}
                       onChange={(e) => updateField("civilStatus", e.target.value)}
                       onBlur={() =>
@@ -1343,6 +1363,8 @@ export default function ManpowerApplyPage() {
                   <div className="md:col-span-3">
                     {labelRow("Complete Address", "completeAddress")}
                     <textarea
+                      id="mp-completeAddress"
+                      name="completeAddress"
                       rows={3}
                       value={form.completeAddress}
                       onChange={(e) => updateField("completeAddress", e.target.value)}
@@ -1356,6 +1378,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("SSS Number", "sssNumber")}
                     <input
+                      id="mp-sssNumber"
+                      name="sssNumber"
                       value={form.sssNumber}
                       onChange={(e) => updateField("sssNumber", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, sssNumber: true }))}
@@ -1367,6 +1391,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Pag-Ibig Number", "pagibigNumber")}
                     <input
+                      id="mp-pagibigNumber"
+                      name="pagibigNumber"
                       value={form.pagibigNumber}
                       onChange={(e) => updateField("pagibigNumber", e.target.value)}
                       onBlur={() =>
@@ -1380,6 +1406,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("PhilHealth Number", "philhealthNumber")}
                     <input
+                      id="mp-philhealthNumber"
+                      name="philhealthNumber"
                       value={form.philhealthNumber}
                       onChange={(e) => updateField("philhealthNumber", e.target.value)}
                       onBlur={() =>
@@ -1393,6 +1421,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("TIN Number", "tinNumber")}
                     <input
+                      id="mp-tinNumber"
+                      name="tinNumber"
                       value={form.tinNumber}
                       onChange={(e) => updateField("tinNumber", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, tinNumber: true }))}
@@ -1404,6 +1434,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Religion", "religion")}
                     <input
+                      id="mp-religion"
+                      name="religion"
                       value={form.religion}
                       onChange={(e) => updateField("religion", e.target.value)}
                       onBlur={() => setTouched((prev) => ({ ...prev, religion: true }))}
@@ -1415,6 +1447,8 @@ export default function ManpowerApplyPage() {
                   <div>
                     {labelRow("Nationality", "nationality")}
                     <input
+                      id="mp-nationality"
+                      name="nationality"
                       value={form.nationality}
                       onChange={(e) => updateField("nationality", e.target.value)}
                       onBlur={() =>
@@ -1438,7 +1472,10 @@ export default function ManpowerApplyPage() {
                   {REQUIREMENT_FIELDS.map((field) => (
                     <div key={field.key}>
                       <div className="flex items-center justify-between gap-2">
-                        <label className="text-[13px] font-medium text-[#45604f]">
+                        <label
+                          htmlFor={`mp-file-${field.key}`}
+                          className="text-[13px] font-medium text-[#45604f]"
+                        >
                           {field.label}
                         </label>
                         {shouldShowError(field.key) ? (
@@ -1463,6 +1500,8 @@ export default function ManpowerApplyPage() {
                         </svg>
 
                         <input
+                          id={`mp-file-${field.key}`}
+                          name={field.key}
                           type="file"
                           accept={field.accept}
                           onChange={(e) =>
