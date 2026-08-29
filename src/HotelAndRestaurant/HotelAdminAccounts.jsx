@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 
 
 const ADMIN_NAV = [
-  ["Dashboard","/hotel-admin-dashboard"],
-  ["Manage Accounts","/hotel-admin-accounts"],
-  ["Manage Bookings","/hotel-admin-bookings"],
-  ["Packages","/hotel-admin-packages"],
-  ["Guest Reviews","/hotel-admin-reviews"],
-  ["Chat Support","/hotel-admin-chat"],
-  ["ID Verification","/hotel-admin-id-verify"]
+  ["Dashboard", "/hotel-admin-dashboard"],
+  ["Manage Accounts", "/hotel-admin-accounts"],
+  ["Manage Bookings", "/hotel-admin-bookings"],
+  ["Check In / Out", "/hotel-admin-check-in-out"],
+  ["Packages", "/hotel-admin-packages"],
+  ["Guest Reviews", "/hotel-admin-reviews"],
+  ["Chat Support", "/hotel-admin-chat"],
+  ["ID Verification", "/hotel-admin-id-verify"],
 ];
 
 const EMPTY_EDIT_FORM = {
@@ -67,6 +68,13 @@ const AdminAccounts = () => {
   const handleAuthFail = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("hotelAdminToken");
+    navigate("/hotel-admin-login", { replace: true });
+  };
+
+  const signOut = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("hotelAdminToken");
+    localStorage.removeItem("hotelAdmin");
     navigate("/hotel-admin-login", { replace: true });
   };
 
@@ -489,30 +497,58 @@ const AdminAccounts = () => {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-[#f8fbf9] lg:flex">
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 bg-[#082719] p-6 lg:block">
         <div className="flex h-full flex-col">
-          <button onClick={() => navigate('/hotel-admin-dashboard')} className="mb-8 text-center text-white">
-            <img src="/HotelLogo.webp" width="56" height="56" loading="eager" fetchPriority="high" decoding="async" alt="Hotel Logo" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover" />
-            <div className="text-xs font-bold tracking-widest text-[#f4d484]">HOTEL & RESORT ADMIN</div>
-            <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
+          <button
+            type="button"
+            onClick={() => navigate("/hotel-admin-dashboard")}
+            className="mb-7 text-center text-white"
+          >
+            <img
+              src="/HotelLogo.webp"
+              width="56"
+              height="56"
+              loading="eager"
+              decoding="async"
+              alt="Hotel & Resort logo"
+              className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"
+            />
+            <div className="text-xs font-extrabold tracking-[0.18em] text-[#F4D484]">
+              HOTEL & RESORT ADMIN
+            </div>
+            <div className="mt-2 text-base font-extrabold text-white">
+              Patio De Lorenzo
+            </div>
           </button>
-          <nav className="space-y-3">
-            {ADMIN_NAV.map(([label, path]) => (
-              <button
-                key={path}
-                onClick={() => navigate(path)}
-                aria-current={path === "/hotel-admin-accounts" ? "page" : undefined}
-                className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold transition ${
-                  path === "/hotel-admin-accounts"
-                    ? "bg-white/15 text-[#f4d484]"
-                    : "text-white hover:bg-white/10"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+
+          <nav className="space-y-2" aria-label="Hotel admin navigation">
+            {ADMIN_NAV.map(([label, path]) => {
+              const active = path === "/hotel-admin-accounts";
+              return (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => navigate(path)}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold transition-colors ${
+                    active
+                      ? "bg-[#F4D484] text-[#082719]"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </nav>
-          <button onClick={() => { localStorage.removeItem('adminToken'); localStorage.removeItem('hotelAdminToken'); navigate('/hotel-admin-login', {replace:true}); }} className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white">Sign out</button>
+
+          <button
+            type="button"
+            onClick={signOut}
+            className="mt-auto min-h-11 rounded-2xl bg-white/10 px-5 text-left text-sm font-bold text-white hover:bg-white/15"
+          >
+            Sign out
+          </button>
         </div>
       </aside>
       <main className="min-w-0 h-screen w-full overflow-hidden lg:pl-64">

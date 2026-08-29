@@ -18,6 +18,7 @@ import hotelGuestReviewRoutes from "./routes/hotelGuestReviewRoutes.js";
 import hotelChatRoutes from "./routes/hotelChatRoutes.js";
 import hotelServicePackageRoutes from "./routes/hotelServicePackageRoutes.js";
 import hotelContactRoutes from "./routes/hotelContactRoutes.js";
+import hotelCheckInOutRoutes from "./routes/checkinandouts.js";
 import adminEnrollmentRoutes from "./routes/adminEnrollmentRoutes.js";
 import trainingAdminRoutes from "./routes/trainingAdminRoutes.js";
 import traineeRoutes from "./routes/traineeRoutes.js";
@@ -319,6 +320,9 @@ app.use("/api/hotel", hotelAdminRoutes);
 app.use("/api/hotel/chat", hotelChatRoutes);
 app.use("/api/hotel", hotelServicePackageRoutes);
 app.use("/api/hotel", hotelContactRoutes);
+app.use("/api/hotel/checkinandouts", hotelCheckInOutRoutes);
+app.use("/api/hotel/check-in-out", hotelCheckInOutRoutes);
+app.use("/api/checkinandouts", hotelCheckInOutRoutes);
 app.use("/api/hotel-admin", hotelAdminRoutes);
 
 /* ---------- MANPOWER ---------- */

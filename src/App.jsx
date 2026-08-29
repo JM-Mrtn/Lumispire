@@ -134,6 +134,9 @@ const HotelAdminAccounts = lazyImport(
 const HotelAdminBookings = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminBookings"),
 );
+const HotelAdminCheckInOut = lazyImport(
+  () => import("./HotelAndRestaurant/HotelAdminCheckInOut"),
+);
 const HotelAdminIDVerify = lazyImport(
   () => import("./HotelAndRestaurant/HotelAdminIDVerify"),
 );
@@ -399,7 +402,6 @@ const LtcAdminProtectedRoute = ({ children }) => {
 };
 
 const HOTEL_CHAT_ALLOWED_PATHS = [
-  "/hotel-resort",
   "/resort-venue",
   "/hotel-condo",
   "/event-package",
@@ -673,6 +675,15 @@ createRoot(document.getElementById("root")).render(
             element={
               <AdminProtectedRoute>
                 <HotelAdminBookings />
+              </AdminProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/hotel-admin-check-in-out"
+            element={
+              <AdminProtectedRoute>
+                <HotelAdminCheckInOut />
               </AdminProtectedRoute>
             }
           />

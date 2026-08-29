@@ -7,6 +7,7 @@ const ADMIN_NAV = [
   ["Dashboard", "/hotel-admin-dashboard"],
   ["Manage Accounts", "/hotel-admin-accounts"],
   ["Manage Bookings", "/hotel-admin-bookings"],
+  ["Check In / Out", "/hotel-admin-check-in-out"],
   ["Packages", "/hotel-admin-packages"],
   ["Guest Reviews", "/hotel-admin-reviews"],
   ["Chat Support", "/hotel-admin-chat"],
@@ -755,36 +756,45 @@ export default function HotelAdminIDVerify() {
   }, [users]);
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-[#f8fbf9] lg:flex">
+    <div className="hotel-id-verify-shell h-screen w-full overflow-hidden bg-[#f8fbf9] lg:flex">
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 overflow-hidden bg-[#082719] p-6 lg:block">
         <div className="flex h-full flex-col">
           <button
             type="button"
             onClick={() => navigate("/hotel-admin-dashboard")}
-            className="mb-8 text-center text-white"
+            className="mb-7 text-center text-white"
           >
             <img
               src="/HotelLogo.webp"
-              loading="lazy"
-              alt="Hotel Logo"
+              width="56"
+              height="56"
+              loading="eager"
+              decoding="async"
+              alt="Hotel & Resort logo"
               className="mx-auto mb-3 h-14 w-14 rounded-full object-cover"
             />
-            <div className="text-xs font-bold tracking-widest text-[#f4d484]">
+            <div className="text-xs font-extrabold tracking-[0.18em] text-[#F4D484]">
               HOTEL & RESORT ADMIN
             </div>
-            <div className="mt-2 font-extrabold">Patio De Lorenzo</div>
+            <div className="mt-2 text-base font-extrabold text-white">
+              Patio De Lorenzo
+            </div>
           </button>
 
-          <nav className="space-y-3">
+          <nav className="space-y-2" aria-label="Hotel admin navigation">
             {ADMIN_NAV.map(([label, path]) => {
               const active = path === "/hotel-admin-id-verify";
+
               return (
                 <button
                   key={path}
                   type="button"
                   onClick={() => navigate(path)}
-                  className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold text-white transition ${
-                    active ? "bg-white/15 ring-1 ring-white/10" : "hover:bg-white/10"
+                  aria-current={active ? "page" : undefined}
+                  className={`flex min-h-11 w-full items-center rounded-2xl px-5 text-left text-sm font-bold transition-colors ${
+                    active
+                      ? "bg-[#F4D484] text-[#082719]"
+                      : "text-white hover:bg-white/10"
                   }`}
                 >
                   {label}
@@ -796,7 +806,7 @@ export default function HotelAdminIDVerify() {
           <button
             type="button"
             onClick={goToLogin}
-            className="mt-auto rounded-2xl bg-white/10 px-5 py-3 text-left font-bold text-white transition hover:bg-white/15"
+            className="mt-auto min-h-11 rounded-2xl bg-white/10 px-5 text-left text-sm font-bold text-white hover:bg-white/15"
           >
             Sign out
           </button>
@@ -804,7 +814,25 @@ export default function HotelAdminIDVerify() {
       </aside>
 
       <main className="h-screen min-w-0 w-full overflow-hidden lg:pl-64">
-        <div className="h-full w-full overflow-y-auto overflow-x-hidden">
+        <div className="hotel-id-verify-scroll h-full w-full overflow-y-auto overflow-x-hidden overscroll-contain">
+          <style>{`
+            html, body, #root {
+              width: 100%;
+              max-width: 100%;
+              height: 100%;
+              overflow: hidden !important;
+            }
+
+            .hotel-id-verify-shell,
+            .hotel-id-verify-shell * {
+              box-sizing: border-box;
+            }
+
+            .hotel-id-verify-scroll {
+              scrollbar-gutter: stable;
+            }
+          `}</style>
+
           <div className="min-h-full p-4 sm:p-5 lg:p-7">
             <div
               className="min-h-full overflow-hidden rounded-[30px] p-[clamp(18px,2.2vw,28px)] text-[#101828]"
