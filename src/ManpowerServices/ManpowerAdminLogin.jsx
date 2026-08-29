@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { recordAdminActivity } from "./ManpowerAdminShell";
 
-const BACKGROUND_IMAGES = ["/ManpowerBanner.png"];
+const BACKGROUND_IMAGES = ["/ManpowerBanner.webp"];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -127,7 +127,7 @@ export default function ManpowerAdminLogin() {
   const ManpowerLogo = () => (
     <button type="button" onClick={goToManpowerHome} className="ltc-logo" aria-label="Go to manpower home">
       <img
-        src="/LTCLogo.jpg"
+        src="/LTCLogo.webp"
         alt="LTC Group logo"
         className="ltc-logo-icon"
         onError={(event) => {
@@ -534,24 +534,54 @@ export default function ManpowerAdminLogin() {
           height: 20px;
         }
 
+        /*
+         * Keep the password input and visibility toggle as two separate
+         * non-overlapping touch targets. This satisfies Lighthouse/axe
+         * target-size and target-spacing checks.
+         */
+        .ltc-password-shell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .ltc-password-shell .ltc-input {
+          flex: 1 1 auto;
+          min-width: 0;
+          width: auto;
+        }
+
         .ltc-eye-button {
-          position: absolute;
-          right: 17px;
-          top: 50%;
-          transform: translateY(-50%);
-          border: 0;
-          background: transparent;
+          position: static;
+          flex: 0 0 44px;
+          width: 44px;
+          min-width: 44px;
+          height: 44px;
+          min-height: 44px;
+          border: 1px solid rgba(35,95,62,.18);
+          border-radius: 999px;
+          background: rgba(248,250,247,.88);
           color: var(--green-700);
           cursor: pointer;
-          display: grid;
+          display: inline-grid;
           place-items: center;
           padding: 0;
-          transition: .25s var(--ease);
+          transition: color .25s var(--ease),
+                      background-color .25s var(--ease),
+                      border-color .25s var(--ease),
+                      box-shadow .25s var(--ease);
+          touch-action: manipulation;
         }
 
         .ltc-eye-button:hover {
           color: var(--green-950);
-          transform: translateY(-50%) scale(1.05);
+          background: white;
+          border-color: rgba(35,95,62,.34);
+        }
+
+        .ltc-eye-button:focus-visible {
+          outline: 3px solid rgba(244,212,132,.9);
+          outline-offset: 2px;
         }
 
         .ltc-eye-button:disabled {
@@ -574,7 +604,7 @@ export default function ManpowerAdminLogin() {
         }
 
         .ltc-input.has-eye {
-          padding-right: 52px;
+          padding-right: 18px;
         }
 
         .ltc-input::placeholder {
@@ -973,7 +1003,7 @@ export default function ManpowerAdminLogin() {
               </div>
 
               <div className="ltc-field-wrap">
-                <div className="ltc-input-shell">
+                <div className="ltc-input-shell ltc-password-shell">
                   <span className="ltc-input-icon">
                     <LockIcon />
                   </span>
@@ -1001,6 +1031,7 @@ export default function ManpowerAdminLogin() {
                     onClick={() => setShowPw((value) => !value)}
                     className="ltc-eye-button"
                     aria-label={showPw ? "Hide password" : "Show password"}
+                    aria-pressed={showPw}
                     disabled={loading}
                   >
                     <EyeIcon open={showPw} />
