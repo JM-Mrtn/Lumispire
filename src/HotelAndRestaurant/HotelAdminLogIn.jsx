@@ -2,9 +2,9 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const HOTEL_LOGO = "/HotelLogo.png";
-const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const HOTEL_LOGO = "/HotelLogo.webp";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.webp";
+const HERO_IMAGES = ["/HotelLanding1.webp", "/HotelLanding2.webp"];
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
