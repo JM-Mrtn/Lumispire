@@ -62,10 +62,40 @@ function ExamLayout({ children }) {
         .manpower-exam-page * {
           font-family: Arial, Helvetica, sans-serif !important;
         }
-        .manpower-exam-page .exam-deferred-section,
-        .manpower-exam-page footer {
-          content-visibility: auto;
-          contain-intrinsic-size: 1px 760px;
+        .manpower-exam-page .exam-content-section {
+          min-height: 760px;
+        }
+        .manpower-exam-page .exam-hero-surface {
+          background:
+            radial-gradient(circle at 14% 88%, rgba(35,95,62,.48), transparent 34%),
+            radial-gradient(circle at 88% 16%, rgba(244,212,132,.16), transparent 30%),
+            linear-gradient(120deg,#03180f 0%,#082719 48%,#155f3b 100%);
+        }
+        .manpower-exam-page .exam-hero-copy {
+          display: grid;
+          grid-template-rows: 20px 78px 58px;
+          align-content: center;
+          min-height: 180px;
+        }
+        .manpower-exam-page .exam-hero-title {
+          display: flex;
+          align-items: center;
+          margin: 0;
+          min-height: 78px;
+        }
+        .manpower-exam-page .exam-hero-subtitle {
+          display: flex;
+          align-items: flex-start;
+          margin: 0;
+          min-height: 58px;
+        }
+        @media (min-width: 768px) {
+          .manpower-exam-page .exam-hero-copy {
+            grid-template-rows: 20px 88px 64px;
+            min-height: 230px;
+          }
+          .manpower-exam-page .exam-hero-title { min-height: 88px; }
+          .manpower-exam-page .exam-hero-subtitle { min-height: 64px; }
         }
         @media (prefers-reduced-motion: reduce) {
           .manpower-exam-page *,
@@ -178,40 +208,16 @@ function ExamLayout({ children }) {
 function ExamHero({ title = "Qualifying Exam", subtitle = "Complete your manpower screening assessment to continue your application." }) {
   return (
     <section className="mx-auto max-w-7xl px-4 pt-0 md:px-6">
-      <div className="relative min-h-[180px] overflow-hidden bg-[#64766c] md:min-h-[230px]">
-        <picture aria-hidden="true">
-          <source media="(max-width: 960px)" srcSet="/ManpowerBanner-960.webp" />
-          <source media="(max-width: 1440px)" srcSet="/ManpowerBanner-1440.webp" />
-          <img
-            src="/ManpowerBanner.webp"
-            srcSet="/ManpowerBanner-960.webp 960w, /ManpowerBanner-1440.webp 1440w, /ManpowerBanner.webp 1672w"
-            sizes="100vw"
-            alt=""
-            width="1672"
-            height="941"
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </picture>
-        <div
-          className="absolute inset-0"
-          aria-hidden="true"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(42,82,61,0.9) 0%, rgba(64,94,77,0.66) 38%, rgba(64,94,77,0.24) 100%)",
-          }}
-        />
-        <div className="relative z-10 flex min-h-[180px] items-center px-5 py-8 md:min-h-[230px] md:px-8">
-          <div className="text-white">
+      <div className="exam-hero-surface relative min-h-[180px] overflow-hidden bg-[#082719] md:min-h-[230px]">
+        <div className="relative z-10 flex min-h-[180px] items-center px-5 md:min-h-[230px] md:px-8">
+          <div className="exam-hero-copy w-full max-w-4xl text-white">
             <p className="text-xs font-bold uppercase tracking-[0.32em] text-white/85">
               Manpower Assessment
             </p>
-            <h2 className="mt-2 font-serif text-4xl leading-none md:text-6xl">
+            <h2 className="exam-hero-title text-4xl font-black leading-none md:text-6xl">
               {title}
             </h2>
-            <p className="mt-4 max-w-2xl text-base text-white/95 md:text-xl">
+            <p className="exam-hero-subtitle max-w-2xl text-base text-white/95 md:text-xl">
               {subtitle}
             </p>
           </div>
@@ -364,7 +370,7 @@ export default function ManpowerExam() {
     return (
       <ExamLayout>
         <ExamHero title="Qualifying Exam" subtitle="Preparing your manpower assessment." />
-        <section className="exam-deferred-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
+        <section className="exam-content-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
           <div
             className="rounded-[28px] border border-[#d7decf] bg-[#f4f4f1] p-8 text-[#24372d] shadow-sm"
             role="status"
@@ -381,7 +387,7 @@ export default function ManpowerExam() {
     return (
       <ExamLayout>
         <ExamHero title="Qualifying Exam" subtitle="We could not load your assessment right now." />
-        <section className="exam-deferred-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
+        <section className="exam-content-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
           <div className="rounded-[28px] border border-[#efc9c9] bg-white p-8 shadow-sm">
             <p className="text-sm font-semibold text-[#912f2f]" role="alert">{error}</p>
             <button
@@ -405,13 +411,13 @@ export default function ManpowerExam() {
           subtitle="Your manpower qualifying exam result has been recorded."
         />
 
-        <section className="exam-deferred-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
+        <section className="exam-content-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
           <div className="bg-[#f4f4f1] px-4 py-5 md:px-6 md:py-6">
             <section>
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2f5a45]">
                 Manpower Qualifying Exam
               </p>
-              <h3 className="mt-2 font-serif text-[28px] text-[#3f5e4d] md:text-[42px]">
+              <h3 className="mt-2 text-[28px] text-[#3f5e4d] md:text-[42px]">
                 Assessment Result
               </h3>
 
@@ -435,7 +441,7 @@ export default function ManpowerExam() {
             <div className="mx-auto my-8 h-[2px] w-[90%] bg-[#617b6a]" />
 
             <section>
-              <h3 className="font-serif text-[26px] text-[#3f5e4d] md:text-[34px]">
+              <h3 className="text-[26px] text-[#3f5e4d] md:text-[34px]">
                 Answer Review
               </h3>
               <div className="mt-6 space-y-4">
@@ -486,13 +492,13 @@ export default function ManpowerExam() {
         subtitle="Answer the questions below and submit your assessment to continue your application."
       />
 
-      <section className="exam-deferred-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
+      <section className="exam-content-section mx-auto max-w-7xl px-4 pb-10 pt-4 md:px-6">
         <div className="bg-[#f4f4f1] px-4 py-5 md:px-6 md:py-6">
           <section>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2f5a45]">
               Manpower Qualifying Exam
             </p>
-            <h3 className="mt-2 font-serif text-[28px] text-[#3f5e4d] md:text-[42px]">
+            <h3 className="mt-2 text-[28px] text-[#3f5e4d] md:text-[42px]">
               Exam Details
             </h3>
 
@@ -536,7 +542,7 @@ export default function ManpowerExam() {
 
           <form onSubmit={submitExam} className="space-y-6">
             <section>
-              <h3 className="font-serif text-[28px] text-[#3f5e4d] md:text-[38px]">
+              <h3 className="text-[28px] text-[#3f5e4d] md:text-[38px]">
                 Questions
               </h3>
 
