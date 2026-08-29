@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const BACKGROUND_IMAGES = ["/TrainingAds.png", "/LTCBanner.png", "/TrainingAssessment.png"];
+const BACKGROUND_IMAGE = "/TrainingAds.webp";
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const systemFont = { fontFamily: 'Arial, Helvetica, sans-serif' };
+const fontMontserrat = systemFont;
+const fontPontano = systemFont;
+const fontPoppins = systemFont;
 
 function normalizeApiBase(raw) {
   if (!raw) return "http://localhost:5000/api";
@@ -33,7 +34,6 @@ export default function TrainingAdminLogin() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
-  const [bgIndex, setBgIndex] = useState(0);
 
   const API_BASE = useMemo(
     () => normalizeApiBase(import.meta.env.VITE_TRAINING_API_URL || import.meta.env.VITE_API_URL),
@@ -44,14 +44,6 @@ export default function TrainingAdminLogin() {
     () => username.trim().length >= 3 && password.length >= 3,
     [username, password]
   );
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, 5000);
-
-    return () => window.clearInterval(timer);
-  }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -138,8 +130,11 @@ export default function TrainingAdminLogin() {
   const TrainingLogo = () => (
     <button type="button" onClick={goToTrainingHome} className="ltc-logo" aria-label="Go to training home">
       <img
-        src="/LTCLogo.jpg"
+        src="/LTCLogo.webp"
         alt="Training and Assessment logo"
+        width="160"
+        height="113"
+        decoding="async"
         className="ltc-logo-icon"
         onError={(event) => {
           event.currentTarget.style.display = "none";
@@ -156,8 +151,6 @@ export default function TrainingAdminLogin() {
   return (
     <div className="ltc-hotel-login-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
         .ltc-hotel-login-page {
           --green-950: #071f14;
           --green-900: #0e3321;
@@ -183,7 +176,7 @@ export default function TrainingAdminLogin() {
           line-height: 1.65;
           letter-spacing: -.01em;
           overflow-x: hidden;
-          font-family: "Inter", Arial, sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
         }
 
         .ltc-hotel-login-page * {
@@ -205,15 +198,10 @@ export default function TrainingAdminLogin() {
           z-index: -4;
           width: 100%;
           height: 100%;
-          background-size: cover;
-          background-position: center;
-          opacity: 0;
-          transform: scale(1.04);
-          transition: opacity 1000ms ease;
-        }
-
-        .ltc-login-bg.active {
-          opacity: 1;
+          object-fit: cover;
+          object-position: center;
+          opacity: .30;
+          pointer-events: none;
         }
 
         .ltc-login-shell::before {
@@ -242,7 +230,6 @@ export default function TrainingAdminLogin() {
             radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
             radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
             radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
-          filter: blur(30px);
           pointer-events: none;
         }
 
@@ -294,7 +281,8 @@ export default function TrainingAdminLogin() {
           height: 42px;
           border-radius: 999px;
           background: white;
-          object-fit: cover;
+          object-fit: contain;
+          padding: 3px;
           box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
         }
 
@@ -545,24 +533,45 @@ export default function TrainingAdminLogin() {
           height: 20px;
         }
 
+        .ltc-password-shell {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 44px;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .ltc-password-shell .ltc-input {
+          grid-column: 1;
+          min-width: 0;
+        }
+
         .ltc-eye-button {
-          position: absolute;
-          right: 17px;
-          top: 50%;
-          transform: translateY(-50%);
-          border: 0;
-          background: transparent;
+          position: static;
+          grid-column: 2;
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          min-height: 44px;
+          border: 1px solid rgba(35,95,62,.18);
+          border-radius: 999px;
+          background: rgba(248,250,247,.92);
           color: var(--green-700);
           cursor: pointer;
           display: grid;
           place-items: center;
           padding: 0;
-          transition: .25s var(--ease);
+          transition: background .2s ease, color .2s ease, border-color .2s ease;
         }
 
         .ltc-eye-button:hover {
           color: var(--green-950);
-          transform: translateY(-50%) scale(1.05);
+          background: white;
+          border-color: rgba(35,95,62,.34);
+        }
+
+        .ltc-eye-button:focus-visible {
+          outline: 3px solid rgba(215,168,77,.42);
+          outline-offset: 2px;
         }
 
         .ltc-eye-button:disabled {
@@ -585,7 +594,7 @@ export default function TrainingAdminLogin() {
         }
 
         .ltc-input.has-eye {
-          padding-right: 52px;
+          padding-right: 18px;
         }
 
         .ltc-input::placeholder {
@@ -733,6 +742,17 @@ export default function TrainingAdminLogin() {
           line-height: 1.4;
         }
 
+        @media (prefers-reduced-motion: reduce) {
+          .ltc-hotel-login-page *,
+          .ltc-hotel-login-page *::before,
+          .ltc-hotel-login-page *::after {
+            scroll-behavior: auto !important;
+            transition-duration: .001ms !important;
+            animation-duration: .001ms !important;
+            animation-iteration-count: 1 !important;
+          }
+        }
+
         @media (max-width: 1000px) {
           .ltc-login-main {
             grid-template-columns: 1fr;
@@ -853,13 +873,17 @@ export default function TrainingAdminLogin() {
 `}</style>
 
       <div className="ltc-login-shell">
-        {BACKGROUND_IMAGES.map((image, index) => (
-          <div
-            key={image}
-            className={`ltc-login-bg ${bgIndex === index ? "active" : ""}`}
-            style={{ backgroundImage: `url('${image}')` }}
-          />
-        ))}
+        <img
+          src={BACKGROUND_IMAGE}
+          alt=""
+          aria-hidden="true"
+          width="552"
+          height="367"
+          loading="eager"
+          decoding="async"
+          fetchPriority="low"
+          className="ltc-login-bg"
+        />
 
         <header className="ltc-header">
           <div className="ltc-container ltc-nav">
@@ -922,6 +946,8 @@ export default function TrainingAdminLogin() {
               <div
                 className={`ltc-error-alert ${msg.type === "success" ? "success" : ""}`}
                 style={fontPoppins}
+                role={msg.type === "success" ? "status" : "alert"}
+                aria-live={msg.type === "success" ? "polite" : "assertive"}
               >
                 {msg.text}
               </div>
@@ -935,6 +961,9 @@ export default function TrainingAdminLogin() {
                   </span>
 
                   <input
+                    id="training-admin-username"
+                    name="username"
+                    aria-label="Training admin username"
                     type="text"
                     placeholder="Training admin username"
                     value={username}
@@ -951,12 +980,15 @@ export default function TrainingAdminLogin() {
               </div>
 
               <div className="ltc-field-wrap">
-                <div className="ltc-input-shell">
+                <div className="ltc-input-shell ltc-password-shell">
                   <span className="ltc-input-icon">
                     <LockIcon />
                   </span>
 
                   <input
+                    id="training-admin-password"
+                    name="password"
+                    aria-label="Training admin password"
                     type={showPw ? "text" : "password"}
                     placeholder="Training admin password"
                     value={password}
@@ -975,6 +1007,7 @@ export default function TrainingAdminLogin() {
                     onClick={() => setShowPw((value) => !value)}
                     className="ltc-eye-button"
                     aria-label={showPw ? "Hide password" : "Show password"}
+                    aria-pressed={showPw}
                     disabled={loading}
                   >
                     <EyeIcon open={showPw} />
@@ -984,7 +1017,7 @@ export default function TrainingAdminLogin() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !canSubmit}
                 className="ltc-submit-button"
                 style={fontMontserrat}
               >
