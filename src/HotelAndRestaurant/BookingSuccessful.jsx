@@ -284,17 +284,18 @@ function createProfessionalPdf({
   return new Blob(chunks, { type: "application/pdf" });
 }
 
-const HOTEL_LOGO = "/HotelLogo.png";
-const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
-const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
+const HOTEL_LOGO = "/HotelLogo.webp";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.webp";
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const systemFont = {
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
+};
+const fontMontserrat = systemFont;
+const fontPontano = systemFont;
+const fontPoppins = systemFont;
 
 const pageStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
   .ltc-resort-summary-page {
     --green-950: #071f14;
     --green-900: #0e3321;
@@ -305,48 +306,38 @@ const pageStyles = `
     --gold-soft: #f4d484;
     --dark: #101828;
     --muted: #667085;
-    --glass: rgba(255,255,255,.82);
-    --shadow-md: 0 18px 45px rgba(8,39,25,.12);
-    --shadow-lg: 0 32px 80px rgba(8,39,25,.18);
+    --surface: rgba(255,255,255,.96);
+    --shadow: 0 18px 42px rgba(8,39,25,.12);
     --radius: 24px;
     --ease: cubic-bezier(.22,1,.36,1);
-
     min-height: 100vh;
     color: var(--dark);
-    background:
-      radial-gradient(circle at 12% 0%, rgba(215,168,77,.12), transparent 28%),
-      radial-gradient(circle at 92% 12%, rgba(35,95,62,.12), transparent 30%),
-      linear-gradient(180deg,#f8fbf9 0%,#fff 42%,#f5faf7 100%);
-    line-height: 1.65;
-    letter-spacing: -.01em;
+    background: linear-gradient(180deg,#f8fbf9 0%,#fff 44%,#f5faf7 100%);
+    line-height: 1.6;
     overflow-x: hidden;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   }
 
-  .ltc-resort-summary-page * {
-    box-sizing: border-box;
-  }
+  .ltc-resort-summary-page *,
+  .ltc-resort-summary-page *::before,
+  .ltc-resort-summary-page *::after { box-sizing: border-box; }
 
-  .ltc-container {
-    width: min(1180px, 92%);
-    margin: auto;
-  }
+  .ltc-container { width: min(1180px,92%); margin: 0 auto; }
 
   .ltc-header {
     position: sticky;
     top: 0;
     z-index: 50;
     width: 100%;
-    background: var(--footer-green);
     border-bottom: 1px solid rgba(255,255,255,.1);
-    box-shadow: 0 10px 34px rgba(7,31,20,.14);
-    margin: 0;
+    background: var(--footer-green);
+    box-shadow: 0 8px 24px rgba(7,31,20,.12);
   }
 
-  .ltc-header .ltc-container {
+  .ltc-header .ltc-container,
+  .ltc-footer .ltc-container {
     width: 100%;
     max-width: none;
-    margin: 0;
     padding-left: 32px;
     padding-right: 32px;
   }
@@ -354,275 +345,154 @@ const pageStyles = `
   .ltc-nav {
     min-height: 76px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     gap: 24px;
   }
 
   .ltc-logo {
+    min-height: 44px;
     display: flex;
     align-items: center;
     gap: 13px;
-    color: white;
     border: 0;
-    background: transparent;
-    cursor: pointer;
-    text-align: left;
     padding: 0;
+    background: transparent;
+    color: white;
+    text-align: left;
+    cursor: pointer;
   }
 
   .ltc-logo-icon {
     width: 42px;
     height: 42px;
+    flex: 0 0 42px;
     border-radius: 999px;
     background: white;
     object-fit: cover;
-    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
   }
 
-  .ltc-logo h1 {
+  .ltc-brand-title {
+    display: block;
+    margin: 0;
+    color: white;
     font-size: 18px;
     line-height: 1;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: -.04em;
-    margin: 0;
   }
 
-  .ltc-logo p {
-    font-size: 11px;
-    color: rgba(255,255,255,.72);
-    margin: 3px 0 0;
-  }
-
-  .ltc-desktop-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .ltc-logo p { margin: 3px 0 0; color: rgba(255,255,255,.72); font-size: 11px; }
+  .ltc-desktop-nav { display: flex; align-items: center; gap: 8px; }
 
   .ltc-nav-link {
-    color: rgba(255,255,255,.78);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    padding: 0 14px;
+    background: transparent;
+    color: rgba(255,255,255,.8);
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
-    padding: 10px 14px;
-    border-radius: 999px;
-    transition: .25s var(--ease);
-    border: 0;
-    background: transparent;
     cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
   }
 
   .ltc-nav-link:hover,
-  .ltc-nav-link.active {
-    color: white;
-    background: rgba(255,255,255,.13);
-    transform: translateY(-1px);
-  }
+  .ltc-nav-link:focus-visible,
+  .ltc-nav-link.active { color: white; background: rgba(255,255,255,.13); }
 
   .ltc-profile-button {
     color: #102418;
     background: linear-gradient(135deg,#f4d484,#d7a84d);
-    box-shadow: 0 14px 28px rgba(215,168,77,.18);
   }
 
   .ltc-menu-button {
     display: none;
-    color: white;
+    width: 44px;
+    height: 44px;
+    place-items: center;
     border: 0;
-    background: rgba(255,255,255,.1);
     border-radius: 12px;
-    padding: 10px;
+    background: rgba(255,255,255,.1);
+    color: white;
     cursor: pointer;
   }
+  .ltc-menu-button svg { width: 24px; height: 24px; }
 
-  .ltc-menu-button svg {
-    width: 24px;
-    height: 24px;
+  .ltc-success-page-main {
+    min-height: calc(100vh - 76px);
+    display: flex;
+    align-items: center;
   }
 
-  .ltc-hero {
-    position: relative;
-    overflow: hidden;
-    color: white;
-    isolation: isolate;
-    background: linear-gradient(120deg, #03180f 0%, #082719 42%, #155f3b 100%);
-    padding: 82px 0 78px;
-  }
-
-  .ltc-hero-slide {
-    position: absolute;
-    inset: 0;
-    z-index: -4;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: .35;
-  }
-
-  .ltc-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -3;
-    background:
-      linear-gradient(
-        120deg,
-        rgba(2, 18, 11, 0.96) 0%,
-        rgba(5, 37, 23, 0.88) 42%,
-        rgba(12, 64, 39, 0.76) 100%
-      );
-  }
-
-  .ltc-hero::after {
-    content: "";
-    position: absolute;
-    inset: -16% -10% -24% -10%;
-    z-index: -2;
-    background:
-      radial-gradient(circle at 16% 82%, rgba(19, 120, 72, 0.36), transparent 24%),
-      radial-gradient(circle at 36% 92%, rgba(7, 76, 47, 0.46), transparent 30%),
-      radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
-      radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
-      radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
-    filter: blur(30px);
-    pointer-events: none;
-  }
-
-  .ltc-hero-content {
-    position: relative;
-    z-index: 2;
-    max-width: 920px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .ltc-eyebrow {
-    display: inline-flex;
-    color: var(--gold-soft);
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.24);
-    border-radius: 999px;
-    padding: 12px 22px;
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    backdrop-filter: blur(8px);
-  }
-
-  .ltc-hero-title {
-    margin: 18px 0 0;
-    color: white;
-    font-size: clamp(36px, 5vw, 62px);
-    line-height: 1.05;
-    font-weight: 900;
-    letter-spacing: -.055em;
-    text-shadow: 0 8px 26px rgba(0,0,0,.22);
-  }
-
-  .ltc-hero-title span {
-    color: var(--gold-soft);
-  }
-
-  .ltc-hero-text {
-    max-width: 760px;
-    margin: 18px auto 0;
-    color: rgba(255,255,255,.80);
-    font-size: 17px;
-    line-height: 1.8;
-  }
-
-  .ltc-section {
-    padding: 84px 0;
-  }
+  .ltc-section { width: 100%; padding: 34px 0; }
 
   .ltc-form-shell {
     position: relative;
     overflow: hidden;
+    border: 1px solid rgba(35,95,62,.10);
     border-radius: var(--radius);
-    background: var(--glass);
-    border: 1px solid rgba(255,255,255,.76);
-    box-shadow: var(--shadow-md);
-    backdrop-filter: blur(18px);
-    padding: 34px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
   }
 
   .ltc-form-shell::before {
     content: "";
     position: absolute;
     inset: 0 0 auto;
-    height: 6px;
-    background: linear-gradient(90deg,var(--green-700),var(--gold));
-    z-index: 3;
-  }
-
-  .ltc-form-shell:hover {
-    box-shadow: var(--shadow-lg);
-    border-color: rgba(215,168,77,.45);
-  }
-
-  .ltc-status {
-    margin-top: 24px;
-    border-radius: 16px;
-    border: 1px solid transparent;
-    padding: 12px 14px;
-    font-size: 13px;
-    line-height: 1.55;
-    font-weight: 800;
-  }
-
-  .ltc-status-success {
-    color: #047857;
-    background: rgba(16,185,129,.10);
-    border-color: rgba(16,185,129,.25);
-  }
-
-  .ltc-status-error {
-    color: #b42318;
-    background: rgba(239,68,68,.10);
-    border-color: rgba(239,68,68,.22);
-  }
-
-  .ltc-status-info {
-    color: #475467;
-    background: rgba(102,112,133,.09);
-    border-color: rgba(102,112,133,.14);
-  }
-
-  .ltc-summary-section + .ltc-summary-section,
-  .ltc-summary-section + .ltc-payment-section {
-    margin-top: 34px;
-  }
-
-  .ltc-section-heading {
-    margin: 0;
-    color: var(--green-950);
-    font-size: clamp(24px,3vw,34px);
-    line-height: 1.08;
-    letter-spacing: -.05em;
-    font-weight: 900;
-  }
-
-  .ltc-section-line {
-    margin-top: 10px;
-    width: 180px;
-    height: 3px;
-    border-radius: 999px;
+    z-index: 1;
+    height: 5px;
     background: linear-gradient(90deg,var(--green-700),var(--gold));
   }
 
-  .ltc-fields-grid {
-    margin-top: 24px;
+  .ltc-success-page-main .ltc-container { width: min(980px,92%); }
+  .ltc-success-shell { max-width: 940px; margin: 0 auto; padding: 26px 28px; }
+  .ltc-success-content { position: relative; z-index: 1; }
+
+  .ltc-success-icon {
+    width: 62px;
+    height: 62px;
+    margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0,1fr));
-    gap: 18px 22px;
+    place-items: center;
+    border-radius: 999px;
+    color: white;
+    font-size: 30px;
+    font-weight: 900;
+    background: linear-gradient(135deg,var(--green-800),var(--green-700));
+    box-shadow: 0 12px 26px rgba(35,95,62,.18),0 0 0 8px rgba(35,95,62,.07);
   }
 
+  .ltc-success-title {
+    margin: 16px 0 0;
+    color: var(--green-950);
+    font-size: clamp(28px,3.4vw,38px);
+    line-height: 1.05;
+    font-weight: 900;
+    letter-spacing: -.045em;
+    text-align: center;
+  }
+  .ltc-success-title span { color: var(--gold); }
+
+  .ltc-success-copy {
+    max-width: 620px;
+    margin: 10px auto 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .ltc-summary-section { margin-top: 22px !important; }
   .ltc-booking-header {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     display: flex;
     align-items: end;
     justify-content: space-between;
@@ -630,306 +500,132 @@ const pageStyles = `
     flex-wrap: wrap;
   }
 
+  .ltc-section-heading {
+    margin: 0;
+    color: var(--green-950);
+    font-size: clamp(20px,2.4vw,26px);
+    line-height: 1.08;
+    letter-spacing: -.04em;
+    font-weight: 900;
+  }
+
+  .ltc-section-line {
+    width: 160px;
+    height: 3px;
+    margin-top: 8px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,var(--green-700),var(--gold));
+  }
+
   .ltc-service-pill {
     min-height: 44px;
-    min-width: 220px;
-    border-radius: 999px;
-    border: 1px solid rgba(35,95,62,.14);
-    background: rgba(255,255,255,.84);
-    color: var(--green-800);
-    padding: 0 18px;
-    font-size: 13px;
-    font-weight: 900;
-    outline: none;
-  }
-
-  .ltc-field label {
-    display: block;
-    margin: 0 0 8px;
-    color: var(--green-950);
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-
-  .ltc-input,
-  .ltc-select,
-  .ltc-file-input {
-    width: 100%;
-    min-height: 50px;
-    border-radius: 999px;
-    border: 1px solid rgba(35,95,62,.16);
-    background: rgba(255,255,255,.88);
-    color: var(--dark);
-    outline: none;
-    font-size: 14px;
-    font-family: inherit;
-    font-weight: 700;
-    padding: 0 18px;
-    transition: .25s var(--ease);
-    box-shadow: 0 10px 24px rgba(8,39,25,.05);
-  }
-
-  .ltc-file-input {
-    padding: 11px 18px;
-  }
-
-  .ltc-file-input::file-selector-button {
-    margin-right: 14px;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(35,95,62,.10);
-    color: var(--green-800);
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 900;
-    cursor: pointer;
-  }
-
-  .ltc-input::placeholder {
-    color: rgba(102,112,133,.68);
-  }
-
-  .ltc-input:focus,
-  .ltc-select:focus,
-  .ltc-file-input:focus {
-    border-color: var(--green-700);
-    background: white;
-    box-shadow: 0 0 0 4px rgba(35,95,62,.10);
-  }
-
-  .ltc-error-text {
-    margin: 7px 0 0;
-    color: #b42318;
-    font-size: 12px;
-    font-weight: 800;
-  }
-
-  .ltc-help-text {
-    margin: 7px 0 0;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 800;
-  }
-
-  .ltc-info-box {
-    margin-top: 18px;
-    border-radius: 18px;
-    background: rgba(35,95,62,.08);
-    border: 1px solid rgba(35,95,62,.10);
-    color: var(--green-800);
-    padding: 14px 16px;
-    font-size: 13px;
-    line-height: 1.65;
-    font-weight: 700;
-  }
-
-  .ltc-info-box p {
-    margin: 0;
-  }
-
-  .ltc-info-box p + p {
-    margin-top: 3px;
-  }
-
-  .ltc-payment-section {
-    margin-top: 34px;
-  }
-
-  .ltc-payment-grid {
-    margin-top: 24px;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: 18px;
-  }
-
-  .ltc-qr-card {
-    position: relative;
-    width: 100%;
-    border-radius: 22px;
-    border: 1px solid rgba(35,95,62,.12);
-    background: white;
-    padding: 18px;
-    box-shadow: 0 16px 34px rgba(8,39,25,.08);
-    cursor: pointer;
-    transition: .25s var(--ease);
-  }
-
-  .ltc-qr-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(215,168,77,.55);
-    box-shadow: 0 22px 44px rgba(8,39,25,.12);
-  }
-
-  .ltc-qr-card.selected {
-    border-color: var(--green-700);
-    box-shadow: 0 0 0 4px rgba(35,95,62,.12), 0 22px 44px rgba(8,39,25,.12);
-  }
-
-  .ltc-qr-card.error {
-    border-color: rgba(239,68,68,.55);
-    box-shadow: 0 0 0 4px rgba(239,68,68,.10), 0 16px 34px rgba(8,39,25,.08);
-  }
-
-  .ltc-selected-badge {
-    position: absolute;
-    right: 16px;
-    top: 16px;
-    border-radius: 999px;
-    background: var(--green-800);
-    color: white;
-    padding: 7px 12px;
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    box-shadow: 0 10px 22px rgba(8,39,25,.16);
-  }
-
-  .ltc-qr-frame {
-    display: grid;
-    place-items: center;
-    height: 230px;
-    border-radius: 18px;
-    background: rgba(35,95,62,.08);
-    overflow: hidden;
-  }
-
-  .ltc-qr-frame img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  .ltc-qr-title {
-    margin: 14px 0 0;
-    color: var(--green-800);
-    text-align: center;
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-
-  .ltc-price-card {
-    margin-top: 32px;
-    border-radius: 20px;
-    background: white;
-    border: 1px solid rgba(35,95,62,.10);
-    padding: 22px;
-    box-shadow: 0 16px 34px rgba(8,39,25,.08);
-  }
-
-  .ltc-price-row {
-    display: flex;
+    min-width: 190px;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-  }
-
-  .ltc-price-label,
-  .ltc-price-value {
-    margin: 0;
-    color: var(--green-950);
-    font-size: clamp(22px,3vw,30px);
+    justify-content: center;
+    border: 1px solid rgba(35,95,62,.14);
+    border-radius: 999px;
+    padding: 0 18px;
+    background: #f7faf8;
+    color: var(--green-800);
+    font-size: 13px;
     font-weight: 900;
-    letter-spacing: -.04em;
   }
 
-  .ltc-price-breakdown {
-    margin-top: 14px;
+  .ltc-fields-grid {
+    margin-top: 18px;
     display: grid;
     grid-template-columns: repeat(3,minmax(0,1fr));
-    gap: 10px;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 800;
+    gap: 12px 14px;
   }
 
+  .ltc-field-label {
+    display: block;
+    margin: 0 0 6px;
+    color: var(--green-950);
+    font-size: 10.5px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .ltc-input {
+    width: 100%;
+    min-height: 43px;
+    border: 1px solid rgba(35,95,62,.14);
+    border-radius: 999px;
+    padding: 0 15px;
+    background: #fff;
+    color: var(--dark);
+    outline: none;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .ltc-success-note {
+    margin-top: 18px;
+    border: 1px solid rgba(35,95,62,.12);
+    border-radius: 18px;
+    padding: 15px 16px;
+    background: rgba(35,95,62,.055);
+  }
+  .ltc-success-note strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--green-950);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .ltc-success-note p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+
   .ltc-actions {
-    margin-top: 32px;
+    margin-top: 20px;
     display: flex;
     justify-content: center;
-    gap: 18px;
+    gap: 12px;
     flex-wrap: wrap;
   }
 
   .ltc-primary-button,
   .ltc-secondary-button {
-    min-height: 52px;
-    min-width: 210px;
+    min-height: 44px;
+    min-width: 190px;
     border-radius: 999px;
-    padding: 0 28px;
-    cursor: pointer;
-    font-size: 13px;
+    padding: 0 22px;
+    font-size: 11px;
     font-weight: 900;
-    transition: all .28s var(--ease);
+    cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease;
   }
 
   .ltc-primary-button {
     border: 0;
     color: #102418;
-    background: linear-gradient(135deg, #f4d484, #d7a84d);
-    box-shadow: 0 16px 35px rgba(215,168,77,.22);
-  }
-
-  .ltc-primary-button:hover {
-    transform: translateY(-4px);
-    background: linear-gradient(135deg, #f7dc93, #c99634);
-    box-shadow: 0 22px 45px rgba(215,168,77,.32);
-  }
-
-  .ltc-primary-button:active {
-    transform: translateY(-1px) scale(.98);
-    box-shadow: 0 10px 24px rgba(215,168,77,.22);
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 10px 24px rgba(215,168,77,.18);
   }
 
   .ltc-secondary-button {
     border: 1px solid rgba(35,95,62,.18);
     color: var(--green-800);
     background: white;
-    box-shadow: 0 12px 28px rgba(8,39,25,.06);
   }
 
-  .ltc-secondary-button:hover {
-    transform: translateY(-4px);
-    color: white;
-    background: var(--green-800);
-    border-color: var(--green-800);
-    box-shadow: 0 18px 38px rgba(8,39,25,.18);
-  }
-
-  .ltc-secondary-button:active,
-  .ltc-secondary-button:focus {
-    transform: translateY(-1px) scale(.98);
-    color: white;
-    background: var(--footer-green);
-    border-color: var(--footer-green);
-  }
-
-  .ltc-primary-button:disabled,
-  .ltc-secondary-button:disabled {
-    opacity: .6;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
+  .ltc-primary-button:hover,
+  .ltc-primary-button:focus-visible { background: linear-gradient(135deg,#f7dc93,#c99634); }
+  .ltc-secondary-button:hover,
+  .ltc-secondary-button:focus-visible { color: white; background: var(--green-800); border-color: var(--green-800); }
 
   .ltc-footer {
     width: 100%;
+    padding: 30px 0 12px;
     background: var(--footer-green);
     color: white;
-    padding: 30px 0 12px;
-    margin: 0;
-  }
-
-  .ltc-footer .ltc-container {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding-left: 32px;
-    padding-right: 32px;
+    content-visibility: auto;
+    contain-intrinsic-size: 360px;
   }
 
   .ltc-footer-grid {
@@ -941,98 +637,56 @@ const pageStyles = `
     border-bottom: 1px solid rgba(255,255,255,.1);
   }
 
-  .ltc-footer-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .ltc-footer-brand img {
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
-    object-fit: cover;
-  }
-
-  .ltc-footer h4 {
+  .ltc-footer-brand { display: flex; align-items: center; gap: 12px; }
+  .ltc-footer-brand img { width: 42px; height: 42px; border-radius: 999px; object-fit: cover; }
+  .ltc-footer-brand-title {
+    margin: 0;
     color: white;
-    font-weight: 900;
     font-size: 20px;
     line-height: 1.2;
-    margin: 0;
+    font-weight: 900;
     text-transform: uppercase;
   }
-
-  .ltc-footer h5 {
-    color: #f4d484;
+  .ltc-footer-heading {
+    margin: 0 0 10px;
+    color: var(--gold-soft);
     font-size: 12px;
     line-height: 1.2;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: .14em;
-    margin: 0 0 10px;
   }
-
   .ltc-footer p,
+  .ltc-footer-link { margin: 5px 0; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.55; }
+  .ltc-footer-small-text { margin: 4px 0 !important; font-size: 12px !important; line-height: 1.42 !important; }
   .ltc-footer-link {
-    display: block;
-    color: rgba(255,255,255,.68);
-    font-size: 13px;
-    line-height: 1.55;
-    margin: 5px 0;
-  }
-
-  .ltc-footer-small-text {
-    font-size: 12px !important;
-    line-height: 1.42 !important;
-    margin: 4px 0 !important;
-  }
-
-  .ltc-footer-small-text strong {
-    font-size: 12px !important;
-    line-height: 1.42 !important;
-  }
-
-  .ltc-footer-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    width: fit-content;
     border: 0;
-    background: transparent;
     padding: 0;
-    cursor: pointer;
+    background: transparent;
     text-align: left;
+    cursor: pointer;
   }
-
-  .ltc-footer-link:hover {
-    color: white;
-    text-decoration: underline;
-  }
+  .ltc-footer-link:hover,
+  .ltc-footer-link:focus-visible { color: white; text-decoration: underline; }
 
   .ltc-facebook-link {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    margin-top: 6px;
     border: 1px solid rgba(255,255,255,.16);
     border-radius: 999px;
-    background: rgba(255,255,255,.10);
+    background: rgba(255,255,255,.1);
     color: white;
     cursor: pointer;
-    transition: .25s var(--ease);
-    margin-top: 6px;
   }
-
-  .ltc-facebook-link:hover {
-    color: #f4d484;
-    border-color: rgba(244,212,132,.42);
-    background: rgba(244,212,132,.12);
-    transform: translateY(-2px);
-  }
-
-  .ltc-facebook-link svg {
-    width: 18px;
-    height: 18px;
-    fill: currentColor;
-  }
+  .ltc-facebook-link svg { width: 18px; height: 18px; fill: currentColor; }
 
   .ltc-copyright {
     width: 100%;
@@ -1042,7 +696,6 @@ const pageStyles = `
     gap: 12px;
     color: rgba(255,255,255,.52);
     font-size: 12px;
-    line-height: 1.4;
   }
 
   .ltc-sidebar-overlay {
@@ -1051,359 +704,52 @@ const pageStyles = `
     z-index: 80;
     background: rgba(0,0,0,.42);
   }
-
   .ltc-sidebar-panel {
     position: absolute;
     right: 0;
     top: 0;
     height: 100%;
-    width: min(310px, 86vw);
-    background: white;
-    box-shadow: -20px 0 60px rgba(0,0,0,.25);
+    width: min(310px,86vw);
     padding: 20px;
+    background: white;
+    box-shadow: -16px 0 42px rgba(0,0,0,.22);
   }
-
   .ltc-sidebar-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 16px;
     border-bottom: 1px solid rgba(16,24,40,.1);
     padding-bottom: 16px;
-    margin-bottom: 16px;
   }
-
-  .ltc-sidebar-title {
-    color: var(--green-950);
-    font-weight: 900;
-    letter-spacing: .14em;
-    font-size: 12px;
-    margin: 0;
-  }
-
+  .ltc-sidebar-title { margin: 0; color: var(--green-950); font-size: 12px; font-weight: 900; letter-spacing: .14em; }
   .ltc-sidebar-close {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
+    width: 44px;
+    height: 44px;
     border: 0;
+    border-radius: 12px;
     background: #f2f4f7;
     color: #101828;
     cursor: pointer;
   }
-
   .ltc-sidebar-link {
-    display: block;
+    display: flex;
+    align-items: center;
     width: 100%;
+    min-height: 44px;
+    margin-bottom: 8px;
     border: 0;
+    border-radius: 14px;
+    padding: 0 14px;
     background: transparent;
     color: #101828;
     text-align: left;
-    border-radius: 14px;
-    padding: 13px 14px;
     font-weight: 800;
-    margin-bottom: 8px;
     cursor: pointer;
   }
-
   .ltc-sidebar-link:hover,
-  .ltc-sidebar-link.active {
-    background: var(--green-800);
-    color: white;
-  }
-
-  @media (max-width: 1100px) {
-    .ltc-fields-grid,
-    .ltc-price-breakdown,
-    .ltc-payment-grid,
-    .ltc-footer-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 900px) {
-    .ltc-header .ltc-container {
-      padding-left: 22px;
-      padding-right: 22px;
-    }
-
-    .ltc-nav {
-      min-height: auto;
-      padding: 18px 0;
-    }
-
-    .ltc-desktop-nav {
-      display: none;
-    }
-
-    .ltc-menu-button {
-      display: grid;
-      place-items: center;
-    }
-
-    .ltc-hero {
-      padding: 76px 0 74px;
-    }
-
-    .ltc-section {
-      padding: 64px 0;
-    }
-
-    .ltc-form-shell {
-      padding: 28px 22px;
-    }
-
-    .ltc-booking-header,
-    .ltc-price-row {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .ltc-footer {
-      padding: 28px 0 12px;
-    }
-
-    .ltc-footer-grid {
-      gap: 18px;
-      padding-bottom: 22px;
-    }
-
-    .ltc-footer .ltc-container {
-      padding-left: 22px;
-      padding-right: 22px;
-    }
-
-    .ltc-copyright {
-      flex-direction: column;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .ltc-header .ltc-container,
-    .ltc-footer .ltc-container {
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-
-    .ltc-logo h1 {
-      font-size: 14px;
-    }
-
-    .ltc-logo p {
-      font-size: 10px;
-    }
-
-    .ltc-hero-title {
-      font-size: clamp(34px, 11vw, 46px);
-      letter-spacing: -.045em;
-    }
-
-    .ltc-hero-text {
-      font-size: 15px;
-    }
-
-    .ltc-form-shell {
-      padding: 26px 18px;
-    }
-
-    .ltc-primary-button,
-    .ltc-secondary-button {
-      width: 100%;
-    }
-  }
-`;
-
-
-const successPageStyles = `
-  .ltc-success-shell {
-    position: relative;
-    overflow: hidden;
-    padding: 38px;
-  }
-
-  .ltc-success-shell::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(circle at 0% 0%, rgba(215,168,77,.16), transparent 28%),
-      radial-gradient(circle at 100% 16%, rgba(35,95,62,.12), transparent 34%);
-    pointer-events: none;
-  }
-
-  .ltc-success-content {
-    position: relative;
-    z-index: 1;
-  }
-
-  .ltc-success-icon {
-    width: 88px;
-    height: 88px;
-    margin: 0 auto;
-    display: grid;
-    place-items: center;
-    border-radius: 999px;
-    color: white;
-    font-size: 42px;
-    font-weight: 900;
-    background: linear-gradient(135deg, var(--green-800), var(--green-700));
-    box-shadow: 0 18px 40px rgba(35,95,62,.24), 0 0 0 12px rgba(35,95,62,.08);
-  }
-
-  .ltc-success-title {
-    margin: 28px 0 0;
-    color: var(--green-950);
-    font-size: clamp(32px, 5vw, 48px);
-    line-height: 1.05;
-    font-weight: 900;
-    letter-spacing: -.045em;
-    text-align: center;
-  }
-
-  .ltc-success-title span {
-    color: var(--gold);
-  }
-
-  .ltc-success-copy {
-    max-width: 660px;
-    margin: 16px auto 0;
-    color: var(--muted);
-    font-size: 16px;
-    line-height: 1.8;
-    text-align: center;
-  }
-
-  .ltc-success-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-    margin-top: 30px;
-  }
-
-  .ltc-success-note {
-    margin-top: 26px;
-    border: 1px solid rgba(35,95,62,.14);
-    background: rgba(35,95,62,.06);
-    border-radius: 22px;
-    padding: 20px;
-  }
-
-  .ltc-success-note strong {
-    display: block;
-    color: var(--green-950);
-    font-size: 14px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .ltc-success-note p {
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.8;
-    margin: 0;
-  }
-
-  .ltc-success-actions {
-    margin-top: 30px;
-    justify-content: center;
-  }
-
-  .ltc-success-page-main {
-    min-height: calc(100vh - 76px);
-    display: flex;
-    align-items: center;
-  }
-
-  .ltc-success-page-main .ltc-section {
-    width: 100%;
-    padding: 34px 0;
-  }
-
-  .ltc-success-page-main .ltc-container {
-    width: min(980px, 92%);
-  }
-
-  .ltc-success-shell {
-    max-width: 940px;
-    margin: 0 auto;
-    padding: 26px 28px;
-    border-radius: 22px;
-  }
-
-  .ltc-success-icon {
-    width: 62px;
-    height: 62px;
-    font-size: 30px;
-    box-shadow: 0 12px 28px rgba(35,95,62,.20), 0 0 0 8px rgba(35,95,62,.07);
-  }
-
-  .ltc-success-title {
-    margin-top: 16px;
-    font-size: clamp(26px, 3.2vw, 36px);
-  }
-
-  .ltc-success-copy {
-    max-width: 620px;
-    margin-top: 10px;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
-  .ltc-success-shell .ltc-summary-section {
-    margin-top: 22px !important;
-  }
-
-  .ltc-success-shell .ltc-booking-header {
-    margin-bottom: 16px;
-  }
-
-  .ltc-success-shell .ltc-section-heading {
-    font-size: clamp(20px, 2.4vw, 26px);
-  }
-
-  .ltc-success-shell .ltc-section-line {
-    margin-top: 8px;
-  }
-
-  .ltc-success-shell .ltc-fields-grid {
-    margin-top: 18px;
-    gap: 12px 14px;
-  }
-
-  .ltc-success-shell .ltc-input {
-    min-height: 43px;
-    font-size: 13px;
-    padding: 0 15px;
-  }
-
-  .ltc-success-shell .ltc-field label {
-    margin-bottom: 6px;
-    font-size: 10.5px;
-  }
-
-  .ltc-success-note {
-    margin-top: 18px;
-    border-radius: 18px;
-    padding: 15px 16px;
-  }
-
-  .ltc-success-note p {
-    font-size: 13px;
-    line-height: 1.55;
-  }
-
-  .ltc-success-actions {
-    margin-top: 20px;
-    gap: 12px;
-  }
-
-  .ltc-success-actions .ltc-primary-button,
-  .ltc-success-actions .ltc-secondary-button {
-    min-height: 44px;
-    min-width: 190px;
-    padding: 0 22px;
-    font-size: 11px;
-  }
+  .ltc-sidebar-link:focus-visible,
+  .ltc-sidebar-link.active { background: var(--green-800); color: white; }
 
   .ltc-receipt-modal-overlay {
     position: fixed;
@@ -1414,33 +760,23 @@ const successPageStyles = `
     justify-content: center;
     padding: 32px 22px;
     background: rgba(0,0,0,.55);
-    backdrop-filter: blur(6px);
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-
   .ltc-receipt-modal {
     position: relative;
     z-index: 121;
-    width: min(840px, 96vw);
+    width: min(840px,96vw);
     max-height: calc(100vh - 64px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: 24px;
-    background: #ffffff;
     border: 1px solid rgba(255,255,255,.72);
-    box-shadow: 0 34px 90px rgba(0,0,0,.28);
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 28px 70px rgba(0,0,0,.24);
   }
-
-  .ltc-receipt-modal-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
+  .ltc-receipt-modal-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .ltc-receipt-modal-header {
     position: sticky;
     top: 0;
@@ -1453,18 +789,10 @@ const successPageStyles = `
     background: var(--footer-green);
     color: white;
   }
-
-  .ltc-receipt-modal-header h3 {
-    margin: 0;
-    font-size: 18px;
-    line-height: 1.2;
-    font-weight: 900;
-    letter-spacing: -.02em;
-  }
-
+  .ltc-receipt-modal-header h2 { margin: 0; font-size: 18px; line-height: 1.2; font-weight: 900; }
   .ltc-receipt-close {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border: 0;
     border-radius: 999px;
     background: rgba(255,255,255,.12);
@@ -1472,222 +800,78 @@ const successPageStyles = `
     cursor: pointer;
     font-size: 18px;
     font-weight: 900;
-    transition: .25s var(--ease);
   }
-
-  .ltc-receipt-close:hover {
-    background: rgba(255,255,255,.22);
-    transform: scale(1.04);
-  }
-
-  .ltc-receipt-paper {
-    margin: 24px;
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1px solid rgba(35,95,62,.12);
-    background: white;
-  }
-
-  .ltc-receipt-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    padding: 26px;
-    color: white;
-    background: var(--green-800);
-  }
-
-  .ltc-receipt-brand h4,
-  .ltc-receipt-meta h4 {
-    margin: 0;
-    font-size: 22px;
-    line-height: 1.1;
-    font-weight: 900;
-    text-transform: uppercase;
-  }
-
+  .ltc-receipt-paper { margin: 24px; overflow: hidden; border: 1px solid rgba(35,95,62,.12); border-radius: 20px; background: white; }
+  .ltc-receipt-top { display: flex; justify-content: space-between; gap: 18px; padding: 26px; color: white; background: var(--green-800); }
+  .ltc-receipt-brand-title,
+  .ltc-receipt-meta-title { margin: 0; font-size: 22px; line-height: 1.1; font-weight: 900; text-transform: uppercase; }
   .ltc-receipt-brand p,
-  .ltc-receipt-meta p {
-    margin: 6px 0 0;
-    color: rgba(255,255,255,.78);
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  .ltc-receipt-meta {
-    text-align: right;
-  }
-
-  .ltc-receipt-status {
-    margin: 22px 26px 0;
-    border-radius: 14px;
-    padding: 12px 14px;
-    background: rgba(244,212,132,.32);
-    color: var(--green-950);
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
-
-  .ltc-receipt-body {
-    padding: 24px 26px 28px;
-  }
-
-  .ltc-receipt-body h5 {
-    margin: 0 0 12px;
-    color: var(--green-950);
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-
-  .ltc-receipt-two-col {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-    margin-bottom: 24px;
-  }
-
-  .ltc-receipt-box {
-    border-radius: 16px;
-    border: 1px solid rgba(35,95,62,.12);
-    background: rgba(35,95,62,.04);
-    padding: 16px;
-  }
-
-  .ltc-receipt-name {
-    margin: 0;
-    color: var(--green-950);
-    font-size: 15px;
-    font-weight: 900;
-  }
-
-  .ltc-receipt-muted {
-    margin: 5px 0 0;
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  .ltc-receipt-table {
-    width: 100%;
-    border-collapse: collapse;
-    overflow: hidden;
-    border-radius: 16px;
-    border: 1px solid rgba(35,95,62,.12);
-    margin-bottom: 24px;
-  }
-
+  .ltc-receipt-meta p { margin: 6px 0 0; color: rgba(255,255,255,.78); font-size: 12px; font-weight: 700; }
+  .ltc-receipt-meta { text-align: right; }
+  .ltc-receipt-status { margin: 22px 26px 0; border-radius: 14px; padding: 12px 14px; background: rgba(244,212,132,.32); color: var(--green-950); font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+  .ltc-receipt-body { padding: 24px 26px 28px; }
+  .ltc-receipt-section-title { margin: 0 0 12px; color: var(--green-950); font-size: 13px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+  .ltc-receipt-two-col { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; margin-bottom: 24px; }
+  .ltc-receipt-box { border: 1px solid rgba(35,95,62,.12); border-radius: 16px; padding: 16px; background: rgba(35,95,62,.04); }
+  .ltc-receipt-name { margin: 0; color: var(--green-950); font-size: 15px; font-weight: 900; }
+  .ltc-receipt-muted { margin: 5px 0 0; color: var(--muted); font-size: 13px; font-weight: 700; }
+  .ltc-receipt-table { width: 100%; margin-bottom: 24px; border-collapse: collapse; border: 1px solid rgba(35,95,62,.12); }
   .ltc-receipt-table th,
-  .ltc-receipt-table td {
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(35,95,62,.10);
-    text-align: left;
-    vertical-align: top;
-    font-size: 13px;
-  }
+  .ltc-receipt-table td { padding: 12px 14px; border-bottom: 1px solid rgba(35,95,62,.10); text-align: left; vertical-align: top; font-size: 13px; }
+  .ltc-receipt-table th { width: 34%; color: var(--muted); font-weight: 900; background: rgba(35,95,62,.04); }
+  .ltc-receipt-table td { color: var(--green-950); font-weight: 800; }
+  .ltc-receipt-summary { overflow: hidden; border: 1px solid rgba(35,95,62,.12); border-radius: 16px; }
+  .ltc-receipt-summary-row { display: flex; justify-content: space-between; gap: 16px; padding: 13px 16px; border-bottom: 1px solid rgba(35,95,62,.10); color: var(--green-950); font-size: 13px; font-weight: 800; }
+  .ltc-receipt-summary-row:last-child { border-bottom: 0; }
+  .ltc-receipt-summary-row.balance { background: var(--green-800); color: white; font-size: 15px; font-weight: 900; }
+  .ltc-receipt-note { margin-top: 18px; border-radius: 16px; padding: 14px 16px; background: rgba(102,112,133,.08); color: var(--muted); font-size: 13px; line-height: 1.65; font-weight: 700; }
 
-  .ltc-receipt-table th {
-    width: 34%;
-    color: var(--muted);
-    font-weight: 900;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    background: rgba(35,95,62,.04);
-  }
+  :where(button, input):focus-visible { outline: 3px solid rgba(244,212,132,.75); outline-offset: 3px; }
 
-  .ltc-receipt-table td {
-    color: var(--green-950);
-    font-weight: 800;
-  }
-
-  .ltc-receipt-table tr:last-child th,
-  .ltc-receipt-table tr:last-child td {
-    border-bottom: 0;
-  }
-
-  .ltc-receipt-summary {
-    border-radius: 16px;
-    border: 1px solid rgba(35,95,62,.12);
-    overflow: hidden;
-  }
-
-  .ltc-receipt-summary-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 13px 16px;
-    border-bottom: 1px solid rgba(35,95,62,.10);
-    color: var(--green-950);
-    font-size: 13px;
-    font-weight: 800;
-  }
-
-  .ltc-receipt-summary-row:last-child {
-    border-bottom: 0;
-  }
-
-  .ltc-receipt-summary-row.balance {
-    background: var(--green-800);
-    color: white;
-    font-size: 15px;
-    font-weight: 900;
-  }
-
-  .ltc-receipt-note {
-    margin-top: 18px;
-    border-radius: 16px;
-    background: rgba(102,112,133,.08);
-    color: var(--muted);
-    padding: 14px 16px;
-    font-size: 13px;
-    line-height: 1.65;
-    font-weight: 700;
+  @media (max-width: 1100px) {
+    .ltc-fields-grid,
+    .ltc-footer-grid { grid-template-columns: 1fr; }
   }
 
   @media (max-width: 900px) {
-    .ltc-success-page-main {
-      align-items: flex-start;
-    }
+    .ltc-header .ltc-container,
+    .ltc-footer .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-nav { min-height: auto; padding: 16px 0; }
+    .ltc-desktop-nav { display: none; }
+    .ltc-menu-button { display: grid; }
+    .ltc-success-page-main { align-items: flex-start; }
+    .ltc-section { padding: 26px 0; }
+    .ltc-success-shell { padding: 24px 18px; }
+    .ltc-fields-grid,
+    .ltc-receipt-two-col { grid-template-columns: 1fr; }
+    .ltc-booking-header { align-items: flex-start; }
+    .ltc-service-pill { width: 100%; }
+    .ltc-footer { padding: 28px 0 12px; }
+    .ltc-footer-grid { gap: 18px; padding-bottom: 22px; }
+    .ltc-copyright { flex-direction: column; }
+    .ltc-receipt-modal-overlay { padding: 14px; }
+    .ltc-receipt-modal { max-height: calc(100vh - 28px); }
+    .ltc-receipt-paper { margin: 14px; }
+    .ltc-receipt-top { flex-direction: column; }
+    .ltc-receipt-meta { text-align: left; }
+    .ltc-receipt-body { padding: 18px; }
+  }
 
-    .ltc-success-page-main .ltc-section {
-      padding: 26px 0;
-    }
+  @media (max-width: 600px) {
+    .ltc-header .ltc-container,
+    .ltc-footer .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-brand-title { font-size: 14px; }
+    .ltc-logo p { font-size: 10px; }
+    .ltc-primary-button,
+    .ltc-secondary-button { width: 100%; }
+  }
 
-    .ltc-success-shell {
-      padding: 24px 18px;
-    }
-
-    .ltc-success-grid,
-    .ltc-success-shell .ltc-fields-grid,
-    .ltc-receipt-two-col {
-      grid-template-columns: 1fr;
-    }
-
-    .ltc-receipt-paper {
-      margin: 14px;
-    }
-
-    .ltc-receipt-top {
-      flex-direction: column;
-    }
-
-    .ltc-receipt-meta {
-      text-align: left;
-    }
-
-    .ltc-receipt-body {
-      padding: 18px;
-    }
-
-    .ltc-receipt-modal-overlay {
-      padding: 14px;
-    }
-
-    .ltc-receipt-modal {
-      max-height: calc(100vh - 28px);
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      transition-duration: .01ms !important;
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
     }
   }
 `;
@@ -1802,7 +986,6 @@ export default function BookingSuccessful() {
   return (
     <div className="ltc-resort-summary-page" style={fontPontano}>
       <style>{pageStyles}</style>
-      <style>{successPageStyles}</style>
 
       <Header
         navigate={navigate}
@@ -1819,9 +1002,9 @@ export default function BookingSuccessful() {
                   ✓
                 </div>
 
-                <h2 className="ltc-success-title" style={fontMontserrat}>
+                <h1 className="ltc-success-title" style={fontMontserrat}>
                   Thank you for <span>booking!</span>
-                </h2>
+                </h1>
 
                 <p className="ltc-success-copy" style={fontPontano}>
                   Your {serviceType} request has been submitted successfully and is now waiting for admin approval.
@@ -1837,13 +1020,13 @@ export default function BookingSuccessful() {
                       <div className="ltc-section-line" />
                     </div>
 
-                    <input
-                      value={serviceType}
-                      disabled
-                      readOnly
+                    <div
                       className="ltc-service-pill"
                       style={fontPoppins}
-                    />
+                      aria-label={`Service type: ${serviceType}`}
+                    >
+                      {serviceType}
+                    </div>
                   </div>
 
                   <div className="ltc-fields-grid">
@@ -1958,6 +1141,7 @@ function ReceiptModal({
       className="ltc-receipt-modal-overlay"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="receipt-preview-title"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -1971,7 +1155,7 @@ function ReceiptModal({
         onTouchStart={(event) => event.stopPropagation()}
       >
         <div className="ltc-receipt-modal-header">
-          <h3 style={fontMontserrat}>Booking Receipt Preview</h3>
+          <h2 id="receipt-preview-title" style={fontMontserrat}>Booking Receipt Preview</h2>
 
           <button
             type="button"
@@ -1987,12 +1171,12 @@ function ReceiptModal({
           <div className="ltc-receipt-paper">
             <div className="ltc-receipt-top">
               <div className="ltc-receipt-brand">
-                <h4 style={fontMontserrat}>Lumispire</h4>
+                <p className="ltc-receipt-brand-title" style={fontMontserrat}>Lumispire</p>
                 <p style={fontPontano}>Hotel &amp; Resort</p>
               </div>
 
               <div className="ltc-receipt-meta">
-                <h4 style={fontMontserrat}>Booking Receipt</h4>
+                <p className="ltc-receipt-meta-title" style={fontMontserrat}>Booking Receipt</p>
                 <p style={fontPontano}>Receipt No. {receiptNumber}</p>
                 <p style={fontPontano}>Issued: {receiptDate}</p>
               </div>
@@ -2005,7 +1189,7 @@ function ReceiptModal({
             <div className="ltc-receipt-body">
               <div className="ltc-receipt-two-col">
                 <div className="ltc-receipt-box">
-                  <h5 style={fontMontserrat}>Billed To</h5>
+                  <h3 className="ltc-receipt-section-title" style={fontMontserrat}>Billed To</h3>
                   <p className="ltc-receipt-name" style={fontMontserrat}>
                     {guestName}
                   </p>
@@ -2018,7 +1202,7 @@ function ReceiptModal({
                 </div>
 
                 <div className="ltc-receipt-box">
-                  <h5 style={fontMontserrat}>Payment Overview</h5>
+                  <h3 className="ltc-receipt-section-title" style={fontMontserrat}>Payment Overview</h3>
                   <p className="ltc-receipt-muted" style={fontPontano}>
                     Method: {details.paymentMethod || "—"}
                   </p>
@@ -2028,7 +1212,7 @@ function ReceiptModal({
                 </div>
               </div>
 
-              <h5 style={fontMontserrat}>Booking Details</h5>
+              <h3 className="ltc-receipt-section-title" style={fontMontserrat}>Booking Details</h3>
               <table className="ltc-receipt-table">
                 <tbody>
                   <ReceiptRow label="Service" value={serviceType || "—"} />
@@ -2039,7 +1223,7 @@ function ReceiptModal({
                 </tbody>
               </table>
 
-              <h5 style={fontMontserrat}>Payment Summary</h5>
+              <h3 className="ltc-receipt-section-title" style={fontMontserrat}>Payment Summary</h3>
               <div className="ltc-receipt-summary">
                 <div className="ltc-receipt-summary-row" style={fontPontano}>
                   <span>Total Booking Amount</span>
@@ -2091,6 +1275,10 @@ function Header({ navigate, goToProfile, openMenu }) {
           <img
             src={HOTEL_LOGO}
             alt="Hotel logo"
+            width="42"
+            height="42"
+            decoding="async"
+            fetchPriority="high"
             className="ltc-logo-icon"
             onError={(event) => {
               event.currentTarget.style.display = "none";
@@ -2098,7 +1286,7 @@ function Header({ navigate, goToProfile, openMenu }) {
           />
 
           <div>
-            <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
+            <span className="ltc-brand-title" style={fontMontserrat}>Hotel &amp; Resort</span>
             <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
           </div>
         </button>
@@ -2155,12 +1343,13 @@ function NavButton({ label, onClick, active = false, className = "" }) {
 function ReadOnlyField({ label, value }) {
   return (
     <div className="ltc-field">
-      <label style={fontMontserrat}>{label}</label>
+      <span className="ltc-field-label" style={fontMontserrat}>{label}</span>
 
       <input
         readOnly
         value={value ?? ""}
         placeholder="—"
+        aria-label={label}
         className="ltc-input"
         style={fontPoppins}
       />
@@ -2177,12 +1366,16 @@ function Footer() {
             <img
               src={LUMISPIRE_LOGO}
               alt="Lumispire logo"
+              width="42"
+              height="42"
+              loading="lazy"
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
             />
 
-            <h4 style={fontMontserrat}>Lumispire</h4>
+            <p className="ltc-footer-brand-title" style={fontMontserrat}>Lumispire</p>
           </div>
         </div>
 
@@ -2285,7 +1478,7 @@ function FacebookLink() {
 function FooterColumn({ title, children }) {
   return (
     <div>
-      <h5 style={fontMontserrat}>{title}</h5>
+      <h2 className="ltc-footer-heading" style={fontMontserrat}>{title}</h2>
       <div>{children}</div>
     </div>
   );
