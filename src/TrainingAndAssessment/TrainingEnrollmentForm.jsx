@@ -80,10 +80,10 @@ const enrollmentPageStyles = `
     line-height: 1.65;
     letter-spacing: -.01em;
     overflow-x: hidden;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
   }
 
-  .ltc-enrollment-page * { box-sizing: border-box; }
+  .ltc-enrollment-page * { box-sizing: border-box; font-family: inherit !important; }
 
   .ltc-enrollment-page header {
     position: sticky;
@@ -93,7 +93,6 @@ const enrollmentPageStyles = `
     background: var(--footer-green) !important;
     border-bottom: 1px solid rgba(255,255,255,.1) !important;
     box-shadow: 0 10px 34px rgba(7,31,20,.14) !important;
-    backdrop-filter: blur(14px);
   }
 
   .ltc-enrollment-page header > div:first-child {
@@ -198,9 +197,7 @@ const enrollmentPageStyles = `
     color: white !important;
     isolation: isolate;
     padding: 82px 0 78px !important;
-    background:
-      linear-gradient(90deg, rgba(3,24,15,.94) 0%, rgba(8,39,25,.88) 42%, rgba(21,95,59,.72) 100%),
-      url('/tamsi-building.jpg') center/cover no-repeat !important;
+    background: linear-gradient(120deg, #03180f 0%, #082719 44%, #155f3b 100%) !important;
   }
 
   .ltc-enrollment-page main > section:nth-child(2)::before,
@@ -281,12 +278,11 @@ const enrollmentPageStyles = `
     width: min(1180px, 94%) !important;
     max-width: 1180px !important;
     margin: 0 auto !important;
-    background: rgba(255,255,255,.9);
+    background: #ffffff;
     border: 1px solid rgba(14,51,33,.10);
     border-radius: 30px;
     box-shadow: var(--shadow-lg);
     padding: clamp(22px, 4vw, 46px);
-    backdrop-filter: blur(18px);
     position: relative;
     overflow: hidden;
   }
@@ -315,13 +311,12 @@ const enrollmentPageStyles = `
     border-radius: 24px;
     padding: clamp(18px, 3vw, 30px);
     box-shadow: 0 16px 34px rgba(8,39,25,.08);
-    transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease);
+    transition: box-shadow .2s ease, border-color .2s ease;
   }
 
   .ltc-enrollment-page form > section:hover {
-    transform: translateY(-3px);
     border-color: rgba(215,168,77,.34);
-    box-shadow: 0 24px 48px rgba(8,39,25,.12);
+    box-shadow: 0 20px 42px rgba(8,39,25,.10);
   }
 
   .ltc-enrollment-page h2 {
@@ -1371,7 +1366,7 @@ export default function TrainingEnrollmentForm() {
             aria-label="TAMSI Home"
           >
             <img
-              src="/TamsiLogo.png"
+              src="/TamsiLogo.webp"
               alt="TAMSI Logo"
               width="44"
               height="44"
@@ -1379,7 +1374,7 @@ export default function TrainingEnrollmentForm() {
               className="h-11 w-11 object-contain"
             />
 
-            <span className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
+            <span className="text-2xl font-extrabold tracking-wide text-[#45674b]">
               TRAINING &amp; ASSESSMENT
             </span>
           </button>
@@ -1388,7 +1383,7 @@ export default function TrainingEnrollmentForm() {
             <button
               type="button"
               onClick={() => goTo("/training")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
+              className="min-h-[44px] px-2 text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
             >
               Home
             </button>
@@ -1396,7 +1391,7 @@ export default function TrainingEnrollmentForm() {
             <button
               type="button"
               onClick={() => goTo("/training-course")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
+              className="min-h-[44px] px-2 text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
             >
               Course
             </button>
@@ -1404,7 +1399,7 @@ export default function TrainingEnrollmentForm() {
             <button
               type="button"
               onClick={() => goTo("/training-requirements")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
+              className="min-h-[44px] px-2 text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
             >
               Requirements
             </button>
@@ -1412,7 +1407,7 @@ export default function TrainingEnrollmentForm() {
             <button
               type="button"
               onClick={() => goTo("/training-contact-us")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
+              className="min-h-[44px] px-2 text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
             >
               Contact
             </button>
@@ -1420,7 +1415,7 @@ export default function TrainingEnrollmentForm() {
             <button
               type="button"
               onClick={() => goTo("/training-faqs")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
+              className="min-h-[44px] px-2 text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
             >
               FAQs
             </button>
@@ -1428,7 +1423,7 @@ export default function TrainingEnrollmentForm() {
             <button
               type="button"
               onClick={() => goTo("/training-certificate-validation")}
-              className="text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
+              className="min-h-[44px] px-2 text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25]"
             >
               Certificate Validation
             </button>
@@ -1437,7 +1432,7 @@ export default function TrainingEnrollmentForm() {
           <button
             type="button"
             onClick={() => goTo("/training-login")}
-            className="ml-3 hidden text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] md:block lg:ml-4"
+            className="ml-3 hidden min-h-[44px] px-2 text-[11px] font-bold uppercase tracking-wide text-[#58705d] transition hover:text-[#173d25] md:block lg:ml-4"
           >
             Sign In
           </button>
@@ -1523,23 +1518,13 @@ export default function TrainingEnrollmentForm() {
       </header>
 
       <main>
-        {/* BANNER IMAGE */}
-        <section className="h-[160px] overflow-hidden bg-[#cad1c5] sm:h-[210px] md:h-[260px]">
-          <img
-            src="/tamsi-building.jpg"
-            alt="TAMSI Building"
-            className="h-full w-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://placehold.co/1600x420/d7ddd4/45674b?text=TAMSI+Training+And+Assessment";
-            }}
-          />
-        </section>
+        {/* Reserved first child: kept only so the existing nth-child layout stays stable. */}
+        <section className="hidden" aria-hidden="true" />
 
         {/* FORM TITLE */}
         <section className="relative overflow-hidden bg-gradient-to-b from-[#486b4b] via-[#123a20] to-[#123a20] px-5 py-6 text-white sm:px-8 lg:px-12">
           <div className="relative mx-auto max-w-[1280px]">
-            <h1 className="text-center font-['Montserrat',sans-serif] text-3xl font-extrabold drop-shadow-md sm:text-4xl">
+            <h1 className="text-center text-3xl font-extrabold drop-shadow-md sm:text-4xl">
               Enrollment Form
             </h1>
 
@@ -1550,25 +1535,37 @@ export default function TrainingEnrollmentForm() {
         {/* FORM BODY */}
         <section className="bg-[#2e5038] px-5 pb-9 pt-7 sm:px-8 lg:px-12">
           <div className="mx-auto max-w-[1280px]">
-            {msg.text && (
-              <div
-                className={[
-                  "mb-6 rounded-lg px-4 py-3 text-sm font-semibold",
-                  msg.type === "success"
-                    ? "bg-green-50 text-green-800 ring-1 ring-green-200"
-                    : "bg-red-50 text-red-800 ring-1 ring-red-200",
-                ].join(" ")}
-              >
-                {msg.text}
-              </div>
-            )}
-
-            {!batchLoading && !openBatches.length ? (
-              <div className="mb-6 rounded-xl bg-yellow-50 px-4 py-4 text-sm font-semibold text-yellow-900 ring-1 ring-yellow-200">
-                Enrollment is currently closed. Please wait for the professor to
-                open a new batch.
-              </div>
-            ) : null}
+            <div
+              className="mb-6 min-h-[58px]"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {msg.text ? (
+                <div
+                  role={msg.type === "error" ? "alert" : "status"}
+                  className={[
+                    "min-h-[58px] rounded-xl px-4 py-4 text-sm font-semibold",
+                    msg.type === "success"
+                      ? "bg-green-50 text-green-800 ring-1 ring-green-200"
+                      : "bg-red-50 text-red-800 ring-1 ring-red-200",
+                  ].join(" ")}
+                >
+                  {msg.text}
+                </div>
+              ) : batchLoading ? (
+                <div className="min-h-[58px] rounded-xl bg-white/80 px-4 py-4 text-sm font-semibold text-[#45674b] ring-1 ring-[#dce5da]">
+                  Checking enrollment availability...
+                </div>
+              ) : !openBatches.length ? (
+                <div className="min-h-[58px] rounded-xl bg-yellow-50 px-4 py-4 text-sm font-semibold text-yellow-900 ring-1 ring-yellow-200">
+                  Enrollment is currently closed. Please wait for the professor to open a new batch.
+                </div>
+              ) : (
+                <div className="min-h-[58px] rounded-xl bg-green-50 px-4 py-4 text-sm font-semibold text-green-800 ring-1 ring-green-200">
+                  Enrollment is open. Select an available course and complete the form below.
+                </div>
+              )}
+            </div>
 
             <form onSubmit={submit} className="space-y-8">
               {/* PERSONAL INFO */}
@@ -1579,7 +1576,7 @@ export default function TrainingEnrollmentForm() {
                   <div className="w-full md:w-[360px]">
                     <label
                       htmlFor="training-enroll-course"
-                      className="mb-1 block font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90"
+                      className="mb-1 block text-[11px] font-extrabold text-white/90"
                     >
                       Course
                     </label>
@@ -1608,24 +1605,25 @@ export default function TrainingEnrollmentForm() {
                       ]}
                     />
 
-                    {selectedBatch ? (
-                      <p className="mt-1 text-[10px] font-semibold text-white/70">
-                        Open batch: {selectedBatch.batchName}{" "}
-                        {selectedBatch.batchCode
-                          ? `(${selectedBatch.batchCode})`
-                          : ""}
-                      </p>
-                    ) : null}
+                    <p className="mt-1 min-h-[16px] text-[10px] font-semibold text-[#45674b]">
+                      {selectedBatch
+                        ? `Open batch: ${selectedBatch.batchName}${
+                            selectedBatch.batchCode
+                              ? ` (${selectedBatch.batchCode})`
+                              : ""
+                          }`
+                        : "\u00A0"}
+                    </p>
 
-                    {(touched.course || touched.batchId) &&
-                      (errors.course || errors.batchId) && (
-                        <p
-                          id="training-enroll-course-error"
-                          className="mt-1 text-[10px] font-semibold text-red-200"
-                        >
-                          {errors.course || errors.batchId}
-                        </p>
-                      )}
+                    <p
+                      id="training-enroll-course-error"
+                      className="mt-1 min-h-[16px] text-[10px] font-semibold text-[#b42318]"
+                    >
+                      {(touched.course || touched.batchId) &&
+                      (errors.course || errors.batchId)
+                        ? errors.course || errors.batchId
+                        : "\u00A0"}
+                    </p>
                   </div>
                 </div>
 
@@ -1989,7 +1987,7 @@ export default function TrainingEnrollmentForm() {
                 <a
                   href="/TAMSI_APPLICATION_FORM.docx"
                   download="TAMSI_APPLICATION_FORM.docx"
-                  className="mt-8 inline-block font-['Montserrat',sans-serif] text-[14px] font-extrabold text-white transition hover:opacity-80 sm:text-[16px]"
+                  className="mt-8 inline-block text-[14px] font-extrabold text-white transition hover:opacity-80 sm:text-[16px]"
                 >
                   Click here to Download the Form
                 </a>
@@ -1999,7 +1997,7 @@ export default function TrainingEnrollmentForm() {
                 <button
                   type="submit"
                   disabled={submitDisabled}
-                  className="h-[32px] min-w-[190px] rounded-full bg-white px-8 font-['Montserrat',sans-serif] text-[10px] font-extrabold uppercase text-[#45674b] shadow-md transition hover:-translate-y-0.5 hover:bg-[#f5f8f2] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-[32px] min-w-[190px] rounded-full bg-white px-8 text-[10px] font-extrabold uppercase text-[#45674b] shadow-md transition hover:-translate-y-0.5 hover:bg-[#f5f8f2] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading
                     ? "Submitting..."
@@ -2011,7 +2009,7 @@ export default function TrainingEnrollmentForm() {
                 <button
                   type="button"
                   onClick={() => navigate("/training")}
-                  className="h-[32px] min-w-[190px] rounded-full bg-white px-8 font-['Montserrat',sans-serif] text-[10px] font-extrabold uppercase text-[#45674b] shadow-md transition hover:-translate-y-0.5 hover:bg-[#f5f8f2]"
+                  className="h-[32px] min-w-[190px] rounded-full bg-white px-8 text-[10px] font-extrabold uppercase text-[#45674b] shadow-md transition hover:-translate-y-0.5 hover:bg-[#f5f8f2]"
                 >
                   Cancel
                 </button>
@@ -2028,19 +2026,19 @@ export default function TrainingEnrollmentForm() {
             <div className="border-[#d6ded2] md:border-r md:pr-4">
               <div className="flex items-center gap-4">
                 <img
-                  src="/TrainingLumispireLogo.png"
+                  src="/TrainingLumispireLogo.webp"
                   alt="Training Lumispire Logo"
                   width="110"
+                  height="80"
                   loading="lazy"
                   decoding="async"
                   className="h-auto w-[110px] object-contain"
                   onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/80x80/ffffff/4d6f55?text=L";
+                    e.currentTarget.style.visibility = "hidden";
                   }}
                 />
 
-                <span className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
+                <span className="text-2xl font-extrabold tracking-wide text-[#45674b]">
                   TRAINING &amp; ASSESSMENT
                 </span>
               </div>
@@ -2127,7 +2125,7 @@ export default function TrainingEnrollmentForm() {
 function SectionTitle({ title }) {
   return (
     <div className="flex w-full flex-col">
-      <h2 className="font-['Montserrat',sans-serif] text-[24px] font-extrabold text-white/85 sm:text-[28px]">
+      <h2 className="text-[24px] font-extrabold text-white/85 sm:text-[28px]">
         {title}
       </h2>
       <div className="mt-1 h-[2px] w-full max-w-[310px] rounded-full bg-white/30" />
@@ -2142,7 +2140,7 @@ function Field({ label, htmlFor, children, error = "" }) {
     <div>
       <label
         htmlFor={htmlFor}
-        className="mb-1 block font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90"
+        className="mb-1 block text-[11px] font-extrabold text-white/90"
       >
         {label}
       </label>
@@ -2190,7 +2188,7 @@ function Input({
       aria-invalid={!!error}
       aria-describedby={error && inputId ? `${inputId}-error` : undefined}
       className={[
-        "h-12 w-full rounded-md border bg-white px-3 font-['Inter',sans-serif] text-[12px] font-semibold text-[#263d2c] outline-none shadow-sm",
+        "h-12 w-full rounded-md border bg-white px-3 text-[12px] font-semibold text-[#263d2c] outline-none shadow-sm",
         readOnly ? "cursor-default bg-white/95" : "",
         error ? "border-red-300" : "border-white/80 focus:border-white",
       ].join(" ")}
@@ -2210,7 +2208,7 @@ function Select({ id, name, value, onChange, onBlur, error = "", options = [] })
       aria-invalid={!!error}
       aria-describedby={error && selectId ? `${selectId}-error` : undefined}
       className={[
-        "h-12 w-full rounded-md border bg-white px-3 font-['Inter',sans-serif] text-[12px] font-semibold text-[#263d2c] outline-none shadow-sm",
+        "h-12 w-full rounded-md border bg-white px-3 text-[12px] font-semibold text-[#263d2c] outline-none shadow-sm",
         error ? "border-red-300" : "border-white/80 focus:border-white",
       ].join(" ")}
     >
@@ -2225,7 +2223,7 @@ function Select({ id, name, value, onChange, onBlur, error = "", options = [] })
 
 function CheckItem({ label, checked, onChange }) {
   return (
-    <label className="flex min-h-[44px] items-center gap-2 font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90">
+    <label className="flex min-h-[44px] items-center gap-2 text-[11px] font-extrabold text-white/90">
       <input
         type="checkbox"
         checked={checked}
@@ -2250,7 +2248,7 @@ function UploadField({
     <div>
       <label
         htmlFor={`training-enroll-${name}`}
-        className="mb-1 block font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90"
+        className="mb-1 block text-[11px] font-extrabold text-white/90"
       >
         {label}
       </label>
@@ -2265,7 +2263,7 @@ function UploadField({
         aria-invalid={!!error}
         aria-describedby={error ? `training-enroll-${name}-error` : undefined}
         className={[
-          "block min-h-12 w-full rounded-md border bg-white px-2 py-2 font-['Inter',sans-serif] text-[10px] font-semibold text-[#263d2c] shadow-sm file:mr-2 file:rounded file:border-0 file:bg-[#45674b] file:px-2 file:py-0.5 file:text-[10px] file:font-bold file:text-white",
+          "block min-h-12 w-full rounded-md border bg-white px-2 py-2 text-[10px] font-semibold text-[#263d2c] shadow-sm file:mr-2 file:rounded file:border-0 file:bg-[#45674b] file:px-2 file:py-0.5 file:text-[10px] file:font-bold file:text-white",
           error ? "border-red-300" : "border-white/80",
         ].join(" ")}
       />
