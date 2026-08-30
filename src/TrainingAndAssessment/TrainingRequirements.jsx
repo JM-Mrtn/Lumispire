@@ -695,7 +695,7 @@ const pageStyles = `
     gap: 6px;
   }
 
-  .ltc-footer h4 {
+  .ltc-footer-brand-title {
     color: white;
     font-weight: 900;
     font-size: 20px;
@@ -710,7 +710,7 @@ const pageStyles = `
     color: rgba(255,255,255,.72) !important;
   }
 
-  .ltc-footer h5 {
+  .ltc-footer h3 {
     color: #f4d484;
     font-size: 12px;
     line-height: 1.2;
@@ -757,7 +757,7 @@ const pageStyles = `
   .ltc-sidebar-panel { position: absolute; right: 0; top: 0; height: 100%; width: min(310px,86vw); background: white; box-shadow: -20px 0 60px rgba(0,0,0,.25); padding: 20px; }
   .ltc-sidebar-top { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(16,24,40,.1); padding-bottom: 16px; margin-bottom: 16px; }
   .ltc-sidebar-title { color: var(--green-950); font-weight: 900; letter-spacing: .14em; font-size: 12px; margin: 0; }
-  .ltc-sidebar-close { width: 38px; height: 38px; border-radius: 12px; border: 0; background: #f2f4f7; color: #101828; cursor: pointer; }
+  .ltc-sidebar-close { width: 44px; height: 44px; border-radius: 12px; border: 0; background: #f2f4f7; color: #101828; cursor: pointer; }
   .ltc-sidebar-link { display: block; width: 100%; border: 0; background: transparent; color: #101828; text-align: left; border-radius: 14px; padding: 13px 14px; font-weight: 800; margin-bottom: 8px; cursor: pointer; text-decoration: none; }
   .ltc-sidebar-link:hover,
   .ltc-sidebar-link.active { background: var(--green-800); color: white; }
@@ -1126,7 +1126,7 @@ function Footer({ goTo }) {
               }}
             />
             <div className="ltc-footer-brand-copy">
-              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <span className="ltc-footer-brand-title" style={fontMontserrat}>TRAINING &amp; ASSESSMENT</span>
               <p className="ltc-footer-brand-description" style={fontPontano}>
                 Practical training, assessment, and learner support.
               </p>
@@ -1176,7 +1176,7 @@ function Footer({ goTo }) {
 function FooterColumn({ title, children }) {
   return (
     <div>
-      <h5 style={fontMontserrat}>{title}</h5>
+      <h3 style={fontMontserrat}>{title}</h3>
       <div>{children}</div>
     </div>
   );
@@ -1256,74 +1256,6 @@ function FloatingHomeIconButton({ onClick }) {
     </button>
   );
 }
-
-export function TrainingPublicShell({
-  active = "",
-  title,
-  subtitle,
-  children,
-}) {
-  const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  function goTo(path) {
-    setMobileOpen(false);
-    navigate(path);
-  }
-
-  return (
-    <div className="ltc-training-home">
-      <style>{pageStyles}</style>
-
-      <Header
-        active={active}
-        goTo={goTo}
-        onOpenMenu={() => setMobileOpen(true)}
-      />
-
-      <main>
-        <section className="ltc-hero">
-          <img
-            src={HERO_IMAGE}
-            alt="Training and Assessment Banner"
-            className="ltc-hero-slide"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
-
-          <div className="ltc-container ltc-hero-content">
-            <h2 className="ltc-hero-title" style={fontMontserrat}>
-              {title}
-            </h2>
-            {subtitle ? (
-              <p className="ltc-hero-text" style={fontPontano}>
-                {subtitle}
-              </p>
-            ) : null}
-          </div>
-        </section>
-
-        {typeof children === "function" ? children({ goTo }) : children}
-      </main>
-
-      <Footer goTo={goTo} />
-
-      {mobileOpen ? (
-        <MobileMenu
-          active={active}
-          onClose={() => setMobileOpen(false)}
-          goTo={goTo}
-        />
-      ) : null}
-
-      <FloatingHomeIconButton onClick={() => navigate("/")} />
-      <TrainingChatbot />
-    </div>
-  );
-}
-
-
 
 export default function TrainingRequirements() {
   const navigate = useNavigate();
