@@ -641,7 +641,7 @@ const pageStyles = `
     color: rgba(255,255,255,.72) !important;
   }
 
-  .ltc-footer h4 {
+  .ltc-footer .ltc-footer-brand-title {
     color: white;
     font-weight: 900;
     font-size: 20px;
@@ -650,7 +650,7 @@ const pageStyles = `
     text-transform: uppercase;
   }
 
-  .ltc-footer h5 {
+  .ltc-footer .ltc-footer-column-title {
     color: #f4d484;
     font-size: 12px;
     line-height: 1.2;
@@ -941,7 +941,7 @@ function Footer({ goTo }) {
               }}
             />
             <div className="ltc-footer-brand-copy">
-              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <h3 className="ltc-footer-brand-title" style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h3>
               <p className="ltc-footer-brand-description" style={fontPontano}>
                 Practical training, assessment, and learner support.
               </p>
@@ -991,7 +991,7 @@ function Footer({ goTo }) {
 function FooterColumn({ title, children }) {
   return (
     <div>
-      <h5 style={fontMontserrat}>{title}</h5>
+      <h3 className="ltc-footer-column-title" style={fontMontserrat}>{title}</h3>
       <div>{children}</div>
     </div>
   );
