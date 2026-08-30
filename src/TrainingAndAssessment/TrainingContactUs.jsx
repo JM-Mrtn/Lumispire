@@ -1,9 +1,11 @@
 // src/TrainingAndAssessment/TrainingContactUs.jsx
 import React, { useMemo, useState } from "react";
-import { TrainingPublicShell } from "./TrainingRequirements";
+import { useNavigate } from "react-router-dom";
+import TrainingChatbot from "./TrainingChatbot";
 
 const HEADER_LOGO_IMAGE = "/TamsiLogo.png";
 const FOOTER_LOGO_IMAGE = "/TrainingLumispireLogo.png";
+const HERO_IMAGE = "/tamsi-banner.jpg";
 const TRAINING_HOME_ROUTE = "/training";
 const TRAINING_COURSE_ROUTE = "/training-course";
 const TRAINING_REQUIREMENTS_ROUTE = "/training-requirements";
@@ -77,9 +79,9 @@ const publicChromeStyles = `
   .ltc-footer-brand { display:flex; align-items:center; gap:14px; width:100%; color:white; text-align:left; border:0; background:transparent; padding:0; cursor:pointer; }
   .ltc-footer-brand img { width:110px; height:auto; object-fit:contain; display:block; }
   .ltc-footer-brand-copy { min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
-  .ltc-footer h4 { margin:0; color:white; font-size:20px; line-height:1.2; font-weight:900; text-transform:uppercase; }
+  .ltc-footer-brand-title { margin:0; color:white; font-size:20px; line-height:1.2; font-weight:900; text-transform:uppercase; }
   .ltc-footer-brand-description { max-width:300px; margin:0!important; color:rgba(255,255,255,.72)!important; }
-  .ltc-footer h5 { margin:0 0 10px; color:var(--gold-soft); font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.14em; }
+  .ltc-footer-column-title { margin:0 0 10px; color:var(--gold-soft); font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.14em; }
   .ltc-footer p,.ltc-footer-link { display:block; margin:5px 0; color:rgba(255,255,255,.68); font-size:13px; line-height:1.55; text-decoration:none; }
   .ltc-footer-link { border:0; background:transparent; padding:0; cursor:pointer; text-align:left; }
   .ltc-footer-link:hover { color:white; text-decoration:underline; }
@@ -88,7 +90,7 @@ const publicChromeStyles = `
   .ltc-sidebar-panel { position:absolute; right:0; top:0; height:100%; width:min(310px,86vw); background:white; box-shadow:-20px 0 60px rgba(0,0,0,.25); padding:20px; }
   .ltc-sidebar-top { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(16,24,40,.1); padding-bottom:16px; margin-bottom:16px; }
   .ltc-sidebar-title { color:var(--green-950); font-weight:900; letter-spacing:.14em; font-size:12px; margin:0; }
-  .ltc-sidebar-close { width:38px; height:38px; border-radius:12px; border:0; background:#f2f4f7; cursor:pointer; }
+  .ltc-sidebar-close { width:44px; height:44px; border-radius:12px; border:0; background:#f2f4f7; cursor:pointer; }
   .ltc-sidebar-link { display:block; width:100%; border:0; background:transparent; color:#101828; text-align:left; border-radius:14px; padding:13px 14px; font-weight:800; margin-bottom:8px; cursor:pointer; }
   .ltc-sidebar-link:hover,.ltc-sidebar-link.active { background:var(--green-800); color:white; }
   @media (max-width:900px) { .ltc-desktop-nav,.ltc-profile-wrap { display:none; } .ltc-menu-button { display:grid; place-items:center; } .ltc-footer-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -96,6 +98,14 @@ const publicChromeStyles = `
 `;
 
 export default function TrainingContactUs() {
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  function goTo(path) {
+    setMobileOpen(false);
+    navigate(path);
+  }
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -219,13 +229,35 @@ export default function TrainingContactUs() {
   };
 
   return (
-    <TrainingPublicShell
-      active="contact"
-      title="Contact Us"
-      subtitle="Reach our training and assessment team for inquiries and assistance."
-    >
-      <>
-        <style>{contactPageStyleFixes}</style>
+    <div className="ltc-training-home">
+      <style>{publicChromeStyles}</style>
+      <style>{contactPageStyleFixes}</style>
+
+      <Header goTo={goTo} onOpenMenu={() => setMobileOpen(true)} />
+
+      <main>
+        <section className="relative isolate overflow-hidden bg-gradient-to-r from-[#03180f] via-[#082719] to-[#155f3b] text-white">
+          <img
+            src={HERO_IMAGE}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            decoding="async"
+            className="absolute inset-0 -z-20 h-full w-full object-cover opacity-30"
+          />
+          <div
+            className="absolute inset-0 -z-10 bg-gradient-to-r from-[#02120bf5] via-[#052517e8] to-[#0c4027c2]"
+            aria-hidden="true"
+          />
+          <div className="mx-auto w-[92%] max-w-[1180px] py-20 text-center sm:py-24">
+            <h2 className="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl" style={fontMontserrat}>
+              Contact Us
+            </h2>
+            <p className="mx-auto mt-5 max-w-3xl text-base font-semibold leading-7 text-white/80" style={fontPontano}>
+              Reach our training and assessment team for inquiries and assistance.
+            </p>
+          </div>
+        </section>
 
         <section className="bg-[#2e5038] px-5 py-10 text-white sm:px-8 lg:px-12">
           <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-2">
@@ -369,8 +401,17 @@ export default function TrainingContactUs() {
             </div>
           </div>
         </section>
-      </>
-    </TrainingPublicShell>
+      </main>
+
+      <Footer goTo={goTo} />
+
+      {mobileOpen ? (
+        <MobileMenu onClose={() => setMobileOpen(false)} goTo={goTo} />
+      ) : null}
+
+      <FloatingHomeIconButton onClick={() => navigate("/")} />
+      <TrainingChatbot />
+    </div>
   );
 }
 
@@ -432,13 +473,13 @@ function HeaderNavButton({ label, active = false, onClick, className = "" }) {
 
 function Footer({ goTo }) {
   return (
-    <footer className="ltc-footer">
+    <footer className="ltc-footer" aria-label="Training and Assessment footer">
       <div className="ltc-container ltc-footer-grid">
         <div>
           <button type="button" onClick={() => goTo(TRAINING_HOME_ROUTE)} className="ltc-footer-brand">
             <img src={FOOTER_LOGO_IMAGE} alt="Training Lumispire Logo" />
             <div className="ltc-footer-brand-copy">
-              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <span className="ltc-footer-brand-title" style={fontMontserrat}>TRAINING &amp; ASSESSMENT</span>
               <p className="ltc-footer-brand-description" style={fontPontano}>
                 Practical training, assessment, and learner support.
               </p>
@@ -488,7 +529,7 @@ function Footer({ goTo }) {
 function FooterColumn({ title, children }) {
   return (
     <div>
-      <h5 style={fontMontserrat}>{title}</h5>
+      <div className="ltc-footer-column-title" style={fontMontserrat}>{title}</div>
       <div>{children}</div>
     </div>
   );

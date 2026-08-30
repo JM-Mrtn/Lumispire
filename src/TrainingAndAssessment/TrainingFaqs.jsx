@@ -1,7 +1,7 @@
 // src/TrainingAndAssessment/TrainingFaqs.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TrainingPublicShell } from "./TrainingRequirements";
+import TrainingChatbot from "./TrainingChatbot";
 
 const TAMSI_LOGO = "/TamsiLogo.png";
 const LUMISPIRE_LOGO = "/TrainingLumispireLogo.png";
@@ -191,7 +191,7 @@ const faqChromeStyles = `
     gap: 6px;
   }
 
-  .ltc-footer h4 {
+  .ltc-footer-brand-title {
     color: white;
     font-weight: 900;
     font-size: 20px;
@@ -206,7 +206,7 @@ const faqChromeStyles = `
     color: rgba(255,255,255,.72) !important;
   }
 
-  .ltc-footer h5 {
+  .ltc-footer-column-title {
     color: #f4d484;
     font-size: 12px;
     line-height: 1.2;
@@ -400,6 +400,11 @@ export default function TrainingFaqs() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [openIndex, setOpenIndex] = useState(-1);
   const [search, setSearch] = useState("");
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const goToProfile = () => {
+    navigate(getTrainingToken() ? "/trainee-profile" : "/training-login");
+  };
 
   const filteredFaqs = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -419,12 +424,7 @@ export default function TrainingFaqs() {
   }, [activeCategory, search]);
 
   return (
-    <TrainingPublicShell
-      active="faqs"
-      title="Frequently Asked Questions"
-      subtitle="Find quick answers about enrollment, requirements, courses, trainee access, and certificates."
-    >
-      <div className="ltc-training-faq-page" style={fontPontano}>
+    <div className="ltc-training-faq-page" style={fontPontano}>
       <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
@@ -622,8 +622,8 @@ export default function TrainingFaqs() {
         }
 
         .ltc-sidebar-close {
-          width: 38px;
-          height: 38px;
+          width: 44px;
+          height: 44px;
           border-radius: 12px;
           border: 0;
           background: #f2f4f7;
@@ -1173,7 +1173,7 @@ export default function TrainingFaqs() {
           gap: 6px;
         }
 
-        .ltc-footer h4 {
+        .ltc-footer-brand-title {
           color: white;
           font-weight: 900;
           font-size: 20px;
@@ -1188,7 +1188,7 @@ export default function TrainingFaqs() {
           color: rgba(255,255,255,.72) !important;
         }
 
-        .ltc-footer h5 {
+        .ltc-footer-column-title {
           color: #f4d484;
           font-size: 12px;
           line-height: 1.2;
@@ -1364,6 +1364,35 @@ export default function TrainingFaqs() {
       `}</style>
       <style>{faqChromeStyles}</style>
 
+      <Header
+        navigate={navigate}
+        goToProfile={goToProfile}
+        openMenu={() => setMobileOpen(true)}
+      />
+
+      <main>
+        <section className="ltc-hero">
+          <img
+            src={HERO_IMAGES[0]}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            decoding="async"
+            className="ltc-hero-slide active"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+          <div className="ltc-container ltc-hero-content">
+            <h2 style={fontMontserrat}>
+              Frequently Asked <span>Questions</span>
+            </h2>
+            <p style={fontPontano}>
+              Find quick answers about enrollment, requirements, courses, trainee access, and certificates.
+            </p>
+          </div>
+        </section>
+
         <section className="ltc-section">
           <div className="ltc-container">
             <RevealOnScroll className="ltc-section-title">
@@ -1499,9 +1528,35 @@ export default function TrainingFaqs() {
             </div>
           </div>
         </section>
+      </main>
 
-      </div>
-    </TrainingPublicShell>
+      <Footer navigate={navigate} />
+
+      {mobileOpen ? (
+        <MobileMenu
+          onClose={() => setMobileOpen(false)}
+          navigate={navigate}
+          goToProfile={goToProfile}
+        />
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => navigate("/")}
+        title="Back to Home"
+        aria-label="Back to LTC Group home"
+        className="fixed bottom-28 right-6 z-[80] flex h-16 w-16 items-center justify-center rounded-full border border-black/10 bg-white p-1.5 shadow-xl transition hover:-translate-y-1"
+      >
+        <img
+          src={TAMSI_LOGO}
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full rounded-full object-contain"
+        />
+      </button>
+
+      <TrainingChatbot />
+    </div>
   );
 }
 
@@ -1579,7 +1634,7 @@ function NavButton({ label, onClick, active = false, className = "" }) {
 
 function Footer({ navigate }) {
   return (
-    <footer className="ltc-footer">
+    <footer className="ltc-footer" aria-label="Training and Assessment footer">
       <div className="ltc-container ltc-footer-grid">
         <div>
           <button
@@ -1596,7 +1651,7 @@ function Footer({ navigate }) {
             />
 
             <div className="ltc-footer-brand-copy">
-              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <span className="ltc-footer-brand-title" style={fontMontserrat}>TRAINING &amp; ASSESSMENT</span>
               <p className="ltc-footer-brand-description" style={fontPontano}>
                 Practical training, assessment, and learner support.
               </p>
@@ -1647,7 +1702,7 @@ function Footer({ navigate }) {
 function FooterColumn({ title, children }) {
   return (
     <div>
-      <h5 style={fontMontserrat}>{title}</h5>
+      <div className="ltc-footer-column-title" style={fontMontserrat}>{title}</div>
       <div>{children}</div>
     </div>
   );

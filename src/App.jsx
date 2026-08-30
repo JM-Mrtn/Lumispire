@@ -155,7 +155,7 @@ const TrainingEnrollmentForm = lazyImport(
   () => import("./TrainingAndAssessment/TrainingEnrollmentForm"),
 );
 const TrainingRequirements = lazyImport(
-  () => import("./TrainingAndAssessment/TrainingRequirementsPage"),
+  () => import("./TrainingAndAssessment/TrainingRequirements"),
 );
 const TrainingContactUs = lazyImport(
   () => import("./TrainingAndAssessment/TrainingContactUs"),
