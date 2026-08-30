@@ -56,9 +56,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 const PH_PHONE_REGEX = /^(09\d{9}|\+639\d{9})$/;
 
 const enrollmentPageStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap");
-
-  .ltc-enrollment-page {
+.ltc-enrollment-page {
     --green-950: #071f14;
     --green-900: #0e3321;
     --green-800: #174a30;
@@ -1375,6 +1373,9 @@ export default function TrainingEnrollmentForm() {
             <img
               src="/TamsiLogo.png"
               alt="TAMSI Logo"
+              width="44"
+              height="44"
+              decoding="async"
               className="h-11 w-11 object-contain"
             />
 
@@ -1444,7 +1445,7 @@ export default function TrainingEnrollmentForm() {
           <button
             type="button"
             onClick={() => setMobileOpen((prev) => !prev)}
-            className="rounded-md border border-[#45674b]/20 bg-[#f7faf2] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#45674b] md:hidden"
+            className="min-h-[44px] min-w-[44px] rounded-md border border-[#45674b]/20 bg-[#f7faf2] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#45674b] md:hidden"
           >
             Menu
           </button>
@@ -1576,6 +1577,13 @@ export default function TrainingEnrollmentForm() {
                   <SectionTitle title="Personal Information" />
 
                   <div className="w-full md:w-[360px]">
+                    <label
+                      htmlFor="training-enroll-course"
+                      className="mb-1 block font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90"
+                    >
+                      Course
+                    </label>
+
                     <Select
                       name="course"
                       value={form.course}
@@ -1611,7 +1619,10 @@ export default function TrainingEnrollmentForm() {
 
                     {(touched.course || touched.batchId) &&
                       (errors.course || errors.batchId) && (
-                        <p className="mt-1 text-[10px] font-semibold text-red-200">
+                        <p
+                          id="training-enroll-course-error"
+                          className="mt-1 text-[10px] font-semibold text-red-200"
+                        >
                           {errors.course || errors.batchId}
                         </p>
                       )}
@@ -1621,6 +1632,7 @@ export default function TrainingEnrollmentForm() {
                 <div className="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-3">
                   <Field
                     label="First Name"
+                    htmlFor="training-enroll-firstName"
                     error={touched.firstName ? errors.firstName : ""}
                   >
                     <Input
@@ -1635,6 +1647,7 @@ export default function TrainingEnrollmentForm() {
 
                   <Field
                     label="Last Name"
+                    htmlFor="training-enroll-lastName"
                     error={touched.lastName ? errors.lastName : ""}
                   >
                     <Input
@@ -1649,6 +1662,7 @@ export default function TrainingEnrollmentForm() {
 
                   <Field
                     label="Middle Name"
+                    htmlFor="training-enroll-middleName"
                     error={touched.middleName ? errors.middleName : ""}
                   >
                     <Input
@@ -1663,6 +1677,7 @@ export default function TrainingEnrollmentForm() {
 
                   <Field
                     label="Phone Number"
+                    htmlFor="training-enroll-phoneNumber"
                     error={touched.phoneNumber ? errors.phoneNumber : ""}
                   >
                     <Input
@@ -1676,7 +1691,7 @@ export default function TrainingEnrollmentForm() {
                     />
                   </Field>
 
-                  <Field label="Email" error={touched.email ? errors.email : ""}>
+                  <Field label="Email" htmlFor="training-enroll-email" error={touched.email ? errors.email : ""}>
                     <>
                       <Input
                         type="email"
@@ -1697,6 +1712,7 @@ export default function TrainingEnrollmentForm() {
 
                   <Field
                     label="Date of Birth"
+                    htmlFor="training-enroll-birthDate"
                     error={touched.birthDate ? errors.birthDate : ""}
                   >
                     <Input
@@ -1709,12 +1725,13 @@ export default function TrainingEnrollmentForm() {
                     />
                   </Field>
 
-                  <Field label="Age">
-                    <Input value={age ?? ""} readOnly />
+                  <Field label="Age" htmlFor="training-enroll-age">
+                    <Input id="training-enroll-age" value={age ?? ""} readOnly />
                   </Field>
 
                   <Field
                     label="Gender"
+                    htmlFor="training-enroll-gender"
                     error={touched.gender ? errors.gender : ""}
                   >
                     <Select
@@ -1733,6 +1750,7 @@ export default function TrainingEnrollmentForm() {
 
                   <Field
                     label="Status"
+                    htmlFor="training-enroll-status"
                     error={touched.status ? errors.status : ""}
                   >
                     <Select
@@ -1754,6 +1772,7 @@ export default function TrainingEnrollmentForm() {
                   <div className="md:col-span-3">
                     <Field
                       label="Complete Address"
+                    htmlFor="training-enroll-completeAddress"
                       error={
                         touched.completeAddress ? errors.completeAddress : ""
                       }
@@ -1815,14 +1834,22 @@ export default function TrainingEnrollmentForm() {
                       onChange={() => onEducationChange("others")}
                     />
 
+                    <label
+                      htmlFor="training-enroll-otherEducationText"
+                      className="sr-only"
+                    >
+                      Other educational attainment
+                    </label>
+
                     <input
+                      id="training-enroll-otherEducationText"
                       type="text"
                       name="otherEducationText"
                       value={form.otherEducationText}
                       onChange={onChange}
                       onBlur={() => markTouched("otherEducationText")}
                       maxLength={MAX_LENGTHS.otherEducationText}
-                      className="h-[20px] w-[120px] border-b border-white/80 bg-transparent text-xs font-bold text-white outline-none"
+                      className="min-h-[44px] w-[180px] border-b border-[#45674b]/40 bg-white/90 px-2 text-xs font-bold text-[#263d2c] outline-none"
                     />
                   </div>
                 </div>
@@ -2003,6 +2030,9 @@ export default function TrainingEnrollmentForm() {
                 <img
                   src="/TrainingLumispireLogo.png"
                   alt="Training Lumispire Logo"
+                  width="110"
+                  loading="lazy"
+                  decoding="async"
                   className="h-auto w-[110px] object-contain"
                   onError={(e) => {
                     e.currentTarget.src =
@@ -2010,9 +2040,9 @@ export default function TrainingEnrollmentForm() {
                   }}
                 />
 
-                <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
+                <span className="font-['Montserrat',sans-serif] text-2xl font-extrabold tracking-wide text-[#45674b]">
                   TRAINING &amp; ASSESSMENT
-                </h2>
+                </span>
               </div>
             </div>
 
@@ -2023,7 +2053,7 @@ export default function TrainingEnrollmentForm() {
                 <button
                   type="button"
                   onClick={() => goTo("/training")}
-                  className="block hover:text-[#173d25]"
+                  className="inline-flex min-h-[44px] items-center py-1 hover:text-[#173d25]"
                 >
                   Home
                 </button>
@@ -2031,7 +2061,7 @@ export default function TrainingEnrollmentForm() {
                 <button
                   type="button"
                   onClick={() => goTo("/training-course")}
-                  className="block hover:text-[#173d25]"
+                  className="inline-flex min-h-[44px] items-center py-1 hover:text-[#173d25]"
                 >
                   Course
                 </button>
@@ -2039,7 +2069,7 @@ export default function TrainingEnrollmentForm() {
                 <button
                   type="button"
                   onClick={() => goTo("/training-certificate-validation")}
-                  className="block hover:text-[#173d25]"
+                  className="inline-flex min-h-[44px] items-center py-1 hover:text-[#173d25]"
                 >
                   Certificate Validation
                 </button>
@@ -2047,7 +2077,7 @@ export default function TrainingEnrollmentForm() {
                 <button
                   type="button"
                   onClick={() => goTo("/training-login")}
-                  className="block hover:text-[#173d25]"
+                  className="inline-flex min-h-[44px] items-center py-1 hover:text-[#173d25]"
                 >
                   Sign In
                 </button>
@@ -2105,23 +2135,34 @@ function SectionTitle({ title }) {
   );
 }
 
-function Field({ label, children, error = "" }) {
+function Field({ label, htmlFor, children, error = "" }) {
+  const errorId = htmlFor ? `${htmlFor}-error` : undefined;
+
   return (
     <div>
-      <label className="mb-1 block font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90">
+      <label
+        htmlFor={htmlFor}
+        className="mb-1 block font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90"
+      >
         {label}
       </label>
 
       {children}
 
       {error && (
-        <p className="mt-1 text-[10px] font-semibold text-red-200">{error}</p>
+        <p
+          id={errorId}
+          className="mt-1 text-[10px] font-semibold text-red-200"
+        >
+          {error}
+        </p>
       )}
     </div>
   );
 }
 
 function Input({
+  id,
   type = "text",
   name,
   value,
@@ -2133,8 +2174,10 @@ function Input({
   placeholder = "",
   inputMode,
 }) {
+  const inputId = id || (name ? `training-enroll-${name}` : undefined);
   return (
     <input
+      id={inputId}
       type={type}
       name={name}
       value={value}
@@ -2145,8 +2188,9 @@ function Input({
       placeholder={placeholder}
       inputMode={inputMode}
       aria-invalid={!!error}
+      aria-describedby={error && inputId ? `${inputId}-error` : undefined}
       className={[
-        "h-[31px] w-full rounded-md border bg-white px-3 font-['Inter',sans-serif] text-[12px] font-semibold text-[#263d2c] outline-none shadow-sm",
+        "h-12 w-full rounded-md border bg-white px-3 font-['Inter',sans-serif] text-[12px] font-semibold text-[#263d2c] outline-none shadow-sm",
         readOnly ? "cursor-default bg-white/95" : "",
         error ? "border-red-300" : "border-white/80 focus:border-white",
       ].join(" ")}
@@ -2154,16 +2198,19 @@ function Input({
   );
 }
 
-function Select({ name, value, onChange, onBlur, error = "", options = [] }) {
+function Select({ id, name, value, onChange, onBlur, error = "", options = [] }) {
+  const selectId = id || (name ? `training-enroll-${name}` : undefined);
   return (
     <select
+      id={selectId}
       name={name}
       value={value}
       onChange={onChange}
       onBlur={onBlur}
       aria-invalid={!!error}
+      aria-describedby={error && selectId ? `${selectId}-error` : undefined}
       className={[
-        "h-[31px] w-full rounded-md border bg-white px-3 font-['Inter',sans-serif] text-[12px] font-semibold text-[#263d2c] outline-none shadow-sm",
+        "h-12 w-full rounded-md border bg-white px-3 font-['Inter',sans-serif] text-[12px] font-semibold text-[#263d2c] outline-none shadow-sm",
         error ? "border-red-300" : "border-white/80 focus:border-white",
       ].join(" ")}
     >
@@ -2178,12 +2225,12 @@ function Select({ name, value, onChange, onBlur, error = "", options = [] }) {
 
 function CheckItem({ label, checked, onChange }) {
   return (
-    <label className="flex items-center gap-2 font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90">
+    <label className="flex min-h-[44px] items-center gap-2 font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="h-3.5 w-3.5 accent-white"
+        className="h-5 w-5 accent-[#235f3e]"
       />
       <span>{label}</span>
     </label>
@@ -2201,19 +2248,24 @@ function UploadField({
 }) {
   return (
     <div>
-      <label className="mb-1 block font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90">
+      <label
+        htmlFor={`training-enroll-${name}`}
+        className="mb-1 block font-['Montserrat',sans-serif] text-[11px] font-extrabold text-white/90"
+      >
         {label}
       </label>
 
       <input
         key={inputKey}
+        id={`training-enroll-${name}`}
         type="file"
         name={name}
         accept={accept}
         onChange={(e) => onChange(e)}
         aria-invalid={!!error}
+        aria-describedby={error ? `training-enroll-${name}-error` : undefined}
         className={[
-          "block h-[31px] w-full rounded-md border bg-white px-2 py-1 font-['Inter',sans-serif] text-[10px] font-semibold text-[#263d2c] shadow-sm file:mr-2 file:rounded file:border-0 file:bg-[#45674b] file:px-2 file:py-0.5 file:text-[10px] file:font-bold file:text-white",
+          "block min-h-12 w-full rounded-md border bg-white px-2 py-2 font-['Inter',sans-serif] text-[10px] font-semibold text-[#263d2c] shadow-sm file:mr-2 file:rounded file:border-0 file:bg-[#45674b] file:px-2 file:py-0.5 file:text-[10px] file:font-bold file:text-white",
           error ? "border-red-300" : "border-white/80",
         ].join(" ")}
       />
@@ -2225,7 +2277,12 @@ function UploadField({
       )}
 
       {error && (
-        <p className="mt-1 text-[10px] font-semibold text-red-200">{error}</p>
+        <p
+          id={`training-enroll-${name}-error`}
+          className="mt-1 text-[10px] font-semibold text-red-200"
+        >
+          {error}
+        </p>
       )}
     </div>
   );
