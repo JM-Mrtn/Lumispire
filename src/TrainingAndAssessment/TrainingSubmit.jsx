@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TrainingChatbot from "./TrainingChatbot";
 
-const HEADER_LOGO_IMAGE = "/TamsiLogo.png";
-const FOOTER_LOGO_IMAGE = "/TrainingLumispireLogo.png";
+const HEADER_LOGO_IMAGE = "/TamsiLogo.webp";
+const FOOTER_LOGO_IMAGE = "/TrainingLumispireLogo.webp";
 const HERO_IMAGE = "/tamsi-banner.jpg";
 
 const NAV_ITEMS = [
@@ -28,7 +28,7 @@ export default function TrainingSubmit() {
   const emailNoticeSent = Boolean(state.emailNoticeSent);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f8fbf9] text-[#071f14]">
+    <div className="min-h-screen overflow-x-hidden bg-[#f8fbf9] font-sans text-[#071f14]" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
       <SubmitHeader navigate={navigate} onOpenMenu={() => setMobileOpen(true)} />
 
       <main>
@@ -37,8 +37,11 @@ export default function TrainingSubmit() {
             src={HERO_IMAGE}
             alt=""
             aria-hidden="true"
+            width="1600"
+            height="520"
             loading="eager"
             decoding="async"
+            fetchPriority="high"
             className="absolute inset-0 -z-20 h-full w-full object-cover opacity-30"
           />
           <div
@@ -55,18 +58,18 @@ export default function TrainingSubmit() {
           </div>
         </section>
 
-        <section className="bg-[#2e5038] px-5 py-12 text-white sm:px-8 lg:px-12">
+        <section className="bg-[#f6f8f4] px-5 py-14 sm:px-8 lg:px-12">
           <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-[28px] bg-white p-6 text-[#395345] shadow-xl sm:p-8">
-              <div className="inline-flex rounded-full bg-[#eef1e7] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#6f7c71]">
+            <div className="rounded-[28px] border border-[#dfe7df] border-t-4 border-t-[#d7a84d] bg-white p-6 text-[#173d27] shadow-[0_18px_46px_rgba(8,39,25,.10)] sm:p-8">
+              <div className="inline-flex rounded-full bg-[#fff7dc] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#2f4536]">
                 Success
               </div>
 
-              <h2 className="mt-5 font-['Montserrat',sans-serif] text-3xl font-extrabold text-[#395345] sm:text-4xl">
+              <h2 className="mt-5 text-3xl font-black tracking-tight text-[#071f14] sm:text-4xl">
                 Thank you, {firstName}!
               </h2>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#5f6e63] sm:text-base">
+              <p className="mt-4 max-w-2xl text-sm font-semibold leading-7 text-[#405247] sm:text-base">
                 Your TAMSI enrollment application was submitted successfully.
                 Please wait while the training admin reviews your information and
                 uploaded requirements.
@@ -82,12 +85,12 @@ export default function TrainingSubmit() {
                 />
               </div>
 
-              <div className="mt-8 rounded-2xl bg-[#f7f8f3] p-5 ring-1 ring-[#e4e9de]">
-                <h3 className="font-['Montserrat',sans-serif] text-xl font-extrabold text-[#395345]">
+              <div className="mt-8 rounded-2xl bg-[#f7faf7] p-5 ring-1 ring-[#dfe7df]">
+                <h3 className="text-xl font-black text-[#173d27]">
                   What happens next?
                 </h3>
 
-                <ul className="mt-4 space-y-3 text-sm leading-7 text-[#5f6e63]">
+                <ul className="mt-4 space-y-3 text-sm font-semibold leading-7 text-[#405247]">
                   <li>• Your submitted documents will be reviewed by the training admin.</li>
                   <li>• Wait for an update regarding your application approval.</li>
                   <li>• Once approved, your trainee account details will be sent to your email.</li>
@@ -98,7 +101,7 @@ export default function TrainingSubmit() {
                 <button
                   type="button"
                   onClick={() => navigate("/training")}
-                  className="rounded-full bg-[#395345] px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#2f463a]"
+                  className="min-h-[48px] rounded-full bg-gradient-to-r from-[#f4d484] to-[#d7a84d] px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-[#102418] shadow-[0_12px_28px_rgba(215,168,77,.22)] transition hover:-translate-y-0.5"
                 >
                   Back to Training
                 </button>
@@ -106,43 +109,43 @@ export default function TrainingSubmit() {
                 <button
                   type="button"
                   onClick={() => navigate("/training-login")}
-                  className="rounded-full border border-[#c8ccbf] bg-white px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-[#395345] transition hover:bg-[#f1f4ec]"
+                  className="min-h-[48px] rounded-full border border-[#b8c7bb] bg-white px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-[#235f3e] transition hover:bg-[#f0f6f1]"
                 >
                   Go to Sign In
                 </button>
               </div>
             </div>
 
-            <div className="rounded-[28px] bg-[#dbe2d1] p-6 shadow-xl ring-1 ring-black/5 sm:p-8">
-              <div className="inline-flex rounded-full bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#6f7c71]">
+            <div className="rounded-[28px] border border-[#dfe7df] border-t-4 border-t-[#235f3e] bg-white p-6 shadow-[0_18px_46px_rgba(8,39,25,.10)] sm:p-8">
+              <div className="inline-flex rounded-full bg-[#eef3e9] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#2f4536]">
                 Reminder
               </div>
 
-              <h3 className="mt-5 font-['Montserrat',sans-serif] text-2xl font-extrabold text-[#395345]">
+              <h3 className="mt-5 text-2xl font-black text-[#071f14]">
                 Keep your email active
               </h3>
 
-              <p className="mt-4 text-sm leading-7 text-[#5f6e63]">
+              <p className="mt-4 text-sm font-semibold leading-7 text-[#405247]">
                 Make sure the email you used in your enrollment form stays active,
                 because TAMSI will use it for updates and approval notices.
               </p>
 
-              <div className="mt-6 rounded-2xl bg-white/85 p-5 ring-1 ring-black/5">
-                <div className="text-xs font-bold uppercase tracking-[0.16em] text-[#748175]">
+              <div className="mt-6 rounded-2xl bg-[#f7faf7] p-5 ring-1 ring-[#dfe7df]">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#334f3c]">
                   Note
                 </div>
-                <p className="mt-3 text-sm leading-7 text-[#627165]">
+                <p className="mt-3 text-sm font-semibold leading-7 text-[#405247]">
                   {emailNoticeSent
                     ? "A confirmation email has been sent to your submitted email address."
                     : "Your application was saved successfully. If no confirmation email arrives, your submission is still recorded in the system."}
                 </p>
               </div>
 
-              <div className="mt-6 rounded-2xl bg-white/85 p-5 ring-1 ring-black/5">
-                <div className="text-xs font-bold uppercase tracking-[0.16em] text-[#748175]">
+              <div className="mt-6 rounded-2xl bg-[#f7faf7] p-5 ring-1 ring-[#dfe7df]">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#334f3c]">
                   Support
                 </div>
-                <p className="mt-3 text-sm leading-7 text-[#627165]">
+                <p className="mt-3 text-sm font-semibold leading-7 text-[#405247]">
                   If you need help with your application, contact the TAMSI training
                   office through the contact details on the training pages.
                 </p>
@@ -171,6 +174,7 @@ export default function TrainingSubmit() {
           aria-hidden="true"
           width="52"
           height="52"
+          decoding="async"
           className="h-full w-full rounded-full object-contain"
         />
       </button>
@@ -326,6 +330,7 @@ function SubmitFooter({ navigate }) {
             src={FOOTER_LOGO_IMAGE}
             alt="Training Lumispire Logo"
             width="110"
+            height="80"
             loading="lazy"
             decoding="async"
             className="h-auto w-[110px] object-contain"
@@ -380,11 +385,11 @@ function SubmitFooter({ navigate }) {
 
 function InfoCard({ label, value }) {
   return (
-    <div className="rounded-2xl bg-[#f7f8f3] p-4 ring-1 ring-[#e4e9de]">
-      <div className="text-xs font-bold uppercase tracking-[0.16em] text-[#748175]">
+    <div className="rounded-2xl bg-[#f7faf7] p-4 ring-1 ring-[#dfe7df]">
+      <div className="text-xs font-black uppercase tracking-[0.16em] text-[#334f3c]">
         {label}
       </div>
-      <div className="mt-2 break-words text-sm font-semibold text-[#395345]">
+      <div className="mt-2 break-words text-sm font-bold text-[#173d27]">
         {value}
       </div>
     </div>
