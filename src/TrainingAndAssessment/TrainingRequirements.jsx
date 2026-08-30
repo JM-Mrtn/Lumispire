@@ -1279,7 +1279,7 @@ export default function TrainingRequirements() {
   }
 
   return (
-    <div className="ltc-training-home">
+    <div className="ltc-training-home" data-page-version="requirements-fresh-module-20260830">
       <style>{pageStyles}</style>
 
       <Header goTo={goTo} onOpenMenu={() => setMobileOpen(true)} />
