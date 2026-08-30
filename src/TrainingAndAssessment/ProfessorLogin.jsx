@@ -1,12 +1,12 @@
 // src/TrainingAndAssessment/ProfessorLogin.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const BACKGROUND_IMAGES = ["/TrainingAds.png", "/LTCBanner.png", "/TrainingAssessment.png"];
+const BACKGROUND_IMAGE = "/TrainingAds.webp";
 
-const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
-const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
-const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+const fontMontserrat = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPontano = { fontFamily: "Arial, Helvetica, sans-serif" };
+const fontPoppins = { fontFamily: "Arial, Helvetica, sans-serif" };
 
 function normalizeApiBase(raw) {
   if (!raw) return "http://localhost:5000/api";
@@ -54,20 +54,12 @@ export default function ProfessorLogin() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
-  const [bgIndex, setBgIndex] = useState(0);
 
   const canSubmit = useMemo(
     () => form.username.trim().length >= 3 && form.password.length >= 3,
     [form]
   );
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, 5000);
-
-    return () => window.clearInterval(timer);
-  }, []);
 
   const onChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -152,8 +144,11 @@ export default function ProfessorLogin() {
   const ProfessorLogo = () => (
     <button type="button" onClick={goToTrainingHome} className="ltc-logo" aria-label="Go to training home">
       <img
-        src="/LTCLogo.jpg"
+        src="/LTCLogo.webp"
         alt="Training and Assessment logo"
+        width="42"
+        height="42"
+        decoding="async"
         className="ltc-logo-icon"
         onError={(event) => {
           event.currentTarget.style.display = "none";
@@ -170,9 +165,7 @@ export default function ProfessorLogin() {
   return (
     <div className="ltc-hotel-login-page" style={fontPontano}>
       <style>{`
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
-
-        .ltc-hotel-login-page {
+.ltc-hotel-login-page {
           --green-950: #071f14;
           --green-900: #0e3321;
           --green-800: #174a30;
@@ -197,11 +190,23 @@ export default function ProfessorLogin() {
           line-height: 1.65;
           letter-spacing: -.01em;
           overflow-x: hidden;
-          font-family: "Inter", Arial, sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
         }
 
         .ltc-hotel-login-page * {
           box-sizing: border-box;
+        }
+
+        .sr-only {
+          position: absolute !important;
+          width: 1px !important;
+          height: 1px !important;
+          padding: 0 !important;
+          margin: -1px !important;
+          overflow: hidden !important;
+          clip: rect(0, 0, 0, 0) !important;
+          white-space: nowrap !important;
+          border: 0 !important;
         }
 
         .ltc-login-shell {
@@ -219,15 +224,9 @@ export default function ProfessorLogin() {
           z-index: -4;
           width: 100%;
           height: 100%;
-          background-size: cover;
-          background-position: center;
-          opacity: 0;
-          transform: scale(1.04);
-          transition: opacity 1000ms ease;
-        }
-
-        .ltc-login-bg.active {
-          opacity: 1;
+          object-fit: cover;
+          object-position: center;
+          opacity: .48;
         }
 
         .ltc-login-shell::before {
@@ -256,7 +255,6 @@ export default function ProfessorLogin() {
             radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
             radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
             radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
-          filter: blur(30px);
           pointer-events: none;
         }
 
@@ -339,6 +337,7 @@ export default function ProfessorLogin() {
           font-weight: 800;
           letter-spacing: .08em;
           text-transform: uppercase;
+          min-height: 44px;
           padding: 10px 14px;
           border-radius: 999px;
           transition: .25s var(--ease);
@@ -384,7 +383,6 @@ export default function ProfessorLogin() {
           text-transform: uppercase;
           letter-spacing: .22em;
           line-height: 1;
-          backdrop-filter: blur(8px);
         }
 
         .ltc-login-copy h2 {
@@ -420,7 +418,6 @@ export default function ProfessorLogin() {
           border-radius: 20px;
           border: 1px solid rgba(255,255,255,.16);
           background: rgba(255,255,255,.10);
-          backdrop-filter: blur(10px);
           box-shadow: 0 14px 32px rgba(0,0,0,.12);
           vertical-align: top;
         }
@@ -460,7 +457,6 @@ export default function ProfessorLogin() {
           background: var(--glass);
           border: 1px solid rgba(255,255,255,.76);
           box-shadow: var(--shadow-lg);
-          backdrop-filter: blur(18px);
           padding: 34px;
           transition: .38s var(--ease);
         }
@@ -475,8 +471,7 @@ export default function ProfessorLogin() {
         }
 
         .ltc-login-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 36px 90px rgba(8,39,25,.26);
+          box-shadow: 0 30px 72px rgba(8,39,25,.22);
           border-color: rgba(215,168,77,.45);
         }
 
@@ -559,24 +554,31 @@ export default function ProfessorLogin() {
           height: 20px;
         }
 
+        .ltc-password-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 48px;
+          gap: 8px;
+          align-items: center;
+        }
+
         .ltc-eye-button {
-          position: absolute;
-          right: 17px;
-          top: 50%;
-          transform: translateY(-50%);
-          border: 0;
-          background: transparent;
+          width: 48px;
+          height: 48px;
+          border: 1px solid rgba(35,95,62,.18);
+          border-radius: 999px;
+          background: rgba(248,250,247,.96);
           color: var(--green-700);
           cursor: pointer;
           display: grid;
           place-items: center;
           padding: 0;
-          transition: .25s var(--ease);
+          transition: color .2s ease, background .2s ease, border-color .2s ease;
         }
 
         .ltc-eye-button:hover {
           color: var(--green-950);
-          transform: translateY(-50%) scale(1.05);
+          background: white;
+          border-color: rgba(35,95,62,.38);
         }
 
         .ltc-eye-button:disabled {
@@ -596,10 +598,6 @@ export default function ProfessorLogin() {
           outline: none;
           transition: .25s var(--ease);
           font-family: inherit;
-        }
-
-        .ltc-input.has-eye {
-          padding-right: 52px;
         }
 
         .ltc-input::placeholder {
@@ -867,13 +865,17 @@ export default function ProfessorLogin() {
 `}</style>
 
       <div className="ltc-login-shell">
-        {BACKGROUND_IMAGES.map((image, index) => (
-          <div
-            key={image}
-            className={`ltc-login-bg ${bgIndex === index ? "active" : ""}`}
-            style={{ backgroundImage: `url('${image}')` }}
-          />
-        ))}
+        <img
+          src={BACKGROUND_IMAGE}
+          alt=""
+          aria-hidden="true"
+          width="552"
+          height="367"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          className="ltc-login-bg"
+        />
 
         <header className="ltc-header">
           <div className="ltc-container ltc-nav">
@@ -934,6 +936,8 @@ export default function ProfessorLogin() {
 
             {msg.text ? (
               <div
+                role={msg.type === "success" ? "status" : "alert"}
+                aria-live={msg.type === "success" ? "polite" : "assertive"}
                 className={`ltc-error-alert ${msg.type === "success" ? "success" : ""}`}
                 style={fontPoppins}
               >
@@ -948,7 +952,13 @@ export default function ProfessorLogin() {
                     <UserIcon />
                   </span>
 
+                  <label htmlFor="professor-login-username" className="sr-only">
+                    Professor username or email
+                  </label>
+
                   <input
+                    id="professor-login-username"
+                    name="username"
                     type="text"
                     placeholder="Professor username or email"
                     value={form.username}
@@ -962,27 +972,36 @@ export default function ProfessorLogin() {
               </div>
 
               <div className="ltc-field-wrap">
-                <div className="ltc-input-shell">
-                  <span className="ltc-input-icon">
-                    <LockIcon />
-                  </span>
+                <label htmlFor="professor-login-password" className="sr-only">
+                  Professor password
+                </label>
 
-                  <input
-                    type={showPw ? "text" : "password"}
-                    placeholder="Professor password"
-                    value={form.password}
-                    onChange={(e) => onChange("password", e.target.value)}
-                    autoComplete="current-password"
-                    disabled={loading}
-                    className="ltc-input has-eye"
-                    style={fontPoppins}
-                  />
+                <div className="ltc-password-row">
+                  <div className="ltc-input-shell">
+                    <span className="ltc-input-icon">
+                      <LockIcon />
+                    </span>
+
+                    <input
+                      id="professor-login-password"
+                      name="password"
+                      type={showPw ? "text" : "password"}
+                      placeholder="Professor password"
+                      value={form.password}
+                      onChange={(e) => onChange("password", e.target.value)}
+                      autoComplete="current-password"
+                      disabled={loading}
+                      className="ltc-input"
+                      style={fontPoppins}
+                    />
+                  </div>
 
                   <button
                     type="button"
                     onClick={() => setShowPw((value) => !value)}
                     className="ltc-eye-button"
                     aria-label={showPw ? "Hide password" : "Show password"}
+                    aria-pressed={showPw}
                     disabled={loading}
                   >
                     <EyeIcon open={showPw} />
