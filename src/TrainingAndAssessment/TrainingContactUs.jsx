@@ -71,7 +71,7 @@ const publicChromeStyles = `
   .ltc-profile-wrap { display:flex; align-items:center; }
   .ltc-sign-in-button { border:1px solid rgba(255,255,255,.22); border-radius:999px; padding:10px 18px; background:rgba(255,255,255,.08); }
   .ltc-sign-in-button::after { display:none; }
-  .ltc-menu-button { display:none; width:42px; height:42px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.08); color:white; cursor:pointer; }
+  .ltc-menu-button { display:none; width:44px; height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.08); color:white; cursor:pointer; }
   .ltc-menu-button svg { width:22px; height:22px; }
   .ltc-footer { width:100%; background:var(--footer-green); color:white; padding:30px 0 12px; }
   .ltc-footer .ltc-container { width:100%; max-width:none; padding-left:40px; padding-right:40px; }
@@ -243,6 +243,7 @@ export default function TrainingContactUs() {
             aria-hidden="true"
             loading="eager"
             decoding="async"
+            fetchPriority="high"
             className="absolute inset-0 -z-20 h-full w-full object-cover opacity-30"
           />
           <div
@@ -259,35 +260,46 @@ export default function TrainingContactUs() {
           </div>
         </section>
 
-        <section className="bg-[#2e5038] px-5 py-10 text-white sm:px-8 lg:px-12">
-          <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-2">
-            <div className="rounded-2xl bg-[#2e5038] p-6 lg:border-r lg:border-white/15 lg:pr-10">
-              <SectionHeading title="Get in touch" />
+        <section className="ta-contact-section">
+          <div className="ta-contact-grid">
+            <article className="ta-contact-card">
+              <p className="ta-contact-eyebrow" style={fontPoppins}>Contact Information</p>
+              <h2 className="ta-contact-title" style={fontMontserrat}>Get in touch</h2>
+              <p className="ta-contact-copy" style={fontPontano}>
+                Reach the TAMSI team for enrollment questions, course information, requirements,
+                scheduling, and other Training &amp; Assessment concerns.
+              </p>
 
-              <div className="mt-8 space-y-6">
-                <ContactItem icon={<LocationIcon />}>
+              <div className="ta-contact-list">
+                <ContactItem icon={<LocationIcon />} label="Training Center">
                   <span>{TRAINING_CONTACT_INFO.addressFull}</span>
                 </ContactItem>
 
-                <ContactItem icon={<PhoneIcon />}>
+                <ContactItem icon={<PhoneIcon />} label="Phone">
                   <span>{TRAINING_CONTACT_INFO.phone}</span>
                 </ContactItem>
 
-                <ContactItem icon={<MailIcon />}>
+                <ContactItem icon={<MailIcon />} label="Email">
                   <span>{TRAINING_CONTACT_INFO.email1}</span>
                   <span>{TRAINING_CONTACT_INFO.email2}</span>
                 </ContactItem>
 
-                <ContactItem icon={<ClockIcon />}>
+                <ContactItem icon={<ClockIcon />} label="Office Hours">
                   <span>{TRAINING_CONTACT_INFO.hours}</span>
                 </ContactItem>
               </div>
-            </div>
+            </article>
 
-            <div className="rounded-2xl bg-[#2e5038] p-6 lg:pl-10">
-              <SectionHeading title="Send us Message" />
+            <section className="ta-contact-card" aria-labelledby="training-contact-form-title">
+              <p className="ta-contact-eyebrow" style={fontPoppins}>Send a Message</p>
+              <h2 id="training-contact-form-title" className="ta-contact-title" style={fontMontserrat}>
+                How can we help?
+              </h2>
+              <p className="ta-contact-copy" style={fontPontano}>
+                Complete the form below and our Training &amp; Assessment team will review your message.
+              </p>
 
-              <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+              <form onSubmit={handleSubmit} className="ta-contact-form" noValidate>
                 <ContactField
                   label="Your Name"
                   name="name"
@@ -319,12 +331,13 @@ export default function TrainingContactUs() {
                   required
                 />
 
-                <div>
-                  <label className="mb-1 block text-xs font-extrabold text-white">
-                    Message
+                <div className="ta-contact-field">
+                  <label htmlFor="training-contact-message" className="ta-contact-label">
+                    Message <span aria-hidden="true">*</span>
                   </label>
 
                   <textarea
+                    id="training-contact-message"
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
@@ -332,33 +345,40 @@ export default function TrainingContactUs() {
                     rows={5}
                     required
                     aria-invalid={Boolean(touched.message && errors.message)}
-                    className={`w-full resize-none rounded-xl border-2 bg-transparent px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/50 focus:border-white ${
-                      touched.message && errors.message ? "border-[#ffd4d4]" : "border-white/80"
+                    aria-describedby={
+                      touched.message && errors.message
+                        ? "training-contact-message-error"
+                        : undefined
+                    }
+                    className={`ta-contact-textarea ${
+                      touched.message && errors.message ? "is-error" : ""
                     }`}
                   />
+
                   {touched.message && errors.message ? (
-                    <p className="mt-1 text-xs font-bold text-[#ffd4d4]">{errors.message}</p>
+                    <p id="training-contact-message-error" className="ta-contact-error">
+                      {errors.message}
+                    </p>
                   ) : null}
                 </div>
 
                 {status.message ? (
                   <div
-                    role="status"
-                    className={`rounded-xl px-4 py-3 text-sm font-bold ${
-                      status.type === "success"
-                        ? "bg-white text-[#2e5038]"
-                        : "border border-[#ffd4d4] bg-[#7c2d2d]/35 text-white"
+                    role={status.type === "success" ? "status" : "alert"}
+                    aria-live={status.type === "success" ? "polite" : "assertive"}
+                    className={`ta-contact-status ${
+                      status.type === "success" ? "success" : "error"
                     }`}
                   >
                     {status.message}
                   </div>
                 ) : null}
 
-                <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+                <div className="ta-contact-actions">
                   <button
                     type="submit"
                     disabled={isSending}
-                    className="h-10 flex-1 rounded-full bg-white px-6 text-xs font-extrabold uppercase tracking-wide text-[#45674b] transition hover:bg-[#eef1e7] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="ta-contact-button primary"
                   >
                     {isSending ? "Sending..." : "Submit"}
                   </button>
@@ -367,38 +387,36 @@ export default function TrainingContactUs() {
                     type="button"
                     onClick={resetForm}
                     disabled={isSending}
-                    className="h-10 flex-1 rounded-full border-2 border-white bg-transparent px-6 text-xs font-extrabold uppercase tracking-wide text-white transition hover:bg-white hover:text-[#45674b] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="ta-contact-button secondary"
                   >
-                    Cancel
+                    Clear
                   </button>
                 </div>
               </form>
-            </div>
+            </section>
           </div>
         </section>
 
-        <section className="bg-[#123a20] px-5 py-8 text-white sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[1280px]">
-            <div className="text-center">
-              <h2 className="font-['Montserrat',sans-serif] text-2xl font-extrabold sm:text-3xl">
+        <section className="ta-map-section" aria-labelledby="training-map-title">
+          <div className="ta-map-card">
+            <div className="ta-map-header">
+              <p className="ta-contact-eyebrow" style={fontPoppins}>Visit TAMSI</p>
+              <h2 id="training-map-title" className="ta-map-title" style={fontMontserrat}>
                 Our Location Guide Map
               </h2>
-              <div className="mx-auto mt-3 h-[3px] max-w-[380px] rounded-full bg-white/45" />
+              <p className="ta-map-subtitle" style={fontPontano}>
+                2/F 5441 Curie Street, Palanan, Makati City
+              </p>
             </div>
 
-            <div className="mt-8 overflow-hidden rounded-2xl bg-white shadow-xl">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.6479398832357!2d120.99862151086919!3d14.562114277958653!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c991472da61b%3A0x3a4930acd0ee798d!2s5441%20Curie%20St%2C%20Makati%20City%2C%201235%20Metro%20Manila!5e0!3m2!1sen!2sph!4v1774615488486!5m2!1sen!2sph"
-                width="100%"
-                height="420"
-                style={{ border: 0 }}
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="TAMSI Location Guide Map"
-                className="block w-full"
-              />
-            </div>
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.6479398832357!2d120.99862151086919!3d14.562114277958653!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c991472da61b%3A0x3a4930acd0ee798d!2s5441%20Curie%20St%2C%20Makati%20City%2C%201235%20Metro%20Manila!5e0!3m2!1sen!2sph!4v1774615488486!5m2!1sen!2sph"
+              title="TAMSI Location Guide Map"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+              className="ta-map-frame"
+            />
           </div>
         </section>
       </main>
@@ -420,8 +438,8 @@ function Header({ goTo, onOpenMenu }) {
     <header className="ltc-header">
       <div className="ltc-container">
         <div className="ltc-nav">
-          <button type="button" onClick={() => goTo(TRAINING_HOME_ROUTE)} className="ltc-logo">
-            <img src={HEADER_LOGO_IMAGE} alt="TAMSI Logo" className="ltc-logo-icon" />
+          <button type="button" onClick={() => goTo(TRAINING_HOME_ROUTE)} className="ltc-logo" aria-label="Training and Assessment Home">
+            <img src={HEADER_LOGO_IMAGE} alt="TAMSI Logo" width="42" height="42" decoding="async" className="ltc-logo-icon" />
             <div>
               <h1 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h1>
               <p style={fontPontano}>Training and assessment portal.</p>
@@ -477,7 +495,7 @@ function Footer({ goTo }) {
       <div className="ltc-container ltc-footer-grid">
         <div>
           <button type="button" onClick={() => goTo(TRAINING_HOME_ROUTE)} className="ltc-footer-brand">
-            <img src={FOOTER_LOGO_IMAGE} alt="Training Lumispire Logo" />
+            <img src={FOOTER_LOGO_IMAGE} alt="Training Lumispire Logo" width="110" loading="lazy" decoding="async" />
             <div className="ltc-footer-brand-copy">
               <span className="ltc-footer-brand-title" style={fontMontserrat}>TRAINING &amp; ASSESSMENT</span>
               <p className="ltc-footer-brand-description" style={fontPontano}>
@@ -550,7 +568,7 @@ function FooterText({ children }) {
 function MobileMenu({ onClose, goTo }) {
   return (
     <div className="ltc-sidebar-overlay">
-      <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
+      <button type="button" aria-label="Close menu" style={{ position: "absolute", inset: 0, border: 0, background: "transparent", padding: 0 }} onClick={onClose} />
       <div className="ltc-sidebar-panel">
         <div className="ltc-sidebar-top">
           <p className="ltc-sidebar-title" style={fontPoppins}>MENU</p>
@@ -578,17 +596,300 @@ function MobileMenu({ onClose, goTo }) {
 }
 
 const contactPageStyleFixes = `
-  .ltc-eyebrow,
-  .training-hero-badge,
-  .training-program-badge {
-    font-size: 0 !important;
-    line-height: 0 !important;
-    color: transparent !important;
+  .ta-contact-section {
+    background:
+      radial-gradient(circle at 12% 0%, rgba(215,168,77,.10), transparent 28%),
+      radial-gradient(circle at 92% 10%, rgba(35,95,62,.08), transparent 26%),
+      #f6f8f4;
+    padding: 72px 0;
   }
 
-  .ltc-eyebrow::before,
-  .ltc-eyebrow::after {
-    color: var(--gold-soft, #f6d77a) !important;
+  .ta-contact-grid {
+    width: min(1180px, 92%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    gap: 26px;
+    align-items: stretch;
+  }
+
+  .ta-contact-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid rgba(16,24,40,.07);
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 18px 46px rgba(8,39,25,.10);
+    padding: 32px;
+  }
+
+  .ta-contact-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: linear-gradient(90deg,#235f3e,#d7a84d);
+  }
+
+  .ta-contact-eyebrow {
+    margin: 0;
+    color: #45674b;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  .ta-contact-title {
+    margin: 8px 0 0;
+    color: #071f14;
+    font-size: clamp(28px, 3vw, 38px);
+    line-height: 1.08;
+    font-weight: 900;
+    letter-spacing: -.04em;
+  }
+
+  .ta-contact-copy {
+    margin: 12px 0 0;
+    max-width: 620px;
+    color: #53655a;
+    font-size: 14px;
+    line-height: 1.7;
+    font-weight: 650;
+  }
+
+  .ta-contact-list {
+    margin-top: 28px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .ta-contact-item {
+    display: grid;
+    grid-template-columns: 48px minmax(0,1fr);
+    gap: 14px;
+    align-items: center;
+    min-height: 76px;
+    border-radius: 20px;
+    border: 1px solid rgba(35,95,62,.10);
+    background: #f8faf7;
+    padding: 14px 16px;
+  }
+
+  .ta-contact-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: rgba(35,95,62,.09);
+    color: #235f3e;
+  }
+
+  .ta-contact-item-label {
+    margin: 0 0 3px;
+    color: #6a766d;
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 900;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+  }
+
+  .ta-contact-item-value {
+    display: grid;
+    gap: 2px;
+    color: #173d27;
+    font-size: 14px;
+    line-height: 1.45;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  .ta-contact-form {
+    margin-top: 26px;
+    display: grid;
+    gap: 17px;
+  }
+
+  .ta-contact-field {
+    display: grid;
+    gap: 7px;
+  }
+
+  .ta-contact-label {
+    color: #264d33;
+    font-size: 12px;
+    line-height: 1.35;
+    font-weight: 900;
+    letter-spacing: .04em;
+  }
+
+  .ta-contact-input,
+  .ta-contact-textarea {
+    width: 100%;
+    border: 1px solid rgba(35,95,62,.18);
+    background: #f8faf7;
+    color: #101828;
+    border-radius: 16px;
+    outline: none;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 650;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+
+  .ta-contact-input {
+    min-height: 50px;
+    padding: 0 16px;
+  }
+
+  .ta-contact-textarea {
+    min-height: 150px;
+    resize: vertical;
+    padding: 14px 16px;
+    line-height: 1.55;
+  }
+
+  .ta-contact-input:focus,
+  .ta-contact-textarea:focus {
+    border-color: #235f3e;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(35,95,62,.10);
+  }
+
+  .ta-contact-input.is-error,
+  .ta-contact-textarea.is-error {
+    border-color: #b42318;
+    background: #fff8f7;
+  }
+
+  .ta-contact-error {
+    margin: 0;
+    color: #b42318;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 800;
+  }
+
+  .ta-contact-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding-top: 2px;
+  }
+
+  .ta-contact-button {
+    min-height: 48px;
+    border-radius: 999px;
+    padding: 0 22px;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform .2s ease, opacity .2s ease, background .2s ease;
+  }
+
+  .ta-contact-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  .ta-contact-button:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+  }
+
+  .ta-contact-button.primary {
+    border: 0;
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 12px 28px rgba(215,168,77,.22);
+  }
+
+  .ta-contact-button.secondary {
+    border: 1px solid rgba(35,95,62,.22);
+    color: #235f3e;
+    background: white;
+  }
+
+  .ta-contact-status {
+    border-radius: 16px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 800;
+  }
+
+  .ta-contact-status.success {
+    border: 1px solid rgba(16,185,129,.22);
+    background: #effbf5;
+    color: #047857;
+  }
+
+  .ta-contact-status.error {
+    border: 1px solid rgba(239,68,68,.22);
+    background: #fff4f4;
+    color: #b42318;
+  }
+
+  .ta-map-section {
+    background: #f6f8f4;
+    padding: 0 0 76px;
+  }
+
+  .ta-map-card {
+    width: min(1180px,92%);
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid rgba(16,24,40,.07);
+    background: white;
+    box-shadow: 0 18px 46px rgba(8,39,25,.10);
+  }
+
+  .ta-map-header {
+    padding: 26px 28px 22px;
+    border-bottom: 1px solid rgba(16,24,40,.07);
+    background: linear-gradient(135deg,#f8fbf9,#eef3e9);
+  }
+
+  .ta-map-title {
+    margin: 0;
+    color: #071f14;
+    font-size: clamp(24px,2.5vw,34px);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -.035em;
+  }
+
+  .ta-map-subtitle {
+    margin: 8px 0 0;
+    color: #53655a;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .ta-map-frame {
+    display: block;
+    width: 100%;
+    height: 420px;
+    border: 0;
+  }
+
+  @media (max-width: 900px) {
+    .ta-contact-section { padding: 56px 0; }
+    .ta-contact-grid { grid-template-columns: 1fr; }
+    .ta-map-section { padding-bottom: 58px; }
+  }
+
+  @media (max-width: 600px) {
+    .ta-contact-section { padding: 42px 0; }
+    .ta-contact-card { padding: 26px 20px; border-radius: 24px; }
+    .ta-contact-actions { grid-template-columns: 1fr; }
+    .ta-map-card { border-radius: 24px; }
+    .ta-map-frame { height: 360px; }
   }
 `;
 
@@ -623,24 +924,19 @@ function FloatingHomeIconButton({ onClick }) {
   );
 }
 
-function SectionHeading({ title }) {
-  return (
-    <div>
-      <h2 className="text-center font-['Montserrat',sans-serif] text-2xl font-extrabold text-white sm:text-3xl">
-        {title}
-      </h2>
-      <div className="mx-auto mt-3 h-[2px] max-w-[300px] rounded-full bg-white/45" />
-    </div>
-  );
-}
-
 function ContactField({ label, type = "text", name, value, onChange, onBlur, error = "", required = false }) {
+  const inputId = `training-contact-${name}`;
+  const errorId = `${inputId}-error`;
+
   return (
-    <div>
-      <label className="mb-1 block text-xs font-extrabold text-white">
+    <div className="ta-contact-field">
+      <label htmlFor={inputId} className="ta-contact-label">
         {label}
+        {required ? <span aria-hidden="true"> *</span> : null}
       </label>
+
       <input
+        id={inputId}
         type={type}
         name={name}
         value={value}
@@ -648,23 +944,31 @@ function ContactField({ label, type = "text", name, value, onChange, onBlur, err
         onBlur={onBlur}
         required={required}
         aria-invalid={Boolean(error)}
-        className={`h-9 w-full rounded-full border-2 bg-transparent px-4 text-sm font-semibold text-white outline-none transition placeholder:text-white/50 focus:border-white ${
-          error ? "border-[#ffd4d4]" : "border-white/80"
-        }`}
+        aria-describedby={error ? errorId : undefined}
+        className={`ta-contact-input ${error ? "is-error" : ""}`}
       />
-      {error ? <p className="mt-1 text-xs font-bold text-[#ffd4d4]">{error}</p> : null}
+
+      {error ? (
+        <p id={errorId} className="ta-contact-error">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-function ContactItem({ icon, children }) {
+function ContactItem({ icon, label, children }) {
   return (
-    <div className="flex items-start gap-4">
-      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center text-white">
+    <div className="ta-contact-item">
+      <div className="ta-contact-icon" aria-hidden="true">
         {icon}
       </div>
-      <div className="space-y-1 text-sm font-extrabold leading-snug text-white">
-        {children}
+
+      <div>
+        <p className="ta-contact-item-label" style={fontPoppins}>{label}</p>
+        <div className="ta-contact-item-value" style={fontPontano}>
+          {children}
+        </div>
       </div>
     </div>
   );
