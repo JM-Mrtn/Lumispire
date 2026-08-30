@@ -98,9 +98,7 @@ function EyeOffIcon() {
 
 
 const traineeResortStyles = `
-  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&display=swap");
-
-  .ltc-trainee-login-page {
+.ltc-trainee-login-page {
     --green-950: #071f14;
     --green-900: #0e3321;
     --green-800: #174a30;
@@ -125,11 +123,23 @@ const traineeResortStyles = `
     line-height: 1.65;
     letter-spacing: -.01em;
     overflow-x: hidden;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
   }
 
   .ltc-trainee-login-page * {
     box-sizing: border-box;
+  }
+
+  .sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
   }
 
   .ltc-trainee-login-container {
@@ -207,6 +217,10 @@ const traineeResortStyles = `
   }
 
   .ltc-trainee-login-nav-link {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
     color: rgba(255,255,255,.78);
     font-size: 12px;
     font-weight: 800;
@@ -234,6 +248,8 @@ const traineeResortStyles = `
   }
 
   .ltc-trainee-login-menu-button {
+    min-height: 44px;
+    min-width: 44px;
     display: none;
     color: white;
     border: 0;
@@ -257,6 +273,7 @@ const traineeResortStyles = `
   .ltc-trainee-login-mobile-nav button {
     display: block;
     width: 100%;
+    min-height: 44px;
     border: 0;
     background: transparent;
     color: rgba(255,255,255,.82);
@@ -314,7 +331,6 @@ const traineeResortStyles = `
       radial-gradient(circle at 72% 18%, rgba(28, 108, 68, 0.28), transparent 30%),
       radial-gradient(circle at 88% 44%, rgba(244, 212, 132, 0.14), transparent 28%),
       radial-gradient(circle at 90% 84%, rgba(22, 108, 66, 0.30), transparent 26%);
-    filter: blur(30px);
     pointer-events: none;
   }
 
@@ -340,7 +356,6 @@ const traineeResortStyles = `
     font-weight: 900;
     letter-spacing: .28em;
     text-transform: uppercase;
-    backdrop-filter: blur(10px);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
   }
 
@@ -379,7 +394,6 @@ const traineeResortStyles = `
     border-radius: 20px;
     background: rgba(255,255,255,.09);
     padding: 16px;
-    backdrop-filter: blur(10px);
   }
 
   .ltc-trainee-login-point strong {
@@ -407,7 +421,6 @@ const traineeResortStyles = `
     box-shadow: var(--shadow-lg);
     padding: 34px;
     color: var(--dark);
-    backdrop-filter: blur(18px);
   }
 
   .ltc-trainee-login-card::before {
@@ -509,7 +522,6 @@ const traineeResortStyles = `
   .ltc-trainee-login-input:focus {
     border-color: rgba(215,168,77,.8);
     box-shadow: 0 0 0 4px rgba(215,168,77,.16);
-    transform: translateY(-1px);
   }
 
   .ltc-trainee-login-input.error {
@@ -519,20 +531,30 @@ const traineeResortStyles = `
 
   .ltc-trainee-login-eye-button {
     position: absolute;
-    right: 16px;
+    right: 5px;
     top: 50%;
+    width: 44px;
+    height: 44px;
     transform: translateY(-50%);
     border: 0;
     background: transparent;
     color: var(--green-800);
     cursor: pointer;
-    padding: 6px;
+    padding: 0;
     border-radius: 999px;
-    transition: .22s var(--ease);
+    display: grid;
+    place-items: center;
+    transition: background .18s ease, color .18s ease;
   }
 
   .ltc-trainee-login-eye-button:hover {
     background: rgba(8,39,25,.08);
+    color: var(--green-950);
+  }
+
+  .ltc-trainee-login-eye-button:focus-visible {
+    outline: 3px solid rgba(215,168,77,.45);
+    outline-offset: 2px;
   }
 
   .ltc-trainee-login-error-text {
@@ -843,13 +865,12 @@ export default function TrainingLogIn() {
               aria-label="TAMSI Home"
             >
               <img
-                src="/TamsiLogo.png"
+                src="/TamsiLogo.webp"
                 alt="TAMSI Logo"
+                width="42"
+                height="42"
+                decoding="async"
                 className="ltc-trainee-login-logo-icon"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "https://placehold.co/80x80/ffffff/45674b?text=T";
-                }}
               />
 
               <span>
@@ -893,7 +914,7 @@ export default function TrainingLogIn() {
 
               <button
                 type="button"
-                onClick={() => goTo("/training-contact-us")}
+                onClick={() => goTo("/training-faqs")}
                 className="ltc-trainee-login-nav-link"
               >
                 FAQs
@@ -912,6 +933,9 @@ export default function TrainingLogIn() {
               type="button"
               onClick={() => setMobileOpen((prev) => !prev)}
               className="ltc-trainee-login-menu-button"
+              aria-expanded={mobileOpen}
+              aria-controls="trainee-login-mobile-nav"
+              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
             >
               Menu
             </button>
@@ -919,7 +943,9 @@ export default function TrainingLogIn() {
         </div>
 
         <div
+          id="trainee-login-mobile-nav"
           className={`ltc-trainee-login-mobile-nav ${mobileOpen ? "open" : ""}`}
+          aria-label="Trainee mobile navigation"
         >
           <button type="button" onClick={() => goTo("/training")}>
             Home
@@ -933,7 +959,7 @@ export default function TrainingLogIn() {
           <button type="button" onClick={() => goTo("/training-contact-us")}>
             Contact
           </button>
-          <button type="button" onClick={() => goTo("/training-contact-us")}>
+          <button type="button" onClick={() => goTo("/training-faqs")}>
             FAQs
           </button>
           <button type="button" onClick={() => navigate(-1)}>
@@ -945,13 +971,15 @@ export default function TrainingLogIn() {
       <main>
         <section className="ltc-trainee-login-hero">
           <img
-            src="/tamsi-building.jpg"
-            alt="TAMSI Building"
+            src="/TrainingAds.webp"
+            alt=""
+            aria-hidden="true"
+            width="552"
+            height="367"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             className="ltc-trainee-login-hero-bg"
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://placehold.co/1600x900/d7ddd4/45674b?text=TAMSI+Training+And+Assessment";
-            }}
           />
 
           <div className="ltc-trainee-login-container ltc-trainee-login-grid">
@@ -993,6 +1021,8 @@ export default function TrainingLogIn() {
 
               {msg.text && (
                 <div
+                  role={msg.type === "success" ? "status" : "alert"}
+                  aria-live={msg.type === "success" ? "polite" : "assertive"}
                   className={`ltc-trainee-login-alert ${
                     msg.type === "success" ? "success" : "error"
                   }`}
@@ -1001,11 +1031,13 @@ export default function TrainingLogIn() {
                 </div>
               )}
 
-              <form onSubmit={submit} className="ltc-trainee-login-form">
+              <form onSubmit={submit} className="ltc-trainee-login-form" aria-label="Trainee sign in">
                 <div className="ltc-trainee-login-field">
-                  <label>TAMSI Email</label>
+                  <label htmlFor="trainee-login-email">TAMSI Email</label>
 
                   <input
+                    id="trainee-login-email"
+                    name="email"
                     type="email"
                     value={email}
                     onChange={(e) => {
@@ -1019,24 +1051,32 @@ export default function TrainingLogIn() {
                       }
                     }}
                     autoComplete="email"
+                    inputMode="email"
                     maxLength={EMAIL_MAX_LENGTH}
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? "trainee-login-email-error" : undefined}
                     className={`ltc-trainee-login-input ${
                       errors.email ? "error" : ""
                     }`}
                   />
 
                   {errors.email && (
-                    <p className="ltc-trainee-login-error-text">
+                    <p
+                      id="trainee-login-email-error"
+                      className="ltc-trainee-login-error-text"
+                    >
                       {errors.email}
                     </p>
                   )}
                 </div>
 
                 <div className="ltc-trainee-login-field">
-                  <label>Password</label>
+                  <label htmlFor="trainee-login-password">Password</label>
 
                   <div className="ltc-trainee-login-input-wrap">
                     <input
+                      id="trainee-login-password"
+                      name="password"
                       type={showPw ? "text" : "password"}
                       value={password}
                       onChange={(e) => {
@@ -1052,6 +1092,10 @@ export default function TrainingLogIn() {
                       autoComplete="current-password"
                       minLength={PASSWORD_MIN_LENGTH}
                       maxLength={PASSWORD_MAX_LENGTH}
+                      aria-invalid={Boolean(errors.password)}
+                      aria-describedby={
+                        errors.password ? "trainee-login-password-error" : undefined
+                      }
                       className={`ltc-trainee-login-input password ${
                         errors.password ? "error" : ""
                       }`}
@@ -1062,13 +1106,18 @@ export default function TrainingLogIn() {
                       onClick={() => setShowPw((prev) => !prev)}
                       className="ltc-trainee-login-eye-button"
                       aria-label={showPw ? "Hide password" : "Show password"}
+                      aria-pressed={showPw}
+                      disabled={loading}
                     >
                       {showPw ? <EyeOffIcon /> : <EyeIcon />}
                     </button>
                   </div>
 
                   {errors.password && (
-                    <p className="ltc-trainee-login-error-text">
+                    <p
+                      id="trainee-login-password-error"
+                      className="ltc-trainee-login-error-text"
+                    >
                       {errors.password}
                     </p>
                   )}
