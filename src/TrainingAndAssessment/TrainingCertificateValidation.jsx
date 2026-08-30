@@ -128,13 +128,13 @@ export default function TrainingCertificateValidation() {
       <section className="bg-[#f4f7ef] px-5 py-10 text-[#243b2e] sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[1280px] overflow-hidden rounded-[28px] border border-[#d9e2d1] bg-white shadow-xl">
           <div className="border-b border-[#e1e8dc] bg-[#eef3e9] px-6 py-6 sm:px-8">
-            <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#6f7d49]">
+            <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#3f552f]">
               Registry Search
             </p>
             <h2 className="mt-2 font-['Montserrat',sans-serif] text-3xl font-extrabold text-[#1f4329] sm:text-4xl">
               Registry of Certified Trainees
             </h2>
-            <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-[#66756a]">
+            <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-[#405247]">
               Enter the exact name and certificate number details shown on the certificate. You may use only the name fields or combine them with the first and last characters of the certificate number for a more accurate result.
             </p>
           </div>
