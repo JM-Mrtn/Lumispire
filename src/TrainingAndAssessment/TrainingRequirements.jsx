@@ -710,7 +710,7 @@ const pageStyles = `
     color: rgba(255,255,255,.72) !important;
   }
 
-  .ltc-footer h3 {
+  .ltc-footer-column-title {
     color: #f4d484;
     font-size: 12px;
     line-height: 1.2;
@@ -1110,7 +1110,7 @@ function HeaderNavButton({ label, active = false, onClick, className = "" }) {
 
 function Footer({ goTo }) {
   return (
-    <footer className="ltc-footer">
+    <footer className="ltc-footer" aria-label="Training and Assessment footer">
       <div className="ltc-container ltc-footer-grid">
         <div>
           <button
@@ -1176,7 +1176,7 @@ function Footer({ goTo }) {
 function FooterColumn({ title, children }) {
   return (
     <div>
-      <h3 style={fontMontserrat}>{title}</h3>
+      <div className="ltc-footer-column-title" style={fontMontserrat}>{title}</div>
       <div>{children}</div>
     </div>
   );
