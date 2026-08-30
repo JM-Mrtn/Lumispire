@@ -122,3 +122,37 @@ export async function fetchJson(url, options = {}) {
     pendingGetMap.delete(cacheKey);
   }
 }
+
+export async function verifyProfessorSession({ signal } = {}) {
+  const token = getProfessorToken();
+
+  if (!token) {
+    clearProfessorSession();
+    return null;
+  }
+
+  try {
+    const data = await fetchJson(`${API_BASE}/professors/me`, {
+      method: "GET",
+      headers: professorAuthHeaders(),
+      signal,
+    });
+
+    const professor = data?.professor || null;
+
+    if (!professor) {
+      clearProfessorSession();
+      return null;
+    }
+
+    setStoredProfessor(professor);
+    return professor;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw error;
+    }
+
+    clearProfessorSession();
+    return null;
+  }
+}

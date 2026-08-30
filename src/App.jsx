@@ -8,6 +8,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import "./Main.css";
+import { verifyProfessorSession } from "./TrainingAndAssessment/professorSession";
 
 /*
  * Vite gives lazy-loaded files a new hash after every deployment. If someone
@@ -372,8 +373,44 @@ const TrainingAdminProtectedRoute = ({ children }) => {
 };
 
 const ProfessorProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("professorToken");
-  return token ? children : <Navigate to="/professor-login" replace />;
+  const [authStatus, setAuthStatus] = useState("checking");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let mounted = true;
+
+    const verify = async () => {
+      try {
+        const professor = await verifyProfessorSession({
+          signal: controller.signal,
+        });
+
+        if (!mounted) return;
+
+        setAuthStatus(professor ? "authorized" : "unauthorized");
+      } catch (error) {
+        if (!mounted || error?.name === "AbortError") return;
+        setAuthStatus("unauthorized");
+      }
+    };
+
+    verify();
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  if (authStatus === "checking") {
+    return <PageFallback />;
+  }
+
+  if (authStatus !== "authorized") {
+    return <Navigate to="/professor-login" replace />;
+  }
+
+  return children;
 };
 
 const TraineeProtectedRoute = ({ children }) => {
