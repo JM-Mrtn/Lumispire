@@ -1,4 +1,6 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+
   "headers": [
     {
       "source": "/(.*)",
@@ -42,6 +44,23 @@
       ]
     }
   ],
+
+  "routes": [
+    {
+      "src": "/.*",
+      "transforms": [
+        {
+          "type": "response.headers",
+          "op": "delete",
+          "target": {
+            "key": "access-control-allow-origin"
+          }
+        }
+      ],
+      "continue": true
+    }
+  ],
+
   "rewrites": [
     {
       "source": "/(.*)",
