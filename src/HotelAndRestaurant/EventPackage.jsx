@@ -905,6 +905,34 @@ export default function EventPackage() {
           color: var(--gold);
         }
 
+        .ltc-rating-star {
+          position: relative;
+          display: inline-block;
+          width: 1em;
+          height: 1em;
+          color: #d6d9dd;
+          overflow: hidden;
+        }
+
+        .ltc-rating-star-empty,
+        .ltc-rating-star-fill {
+          position: absolute;
+          inset: 0;
+          display: block;
+          line-height: 1;
+        }
+
+        .ltc-rating-star-empty {
+          color: #d6d9dd;
+        }
+
+        .ltc-rating-star-fill {
+          right: auto;
+          overflow: hidden;
+          color: var(--gold);
+          white-space: nowrap;
+        }
+
         .ltc-rating-label {
           color: var(--muted);
           font-size: 12px;
@@ -1804,10 +1832,36 @@ function ServiceCard({ title, imageSrc, feedback, onDetails }) {
   );
 }
 
+function RatingStar({ fill = 0 }) {
+  const safeFill = Math.max(0, Math.min(100, Number(fill) || 0));
+
+  return (
+    <span className="ltc-rating-star" aria-hidden="true">
+      <span className="ltc-rating-star-empty">★</span>
+      <span
+        className="ltc-rating-star-fill"
+        style={{ width: `${safeFill}%` }}
+      >
+        ★
+      </span>
+    </span>
+  );
+}
+
 function GuestRating({ feedback = {} }) {
   const averageRating = Number(feedback?.averageRating || 0);
   const totalReviews = Number(feedback?.totalReviews || 0);
-  const filledStars = Math.round(averageRating);
+  const normalizedRating = Math.max(0, Math.min(5, averageRating));
+
+  const getStarFill = (star) => {
+    const fill = normalizedRating - (star - 1);
+
+    if (fill >= 1) return 100;
+    if (fill <= 0) return 0;
+
+    return fill * 100;
+  };
+
   const label = totalReviews
     ? `${averageRating.toFixed(1)} (${totalReviews} ${
         totalReviews === 1 ? "review" : "reviews"
@@ -1822,11 +1876,10 @@ function GuestRating({ feedback = {} }) {
         aria-label={totalReviews ? `${averageRating.toFixed(1)} out of 5 stars` : "Not yet rated"}
       >
         {[1, 2, 3, 4, 5].map((star) => (
-          <span key={star} className={star <= filledStars ? "filled" : ""}>
-            ★
-          </span>
+          <RatingStar key={star} fill={getStarFill(star)} />
         ))}
       </span>
+
       <span className="ltc-rating-label">{label}</span>
     </div>
   );

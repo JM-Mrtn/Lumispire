@@ -10,6 +10,296 @@ function normalizeApiBase(raw) {
 
 const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
+const TERMS_AND_CONDITIONS_TEXT = `# LUMISPIRE TERMS AND CONDITIONS
+
+**LUMISPIRE: An AI-Enabled Service Management System for Hospitality, Training, and Manpower Services of the LTC Group**
+These Terms and Conditions govern your access to and use of LUMISPIRE and the services offered through the platform. By accessing, registering for, or using LUMISPIRE, you agree to comply with and be bound by these Terms and Conditions.
+
+### 1. Acceptance of Terms
+
+By accessing and using LUMISPIRE, you acknowledge that you have read, understood, and agreed to these Terms and Conditions.
+If you do not agree with any part of these Terms and Conditions, you should discontinue your use of the system.
+
+### 2. Use of the System
+
+LUMISPIRE is provided for authorized users who access hospitality, training, manpower, administrative, and related services offered by the LTC Group.
+Users are granted limited permission to access and use the system for legitimate and authorized purposes only.
+You may not:
+
+- Modify, reproduce, copy, distribute, or duplicate system materials without authorization
+- Use LUMISPIRE for unlawful, fraudulent, or unauthorized purposes
+- Attempt to reverse engineer, decompile, or gain unauthorized access to the system or its software
+- Circumvent security features or access restrictions
+- Copy, reproduce, or redistribute proprietary content without permission
+- Attempt to access another user's account
+- Upload malicious software, viruses, or harmful code
+- Interfere with the normal operation or security of LUMISPIRE
+- Remove copyright, ownership, or proprietary notices from system materials
+
+### 3. User Registration
+
+Certain features of LUMISPIRE may require users to create an account.
+During registration, you must provide accurate, current, and complete information. You are responsible for updating your information whenever necessary.
+You are also responsible for maintaining the confidentiality of your account credentials, including your username and password.
+Any activities performed through your account may be considered your responsibility unless unauthorized access is reported promptly to the LUMISPIRE administration.
+
+### 4. Account and Identity Verification
+
+LUMISPIRE may require users to verify their identity, email address, contact number, or other submitted information before certain services or features can be accessed.
+Registration or application processes may not be considered complete until the required verification has been successfully completed.
+Providing false, misleading, incomplete, or fraudulent information may result in account restriction, rejection, suspension, or termination.
+
+### 5. User Roles and Access
+
+Access to LUMISPIRE may vary depending on the user's assigned role, service category, department, or authorization level.
+Users may be provided access to specific functions related to:
+
+- Hospitality services
+- Training services
+- Manpower services
+- Applicant or employee management
+- Client service requests
+- Administrative functions
+- Reports and records
+- Other services authorized by the LTC Group
+
+Users must not attempt to access system features, records, or information outside their authorized role or permission level.
+
+### 6. Privacy and Data Protection
+
+LUMISPIRE collects and processes personal information in accordance with its Privacy Policy and applicable Philippine data privacy laws.
+Personal information may be collected and processed for purposes including account management, service delivery, bookings, training registration, manpower applications, employee or applicant management, communications, reporting, and system administration.
+By using LUMISPIRE, you acknowledge that your personal information may be processed as described in the LUMISPIRE Privacy Policy.
+
+### 7. User Conduct
+
+You agree to use LUMISPIRE responsibly and professionally.
+You must not use the system to:
+
+- Upload, submit, or transmit harmful, abusive, threatening, discriminatory, defamatory, obscene, or unlawful content
+- Violate applicable laws or regulations
+- Impersonate another person, organization, employee, applicant, or client
+- Submit false or misleading information
+- Harass, threaten, or harm other users
+- Attempt unauthorized access to records or accounts
+- Manipulate system information or records
+- Disrupt system operations, servers, databases, or networks
+- Use automated tools, bots, or scripts without authorization
+- Exploit system vulnerabilities or security weaknesses
+
+Any misuse of LUMISPIRE may result in restricted access, account suspension, account termination, or other appropriate action.
+
+### 8. Hospitality Services, Reservations, and Bookings
+
+Hospitality-related reservations, bookings, inquiries, and service requests submitted through LUMISPIRE are subject to availability, confirmation, and applicable LTC Group policies.
+Submitting a booking request does not automatically guarantee confirmation.
+The LTC Group reserves the right to approve, reject, reschedule, modify, or cancel bookings when necessary due to availability, operational requirements, emergencies, incorrect information, or other reasonable circumstances.
+Users are responsible for reviewing booking details before confirming their requests.
+
+### 9. Training Services
+
+Training registrations, schedules, attendance, assessments, certifications, and other training-related services may be managed through LUMISPIRE.
+Enrollment in a training program is subject to availability, eligibility requirements, payment requirements when applicable, and approval by authorized LTC Group personnel.
+Training schedules, instructors, venues, requirements, or program arrangements may be modified when necessary.
+Users are responsible for complying with applicable training rules, attendance requirements, and program policies.
+
+### 10. Manpower Services
+
+LUMISPIRE may be used for manpower-related services including applicant registration, recruitment, screening, assignment, employee or personnel management, service requests, and related administrative activities.
+Submission of an application or profile through LUMISPIRE does not guarantee employment, placement, deployment, assignment, or acceptance.
+The LTC Group may evaluate applicants based on qualifications, experience, skills, availability, client requirements, screening results, and other legitimate criteria.
+Users must ensure that all documents, qualifications, employment records, and information submitted through the system are accurate and authentic.
+
+### 11. AI-Enabled Features
+
+LUMISPIRE may use artificial intelligence or automated technologies to assist with certain system functions, such as:
+
+- Organizing and retrieving information
+- Processing service requests
+- Generating recommendations
+- Supporting administrative workflows
+- Summarizing or analyzing records
+- Assisting with scheduling or resource management
+- Identifying relevant applicants, services, or information
+- Supporting reporting and operational decision-making
+
+AI-generated outputs are intended to assist users and authorized personnel and should not always be considered final or independently authoritative.
+Where appropriate, significant administrative, employment, financial, training, or service-related decisions may be reviewed or confirmed by authorized LTC Group personnel.
+Users should report suspected errors, inaccurate recommendations, or unexpected AI-generated results to the system administrator.
+
+### 12. Payments and Fees
+
+Certain hospitality, training, manpower, or other services available through LUMISPIRE may require payment.
+Applicable fees, payment schedules, methods, and conditions will be communicated to users before or during the relevant transaction.
+Users are responsible for providing accurate payment information and completing required payments within the specified period.
+Failure to make required payments may result in cancellation, suspension, or delay of the requested service.
+Any applicable refund, cancellation, or rescheduling rules will be governed by the relevant LTC Group service policies.
+
+### 13. Accuracy of Information
+
+While the LTC Group makes reasonable efforts to maintain accurate and updated information within LUMISPIRE, the system may occasionally contain technical, typographical, administrative, or other errors.
+Information such as schedules, availability, prices, training details, assignments, applicant status, or service information may change.
+The LTC Group reserves the right to correct errors, update information, or modify system content when necessary.
+
+### 14. System Availability
+
+LUMISPIRE may occasionally become unavailable due to maintenance, upgrades, technical problems, cybersecurity measures, Internet disruptions, or circumstances beyond the LTC Group's reasonable control.
+The LTC Group does not guarantee uninterrupted or error-free access to the system at all times.
+Scheduled maintenance or system updates may temporarily affect access to certain services.
+
+### 15. Limitation of Liability
+
+To the extent permitted by applicable law, the LTC Group shall not be liable for indirect, incidental, special, or consequential damages arising from the use of or inability to use LUMISPIRE.
+This may include losses resulting from system interruptions, Internet connectivity issues, unauthorized account access, inaccurate information provided by users, or circumstances beyond the reasonable control of the LTC Group.
+Nothing in these Terms and Conditions excludes liabilities that cannot legally be excluded under applicable law.
+
+### 16. Intellectual Property
+
+The LUMISPIRE system, including its interface, design, software, graphics, databases, documentation, branding, content, and other materials, may be protected by applicable intellectual property laws.
+Unless otherwise stated, these materials are owned by or licensed to the LTC Group.
+Users may not reproduce, distribute, modify, publish, sell, license, or commercially exploit any portion of LUMISPIRE without prior authorization.
+
+### 17. Account Suspension and Termination
+
+The LTC Group reserves the right to suspend, restrict, or terminate a user's access to LUMISPIRE when there is reasonable basis to believe that the user:
+
+- Violated these Terms and Conditions
+- Submitted fraudulent or misleading information
+- Attempted unauthorized access
+- Misused the platform
+- Compromised the security of the system
+- Harmed or attempted to harm other users or the LTC Group
+- Violated applicable laws or organizational policies
+
+Where appropriate, users may be notified regarding account restrictions or termination.
+
+### 18. Third-Party Services
+
+LUMISPIRE may integrate with or rely on third-party technologies and service providers for functions such as hosting, communications, payment processing, analytics, security, or AI-enabled services.
+The availability and operation of third-party services may be subject to their own terms, conditions, and privacy policies.
+The LTC Group is not responsible for disruptions or failures caused solely by third-party platforms outside its reasonable control.
+
+### 19. Changes to the Terms and Conditions
+
+The LTC Group may revise or update these Terms and Conditions when necessary to reflect changes in services, system functions, policies, technologies, or legal requirements.
+Significant changes may be communicated through LUMISPIRE or other appropriate communication channels.
+Your continued use of LUMISPIRE after updated Terms and Conditions take effect indicates your acknowledgment of the revised terms, subject to applicable laws.
+
+### 20. Governing Law
+
+These Terms and Conditions shall be governed by and interpreted in accordance with the laws of the **Republic of the Philippines**.
+Any dispute arising from the use of LUMISPIRE shall be handled in accordance with applicable Philippine laws and appropriate legal procedures.
+
+### 21. Contact Information
+
+If you have questions, concerns, or requests regarding these Terms and Conditions, please contact:
+**LTC Group – LUMISPIRE Administration**
+Email: **Admin@ltcmultiservices.com**
+Contact Email: **lorengladius@ltcmultiservices.com**
+You may also contact the LTC Group through the official inquiry or support features available within LUMISPIRE.
+By clicking **“I Understand,” “I Agree,”** creating an account, or continuing to use LUMISPIRE, you acknowledge that you have read, understood, and agree to be bound by these **LUMISPIRE Terms and Conditions**.`;
+
+const PRIVACY_POLICY_TEXT = `# LUMISPIRE PRIVACY POLICY
+
+**LUMISPIRE: An AI-Enabled Service Management System for Hospitality, Training, and Manpower Services of the LTC Group**
+LUMISPIRE and the LTC Group value your privacy and are committed to protecting the personal information you provide while using the system. This Privacy Policy explains what information may be collected, how it is used, and the measures taken to protect it.
+
+### 1. Information We Collect
+
+We may collect personal information that you provide directly when you register for an account, submit an inquiry, request or book a service, enroll in a training program, apply for manpower-related opportunities, complete forms, upload documents, or communicate with the LTC Group through LUMISPIRE.
+The information collected may include your:
+
+- Full name
+- Email address
+- Contact number
+- Address
+- Account and login information
+- Service or booking details
+- Training and enrollment information
+- Employment or manpower application information
+- Educational background, qualifications, skills, and work experience
+- Documents submitted through the system
+- Payment and transaction information, when applicable
+- Messages, inquiries, feedback, and other information voluntarily provided through LUMISPIRE
+
+We may also collect limited technical information related to your use of the system, such as device information, browser type, login activity, and system usage data.
+
+### 2. How We Use Your Information
+
+We use the information collected through LUMISPIRE to:
+
+- Create and manage user accounts
+- Process inquiries, bookings, reservations, and service requests
+- Manage hospitality-related services and customer transactions
+- Process training registrations, schedules, attendance, and related records
+- Manage manpower applications, applicant information, personnel records, assignments, and service requests
+- Communicate important notices, confirmations, schedules, and service updates
+- Assist authorized LTC Group personnel in managing operations and responding to users
+- Support LUMISPIRE's AI-enabled features in organizing, processing, retrieving, and analyzing relevant information
+- Improve the functionality, performance, security, and overall user experience of the system
+- Generate administrative reports and operational insights
+- Prevent unauthorized access, fraud, misuse, and other security threats
+- Comply with applicable legal and regulatory requirements
+
+AI-enabled features within LUMISPIRE may assist in processing and organizing information, generating recommendations, identifying relevant records, and supporting administrative tasks. Where appropriate, important decisions involving users remain subject to review by authorized personnel.
+
+### 3. Information Sharing
+
+LUMISPIRE and the LTC Group do not sell, trade, or rent your personal information to third parties.
+Personal information may only be shared with authorized LTC Group personnel and trusted service providers when necessary to operate, maintain, secure, or support the system and its services.
+Information may also be disclosed when required by applicable law, regulation, court order, or lawful request from government authorities.
+Access to personal information is limited to individuals who require such information to perform legitimate and authorized functions.
+
+### 4. Data Security
+
+We implement reasonable administrative, technical, and organizational security measures to protect personal information against unauthorized access, alteration, loss, misuse, disclosure, or destruction.
+These measures may include access controls, account authentication, secure data storage, system monitoring, and appropriate restrictions on access to personal information.
+However, no electronic system or method of transmitting information over the Internet can be guaranteed to be completely secure. Users are also responsible for keeping their account credentials and passwords confidential.
+
+### 5. Cookies and System Usage Data
+
+LUMISPIRE may use cookies or similar technologies to improve system functionality and user experience.
+Cookies are small files stored on your device that may help the system maintain login sessions, remember user preferences, improve system performance, and understand how users interact with LUMISPIRE.
+You may manage or disable cookies through your browser settings; however, certain system features may not function properly when cookies are disabled.
+
+### 6. Data Retention
+
+Personal information will only be retained for as long as necessary to fulfill the purposes for which it was collected, provide the requested services, maintain appropriate business and administrative records, and comply with applicable legal or regulatory requirements.
+When personal information is no longer required, appropriate measures may be taken to securely delete, anonymize, or dispose of the information in accordance with applicable policies and laws.
+
+### 7. Your Rights
+
+Subject to applicable data privacy laws and regulations, you may have the right to:
+
+- Request access to your personal information
+- Request correction of inaccurate or incomplete information
+- Request deletion or removal of personal information when legally permitted
+- Object to or restrict certain types of personal information processing
+- Withdraw consent when processing is based on your consent
+- Request information regarding how your personal data is being processed
+- Raise concerns regarding the handling or protection of your personal information
+
+To exercise these rights, you may contact the LTC Group through its official contact information.
+
+### 8. Third-Party Services
+
+LUMISPIRE may use authorized third-party technologies or service providers to support functions such as hosting, communications, payment processing, system security, analytics, or AI-enabled services.
+When third-party services are used, only information reasonably necessary for the intended function should be processed, subject to appropriate privacy and security safeguards.
+LUMISPIRE is not responsible for the privacy practices of external websites or services that users independently access through third-party links.
+
+### 9. Changes to This Privacy Policy
+
+LUMISPIRE and the LTC Group may update this Privacy Policy when necessary to reflect changes in the system, services, operational practices, technologies, or applicable legal requirements.
+Users may be notified of significant changes through LUMISPIRE or other appropriate communication channels. Continued use of the system following an updated Privacy Policy constitutes acknowledgment of the revised policy, subject to applicable laws.
+
+### 10. Contact Us
+
+If you have questions, concerns, or requests regarding this Privacy Policy or the handling of your personal information, please contact:
+**LTC Group – LUMISPIRE Administration**
+Email: **Admin@ltcmultiservices.com**
+Contact Email: **lorengladius@ltcmultiservices.com**
+By clicking **“I Understand,” “I Agree,”** or by continuing to use LUMISPIRE, you acknowledge that you have read and understood this Privacy Policy and consent to the collection and processing of your personal information in accordance with this policy and applicable data privacy laws.`;
+
 const DEFAULT_VACANCIES = [
   "Accounting Clerk",
   "General Clerk",
@@ -588,6 +878,249 @@ const manpowerApplyEnrollmentStyles = `
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
+  .ltc-enrollment-page .mp-policy-box {
+    border: 1px solid rgba(35,95,62,.14);
+    border-radius: 18px;
+    background: rgba(255,255,255,.88);
+    padding: 16px 18px;
+    box-shadow: 0 12px 28px rgba(8,39,25,.07);
+  }
+
+  .ltc-enrollment-page .mp-policy-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+  }
+
+  .ltc-enrollment-page input.mp-policy-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    flex: 0 0 20px;
+    margin: 2px 0 0 !important;
+    padding: 0 !important;
+    border: 2px solid var(--gold) !important;
+    border-radius: 5px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+  }
+
+  .ltc-enrollment-page input.mp-policy-checkbox::before {
+    content: "";
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid #102418;
+    border-bottom: 2px solid #102418;
+    transform: rotate(-45deg) scale(0);
+    transform-origin: center;
+    transition: transform .16s ease;
+    margin-top: -2px;
+  }
+
+  .ltc-enrollment-page input.mp-policy-checkbox:checked {
+    background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+  }
+
+  .ltc-enrollment-page input.mp-policy-checkbox:checked::before {
+    transform: rotate(-45deg) scale(1);
+  }
+
+  .ltc-enrollment-page input.mp-policy-checkbox.error {
+    border-color: #d92d20 !important;
+    background: rgba(239,68,68,.06) !important;
+    box-shadow: 0 0 0 4px rgba(239,68,68,.08) !important;
+  }
+
+  .ltc-enrollment-page .mp-policy-copy {
+    color: #405a49;
+    font-size: 12.5px;
+    line-height: 1.55;
+    font-weight: 700;
+  }
+
+  .ltc-enrollment-page form button.mp-policy-link {
+    min-height: auto !important;
+    min-width: 0 !important;
+    display: inline !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #9b6a16 !important;
+    font-size: inherit !important;
+    font-weight: 900 !important;
+    letter-spacing: normal !important;
+    line-height: inherit !important;
+    text-transform: none !important;
+    vertical-align: baseline;
+    cursor: pointer;
+  }
+
+  .ltc-enrollment-page form button.mp-policy-link:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    color: var(--green-800) !important;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .ltc-enrollment-page .mp-policy-error {
+    margin: 7px 0 0 31px;
+    color: #b42318;
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 800;
+  }
+
+  .ltc-enrollment-page .mp-policy-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(2,18,11,.74);
+    backdrop-filter: blur(7px);
+  }
+
+  .ltc-enrollment-page .mp-policy-modal {
+    width: min(900px, 100%);
+    height: min(84vh, 820px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.72);
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 30px 90px rgba(0,0,0,.32);
+  }
+
+  .ltc-enrollment-page .mp-policy-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 20px;
+    background: var(--footer-green);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .ltc-enrollment-page .mp-policy-kicker {
+    margin: 0 0 4px !important;
+    color: var(--gold-soft) !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .ltc-enrollment-page .mp-policy-title {
+    margin: 0 !important;
+    color: #fff !important;
+    font-size: 24px !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+  }
+
+  .ltc-enrollment-page .mp-policy-close {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .ltc-enrollment-page .mp-policy-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px 28px 32px;
+    background: #fff;
+  }
+
+  .ltc-enrollment-page .mp-policy-document {
+    width: min(760px, 100%);
+    margin: 0 auto;
+    color: #25352d;
+    font-size: 13.5px;
+    line-height: 1.72;
+  }
+
+  .ltc-enrollment-page .mp-policy-document h1 {
+    margin: 0 0 16px !important;
+    color: var(--green-950) !important;
+    font-size: clamp(23px, 3vw, 31px) !important;
+    line-height: 1.15 !important;
+    font-weight: 900 !important;
+  }
+
+  .ltc-enrollment-page .mp-policy-document h3 {
+    margin: 24px 0 8px !important;
+    color: var(--green-800) !important;
+    font-size: 16px !important;
+    line-height: 1.35 !important;
+    font-weight: 900 !important;
+  }
+
+  .ltc-enrollment-page .mp-policy-document p {
+    margin: 0 0 12px !important;
+    color: #25352d !important;
+    font-size: 13.5px !important;
+    line-height: 1.72 !important;
+  }
+
+  .ltc-enrollment-page .mp-policy-document strong {
+    color: #13281d;
+    font-weight: 900;
+  }
+
+  .ltc-enrollment-page .mp-policy-document ul {
+    margin: 4px 0 16px;
+    padding-left: 24px;
+  }
+
+  .ltc-enrollment-page .mp-policy-document li {
+    margin: 4px 0;
+    color: #25352d;
+  }
+
+  .ltc-enrollment-page .mp-policy-document li::marker {
+    color: var(--gold);
+  }
+
+  .ltc-enrollment-page .mp-policy-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 18px 16px;
+    border-top: 1px solid rgba(14,51,33,.10);
+    background: #f8fbf9;
+  }
+
+  .ltc-enrollment-page .mp-policy-done {
+    min-width: 118px;
+    min-height: 42px;
+    border: 0;
+    border-radius: 999px;
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
   @media (max-width: 900px) {
     .ltc-enrollment-page .mp-header .mp-container { padding-left: 22px !important; padding-right: 22px !important; }
     .ltc-enrollment-page .mp-desktop-nav { display: none !important; }
@@ -601,6 +1134,10 @@ const manpowerApplyEnrollmentStyles = `
 
   @media (max-width: 600px) {
     .ltc-enrollment-page .mp-header .mp-container { padding-left: 16px !important; padding-right: 16px !important; }
+    .ltc-enrollment-page .mp-policy-overlay { padding: 10px; }
+    .ltc-enrollment-page .mp-policy-modal { height: 90vh; border-radius: 18px; }
+    .ltc-enrollment-page .mp-policy-body { padding: 20px 16px 26px; }
+    .ltc-enrollment-page .mp-policy-document { font-size: 13px; line-height: 1.68; }
     .ltc-enrollment-page .mp-logo h1 { font-size: 14px !important; }
     .ltc-enrollment-page .mp-logo p { font-size: 10px !important; }
     .ltc-enrollment-page main > section:first-child h2 { font-size: clamp(38px, 12vw, 54px) !important; }
@@ -758,6 +1295,9 @@ export default function ManpowerApplyPage() {
 
   const [files, setFiles] = useState({});
   const [touched, setTouched] = useState({});
+  const [agreedToPolicies, setAgreedToPolicies] = useState(false);
+  const [policyTouched, setPolicyTouched] = useState(false);
+  const [policyModal, setPolicyModal] = useState(null);
   const [status, setStatus] = useState({
     loading: false,
     error: "",
@@ -879,6 +1419,26 @@ export default function ManpowerApplyPage() {
   }, [form, files, emailCheck]);
 
   useEffect(() => {
+    if (!policyModal) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setPolicyModal(null);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [policyModal]);
+
+  useEffect(() => {
     const email = String(form.email || "").trim();
 
     if (!email) {
@@ -986,6 +1546,7 @@ export default function ManpowerApplyPage() {
 
   async function submitApplication(e) {
     e.preventDefault();
+    setPolicyTouched(true);
 
     const allTouched = {
       vacancy: true,
@@ -1013,6 +1574,15 @@ export default function ManpowerApplyPage() {
 
     setTouched((prev) => ({ ...prev, ...allTouched }));
     setStatus({ loading: false, error: "", success: "" });
+
+    if (!agreedToPolicies) {
+      setStatus({
+        loading: false,
+        error: "Please review the highlighted fields.",
+        success: "",
+      });
+      return;
+    }
 
     if (Object.keys(formErrors).length > 0 || emailCheck.state === "checking") {
       setStatus({
@@ -1518,6 +2088,64 @@ export default function ManpowerApplyPage() {
                 </div>
               </section>
 
+              <div className="mp-policy-box">
+                <div className="mp-policy-row">
+                  <input
+                    id="manpower-policy-consent"
+                    type="checkbox"
+                    checked={agreedToPolicies}
+                    onChange={(event) => {
+                      setAgreedToPolicies(event.target.checked);
+                      setPolicyTouched(true);
+                      setStatus((prev) => ({ ...prev, error: "", success: "" }));
+                    }}
+                    className={`mp-policy-checkbox ${
+                      policyTouched && !agreedToPolicies ? "error" : ""
+                    }`}
+                    aria-required="true"
+                    aria-invalid={policyTouched && !agreedToPolicies}
+                    aria-describedby={
+                      policyTouched && !agreedToPolicies
+                        ? "manpower-policy-consent-error"
+                        : undefined
+                    }
+                  />
+
+                  <div className="mp-policy-copy">
+                    <label htmlFor="manpower-policy-consent">
+                      I agree to the{" "}
+                    </label>
+
+                    <button
+                      type="button"
+                      className="mp-policy-link"
+                      onClick={() => setPolicyModal("terms")}
+                    >
+                      Terms &amp; Conditions
+                    </button>
+
+                    <span> and </span>
+
+                    <button
+                      type="button"
+                      className="mp-policy-link"
+                      onClick={() => setPolicyModal("privacy")}
+                    >
+                      Privacy Policy
+                    </button>
+                  </div>
+                </div>
+
+                {policyTouched && !agreedToPolicies ? (
+                  <p
+                    id="manpower-policy-consent-error"
+                    className="mp-policy-error"
+                  >
+                    You must agree to the Terms &amp; Conditions and Privacy Policy before submitting your application.
+                  </p>
+                ) : null}
+              </div>
+
               {status.error ? (
                 <div className="rounded-md border border-[#efc9c9] bg-[#fff2f2] px-4 py-3 text-sm text-[#912f2f]">
                   {status.error}
@@ -1551,6 +2179,13 @@ export default function ManpowerApplyPage() {
           </div>
         </section>
       </main>
+
+      {policyModal ? (
+        <ManpowerPolicyModal
+          type={policyModal}
+          onClose={() => setPolicyModal(null)}
+        />
+      ) : null}
 
       <footer className="bg-[#456b56] text-white">
         <div className="mx-auto max-w-7xl px-4 py-5 md:px-6">
@@ -1605,3 +2240,137 @@ export default function ManpowerApplyPage() {
     </div>
   );
 }
+
+function renderPolicyInline(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
+    }
+
+    return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
+  });
+}
+
+function ManpowerPolicyDocument({ content }) {
+  const lines = content.split("\n");
+  const elements = [];
+  let listItems = [];
+
+  const flushList = () => {
+    if (!listItems.length) return;
+
+    elements.push(
+      <ul key={`policy-list-${elements.length}`}>
+        {listItems.map((item, index) => (
+          <li key={`${item}-${index}`}>{renderPolicyInline(item)}</li>
+        ))}
+      </ul>
+    );
+
+    listItems = [];
+  };
+
+  lines.forEach((rawLine, index) => {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushList();
+      return;
+    }
+
+    if (line.startsWith("- ")) {
+      listItems.push(line.slice(2));
+      return;
+    }
+
+    flushList();
+
+    if (line.startsWith("# ")) {
+      elements.push(
+        <h1 key={`policy-h1-${index}`}>
+          {renderPolicyInline(line.slice(2))}
+        </h1>
+      );
+      return;
+    }
+
+    if (line.startsWith("### ")) {
+      elements.push(
+        <h3 key={`policy-h3-${index}`}>
+          {renderPolicyInline(line.slice(4))}
+        </h3>
+      );
+      return;
+    }
+
+    elements.push(
+      <p key={`policy-p-${index}`}>{renderPolicyInline(line)}</p>
+    );
+  });
+
+  flushList();
+
+  return <div className="mp-policy-document">{elements}</div>;
+}
+
+function ManpowerPolicyModal({ type, onClose }) {
+  const isTerms = type === "terms";
+  const title = isTerms ? "Terms & Conditions" : "Privacy Policy";
+  const content = isTerms
+    ? TERMS_AND_CONDITIONS_TEXT
+    : PRIVACY_POLICY_TEXT;
+
+  return (
+    <div
+      className="mp-policy-overlay"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section
+        className="mp-policy-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manpower-policy-modal-title"
+      >
+        <div className="mp-policy-header">
+          <div>
+            <p className="mp-policy-kicker">LUMISPIRE LTC MANPOWER</p>
+            <h2 id="manpower-policy-modal-title" className="mp-policy-title">
+              {title}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            className="mp-policy-close"
+            onClick={onClose}
+            aria-label={`Close ${title}`}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mp-policy-body">
+          <ManpowerPolicyDocument content={content} />
+        </div>
+
+        <div className="mp-policy-footer">
+          <button
+            type="button"
+            className="mp-policy-done"
+            onClick={onClose}
+          >
+            DONE
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
