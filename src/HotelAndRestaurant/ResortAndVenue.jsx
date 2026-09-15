@@ -77,6 +77,7 @@ const ResortAndVenue = () => {
   const [isUnlocked, setIsUnlocked] = useState(() => {
     return sessionStorage.getItem(RESORT_UNLOCK_SESSION_KEY) === "true";
   });
+  const [isUnlocking, setIsUnlocking] = useState(false);
   const contentRef = useRef(null);
 
   useEffect(() => {
@@ -114,11 +115,16 @@ const ResortAndVenue = () => {
   }, []);
 
   const unlockPage = () => {
-    sessionStorage.setItem(RESORT_UNLOCK_SESSION_KEY, "true");
-    setIsUnlocked(true);
+    if (isUnlocking) return;
+
+    setIsUnlocking(true);
+
     window.setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 40);
+      sessionStorage.setItem(RESORT_UNLOCK_SESSION_KEY, "true");
+      setIsUnlocked(true);
+      setIsUnlocking(false);
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }, 820);
   };
 
   useEffect(() => {
@@ -679,16 +685,28 @@ const ResortAndVenue = () => {
 
 
         .ltc-unlock-intro {
-          min-height: 100vh;
-          position: relative;
-          display: flex;
-          align-items: center;
+          position: fixed;
+          inset: 0;
+          z-index: 80;
+          width: 100%;
+          height: 100svh;
+          min-height: 100svh;
+          display: grid;
+          place-items: center;
           overflow: hidden;
-          background: #000;
+          background: #0b0d0c;
           color: white;
           padding: 0;
-          text-align: left;
+          text-align: center;
           isolation: isolate;
+          transform: translate3d(0, 0, 0);
+          will-change: transform;
+          transition: transform 820ms cubic-bezier(.77, 0, .18, 1);
+        }
+
+        .ltc-unlock-intro.is-exiting {
+          transform: translate3d(0, -100%, 0);
+          pointer-events: none;
         }
 
         .ltc-unlock-bg {
@@ -698,12 +716,14 @@ const ResortAndVenue = () => {
           width: 100%;
           object-fit: cover;
           opacity: 0;
-          transition: opacity 700ms ease;
+          transform: scale(1.035);
+          transition: opacity 900ms ease, transform 7s ease;
           z-index: -5;
         }
 
         .ltc-unlock-bg.active {
-          opacity: 1;
+          opacity: .58;
+          transform: scale(1);
         }
 
         .ltc-unlock-intro::before {
@@ -711,7 +731,9 @@ const ResortAndVenue = () => {
           position: absolute;
           inset: 0;
           z-index: -4;
-          background: rgba(0, 0, 0, .30);
+          background:
+            linear-gradient(180deg, rgba(5,8,7,.64) 0%, rgba(8,11,10,.56) 45%, rgba(4,7,6,.80) 100%),
+            linear-gradient(90deg, rgba(0,0,0,.24), transparent 48%, rgba(0,0,0,.24));
         }
 
         .ltc-unlock-intro::after {
@@ -720,124 +742,159 @@ const ResortAndVenue = () => {
           inset: 0;
           z-index: -3;
           background:
-            linear-gradient(90deg, rgba(0,0,0,.48) 0%, rgba(0,0,0,.16) 48%, rgba(0,0,0,.38) 100%),
-            linear-gradient(0deg, rgba(0,0,0,.34) 0%, transparent 45%, rgba(0,0,0,.14) 100%);
+            radial-gradient(circle at 50% 42%, rgba(255,255,255,.045), transparent 34%),
+            linear-gradient(180deg, transparent 66%, rgba(0,0,0,.36) 100%);
+          pointer-events: none;
         }
 
         .ltc-unlock-content {
           position: relative;
           z-index: 2;
-          width: min(1800px, 100%);
+          width: min(1500px, 92%);
           margin: 0 auto;
-          padding: 130px 24px 190px;
+          padding: 118px 24px 175px;
         }
 
         .ltc-unlock-copy {
-          max-width: 1180px;
+          max-width: 1320px;
+          margin: 0 auto;
+        }
+
+        .ltc-unlock-kicker {
+          margin: 0 0 22px;
+          color: rgba(255,255,255,.62);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .28em;
+          text-transform: uppercase;
         }
 
         .ltc-unlock-title {
           margin: 0;
           color: white;
-          font-size: clamp(58px, 8vw, 145px);
-          line-height: .92;
+          font-size: clamp(70px, 10.6vw, 178px);
+          line-height: .82;
           font-weight: 900;
-          letter-spacing: -.05em;
+          letter-spacing: -.07em;
           text-transform: uppercase;
-          text-shadow: 0 18px 45px rgba(0,0,0,.34);
+          text-shadow: 0 18px 54px rgba(0,0,0,.34);
           white-space: nowrap;
         }
 
         .ltc-unlock-title .gold {
-          color: #e7b14b;
+          color: var(--gold-soft);
         }
 
         .ltc-unlock-title .white {
           color: #ffffff;
         }
 
+        .ltc-unlock-title .ampersand {
+          display: inline-block;
+          color: var(--gold-soft);
+          font-size: .58em;
+          font-weight: 800;
+          vertical-align: .14em;
+          margin: 0 .08em;
+        }
+
         .ltc-unlock-subtitle {
-          margin: 18px 0 0;
-          max-width: 800px;
-          color: rgba(255,255,255,.95);
-          font-size: clamp(18px, 2.2vw, 31px);
-          line-height: 1.08;
-          font-weight: 500;
+          margin: 30px auto 0;
+          max-width: 720px;
+          color: rgba(255,255,255,.72);
+          font-size: clamp(15px, 1.35vw, 20px);
+          line-height: 1.65;
+          font-weight: 400;
         }
 
         .ltc-unlock-action {
-          margin-top: 40px;
+          margin: 48px auto 0;
           display: inline-flex;
-          min-height: 74px;
-          min-width: 260px;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
-          border-radius: 26px;
-          border: 1px solid rgba(255,255,255,.40);
-          background: linear-gradient(180deg, rgba(118,132,73,.78) 0%, rgba(74,88,48,.78) 100%);
+          gap: 9px;
           color: white;
+          background: transparent;
+          border: 0;
+          padding: 0;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: .16em;
+          text-transform: uppercase;
           cursor: pointer;
-          padding: 0 42px;
-          font-size: 27px;
-          font-weight: 600;
-          box-shadow: 0 14px 35px rgba(0,0,0,.28);
-          backdrop-filter: blur(14px);
-          transition: transform .25s ease, background .25s ease, opacity .25s ease;
+          transition: opacity .22s ease, transform .22s ease;
         }
 
-        .ltc-unlock-action:hover {
-          transform: scale(1.02);
-          opacity: .96;
+        .ltc-unlock-action:hover:not(:disabled) {
+          opacity: .78;
+          transform: translateY(2px);
+        }
+
+        .ltc-unlock-action:disabled {
+          cursor: default;
+        }
+
+        .ltc-unlock-action svg {
+          width: 28px;
+          height: 28px;
+          animation: ltcUnlockArrow 1.6s ease-in-out infinite;
+        }
+
+        @keyframes ltcUnlockArrow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(7px); }
         }
 
         .ltc-unlock-bottom-locations {
           pointer-events: none;
           position: absolute;
-          inset-inline: 0;
-          bottom: 32px;
-          z-index: 3;
-          display: flex;
-          justify-content: space-between;
-          gap: 24px;
-          padding: 0 24px;
-          width: min(1800px, 100%);
-          margin: 0 auto;
           left: 50%;
+          bottom: 30px;
+          z-index: 3;
+          width: min(1500px, 92%);
           transform: translateX(-50%);
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 34px;
         }
 
         .ltc-unlock-location {
           display: flex;
           align-items: flex-start;
           gap: 10px;
-          max-width: 360px;
+          max-width: 390px;
           color: white;
+          text-align: left;
         }
 
         .ltc-unlock-location.right {
-          text-align: right;
+          text-align: left;
           justify-content: flex-end;
         }
 
         .ltc-unlock-location svg {
-          margin-top: 4px;
-          height: 32px;
-          width: 32px;
+          margin-top: 1px;
+          height: 23px;
+          width: 23px;
           flex: 0 0 auto;
+          color: var(--gold-soft);
         }
 
         .ltc-unlock-location-title {
-          font-size: clamp(24px, 2.4vw, 34px);
-          font-weight: 500;
-          line-height: 1;
+          font-size: 15px;
+          font-weight: 800;
+          line-height: 1.15;
+          letter-spacing: .02em;
         }
 
         .ltc-unlock-location-address {
-          margin-top: 4px;
-          color: rgba(255,255,255,.90);
-          font-size: clamp(12px, 1vw, 15px);
+          margin-top: 5px;
+          color: rgba(255,255,255,.62);
+          font-size: 12px;
           font-weight: 500;
-          line-height: 1.2;
+          line-height: 1.45;
         }
 
 
@@ -957,7 +1014,7 @@ const ResortAndVenue = () => {
         }
 
         .ltc-section {
-          padding: 84px 0;
+          padding: 46px 0 72px;
         }
 
         .ltc-section-title {
@@ -986,6 +1043,16 @@ const ResortAndVenue = () => {
           max-width: 760px;
           margin: 15px auto 0;
           color: var(--muted);
+        }
+
+        .ltc-section-title p::after {
+          content: "";
+          display: block;
+          width: 120px;
+          height: 2px;
+          margin: 14px auto 0;
+          border-radius: 999px;
+          background: var(--green-700);
         }
 
         .ltc-services-header {
@@ -1724,53 +1791,67 @@ const ResortAndVenue = () => {
 
         @media (max-width: 600px) {
 
-          .ltc-unlock-intro {
-            align-items: center;
+          .ltc-unlock-content {
+            width: 100%;
+            padding: 100px 20px 190px;
           }
 
-          .ltc-unlock-content {
-            padding: 120px 24px 150px;
+          .ltc-unlock-kicker {
+            margin-bottom: 16px;
+            font-size: 10px;
+            letter-spacing: .22em;
           }
 
           .ltc-unlock-title {
-            font-size: clamp(46px, 14vw, 78px);
+            font-size: clamp(52px, 18vw, 88px);
             white-space: normal;
-            line-height: .94;
-            letter-spacing: -.045em;
+            line-height: .86;
+            letter-spacing: -.055em;
+          }
+
+          .ltc-unlock-title .ampersand {
+            display: block;
+            margin: .08em 0 .02em;
+            font-size: .48em;
           }
 
           .ltc-unlock-subtitle {
-            font-size: 18px;
-            line-height: 1.2;
+            max-width: 460px;
+            margin-top: 22px;
+            font-size: 14px;
+            line-height: 1.55;
           }
 
           .ltc-unlock-action {
-            min-height: 58px;
-            min-width: 190px;
-            border-radius: 22px;
-            font-size: 20px;
-            padding: 0 30px;
+            margin-top: 34px;
+            font-size: 11px;
           }
 
           .ltc-unlock-bottom-locations {
-            position: relative;
-            bottom: auto;
-            left: auto;
-            transform: none;
-            display: block;
-            padding: 0 24px 32px;
-            margin-top: -118px;
+            width: calc(100% - 32px);
+            bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
           }
 
           .ltc-unlock-location,
           .ltc-unlock-location.right {
+            max-width: none;
             text-align: left;
             justify-content: flex-start;
-            margin-top: 16px;
           }
 
           .ltc-unlock-location.right {
-            flex-direction: row-reverse;
+            flex-direction: row;
+          }
+
+          .ltc-unlock-location-title {
+            font-size: 13px;
+          }
+
+          .ltc-unlock-location-address {
+            font-size: 11px;
           }
 
           .ltc-header .ltc-container,
@@ -1801,7 +1882,7 @@ const ResortAndVenue = () => {
           }
 
           .ltc-section {
-            padding: 64px 0;
+            padding: 38px 0 60px;
           }
 
           .ltc-info-grid {
@@ -1831,19 +1912,23 @@ const ResortAndVenue = () => {
         }
       `}</style>
 
-      {isUnlocked ? (
+      {isUnlocked || isUnlocking ? (
         <Header navigate={navigate} goToProfile={goToProfile} openMenu={() => setIsOpen(true)} />
       ) : null}
 
       {!isUnlocked ? (
-        <section className="ltc-unlock-intro" aria-label="Unlock intro">
+        <section
+          className={`ltc-unlock-intro ${isUnlocking ? "is-exiting" : ""}`}
+          aria-label="Hotel and Resort introduction"
+        >
           {HERO_IMAGES.map((image, index) => (
             <img
               key={`unlock-${image.src}`}
               src={image.src}
               srcSet={image.srcSet}
               sizes="100vw"
-              alt={`Hotel and Resort background ${index + 1}`}
+              alt=""
+              aria-hidden="true"
               className={`ltc-unlock-bg ${heroIndex === index ? "active" : ""}`}
               width="1536"
               height="1024"
@@ -1858,22 +1943,40 @@ const ResortAndVenue = () => {
 
           <div className="ltc-unlock-content">
             <div className="ltc-unlock-copy">
+              <p className="ltc-unlock-kicker" style={fontPoppins}>
+                Lumispire Hospitality
+              </p>
+
               <h1 className="ltc-unlock-title" style={fontMontserrat}>
-                <span className="white">Hotel &amp; Resort</span>
+                <span className="white">Hotel</span>
+                <span className="ampersand">&amp;</span>
+                <span className="white">Resort</span>
               </h1>
 
               <p className="ltc-unlock-subtitle" style={fontPontano}>
-                Discover resort venues, comfortable stays, and flexible event spaces made for unforgettable moments.
+                Comfortable stays, resort venues, and flexible event spaces for memorable occasions.
               </p>
 
               <button
                 type="button"
-                onClick={unlockPage}
                 className="ltc-unlock-action"
                 style={fontPoppins}
-                aria-label="Open resort and venue content"
+                onClick={unlockPage}
+                disabled={isUnlocking}
+                aria-label="Explore Hotel and Resort"
               >
-                Explore
+                <span>Explore now</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
               </button>
             </div>
           </div>
@@ -1884,15 +1987,15 @@ const ResortAndVenue = () => {
               address="2/F 5441 Currie Street, Palanan, Makati City"
             />
             <UnlockLocation
-              title="Bacoor Cavite"
-              address="Eco Trend Subdivision"
+              title="Bacoor, Cavite"
+              address="Ecotrend Subdivision, San Nicolas, Bacoor, Cavite"
               align="right"
             />
           </div>
         </section>
       ) : null}
 
-      {isUnlocked ? (
+      {isUnlocked || isUnlocking ? (
         <main ref={contentRef}>
           <section className="ltc-hero">
             {HERO_IMAGES.map((image, index) => (
@@ -2029,7 +2132,7 @@ const ResortAndVenue = () => {
         </main>
       ) : null}
 
-      {isUnlocked ? <Footer /> : null}
+      {isUnlocked || isUnlocking ? <Footer /> : null}
 
       {isUnlocked && isOpen && (
         <MobileMenu
@@ -2073,7 +2176,7 @@ function UnlockLocation({ title, address, align = "left" }) {
 
   return (
     <div className={`ltc-unlock-location ${rightSide ? "right" : ""}`}>
-      {!rightSide ? <UnlockLocationIcon /> : null}
+      <UnlockLocationIcon />
 
       <div>
         <div className="ltc-unlock-location-title" style={fontMontserrat}>
@@ -2083,8 +2186,6 @@ function UnlockLocation({ title, address, align = "left" }) {
           {address}
         </div>
       </div>
-
-      {rightSide ? <UnlockLocationIcon /> : null}
     </div>
   );
 }

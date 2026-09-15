@@ -299,10 +299,9 @@ Email: **Admin@ltcmultiservices.com**
 Contact Email: **lorengladius@ltcmultiservices.com**
 By clicking **“I Understand,” “I Agree,”** or by continuing to use LUMISPIRE, you acknowledge that you have read and understood this Privacy Policy and consent to the collection and processing of your personal information in accordance with this policy and applicable data privacy laws.`;
 
-const SYSTEM_FONT = 'system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Arial, sans-serif';
-const fontMontserrat = { fontFamily: SYSTEM_FONT };
-const fontPontano = { fontFamily: SYSTEM_FONT };
-const fontPoppins = { fontFamily: SYSTEM_FONT };
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 
 function getHotelToken() {
   return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
@@ -729,13 +728,16 @@ const HotelSignUp = () => {
         src="/HotelLogo.webp"
         alt="Hotel logo"
         className="ltc-logo-icon"
+        width="42"
+        height="42"
+        decoding="async"
         onError={(event) => {
           event.currentTarget.style.display = "none";
         }}
       />
 
       <div>
-        <span className="ltc-logo-title" style={fontMontserrat}>Hotel &amp; Resort</span>
+        <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
         <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
       </div>
     </button>
@@ -833,8 +835,9 @@ const HotelSignUp = () => {
         }
 
         .ltc-header {
-          position: relative;
-          z-index: 20;
+          position: sticky;
+          top: 0;
+          z-index: 50;
           width: 100%;
           background: var(--footer-green);
           border-bottom: 1px solid rgba(255,255,255,.1);
@@ -879,7 +882,7 @@ const HotelSignUp = () => {
           box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
         }
 
-        .ltc-logo-title {
+        .ltc-logo h1 {
           font-size: 18px;
           line-height: 1;
           font-weight: 900;
@@ -1800,7 +1803,7 @@ const HotelSignUp = () => {
             padding-right: 16px;
           }
 
-          .ltc-logo-title {
+          .ltc-logo h1 {
             font-size: 14px;
           }
 

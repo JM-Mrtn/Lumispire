@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const BANK_QR_IMAGE = "/bank-transfer-qr.png";
-const GCASH_QR_IMAGE = "/gcash-qr.png";
+const BANK_QR_IMAGE = "/QRImage.jpg";
+const GCASH_QR_IMAGE = "/QRImage.jpg";
 const HOTEL_LOGO = "/HotelLogo.png";
 const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
 const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
@@ -10,6 +10,264 @@ const HERO_IMAGES = ["/HotelLanding1.png", "/HotelLanding2.png"];
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
 const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
+
+const RESORT_BOOKING_POLICY_TEXT = `# 1. LUMISPIRE RESORT BOOKING POLICY
+
+For HotelResortBookingBookingForm
+
+**Effective Date:** September 2026
+**Last Updated:** 2026
+
+Welcome to **LUMISPIRE Hotel & Resort Services of LTC Group**. This Resort Booking Policy outlines the terms and conditions governing resort reservations, payments, cancellations, modifications, venue use, and other booking-related matters when using LUMISPIRE.
+By making a resort reservation through LUMISPIRE, you acknowledge that you have read, understood, and agreed to the policies stated below.
+
+---
+
+## 1. Reservation and Booking Process
+
+Guests may make resort reservations through the LUMISPIRE platform by providing the required information, which may include:
+
+- Full name of guest or booking representative
+- Contact information
+- Email address
+- Reservation date
+- Check-in and check-out details, when applicable
+- Number of guests
+- Selected resort accommodation or facility
+- Selected amenities or services
+- Additional requests or special requirements
+
+All information provided must be accurate, complete, and updated.
+Guests are responsible for reviewing all reservation details before submitting the booking.
+A reservation will only be considered confirmed once the required booking process has been completed and any applicable payment has been submitted, verified, and approved.
+
+---
+
+## 2. Guest Information Requirements
+
+Guests may be required to provide valid identification and other necessary information for reservation verification, security, guest management, and service delivery.
+The resort may verify submitted guest and booking information before confirming a reservation.
+Personal information collected during the booking process will be handled in accordance with the **LUMISPIRE Hotel & Resort Privacy Policy** and applicable Philippine data privacy laws.
+
+---
+
+## 3. Resort Availability and Booking Confirmation
+
+All resort reservations are subject to availability at the time of booking.
+LTC Group Hotel & Resort Services reserves the right to:
+
+- Confirm or decline reservations based on availability
+- Correct errors in booking details or pricing
+- Update available dates, accommodations, amenities, and services
+- Request additional information before approving a reservation
+- Reschedule a booking when reasonably required by operational circumstances
+
+Guests will receive confirmation through their registered email address, contact information, or LUMISPIRE notification when available.
+Submission of a booking request does not automatically mean that the reservation has been approved.
+
+---
+
+## 4. Check-in and Check-out Policy
+
+### Check-in Time:
+
+**[Insert Time]**
+
+### Check-out Time:
+
+**[Insert Time]**
+Guests must present required identification and booking confirmation upon arrival when requested.
+Early check-in or late check-out requests are subject to availability and approval and may involve additional charges.
+Guests who remain beyond the approved reservation period may be charged additional fees.
+
+---
+
+## 5. Payment Policy
+
+Guests may be required to complete full or partial payment to secure their resort reservation.
+
+### GCash Payment
+
+Guests may make payments through the officially designated GCash account.
+Guests must:
+
+- Send payment only to the officially provided GCash account
+- Verify the recipient details before completing payment
+- Upload or submit valid proof of payment
+- Provide the correct reference number and amount
+- Ensure that the proof of payment is readable and authentic
+
+### Bank Transfer Payment
+
+Guests may also make payments through the authorized bank account provided by LTC Group Hotel & Resort Services.
+Guests must:
+
+- Transfer payment only to the officially provided bank account
+- Submit valid proof of successful transfer
+- Provide accurate transaction information
+- Wait for payment verification before considering the reservation confirmed
+
+All payments are subject to verification.
+Failure to complete the required payment within the specified period may result in the booking being cancelled or released to other guests.
+LTC Group shall not be responsible for payments sent to unauthorized accounts or incorrect recipients.
+
+---
+
+## 6. Cancellation and Modification Policy
+
+Guests may request cancellation or modification of their resort reservation through:
+
+- LUMISPIRE
+- Official Hotel & Resort communication channels
+
+Cancellation and modification conditions may depend on:
+
+- Reservation date
+- Accommodation or facility selected
+- Promotional conditions
+- Payment status
+- Notice period
+- Availability
+
+Changes to reservation dates, guest count, accommodations, facilities, or services are subject to availability and approval.
+
+---
+
+## 7. Refund Policy
+
+Refund requests may be considered depending on the applicable cancellation and payment conditions.
+Approved refunds may be returned through the original payment method, subject to verification and processing requirements.
+Guests who paid through GCash or bank transfer must provide complete and accurate transaction information.
+Processing time may vary depending on the payment method and verification process.
+Approval of a refund is not automatic unless required by applicable law or specifically provided under an applicable booking condition.
+
+---
+
+## 8. No-Show Policy
+
+A no-show occurs when a guest fails to arrive on the scheduled reservation date without prior notice.
+In the event of a no-show:
+
+- The reservation may be cancelled
+- Advance payments or deposits may be forfeited subject to applicable policy
+- Reserved facilities or accommodations may be released
+- Future booking arrangements may be affected
+
+Guests should contact Hotel & Resort Services as soon as possible if they are unable to arrive as scheduled.
+
+---
+
+## 9. Early Departure Policy
+
+Guests who leave the resort before their scheduled departure may remain responsible for applicable booking charges.
+Refunds for unused accommodations, amenities, or services are not guaranteed and will depend on the approved refund and cancellation conditions.
+
+---
+
+## 10. Special Requests
+
+Guests may submit special requests such as:
+
+- Preferred accommodation arrangements
+- Additional amenities
+- Accessibility requirements
+- Celebration arrangements
+- Event setup requests
+- Additional tables, chairs, or equipment when available
+- Other reasonable service preferences
+
+All requests are subject to availability, approval, and possible additional charges.
+
+---
+
+## 11. Guest Responsibilities
+
+Guests agree to:
+
+- Provide accurate booking information
+- Observe resort rules and safety requirements
+- Respect other guests, employees, facilities, and property
+- Maintain cleanliness and proper conduct
+- Pay applicable charges
+- Take responsibility for damages caused by themselves or persons included in their booking
+- Follow capacity and facility-use restrictions
+- Avoid illegal, dangerous, disruptive, or prohibited activities
+
+LTC Group reserves the right to refuse or discontinue service when there is misconduct, illegal activity, serious safety risk, property damage, or substantial violation of resort policies.
+
+---
+
+## 12. Children and Additional Guests Policy
+
+The correct number of guests must be declared during booking.
+Children, additional guests, and visitors may be subject to applicable capacity restrictions and additional charges.
+Guests must not exceed the approved capacity of the accommodation, venue, or resort facility.
+
+---
+
+## 13. Promotions and Special Offers
+
+Promotional packages and discounts may have specific conditions including:
+
+- Limited booking periods
+- Limited availability
+- Specific dates
+- Required advance payment
+- Non-transferable reservations
+- Restrictions on cancellation or modification
+
+Promotions may not be combined unless expressly permitted.
+
+---
+
+## 14. Force Majeure
+
+LTC Group shall not be held responsible for delays, cancellations, or inability to provide resort services because of circumstances beyond reasonable control, including:
+
+- Typhoons and severe weather
+- Flooding
+- Earthquakes and natural disasters
+- Government restrictions
+- Public emergencies
+- Utility interruptions
+- Other unforeseen events
+
+Reasonable efforts will be made to assist affected guests when possible.
+
+---
+
+## 15. Privacy and Data Protection
+
+Personal information collected during resort bookings may be used for:
+
+- Reservation processing
+- Guest verification
+- Payment verification
+- Service delivery
+- Guest communication
+- Security
+- Record management
+
+Information will be processed in accordance with the **LUMISPIRE Hotel & Resort Privacy Policy** and applicable Philippine data privacy laws.
+
+---
+
+## 16. Policy Updates
+
+LTC Group may modify this Resort Booking Policy when necessary due to operational, service, technological, legal, or regulatory changes.
+Updated policies may be provided through LUMISPIRE or official Hotel & Resort communication channels.
+
+---
+
+## 17. Contact Information
+
+For resort reservations, payments, modifications, cancellations, or other concerns:
+**Service:** LTC Group – Hotel & Resort Services
+**Resort Location:** Patio de Lorenzo, CXRC+76G, Bacoor, Cavite
+**Email:** lorenzoeventandvenue@gmail.com
+**Contact Numbers:** 09338699988 / 09064191405
+
+**By completing a resort reservation through LUMISPIRE, you confirm that you have read, understood, and agreed to this Resort Booking Policy.**`;
 
 const pageStyles = `
   @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
@@ -261,12 +519,14 @@ const pageStyles = `
   .ltc-form-shell {
     position: relative;
     overflow: hidden;
-    border-radius: var(--radius);
+    width: min(1040px, 100%);
+    margin: 0 auto;
+    border-radius: 22px;
     background: var(--glass);
     border: 1px solid rgba(255,255,255,.76);
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(18px);
-    padding: 34px;
+    padding: 24px 26px;
   }
 
   .ltc-form-shell::before {
@@ -313,7 +573,7 @@ const pageStyles = `
 
   .ltc-summary-section + .ltc-summary-section,
   .ltc-summary-section + .ltc-payment-section {
-    margin-top: 34px;
+    margin-top: 24px;
   }
 
   .ltc-section-heading {
@@ -326,22 +586,22 @@ const pageStyles = `
   }
 
   .ltc-section-line {
-    margin-top: 10px;
-    width: 180px;
+    margin-top: 8px;
+    width: 150px;
     height: 3px;
     border-radius: 999px;
     background: linear-gradient(90deg,var(--green-700),var(--gold));
   }
 
   .ltc-fields-grid {
-    margin-top: 24px;
+    margin-top: 18px;
     display: grid;
     grid-template-columns: repeat(3, minmax(0,1fr));
-    gap: 18px 22px;
+    gap: 14px 18px;
   }
 
   .ltc-booking-header {
-    margin-bottom: 24px;
+    margin-bottom: 18px;
     display: flex;
     align-items: end;
     justify-content: space-between;
@@ -376,7 +636,7 @@ const pageStyles = `
   .ltc-select,
   .ltc-file-input {
     width: 100%;
-    min-height: 50px;
+    min-height: 46px;
     border-radius: 999px;
     border: 1px solid rgba(35,95,62,.16);
     background: rgba(255,255,255,.88);
@@ -432,6 +692,217 @@ const pageStyles = `
     font-weight: 800;
   }
 
+  .ltc-policy-consent {
+    margin-top: 18px;
+    border: 1px solid rgba(35,95,62,.14);
+    border-radius: 16px;
+    background: rgba(35,95,62,.055);
+    padding: 13px 15px;
+  }
+
+  .ltc-policy-consent.error {
+    border-color: rgba(239,68,68,.5);
+    background: rgba(239,68,68,.055);
+  }
+
+  .ltc-policy-consent-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .ltc-policy-checkbox {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--green-800);
+    cursor: pointer;
+  }
+
+  .ltc-policy-consent-text {
+    color: #475467;
+    font-size: 12px;
+    line-height: 1.55;
+    font-weight: 700;
+  }
+
+  .ltc-policy-consent-text label {
+    cursor: pointer;
+  }
+
+  .ltc-policy-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--green-800);
+    font: inherit;
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .ltc-policy-link:hover {
+    color: var(--green-950);
+  }
+
+  .ltc-policy-consent-error {
+    margin: 6px 0 0 28px;
+    color: #b42318;
+    font-size: 11px;
+    line-height: 1.45;
+    font-weight: 800;
+  }
+
+  .ltc-policy-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(2,18,11,.72);
+    backdrop-filter: blur(7px);
+  }
+
+  .ltc-policy-modal {
+    width: min(860px, 100%);
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,.65);
+    background: white;
+    box-shadow: 0 34px 90px rgba(0,0,0,.34);
+  }
+
+  .ltc-policy-modal-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    color: white;
+    background: linear-gradient(135deg,var(--green-950),var(--green-800));
+    border-bottom: 3px solid var(--gold);
+  }
+
+  .ltc-policy-modal-kicker {
+    margin: 0 0 3px;
+    color: var(--gold-soft);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .ltc-policy-modal-title {
+    margin: 0;
+    color: white;
+    font-size: clamp(19px,2.5vw,25px);
+    line-height: 1.15;
+    font-weight: 900;
+  }
+
+  .ltc-policy-modal-close {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    background: rgba(255,255,255,.1);
+    color: white;
+    font-size: 23px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .ltc-policy-modal-body {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px 30px;
+    background: white;
+  }
+
+  .ltc-policy-document {
+    width: min(740px,100%);
+    margin: 0 auto;
+    color: #25352d;
+    font-size: 13px;
+    line-height: 1.68;
+  }
+
+  .ltc-policy-document h1 {
+    margin: 0 0 14px;
+    color: var(--green-950);
+    font-size: clamp(23px,3vw,30px);
+    line-height: 1.15;
+    font-weight: 900;
+  }
+
+  .ltc-policy-document h2 {
+    margin: 22px 0 8px;
+    color: var(--green-800);
+    font-size: 17px;
+    line-height: 1.3;
+    font-weight: 900;
+  }
+
+  .ltc-policy-document h3 {
+    margin: 16px 0 7px;
+    color: var(--green-900);
+    font-size: 14px;
+    line-height: 1.35;
+    font-weight: 900;
+  }
+
+  .ltc-policy-document p {
+    margin: 0 0 10px;
+  }
+
+  .ltc-policy-document strong {
+    color: #13281d;
+    font-weight: 900;
+  }
+
+  .ltc-policy-document ul {
+    margin: 4px 0 14px;
+    padding-left: 22px;
+  }
+
+  .ltc-policy-document li {
+    margin: 3px 0;
+  }
+
+  .ltc-policy-document li::marker {
+    color: var(--green-700);
+  }
+
+  .ltc-policy-modal-footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 11px 16px;
+    border-top: 1px solid rgba(16,24,40,.08);
+    background: #f8faf8;
+  }
+
+  .ltc-policy-modal-done {
+    min-width: 108px;
+    height: 40px;
+    border: 0;
+    border-radius: 999px;
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    font-weight: 900;
+    cursor: pointer;
+  }
+
   .ltc-info-box {
     margin-top: 18px;
     border-radius: 18px;
@@ -453,21 +924,23 @@ const pageStyles = `
   }
 
   .ltc-payment-section {
-    margin-top: 34px;
+    margin-top: 24px;
   }
 
   .ltc-payment-grid {
-    margin-top: 18px;
+    margin-top: 14px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0,1fr));
     gap: 18px;
   }
 
   .ltc-qr-placeholder {
-    height: 230px;
+    width: min(220px, 100%);
+    aspect-ratio: 1 / 1;
     border-radius: 18px;
     display: grid;
     place-items: center;
+    margin: 0 auto;
     text-align: center;
     padding: 18px;
     color: white;
@@ -490,7 +963,7 @@ const pageStyles = `
     border-radius: 22px;
     border: 1px solid rgba(35,95,62,.12);
     background: white;
-    padding: 18px;
+    padding: 14px 14px 16px;
     box-shadow: 0 16px 34px rgba(8,39,25,.08);
     cursor: pointer;
     transition: .25s var(--ease);
@@ -530,7 +1003,9 @@ const pageStyles = `
   .ltc-qr-frame {
     display: grid;
     place-items: center;
-    height: 230px;
+    width: min(220px, 100%);
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
     border-radius: 18px;
     background: rgba(35,95,62,.08);
     overflow: hidden;
@@ -540,6 +1015,8 @@ const pageStyles = `
     width: 100%;
     height: 100%;
     object-fit: contain;
+    padding: 8px;
+    background: white;
   }
 
   .ltc-qr-title {
@@ -553,11 +1030,11 @@ const pageStyles = `
   }
 
   .ltc-price-card {
-    margin-top: 32px;
-    border-radius: 20px;
+    margin-top: 22px;
+    border-radius: 18px;
     background: white;
     border: 1px solid rgba(35,95,62,.10);
-    padding: 22px;
+    padding: 16px 18px;
     box-shadow: 0 16px 34px rgba(8,39,25,.08);
   }
 
@@ -572,9 +1049,9 @@ const pageStyles = `
   .ltc-price-value {
     margin: 0;
     color: var(--green-950);
-    font-size: clamp(22px,3vw,30px);
+    font-size: clamp(19px,2.4vw,26px);
     font-weight: 900;
-    letter-spacing: -.04em;
+    letter-spacing: -.035em;
   }
 
   .ltc-price-breakdown {
@@ -588,7 +1065,7 @@ const pageStyles = `
   }
 
   .ltc-actions {
-    margin-top: 32px;
+    margin-top: 22px;
     display: flex;
     justify-content: center;
     gap: 18px;
@@ -888,7 +1365,8 @@ const pageStyles = `
     }
 
     .ltc-form-shell {
-      padding: 28px 22px;
+      width: min(96%, 1040px);
+      padding: 22px 18px;
     }
 
     .ltc-booking-header,
@@ -941,12 +1419,31 @@ const pageStyles = `
     }
 
     .ltc-form-shell {
-      padding: 26px 18px;
+      width: 96%;
+      padding: 20px 16px;
     }
 
     .ltc-primary-button,
     .ltc-secondary-button {
       width: 100%;
+    }
+
+
+    .ltc-policy-modal-overlay {
+      padding: 10px;
+    }
+
+    .ltc-policy-modal {
+      max-height: 92vh;
+      border-radius: 18px;
+    }
+
+    .ltc-policy-modal-header {
+      padding: 13px 14px;
+    }
+
+    .ltc-policy-modal-body {
+      padding: 20px 16px 24px;
     }
   }
 `;
@@ -1009,6 +1506,8 @@ export default function ResortSummary() {
   const [isDownPayment, setIsDownPayment] = useState(false);
   const [proofFile, setProofFile] = useState(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [agreedToBookingPolicy, setAgreedToBookingPolicy] = useState(false);
+  const [policyModalOpen, setPolicyModalOpen] = useState(false);
 
   const fullTotalAmount = Number(
     bookingData?.price || bookingData?.totalAmount || 0
@@ -1067,6 +1566,14 @@ export default function ResortSummary() {
   const submitBooking = async () => {
     setSubmitAttempted(true);
     setStatus({ type: "", message: "" });
+
+    if (!agreedToBookingPolicy) {
+      setStatus({
+        type: "error",
+        message: "Please read and agree to the Resort Booking Policy before submitting your booking.",
+      });
+      return;
+    }
 
     if (!paymentMethod) {
       setStatus({
@@ -1405,6 +1912,16 @@ export default function ResortSummary() {
                 </div>
               </div>
 
+              <BookingPolicyConsent
+                agreed={agreedToBookingPolicy}
+                onChange={(checked) => {
+                  setAgreedToBookingPolicy(checked);
+                  setStatus({ type: "", message: "" });
+                }}
+                onOpen={() => setPolicyModalOpen(true)}
+                showError={submitAttempted && !agreedToBookingPolicy}
+              />
+
               {status.message ? (
                 <div className={`ltc-status ${statusClass}`} style={fontPoppins}>
                   {status.type === "error" ? (
@@ -1451,6 +1968,186 @@ export default function ResortSummary() {
           goToProfile={goToProfile}
         />
       ) : null}
+
+      {policyModalOpen ? (
+        <BookingPolicyModal onClose={() => setPolicyModalOpen(false)} />
+      ) : null}
+    </div>
+  );
+}
+
+function BookingPolicyConsent({ agreed, onChange, onOpen, showError }) {
+  return (
+    <div className={`ltc-policy-consent ${showError ? "error" : ""}`}>
+      <div className="ltc-policy-consent-row" style={fontPoppins}>
+        <input
+          id="resort-booking-policy-consent"
+          type="checkbox"
+          className="ltc-policy-checkbox"
+          checked={agreed}
+          onChange={(event) => onChange(event.target.checked)}
+          aria-required="true"
+          aria-invalid={showError ? "true" : "false"}
+        />
+
+        <div className="ltc-policy-consent-text">
+          <label htmlFor="resort-booking-policy-consent">
+            I have read and agree to the 
+          </label>
+          <button type="button" className="ltc-policy-link" onClick={onOpen}>
+            LUMISPIRE Resort Booking Policy
+          </button>
+          <span>.</span>
+        </div>
+      </div>
+
+      {showError ? (
+        <p className="ltc-policy-consent-error" style={fontPoppins}>
+          You must agree to the Resort Booking Policy before submitting your booking.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function renderPolicyInline(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
+    }
+
+    return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
+  });
+}
+
+function ResortPolicyDocument({ content }) {
+  const lines = content.split("\n");
+  const elements = [];
+  let listItems = [];
+
+  const flushList = () => {
+    if (!listItems.length) return;
+
+    elements.push(
+      <ul key={`resort-policy-list-${elements.length}`}>
+        {listItems.map((item, index) => (
+          <li key={`${item}-${index}`}>{renderPolicyInline(item)}</li>
+        ))}
+      </ul>
+    );
+
+    listItems = [];
+  };
+
+  lines.forEach((rawLine, index) => {
+    const line = rawLine.trim();
+
+    if (!line || line === "---") {
+      flushList();
+      return;
+    }
+
+    if (line.startsWith("- ")) {
+      listItems.push(line.slice(2));
+      return;
+    }
+
+    flushList();
+
+    if (line.startsWith("# ")) {
+      elements.push(
+        <h1 key={`resort-policy-h1-${index}`} style={fontMontserrat}>
+          {renderPolicyInline(line.slice(2))}
+        </h1>
+      );
+      return;
+    }
+
+    if (line.startsWith("## ")) {
+      elements.push(
+        <h2 key={`resort-policy-h2-${index}`} style={fontMontserrat}>
+          {renderPolicyInline(line.slice(3))}
+        </h2>
+      );
+      return;
+    }
+
+    if (line.startsWith("### ")) {
+      elements.push(
+        <h3 key={`resort-policy-h3-${index}`} style={fontMontserrat}>
+          {renderPolicyInline(line.slice(4))}
+        </h3>
+      );
+      return;
+    }
+
+    elements.push(
+      <p key={`resort-policy-p-${index}`} style={fontPoppins}>
+        {renderPolicyInline(line)}
+      </p>
+    );
+  });
+
+  flushList();
+  return <div className="ltc-policy-document">{elements}</div>;
+}
+
+function BookingPolicyModal({ onClose }) {
+  return (
+    <div
+      className="ltc-policy-modal-overlay"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        className="ltc-policy-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="resort-booking-policy-title"
+      >
+        <div className="ltc-policy-modal-header">
+          <div>
+            <p className="ltc-policy-modal-kicker" style={fontMontserrat}>
+              LUMISPIRE HOTEL &amp; RESORT
+            </p>
+            <h2
+              id="resort-booking-policy-title"
+              className="ltc-policy-modal-title"
+              style={fontMontserrat}
+            >
+              Resort Booking Policy
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            className="ltc-policy-modal-close"
+            onClick={onClose}
+            aria-label="Close Resort Booking Policy"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="ltc-policy-modal-body">
+          <ResortPolicyDocument content={RESORT_BOOKING_POLICY_TEXT} />
+        </div>
+
+        <div className="ltc-policy-modal-footer">
+          <button
+            type="button"
+            className="ltc-policy-modal-done"
+            style={fontMontserrat}
+            onClick={onClose}
+          >
+            DONE
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

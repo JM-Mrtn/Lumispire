@@ -621,11 +621,18 @@ const pageStyles = `
 
   .ltc-footer {
     width: 100%;
+    margin: 0;
     padding: 30px 0 12px;
     background: var(--footer-green);
     color: white;
-    content-visibility: auto;
-    contain-intrinsic-size: 360px;
+  }
+
+  .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
   }
 
   .ltc-footer-grid {
@@ -637,8 +644,19 @@ const pageStyles = `
     border-bottom: 1px solid rgba(255,255,255,.1);
   }
 
-  .ltc-footer-brand { display: flex; align-items: center; gap: 12px; }
-  .ltc-footer-brand img { width: 42px; height: 42px; border-radius: 999px; object-fit: cover; }
+  .ltc-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-footer-brand img {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+  }
+
   .ltc-footer-brand-title {
     margin: 0;
     color: white;
@@ -647,46 +665,81 @@ const pageStyles = `
     font-weight: 900;
     text-transform: uppercase;
   }
+
   .ltc-footer-heading {
     margin: 0 0 10px;
-    color: var(--gold-soft);
+    color: #f4d484;
     font-size: 12px;
     line-height: 1.2;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: .14em;
   }
+
   .ltc-footer p,
-  .ltc-footer-link { margin: 5px 0; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.55; }
-  .ltc-footer-small-text { margin: 4px 0 !important; font-size: 12px !important; line-height: 1.42 !important; }
   .ltc-footer-link {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    width: fit-content;
+    display: block;
+    margin: 5px 0;
+    color: rgba(255,255,255,.68);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .ltc-footer-small-text {
+    margin: 4px 0 !important;
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+  }
+
+  .ltc-footer-small-text strong {
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+  }
+
+  .ltc-footer-link {
+    width: auto;
+    min-height: 0;
     border: 0;
     padding: 0;
     background: transparent;
     text-align: left;
     cursor: pointer;
   }
+
   .ltc-footer-link:hover,
-  .ltc-footer-link:focus-visible { color: white; text-decoration: underline; }
+  .ltc-footer-link:focus-visible {
+    color: white;
+    text-decoration: underline;
+  }
 
   .ltc-facebook-link {
-    width: 44px;
-    height: 44px;
+    width: 34px;
+    height: 34px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin-top: 6px;
     border: 1px solid rgba(255,255,255,.16);
     border-radius: 999px;
-    background: rgba(255,255,255,.1);
+    background: rgba(255,255,255,.10);
     color: white;
     cursor: pointer;
+    transition: .25s var(--ease);
   }
-  .ltc-facebook-link svg { width: 18px; height: 18px; fill: currentColor; }
+
+  .ltc-facebook-link:hover,
+  .ltc-facebook-link:focus-visible {
+    color: #f4d484;
+    border-color: rgba(244,212,132,.42);
+    background: rgba(244,212,132,.12);
+    transform: translateY(-2px);
+  }
+
+  .ltc-facebook-link svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
 
   .ltc-copyright {
     width: 100%;
@@ -696,6 +749,7 @@ const pageStyles = `
     gap: 12px;
     color: rgba(255,255,255,.52);
     font-size: 12px;
+    line-height: 1.4;
   }
 
   .ltc-sidebar-overlay {
@@ -829,8 +883,13 @@ const pageStyles = `
   :where(button, input):focus-visible { outline: 3px solid rgba(244,212,132,.75); outline-offset: 3px; }
 
   @media (max-width: 1100px) {
-    .ltc-fields-grid,
-    .ltc-footer-grid { grid-template-columns: 1fr; }
+    .ltc-fields-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ltc-footer-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (max-width: 900px) {
@@ -846,8 +905,15 @@ const pageStyles = `
     .ltc-receipt-two-col { grid-template-columns: 1fr; }
     .ltc-booking-header { align-items: flex-start; }
     .ltc-service-pill { width: 100%; }
-    .ltc-footer { padding: 28px 0 12px; }
-    .ltc-footer-grid { gap: 18px; padding-bottom: 22px; }
+    .ltc-footer {
+      padding: 28px 0 12px;
+    }
+
+    .ltc-footer-grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+      padding-bottom: 22px;
+    }
     .ltc-copyright { flex-direction: column; }
     .ltc-receipt-modal-overlay { padding: 14px; }
     .ltc-receipt-modal { max-height: calc(100vh - 28px); }

@@ -7,10 +7,9 @@ const USERNAME_MAX_LENGTH = 20;
 const PASSWORD_MIN_LENGTH = 6;
 const PASSWORD_MAX_LENGTH = 20;
 
-const SYSTEM_FONT_STACK = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
-const fontMontserrat = { fontFamily: SYSTEM_FONT_STACK };
-const fontPontano = { fontFamily: SYSTEM_FONT_STACK };
-const fontPoppins = { fontFamily: SYSTEM_FONT_STACK };
+const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 
 function getHotelToken() {
   return localStorage.getItem("token") || localStorage.getItem("hotelToken") || "";
@@ -238,13 +237,16 @@ const HotelLogIn = () => {
         src="/HotelLogo.webp"
         alt="Hotel logo"
         className="ltc-logo-icon"
+        width="42"
+        height="42"
+        decoding="async"
         onError={(event) => {
           event.currentTarget.style.display = "none";
         }}
       />
 
       <div>
-        <p className="ltc-logo-title" style={fontMontserrat}>Hotel &amp; Resort</p>
+        <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
         <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
       </div>
     </button>
@@ -278,7 +280,7 @@ const HotelLogIn = () => {
           line-height: 1.65;
           letter-spacing: -.01em;
           overflow-x: hidden;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+          font-family: "Inter", Arial, sans-serif;
         }
 
         .ltc-hotel-login-page * {
@@ -347,8 +349,9 @@ const HotelLogIn = () => {
         }
 
         .ltc-header {
-          position: relative;
-          z-index: 20;
+          position: sticky;
+          top: 0;
+          z-index: 50;
           width: 100%;
           background: var(--footer-green);
           border-bottom: 1px solid rgba(255,255,255,.1);
@@ -393,7 +396,7 @@ const HotelLogIn = () => {
           box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12);
         }
 
-        .ltc-logo-title {
+        .ltc-logo h1 {
           font-size: 18px;
           line-height: 1;
           font-weight: 900;
@@ -576,8 +579,16 @@ const HotelLogIn = () => {
           line-height: 1.8;
         }
 
-        .ltc-location-box {
+        .ltc-location-list {
           margin-top: 30px;
+          display: flex;
+          align-items: stretch;
+          flex-wrap: wrap;
+          gap: 18px;
+        }
+
+        .ltc-location-box {
+          margin-top: 0;
           display: inline-flex;
           align-items: center;
           gap: 14px;
@@ -1035,9 +1046,8 @@ const HotelLogIn = () => {
             margin: 0 auto;
           }
 
-          .ltc-location-box {
-            margin-left: auto;
-            margin-right: auto;
+          .ltc-location-list {
+            justify-content: center;
           }
 
           .ltc-login-card {
@@ -1084,7 +1094,7 @@ const HotelLogIn = () => {
             padding-right: 16px;
           }
 
-          .ltc-logo-title {
+          .ltc-logo h1 {
             font-size: 14px;
           }
 
@@ -1120,6 +1130,12 @@ const HotelLogIn = () => {
 
           .ltc-login-copy p {
             font-size: 15px;
+          }
+
+          .ltc-location-list {
+            width: 100%;
+            flex-direction: column;
+            gap: 14px;
           }
 
           .ltc-location-box {
@@ -1225,21 +1241,23 @@ const HotelLogIn = () => {
               experience.
             </p>
 
-            <div className="ltc-location-box">
-              <PinIcon />
+            <div className="ltc-location-list">
+              <div className="ltc-location-box">
+                <PinIcon />
 
-              <div>
-                <h2 style={fontMontserrat}>Bacoor, Cavite</h2>
-                <p style={fontPoppins}>Eco Trend Subdivision</p>
+                <div>
+                  <h2 style={fontMontserrat}>Bacoor, Cavite</h2>
+                  <p style={fontPoppins}>Eco Trend Subdivision</p>
+                </div>
               </div>
-            </div>
 
-            <div className="ltc-location-box">
-              <PinIcon />
+              <div className="ltc-location-box">
+                <PinIcon />
 
-              <div>
-                <h2 style={fontMontserrat}>Palanan, Makati</h2>
-                <p style={fontPoppins}>Building II, Curie Street</p>
+                <div>
+                  <h2 style={fontMontserrat}>Palanan, Makati</h2>
+                  <p style={fontPoppins}>Building II, Curie Street</p>
+                </div>
               </div>
             </div>
           </section>

@@ -335,20 +335,130 @@ const ScrollToTop = () => {
 };
 
 const PageFallback = () => (
-  <div
-    role="status"
-    aria-live="polite"
-    style={{
-      minHeight: "100vh",
-      display: "grid",
-      placeItems: "center",
-      background: "#f5f8f6",
-      color: "#155f3b",
-      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      fontWeight: 600,
-    }}
-  >
-    Loading page…
+  <div className="ltc-page-loader" role="status" aria-live="polite">
+    <style>{`
+      .ltc-page-loader {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at 50% 42%, rgba(21, 95, 59, 0.055), transparent 30%),
+          #f8faf9;
+        color: #155f3b;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      .ltc-loader-wrap {
+        display: grid;
+        justify-items: center;
+      }
+
+      .ltc-loader-scene {
+        position: relative;
+        width: 112px;
+        height: 112px;
+        display: grid;
+        place-items: center;
+        perspective: 700px;
+      }
+
+      .ltc-loader-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2px solid rgba(21, 95, 59, 0.10);
+        border-top-color: #155f3b;
+        border-right-color: rgba(21, 95, 59, 0.42);
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,.7),
+          0 14px 34px rgba(10, 65, 39, .08);
+        animation: ltcLoaderOrbit 1.1s linear infinite;
+      }
+
+      .ltc-loader-logo-shell {
+        position: relative;
+        z-index: 1;
+        width: 84px;
+        height: 84px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(255,255,255,.96);
+        border: 1px solid rgba(21, 95, 59, .10);
+        box-shadow:
+          0 18px 34px rgba(8, 56, 34, .13),
+          0 5px 12px rgba(8, 56, 34, .08),
+          inset 0 1px 0 rgba(255,255,255,.95);
+        transform-style: preserve-3d;
+        animation: ltcLogoFloat 2.4s ease-in-out infinite;
+      }
+
+      .ltc-loader-logo-shell::after {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, rgba(255,255,255,.35), transparent 45%);
+        pointer-events: none;
+      }
+
+      .ltc-loader-logo {
+        width: 66px;
+        height: 66px;
+        object-fit: contain;
+        border-radius: 50%;
+        transform: translateZ(10px);
+        filter: drop-shadow(0 5px 7px rgba(8, 56, 34, .10));
+      }
+
+      .ltc-loader-shadow {
+        position: absolute;
+        left: 50%;
+        bottom: -7px;
+        width: 54px;
+        height: 9px;
+        border-radius: 50%;
+        background: rgba(8, 56, 34, .10);
+        filter: blur(7px);
+        transform: translateX(-50%);
+        animation: ltcShadowPulse 2.4s ease-in-out infinite;
+      }
+
+
+      @keyframes ltcLoaderOrbit {
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes ltcLogoFloat {
+        0%, 100% { transform: rotateX(0deg) rotateY(-4deg) translateY(0); }
+        50% { transform: rotateX(4deg) rotateY(4deg) translateY(-4px); }
+      }
+
+      @keyframes ltcShadowPulse {
+        0%, 100% { opacity: .7; transform: translateX(-50%) scaleX(1); }
+        50% { opacity: .35; transform: translateX(-50%) scaleX(.78); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ltc-loader-ring,
+        .ltc-loader-logo-shell,
+        .ltc-loader-shadow {
+          animation: none;
+        }
+      }
+    `}</style>
+
+    <div className="ltc-loader-wrap">
+      <div className="ltc-loader-scene" aria-hidden="true">
+        <div className="ltc-loader-ring" />
+        <div className="ltc-loader-logo-shell">
+          <img className="ltc-loader-logo" src="/LTCLogoTransparent.png" alt="" />
+        </div>
+        <div className="ltc-loader-shadow" />
+      </div>
+
+    </div>
   </div>
 );
 

@@ -320,8 +320,8 @@ const Home = () => {
         }
 
         .ltc-logo-icon {
-          width: 44px;
-          height: 44px;
+          width: 30px;
+          height: 30px;
           display: grid;
           place-items: center;
           border-radius: 50%;
@@ -960,7 +960,7 @@ const Home = () => {
 
         .ltc-promo-card {
           position: relative;
-          width: min(100%, 1024px, calc((100vh - 32px) * 1.5));
+          width: min(94%, 890px, calc((100vh - 56px) * 1.5));
           aspect-ratio: 3 / 2;
           overflow: hidden;
           border-radius: 28px;
@@ -1018,21 +1018,21 @@ const Home = () => {
 
         .ltc-promo-dots {
           position: absolute;
-          bottom: 22px;
+          bottom: 16px;
           left: 50%;
           z-index: 3;
           transform: translateX(-50%);
           display: flex;
-          gap: 9px;
-          padding: 9px 12px;
+          gap: 5px;
+          padding: 5px 7px;
           border-radius: 999px;
           background: rgba(0,0,0,.28);
           backdrop-filter: blur(8px);
         }
 
         .ltc-promo-dot {
-          width: 44px;
-          height: 44px;
+          width: 30px;
+          height: 30px;
           display: grid;
           place-items: center;
           border-radius: 999px;
@@ -1044,8 +1044,8 @@ const Home = () => {
 
         .ltc-promo-dot::before {
           content: "";
-          width: 10px;
-          height: 10px;
+          width: 7px;
+          height: 7px;
           border-radius: 999px;
           background: rgba(255,255,255,.48);
           transition: .2s var(--ease);

@@ -2309,26 +2309,6 @@ export default function HotelGuestReviews() {
                 </p>
               </div>
 
-              <div className="ltc-filter-buttons">
-                <button
-                  type="button"
-                  onClick={fetchBookingsAndReviews}
-                  disabled={loading}
-                  className="ltc-secondary-button"
-                  style={fontMontserrat}
-                >
-                  {loading ? "Refreshing..." : "Refresh"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate("/hotel-profile")}
-                  className="ltc-primary-button"
-                  style={fontMontserrat}
-                >
-                  Back to Profile
-                </button>
-              </div>
             </div>
 
             {status.message ? (

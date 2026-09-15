@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import HotelChatEmbedded from "./HotelChatEmbedded";
 
 const DEFAULT_ID_UPLOAD_POLICY = {
   canUpload: true,
@@ -362,10 +363,6 @@ const profilePageStyles = `
     transform: translateY(-1px);
   }
 
-  .ltc-signout-button {
-    color: #fecaca;
-  }
-
   .ltc-menu-button {
     display: none;
     color: white;
@@ -488,7 +485,7 @@ const profilePageStyles = `
   }
 
   .ltc-main {
-    padding: 46px 0 84px;
+    padding: 40px 0 76px;
   }
 
   .ltc-status-banner {
@@ -520,9 +517,19 @@ const profilePageStyles = `
 
   .ltc-profile-grid {
     display: grid;
-    grid-template-columns: 330px minmax(0, 1fr);
-    gap: 28px;
-    align-items: start;
+    gap: 18px;
+  }
+
+  .ltc-profile-overview {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    align-items: stretch;
+    overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255,255,255,.76);
+    background: var(--glass);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(18px);
   }
 
   .ltc-side-card,
@@ -537,6 +544,30 @@ const profilePageStyles = `
     transition: .35s var(--ease);
   }
 
+  .ltc-profile-overview .ltc-side-card,
+  .ltc-profile-overview .ltc-dashboard-card {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    background: transparent;
+  }
+
+  .ltc-profile-overview .ltc-side-card {
+    border-right: 1px solid rgba(35,95,62,.10);
+  }
+
+  .ltc-profile-overview .ltc-side-card::before,
+  .ltc-profile-overview .ltc-dashboard-card::before {
+    display: none;
+  }
+
+  .ltc-profile-overview .ltc-side-card:hover,
+  .ltc-profile-overview .ltc-dashboard-card:hover {
+    box-shadow: none;
+    border-color: transparent;
+  }
+
   .ltc-side-card::before,
   .ltc-dashboard-card::before {
     content: "";
@@ -549,25 +580,71 @@ const profilePageStyles = `
 
   .ltc-side-card:hover,
   .ltc-dashboard-card:hover {
-    transform: translateY(-6px);
     box-shadow: var(--shadow-lg);
-    border-color: rgba(215,168,77,.45);
+    border-color: rgba(215,168,77,.38);
   }
 
   .ltc-side-card {
-    padding: 30px 24px 24px;
+    position: sticky;
+    top: 96px;
+    padding: 26px 22px 22px;
     text-align: center;
   }
 
-  .ltc-avatar {
-    width: 178px;
-    height: 178px;
+  .ltc-profile-overview .ltc-side-card {
+    position: relative;
+    top: auto;
+    height: auto;
+    align-self: stretch;
+  }
+
+  .ltc-avatar-wrap {
+    position: relative;
+    width: 144px;
+    height: 144px;
     margin: 0 auto;
+  }
+
+  .ltc-avatar {
+    width: 100%;
+    height: 100%;
+    margin: 0;
     overflow: hidden;
     border-radius: 32px;
     border: 4px solid rgba(255,255,255,.76);
     background: rgba(35,95,62,.08);
     box-shadow: 0 18px 42px rgba(8,39,25,.12);
+  }
+
+  .ltc-avatar-upload {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    z-index: 4;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 4px solid white;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #f4d484, #d7a84d);
+    color: #102418;
+    font-size: 25px;
+    line-height: 1;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 12px 26px rgba(8,39,25,.18);
+    transition: .22s var(--ease);
+  }
+
+  .ltc-avatar-upload:hover {
+    transform: translateY(-2px) scale(1.04);
+  }
+
+  .ltc-avatar-upload:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+    transform: none;
   }
 
   .ltc-avatar img {
@@ -587,9 +664,9 @@ const profilePageStyles = `
   }
 
   .ltc-profile-name {
-    margin: 18px 0 0;
+    margin: 16px 0 0;
     color: var(--green-950);
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1.15;
     font-weight: 900;
     letter-spacing: -.04em;
@@ -646,9 +723,9 @@ const profilePageStyles = `
   }
 
   .ltc-side-actions {
-    margin-top: 24px;
+    margin-top: 20px;
     display: grid;
-    gap: 10px;
+    gap: 9px;
   }
 
   .ltc-primary-button,
@@ -697,11 +774,59 @@ const profilePageStyles = `
 
   .ltc-content-stack {
     display: grid;
-    gap: 24px;
+    gap: 18px;
+  }
+
+  .ltc-profile-shortcuts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .ltc-id-left-stack .ltc-profile-shortcut {
+    min-height: 68px;
+    padding: 12px 13px;
+  }
+
+  .ltc-profile-shortcut {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(35,95,62,.12);
+    border-radius: 18px;
+    background: rgba(255,255,255,.86);
+    color: var(--green-950);
+    padding: 14px 18px;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(8,39,25,.06);
+    transition: .25s var(--ease);
+  }
+
+  .ltc-profile-shortcut:hover {
+    transform: translateY(-2px);
+    border-color: rgba(215,168,77,.48);
+    box-shadow: 0 16px 32px rgba(8,39,25,.10);
+  }
+  .ltc-profile-shortcut strong {
+    display: block;
+    color: var(--green-950);
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 900;
+  }
+
+  .ltc-profile-shortcut span {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 600;
   }
 
   .ltc-dashboard-card {
-    padding: 30px;
+    padding: 26px;
   }
 
   .ltc-card-header {
@@ -709,11 +834,24 @@ const profilePageStyles = `
     justify-content: space-between;
     align-items: flex-start;
     gap: 18px;
-    margin-bottom: 24px;
+    margin-bottom: 18px;
   }
 
-  .ltc-card-eyebrow {
-    color: var(--green-700);
+  .ltc-account-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .ltc-account-actions .ltc-primary-button,
+  .ltc-account-actions .ltc-danger-button {
+    min-width: 150px;
+  }
+
+  .ltc-profile-page .ltc-dashboard-card .ltc-card-eyebrow {
+    color: var(--green-700) !important;
     font-size: 12px;
     font-weight: 900;
     letter-spacing: .18em;
@@ -721,36 +859,30 @@ const profilePageStyles = `
     margin: 0;
   }
 
-  .ltc-card-title {
-    color: var(--green-950);
+  .ltc-profile-page .ltc-dashboard-card .ltc-card-title {
+    color: var(--green-950) !important;
     font-size: clamp(24px, 3vw, 34px);
     line-height: 1.08;
     letter-spacing: -.05em;
     font-weight: 900;
     margin: 8px 0 0;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .ltc-info-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .ltc-info-field,
   .ltc-ai-box {
-    border-radius: 18px;
-    background: rgba(255,255,255,.68);
+    border-radius: 16px;
+    background: rgba(255,255,255,.72);
     border: 1px solid rgba(35,95,62,.10);
-    padding: 16px;
-    min-height: 88px;
-    transition: .25s var(--ease);
-  }
-
-  .ltc-info-field:hover,
-  .ltc-ai-box:hover {
-    transform: translateY(-2px);
-    background: rgba(255,255,255,.92);
-    box-shadow: 0 14px 28px rgba(8,39,25,.08);
+    padding: 14px 15px;
+    min-height: 78px;
   }
 
   .ltc-info-label,
@@ -793,12 +925,62 @@ const profilePageStyles = `
     font-weight: 800;
   }
 
-  .ltc-upload-row {
-    margin-top: 22px;
+  .ltc-id-chat-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 14px;
-    align-items: end;
+    grid-template-columns: minmax(340px, .82fr) minmax(0, 1.18fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .ltc-id-left-stack {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+  }
+
+  .ltc-id-chat-grid > .ltc-profile-support-chat,
+  .ltc-id-left-stack > .ltc-dashboard-card {
+    min-width: 0;
+  }
+
+  .ltc-verification-panel {
+    padding: 0;
+  }
+
+  .ltc-profile-support-chat {
+    min-width: 0;
+    height: 100%;
+  }
+
+  .ltc-profile-support-chat > .ltc-chat-page {
+    height: 100%;
+  }
+
+  .ltc-verification-panel-title {
+    margin: 0;
+    color: var(--green-950);
+    font-size: 15px;
+    line-height: 1.25;
+    font-weight: 900;
+  }
+
+  .ltc-verification-panel-copy {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    font-weight: 600;
+  }
+
+  .ltc-upload-row {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .ltc-upload-row .ltc-primary-button {
+    width: 100%;
   }
 
   .ltc-upload-label {
@@ -825,7 +1007,7 @@ const profilePageStyles = `
   }
 
   .ltc-consent {
-    margin-top: 18px;
+    margin-top: 14px;
     display: flex;
     align-items: flex-start;
     gap: 12px;
@@ -845,17 +1027,16 @@ const profilePageStyles = `
   }
 
   .ltc-verification-grid {
-    margin-top: 18px;
     display: grid;
-    grid-template-columns: .85fr 1.15fr;
-    gap: 14px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .ltc-status-card {
-    border-radius: 18px;
+    border-radius: 16px;
     border: 1px solid rgba(35,95,62,.10);
-    background: rgba(255,255,255,.68);
-    padding: 18px;
+    background: rgba(255,255,255,.78);
+    padding: 15px;
   }
 
   .ltc-status-title {
@@ -884,12 +1065,71 @@ const profilePageStyles = `
     font-weight: 600;
   }
 
-  .ltc-ai-card {
-    margin-top: 18px;
-    border-radius: 20px;
+  .ltc-submitted-id-status {
+    margin-top: 16px;
+    border-radius: 18px;
     border: 1px solid rgba(35,95,62,.10);
-    background: rgba(255,255,255,.68);
-    padding: 20px;
+    background: rgba(255,255,255,.82);
+    padding: 16px;
+  }
+
+  .ltc-submitted-id-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .ltc-submitted-id-label {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .ltc-submitted-id-value {
+    margin: 5px 0 0;
+    color: var(--green-950);
+    font-size: 20px;
+    line-height: 1.2;
+    font-weight: 900;
+    letter-spacing: -.035em;
+  }
+
+  .ltc-id-reason-box {
+    margin-top: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(239,68,68,.16);
+    background: rgba(239,68,68,.06);
+    padding: 12px 14px;
+  }
+
+  .ltc-id-reason-label {
+    margin: 0;
+    color: #b42318;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .ltc-id-reason-text {
+    margin: 5px 0 0;
+    color: #7a271a;
+    font-size: 13px;
+    line-height: 1.6;
+    font-weight: 700;
+  }
+
+  .ltc-ai-card {
+    margin-top: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(35,95,62,.10);
+    background: rgba(255,255,255,.78);
+    padding: 16px;
   }
 
   .ltc-ai-header {
@@ -911,8 +1151,8 @@ const profilePageStyles = `
 
   .ltc-ai-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 9px;
   }
 
   .ltc-ai-summary {
@@ -924,10 +1164,14 @@ const profilePageStyles = `
   }
 
   .ltc-card-actions {
-    margin-top: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .ltc-card-actions button {
+    width: 100%;
   }
 
   .ltc-footer {
@@ -1299,11 +1543,17 @@ const profilePageStyles = `
   }
 
   @media (max-width: 1100px) {
-    .ltc-profile-grid {
+    .ltc-profile-overview {
       grid-template-columns: 1fr;
     }
 
+    .ltc-profile-overview .ltc-side-card {
+      border-right: 0;
+      border-bottom: 1px solid rgba(35,95,62,.10);
+    }
+
     .ltc-side-card {
+      position: static;
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
       gap: 24px;
@@ -1317,9 +1567,15 @@ const profilePageStyles = `
       gap: 22px;
     }
 
-    .ltc-avatar {
+    .ltc-avatar-wrap {
       width: 138px;
       height: 138px;
+      margin: 0;
+    }
+
+    .ltc-avatar {
+      width: 100%;
+      height: 100%;
       margin: 0;
     }
 
@@ -1328,7 +1584,7 @@ const profilePageStyles = `
     }
 
     .ltc-footer-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -1365,9 +1621,16 @@ const profilePageStyles = `
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ltc-upload-row,
-    .ltc-verification-grid {
+    .ltc-id-chat-grid {
       grid-template-columns: 1fr;
+    }
+
+    .ltc-profile-shortcuts {
+      grid-template-columns: 1fr;
+    }
+
+    .ltc-profile-support-chat {
+      width: 100%;
     }
 
     .ltc-footer {
@@ -1375,6 +1638,7 @@ const profilePageStyles = `
     }
 
     .ltc-footer-grid {
+      grid-template-columns: 1fr;
       gap: 18px;
       padding-bottom: 22px;
     }
@@ -1390,6 +1654,10 @@ const profilePageStyles = `
   }
 
   @media (max-width: 620px) {
+    .ltc-profile-shortcuts {
+      grid-template-columns: 1fr;
+    }
+
     .ltc-header .ltc-container,
     .ltc-footer .ltc-container {
       padding-left: 16px;
@@ -1423,10 +1691,16 @@ const profilePageStyles = `
       display: block;
     }
 
-    .ltc-avatar {
+    .ltc-avatar-wrap {
       width: 142px;
       height: 142px;
       margin: 0 auto;
+    }
+
+    .ltc-avatar {
+      width: 100%;
+      height: 100%;
+      margin: 0;
     }
 
     .ltc-side-actions {
@@ -1441,6 +1715,16 @@ const profilePageStyles = `
     .ltc-ai-header {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    .ltc-account-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .ltc-account-actions .ltc-primary-button,
+    .ltc-account-actions .ltc-danger-button {
+      flex: 1 1 180px;
     }
 
     .ltc-info-grid,
@@ -1506,7 +1790,6 @@ const HotelProfile = () => {
   const [lastAiResult, setLastAiResult] = useState(null);
   const [now, setNow] = useState(Date.now());
   const [imageFailed, setImageFailed] = useState(false);
-  const [isBotOpen, setIsBotOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -2062,18 +2345,6 @@ const HotelProfile = () => {
     { title: "Username", value: loading ? "Loading..." : form.username || "-" },
     { title: "Email", value: loading ? "Loading..." : form.email || "-" },
     { title: "Phone Number", value: loading ? "Loading..." : form.phone || "-" },
-    {
-      title: "Identity Verification",
-      value: loading
-        ? "Loading..."
-        : form.isIdentityVerified
-        ? "Verified"
-        : form.idVerificationStatus === "pending"
-        ? "Pending Review"
-        : form.idVerificationStatus === "rejected"
-        ? "Rejected"
-        : "Not Submitted",
-    },
   ];
 
   const aiStats = [
@@ -2088,7 +2359,6 @@ const HotelProfile = () => {
 
       <Header
         navigate={navigate}
-        onSignOut={handleSignOut}
         openMenu={() => setIsOpen(true)}
       />
 
@@ -2099,90 +2369,69 @@ const HotelProfile = () => {
           ) : null}
 
           <div className="ltc-profile-grid">
-            <aside className="ltc-side-card">
-              <div className="ltc-side-main">
-                <AvatarPreview
-                  src={profileImageSrc}
-                  initials={initials}
-                  imageFailed={imageFailed}
-                  setImageFailed={setImageFailed}
-                  setStatus={setStatus}
-                />
+            <div className="ltc-profile-overview">
+              <aside className="ltc-side-card">
+                <div className="ltc-side-main">
+                  <AvatarPreview
+                    src={profileImageSrc}
+                    initials={initials}
+                    imageFailed={imageFailed}
+                    setImageFailed={setImageFailed}
+                    setStatus={setStatus}
+                    onChoosePhoto={handleChoosePhoto}
+                    uploading={uploading}
+                  />
 
-                <div>
-                  <h2 className="ltc-profile-name" style={fontMontserrat}>
-                    {displayName}
-                  </h2>
+                  <div>
+                    <h2 className="ltc-profile-name" style={fontMontserrat}>
+                      {displayName}
+                    </h2>
 
-                  <p className="ltc-profile-username" style={fontPoppins}>
-                    {loading ? "@username" : form.username ? `@${form.username}` : "@username"}
-                  </p>
+                    <p className="ltc-profile-username" style={fontPoppins}>
+                      {loading ? "@username" : form.username ? `@${form.username}` : "@username"}
+                    </p>
 
-                  <div style={{ marginTop: "14px" }}>
-                    <Badge
-                      label={verificationBadge.label}
-                      className={verificationBadge.className}
-                      dotClassName={verificationBadge.dotClassName}
-                    />
+                    <div style={{ marginTop: "14px" }}>
+                      <Badge
+                        label={verificationBadge.label}
+                        className={verificationBadge.className}
+                        dotClassName={verificationBadge.dotClassName}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="ltc-side-actions">
-                <button
-                  type="button"
-                  onClick={handleChoosePhoto}
-                  disabled={uploading}
-                  className="ltc-primary-button"
-                  style={fontMontserrat}
-                >
-                  {uploading ? "Uploading Photo..." : "Upload Photo"}
-                </button>
-
-                <SideActionButton onClick={() => navigate("/hotel-recommendations")}>
-                  Hotel Recommendations
-                </SideActionButton>
-
-                <SideActionButton onClick={() => navigate("/hotel-chat")}>
-                  Open Hotel &amp; Resort Chat
-                </SideActionButton>
-
-                <SideActionButton onClick={() => navigate("/hotel-guest-reviews")}>
-                  My Approved Booking Reviews
-                </SideActionButton>
-
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="ltc-danger-button"
-                  style={fontMontserrat}
-                >
-                  Sign Out
-                </button>
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePictureChange}
-                hidden
-              />
-            </aside>
-
-            <section className="ltc-content-stack">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureChange}
+                  hidden
+                />
+              </aside>
               <DashboardCard
                 eyebrow="Account Information"
                 title="Personal Details"
                 action={
-                  <button
-                    type="button"
-                    onClick={() => navigate("/hotel-change-password")}
-                    className="ltc-primary-button"
-                    style={fontMontserrat}
-                  >
-                    Change Password
-                  </button>
+                  <div className="ltc-account-actions">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/hotel-change-password")}
+                      className="ltc-primary-button"
+                      style={fontMontserrat}
+                    >
+                      Change Password
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="ltc-danger-button"
+                      style={fontMontserrat}
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 }
               >
                 <div className="ltc-info-grid">
@@ -2195,164 +2444,169 @@ const HotelProfile = () => {
                   ))}
                 </div>
               </DashboardCard>
+            </div>
 
-              <DashboardCard
-                eyebrow="Identity Verification"
-                title="Upload Government ID"
-                action={
-                  <Badge
-                    label={verificationBadge.label}
-                    className={verificationBadge.className}
-                    dotClassName={verificationBadge.dotClassName}
-                  />
-                }
-              >
-                <p className="ltc-help-text" style={fontPontano}>
-                  Upload a valid government ID. The backend will run an AI pre-check first,
-                  then your document will wait for admin review when needed.
-                </p>
+            <section className="ltc-content-stack">
+              <div className="ltc-id-chat-grid">
+                <div className="ltc-id-left-stack">
+                  <div className="ltc-profile-shortcuts">
+                    <button
+                      type="button"
+                      className="ltc-profile-shortcut"
+                      onClick={() => navigate("/hotel-recommendations")}
+                    >
+                      <span>
+                        <strong style={fontMontserrat}>Recommendations</strong>
+                        <span style={fontPontano}>View suggested hotel, resort, and event options.</span>
+                      </span>
+                    </button>
 
-                {uploadBlockMessage ? (
-                  <div className="ltc-alert-box" style={fontPoppins}>
-                    {uploadBlockMessage}
-                  </div>
-                ) : null}
-
-                <div className="ltc-upload-row">
-                  <div>
-                    <p className="ltc-upload-label" style={fontMontserrat}>
-                      Selected File
-                    </p>
-
-                    <div className="ltc-file-display" style={fontPoppins}>
-                      {idFile ? idFile.name : "No file selected"}
-                    </div>
+                    <button
+                      type="button"
+                      className="ltc-profile-shortcut"
+                      onClick={() => navigate("/hotel-guest-reviews")}
+                    >
+                      <span>
+                        <strong style={fontMontserrat}>Booking Reviews</strong>
+                        <span style={fontPontano}>Review your approved bookings and feedback.</span>
+                      </span>
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleChooseId}
-                    disabled={!canUploadIdNow}
-                    className="ltc-primary-button"
-                    style={fontMontserrat}
-                  >
-                    Choose ID File
-                  </button>
-
-                  <input
-                    ref={idFileInputRef}
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.webp,.pdf"
-                    onChange={handleIdFileChange}
-                    disabled={!canUploadIdNow}
-                    hidden
-                  />
-                </div>
-
-                <label className="ltc-consent" style={fontPoppins}>
-                  <input
-                    type="checkbox"
-                    checked={consentGiven}
-                    onChange={(event) => setConsentGiven(event.target.checked)}
-                    disabled={!canUploadIdNow}
-                  />
-
-                  <span>
-                    I agree to submit my ID for account verification and admin review.
-                  </span>
-                </label>
-
-                <div className="ltc-verification-grid">
-                  <div className="ltc-status-card">
-                    <p className="ltc-status-title" style={fontMontserrat}>
-                      Current Status
-                    </p>
-
-                    <p className="ltc-status-value" style={fontMontserrat}>
-                      {verificationBadge.label}
-                    </p>
-                  </div>
-
-                  <div className="ltc-status-card">
-                    {form.idVerificationRemarks ? (
-                      <p className="ltc-status-desc" style={fontPontano}>
-                        <strong>Remarks: </strong>
-                        {form.idVerificationRemarks}
-                      </p>
-                    ) : (
-                      <p className="ltc-status-desc" style={fontPontano}>
-                        No admin remarks yet.
-                      </p>
-                    )}
-
-                    <p className="ltc-status-desc" style={fontPontano}>
-                      <strong>Upload Rule: </strong>
-                      {canUploadIdNow
-                        ? "You can upload an ID now."
-                        : uploadBlockMessage || "ID upload is currently blocked."}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="ltc-ai-card">
-                  <div className="ltc-ai-header">
-                    <div>
-                      <p className="ltc-card-eyebrow" style={fontMontserrat}>
-                        AI Pre-check
-                      </p>
-
-                      <h4 className="ltc-ai-title" style={fontMontserrat}>
-                        AI ID Review
-                      </h4>
-                    </div>
-
-                    <Badge label={aiBadge.label} className={aiBadge.className} />
-                  </div>
-
-                  <div className="ltc-ai-grid">
-                    {aiStats.map((item) => (
-                      <AiInfo key={item.title} title={item.title} value={item.value} />
-                    ))}
-                  </div>
-
-                  <p className="ltc-ai-summary" style={fontPontano}>
-                    {aiDisplay.aiSummary || "Upload your ID to run the AI pre-check."}
+                  <DashboardCard
+                    eyebrow="Identity Verification"
+                  title="Government ID"
+                  action={
+                    <Badge
+                      label={verificationBadge.label}
+                      className={verificationBadge.className}
+                      dotClassName={verificationBadge.dotClassName}
+                    />
+                  }
+                >
+                  <p className="ltc-help-text" style={fontPontano}>
+                    Submit your government ID here and check its verification status.
                   </p>
 
-                  {aiDisplay.aiCheckedAt ? (
-                    <p className="ltc-ai-summary" style={fontPoppins}>
-                      Last checked: {new Date(aiDisplay.aiCheckedAt).toLocaleString()}
-                    </p>
-                  ) : null}
+                  <div className="ltc-verification-panel">
+                    {uploadBlockMessage ? (
+                      <div className="ltc-alert-box" style={fontPoppins}>
+                        {uploadBlockMessage}
+                      </div>
+                    ) : null}
 
-                  {aiDisplay.aiError ? (
-                    <p className="ltc-ai-summary" style={{ ...fontPoppins, color: "#b42318" }}>
-                      AI Error: {aiDisplay.aiError}
-                    </p>
-                  ) : null}
+                    <div className="ltc-upload-row">
+                      <div>
+                        <p className="ltc-upload-label" style={fontMontserrat}>
+                          Selected File
+                        </p>
+
+                        <div className="ltc-file-display" style={fontPoppins}>
+                          {idFile ? idFile.name : "No file selected"}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleChooseId}
+                        disabled={!canUploadIdNow}
+                        className="ltc-secondary-button"
+                        style={fontMontserrat}
+                      >
+                        Choose ID File
+                      </button>
+
+                      <input
+                        ref={idFileInputRef}
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,.pdf"
+                        onChange={handleIdFileChange}
+                        disabled={!canUploadIdNow}
+                        hidden
+                      />
+                    </div>
+
+                    <label className="ltc-consent" style={fontPoppins}>
+                      <input
+                        type="checkbox"
+                        checked={consentGiven}
+                        onChange={(event) => setConsentGiven(event.target.checked)}
+                        disabled={!canUploadIdNow}
+                      />
+
+                      <span>
+                        I agree to submit my ID for account verification and admin review.
+                      </span>
+                    </label>
+
+                    <div className="ltc-card-actions">
+                      <button
+                        type="button"
+                        onClick={handleUploadId}
+                        disabled={!canUploadIdNow || !idFile || idUploading}
+                        className="ltc-primary-button"
+                        style={fontMontserrat}
+                      >
+                        {uploadButtonText}
+                      </button>
+                    </div>
+
+                    <div className="ltc-submitted-id-status">
+                      <div className="ltc-submitted-id-row">
+                        <div>
+                          <p className="ltc-submitted-id-label" style={fontMontserrat}>
+                            Submitted ID Status
+                          </p>
+                          <p className="ltc-submitted-id-value" style={fontMontserrat}>
+                            {verificationBadge.label}
+                          </p>
+                        </div>
+
+                        <Badge
+                          label={verificationBadge.label}
+                          className={verificationBadge.className}
+                          dotClassName={verificationBadge.dotClassName}
+                        />
+                      </div>
+
+                      {form.idVerificationStatus !== "verified" ? (
+                        <div className="ltc-id-reason-box">
+                          <p className="ltc-id-reason-label" style={fontMontserrat}>
+                            Reason / Status Details
+                          </p>
+                          <p className="ltc-id-reason-text" style={fontPontano}>
+                            {form.idVerificationRemarks ||
+                              (form.idVerificationStatus === "pending"
+                                ? "Your submitted ID is still waiting for admin review."
+                                : form.idVerificationStatus === "rejected"
+                                ? "Your ID was not approved. No specific reason has been provided yet."
+                                : "No government ID has been submitted yet.")}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="ltc-status-card" style={{ marginTop: 12 }}>
+                      <p className="ltc-status-title" style={fontMontserrat}>
+                        Upload Availability
+                      </p>
+                      <p className="ltc-status-desc" style={fontPontano}>
+                        {canUploadIdNow
+                          ? "You can upload an ID now."
+                          : uploadBlockMessage || "ID upload is currently blocked."}
+                      </p>
+                    </div>
+                  </div>
+                  </DashboardCard>
                 </div>
 
-                <div className="ltc-card-actions">
-                  <button
-                    type="button"
-                    onClick={handleUploadId}
-                    disabled={!canUploadIdNow || !idFile || idUploading}
-                    className="ltc-primary-button"
-                    style={fontMontserrat}
-                  >
-                    {uploadButtonText}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsBotOpen(true)}
-                    className="ltc-secondary-button"
-                    style={fontMontserrat}
-                  >
-                    Ask Chatbot About ID
-                  </button>
+                <div
+                  id="hotel-support-chat"
+                  className="ltc-profile-support-chat"
+                >
+                  <HotelChatEmbedded />
                 </div>
-              </DashboardCard>
+              </div>
             </section>
           </div>
         </div>
@@ -2364,20 +2618,13 @@ const HotelProfile = () => {
         <MobileMenu
           onClose={() => setIsOpen(false)}
           navigate={navigate}
-          onSignOut={handleSignOut}
         />
       ) : null}
-
-      <ProfileFaqBot
-        isOpen={isBotOpen}
-        onClose={() => setIsBotOpen(false)}
-        navigate={navigate}
-      />
     </div>
   );
 };
 
-function Header({ navigate, openMenu, onSignOut }) {
+function Header({ navigate, openMenu }) {
   return (
     <header className="ltc-header">
       <div className="ltc-container ltc-nav">
@@ -2408,7 +2655,6 @@ function Header({ navigate, openMenu, onSignOut }) {
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
           <NavButton active label="Profile" onClick={() => navigate("/hotel-profile")} />
-          <NavButton label="Sign Out" onClick={onSignOut} className="ltc-signout-button" />
         </nav>
 
         <button onClick={openMenu} type="button" aria-label="Open menu" className="ltc-menu-button">
@@ -2445,26 +2691,41 @@ function AvatarPreview({
   imageFailed,
   setImageFailed,
   setStatus,
+  onChoosePhoto,
+  uploading,
 }) {
   return (
-    <div className="ltc-avatar">
-      {src && !imageFailed ? (
-        <img
-          src={src}
-          alt="Profile"
-          onError={() => {
-            setImageFailed(true);
-            setStatus({
-              type: "error",
-              message: "Uploaded image could not be displayed.",
-            });
-          }}
-        />
-      ) : (
-        <div className="ltc-avatar-fallback" style={fontMontserrat}>
-          {initials}
-        </div>
-      )}
+    <div className="ltc-avatar-wrap">
+      <div className="ltc-avatar">
+        {src && !imageFailed ? (
+          <img
+            src={src}
+            alt="Profile"
+            onError={() => {
+              setImageFailed(true);
+              setStatus({
+                type: "error",
+                message: "Uploaded image could not be displayed.",
+              });
+            }}
+          />
+        ) : (
+          <div className="ltc-avatar-fallback" style={fontMontserrat}>
+            {initials}
+          </div>
+        )}
+      </div>
+
+      <button
+        type="button"
+        className="ltc-avatar-upload"
+        onClick={onChoosePhoto}
+        disabled={uploading}
+        aria-label={uploading ? "Uploading profile photo" : "Change or upload profile photo"}
+        title={uploading ? "Uploading..." : "Change or upload photo"}
+      >
+        +
+      </button>
     </div>
   );
 }
@@ -2703,6 +2964,10 @@ function Footer({ navigate }) {
             <img
               src={LUMISPIRE_LOGO}
               alt="Lumispire logo"
+              width="42"
+              height="42"
+              loading="lazy"
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
@@ -2814,7 +3079,7 @@ function FooterText({ children, className = "" }) {
   );
 }
 
-function MobileMenu({ onClose, navigate, onSignOut }) {
+function MobileMenu({ onClose, navigate }) {
   return (
     <div className="ltc-sidebar-overlay">
       <div style={{ position: "absolute", inset: 0 }} onClick={onClose} />
@@ -2868,14 +3133,6 @@ function MobileMenu({ onClose, navigate, onSignOut }) {
           onClick={() => {
             onClose();
             navigate("/hotel-profile");
-          }}
-        />
-
-        <MenuItem
-          label="SIGN OUT"
-          onClick={() => {
-            onClose();
-            onSignOut();
           }}
         />
       </div>

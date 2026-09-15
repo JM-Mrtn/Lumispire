@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const HOTEL_LOGO = "/HotelLogo.png";
+const LUMISPIRE_LOGO = "/HotelLumispireLogo.png";
 const HERO_IMAGE = "/HotelLanding1.png";
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
@@ -432,16 +433,163 @@ const pageStyles = `
   }
 
   .ltc-footer {
+    width: 100%;
+    margin: 0;
+    padding: 30px 0 12px;
     background: var(--footer-green);
     color: white;
-    padding: 32px 0;
-    text-align: center;
   }
 
-  .ltc-footer p {
+  .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
     margin: 0;
-    color: rgba(255,255,255,.72);
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .ltc-footer-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.1fr .75fr 1.1fr 1.1fr 1fr;
+    gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .ltc-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ltc-footer-brand img {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+  }
+
+  .ltc-footer h4 {
+    margin: 0;
+    color: white;
+    font-size: 20px;
+    line-height: 1.2;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .ltc-footer h5 {
+    margin: 0 0 10px;
+    color: #f4d484;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 900;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .ltc-footer p,
+  .ltc-footer-link {
+    display: block;
+    margin: 5px 0;
+    color: rgba(255,255,255,.68);
     font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .ltc-footer-small-text {
+    margin: 4px 0 !important;
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+  }
+
+  .ltc-footer-small-text strong {
+    font-size: 12px !important;
+    line-height: 1.42 !important;
+  }
+
+  .ltc-footer-link {
+    width: auto;
+    min-height: 0;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ltc-footer-link:hover,
+  .ltc-footer-link:focus-visible {
+    color: white;
+    text-decoration: underline;
+  }
+
+  .ltc-facebook-link {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    color: white;
+    cursor: pointer;
+    transition: .25s var(--ease);
+  }
+
+  .ltc-facebook-link:hover,
+  .ltc-facebook-link:focus-visible {
+    color: #f4d484;
+    border-color: rgba(244,212,132,.42);
+    background: rgba(244,212,132,.12);
+    transform: translateY(-2px);
+  }
+
+  .ltc-facebook-link svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  .ltc-copyright {
+    width: 100%;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 1100px) {
+    .ltc-footer-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-footer {
+      padding: 28px 0 12px;
+    }
+
+    .ltc-footer-grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+      padding-bottom: 22px;
+    }
+
+    .ltc-footer .ltc-container {
+      padding-left: 22px;
+      padding-right: 22px;
+    }
+
+    .ltc-copyright {
+      flex-direction: column;
+    }
   }
 
   @media (max-width: 768px) {
@@ -467,6 +615,11 @@ const pageStyles = `
   }
 
   @media (max-width: 560px) {
+    .ltc-footer .ltc-container {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
     .ltc-nav {
       min-height: auto;
       padding: 14px 0;
@@ -729,14 +882,6 @@ const HotelChangePassword = () => {
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => navigate("/hotel-profile")}
-                    className="ltc-secondary-button"
-                    style={fontMontserrat}
-                  >
-                    Back to Profile
-                  </button>
                 </div>
 
                 {status.message ? (
@@ -940,10 +1085,148 @@ function NavButton({ label, onClick, className = "" }) {
 function Footer() {
   return (
     <footer className="ltc-footer">
-      <div className="ltc-container">
-        <p style={fontPoppins}>© {new Date().getFullYear()} Hotel &amp; Resort Booking Services. All rights reserved.</p>
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <div className="ltc-footer-brand">
+            <img
+              src={LUMISPIRE_LOGO}
+              alt="Lumispire logo"
+              width="42"
+              height="42"
+              loading="lazy"
+              decoding="async"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+
+            <h4 style={fontMontserrat}>Lumispire</h4>
+          </div>
+        </div>
+
+        <FooterColumn title="Menu">
+          <FooterLink onClick={() => (window.location.href = "/resort-venue")}>
+            Home
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/virtual-tour")}>
+            Virtual Tour
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-contact-us")}>
+            Contact
+          </FooterLink>
+          <FooterLink onClick={() => (window.location.href = "/hotel-faqs")}>
+            FAQs
+          </FooterLink>
+          <FooterLink
+            onClick={() => {
+              window.location.href =
+                localStorage.getItem("token") || localStorage.getItem("hotelToken")
+                  ? "/hotel-profile"
+                  : "/hotel-login";
+            }}
+          >
+            {localStorage.getItem("token") || localStorage.getItem("hotelToken")
+              ? "Profile"
+              : "Sign In"}
+          </FooterLink>
+        </FooterColumn>
+
+        <FooterColumn title="Resort">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            Ecotrend Subdivision San Nicolas, Bacoor Cavite
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9953781962</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Hotel">
+          <FooterText className="ltc-footer-small-text">
+            <strong>Address:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">
+            2/F 5441 Currie Street, Palanan, Makati City
+          </FooterText>
+
+          <FooterText className="ltc-footer-small-text">
+            <strong>Contact No.:</strong>
+          </FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9064191405</FooterText>
+          <FooterText className="ltc-footer-small-text">+63 9338699988</FooterText>
+        </FooterColumn>
+
+        <FooterColumn title="Contact Information">
+          <FooterText>recruitment@ltcmultiservices.com</FooterText>
+          <FooterText>marketing@ltcmultiservices.com</FooterText>
+          <FooterText>lorenzoeventandvenue@gmail.com</FooterText>
+          <FacebookLink />
+        </FooterColumn>
+      </div>
+
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
+  );
+}
+
+function FacebookLink() {
+  return (
+    <button
+      type="button"
+      className="ltc-facebook-link"
+      aria-label="Open Facebook page"
+      title="Facebook"
+      onClick={() => {
+        window.open(
+          "https://www.facebook.com/4delorenzo?rdid=2DsYHS1ll77JUW6K&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18wf6uHcfv%2F#",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 12.06C22 6.48 17.52 2 11.94 2S2 6.48 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.9h2.77l-.44 2.91h-2.33V22c4.78-.76 8.45-4.92 8.45-9.94Z" />
+      </svg>
+    </button>
+  );
+}
+
+function FooterColumn({ title, children }) {
+  return (
+    <div>
+      <h5 style={fontMontserrat}>{title}</h5>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function FooterLink({ children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="ltc-footer-link"
+      style={fontPontano}
+    >
+      {children}
+    </button>
+  );
+}
+
+function FooterText({ children, className = "" }) {
+  return (
+    <p className={className} style={fontPontano}>
+      {children}
+    </p>
   );
 }
 

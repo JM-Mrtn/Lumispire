@@ -11,6 +11,11 @@ const SYSTEM_FONT = '"Segoe UI", Arial, Helvetica, sans-serif';
 const fontMontserrat = { fontFamily: SYSTEM_FONT };
 const fontPontano = { fontFamily: SYSTEM_FONT };
 const fontPoppins = { fontFamily: SYSTEM_FONT };
+
+// Keep the shared Hotel & Resort header visually identical to ResortAndVenue.
+const headerFontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
+const headerFontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
+const headerFontPoppins = { fontFamily: "'Poppins', sans-serif" };
 const pesoFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
@@ -842,7 +847,7 @@ export default function HotelOrCondo() {
         }
 
         .ltc-section {
-          padding: 84px 0;
+          padding: 46px 0 84px;
         }
 
         .ltc-section-title {
@@ -871,6 +876,16 @@ export default function HotelOrCondo() {
           max-width: 760px;
           margin: 15px auto 0;
           color: var(--muted);
+        }
+
+        .ltc-section-title p::after {
+          content: "";
+          display: block;
+          width: 120px;
+          height: 3px;
+          margin: 18px auto 0;
+          border-radius: 999px;
+          background: var(--green-700);
         }
 
         .ltc-services-header {
@@ -1667,7 +1682,7 @@ export default function HotelOrCondo() {
           }
 
           .ltc-section {
-            padding: 64px 0;
+            padding: 38px 0 64px;
           }
 
           .ltc-info-grid {
@@ -1901,13 +1916,13 @@ function Header({ navigate, goToProfile, openMenu }) {
           />
 
           <div>
-            <h1 style={fontMontserrat}>Hotel &amp; Resort</h1>
-            <p style={fontPontano}>Resort, venue, hotel, and events booking services.</p>
+            <h1 style={headerFontMontserrat}>Hotel &amp; Resort</h1>
+            <p style={headerFontPontano}>Resort, venue, hotel, and events booking services.</p>
           </div>
         </button>
 
-        <nav className="ltc-desktop-nav" style={fontPoppins}>
-          <NavButton label="Home" onClick={() => navigate("/resort-venue")} />
+        <nav className="ltc-desktop-nav" style={headerFontPoppins}>
+          <NavButton active label="Home" onClick={() => navigate("/resort-venue")} />
           <NavButton label="Virtual Tour" onClick={() => navigate("/virtual-tour")} />
           <NavButton label="Contact" onClick={() => navigate("/hotel-contact-us")} />
           <NavButton label="FAQs" onClick={() => navigate("/hotel-faqs")} />
@@ -2342,7 +2357,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
 
       <div className="ltc-sidebar-panel">
         <div className="ltc-sidebar-top">
-          <p className="ltc-sidebar-title" style={fontPoppins}>
+          <p className="ltc-sidebar-title" style={headerFontPoppins}>
             MENU
           </p>
 
@@ -2358,6 +2373,7 @@ function MobileMenu({ onClose, navigate, goToProfile }) {
 
         <MenuItem
           label="HOME"
+          active
           onClick={() => {
             onClose();
             navigate("/resort-venue");
@@ -2406,7 +2422,7 @@ function MenuItem({ label, onClick, active = false }) {
       onClick={onClick}
       type="button"
       className={`ltc-sidebar-link ${active ? "active" : ""}`}
-      style={fontPoppins}
+      style={headerFontPoppins}
     >
       {label}
     </button>

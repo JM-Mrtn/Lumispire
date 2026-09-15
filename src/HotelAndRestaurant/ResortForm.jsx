@@ -416,12 +416,14 @@ const pageStyles = `
   .ltc-form-shell {
     position: relative;
     overflow: hidden;
-    border-radius: var(--radius);
+    width: min(1040px, 100%);
+    margin: 0 auto;
+    border-radius: 22px;
     background: var(--glass);
     border: 1px solid rgba(255,255,255,.76);
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(18px);
-    padding: 34px;
+    padding: 24px 26px;
   }
 
   .ltc-form-shell::before {
@@ -467,7 +469,7 @@ const pageStyles = `
   }
 
   .ltc-form-section + .ltc-booking-section {
-    margin-top: 34px;
+    margin-top: 24px;
   }
 
   .ltc-section-heading {
@@ -480,22 +482,22 @@ const pageStyles = `
   }
 
   .ltc-section-line {
-    margin-top: 10px;
-    width: 180px;
+    margin-top: 8px;
+    width: 150px;
     height: 3px;
     border-radius: 999px;
     background: linear-gradient(90deg,var(--green-700),var(--gold));
   }
 
   .ltc-fields-grid {
-    margin-top: 24px;
+    margin-top: 18px;
     display: grid;
     grid-template-columns: repeat(3, minmax(0,1fr));
-    gap: 18px 22px;
+    gap: 14px 18px;
   }
 
   .ltc-booking-header {
-    margin-bottom: 24px;
+    margin-bottom: 18px;
     display: flex;
     align-items: end;
     justify-content: space-between;
@@ -530,7 +532,7 @@ const pageStyles = `
   .ltc-select,
   .ltc-date-input {
     width: 100%;
-    min-height: 50px;
+    min-height: 46px;
     border-radius: 999px;
     border: 1px solid rgba(35,95,62,.16);
     background: rgba(255,255,255,.88);
@@ -542,6 +544,16 @@ const pageStyles = `
     padding: 0 18px;
     transition: .25s var(--ease);
     box-shadow: 0 10px 24px rgba(8,39,25,.05);
+  }
+
+  .ltc-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 48px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23101828' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 20px center;
+    background-size: 14px 14px;
   }
 
   .ltc-input::placeholder,
@@ -599,11 +611,11 @@ const pageStyles = `
   }
 
   .ltc-price-card {
-    margin-top: 32px;
-    border-radius: 20px;
+    margin-top: 22px;
+    border-radius: 18px;
     background: white;
     border: 1px solid rgba(35,95,62,.10);
-    padding: 22px;
+    padding: 16px 18px;
     box-shadow: 0 16px 34px rgba(8,39,25,.08);
   }
 
@@ -618,9 +630,9 @@ const pageStyles = `
   .ltc-price-value {
     margin: 0;
     color: var(--green-950);
-    font-size: clamp(22px,3vw,30px);
+    font-size: clamp(19px,2.4vw,26px);
     font-weight: 900;
-    letter-spacing: -.04em;
+    letter-spacing: -.035em;
   }
 
   .ltc-price-breakdown {
@@ -656,7 +668,7 @@ const pageStyles = `
   }
 
   .ltc-actions {
-    margin-top: 32px;
+    margin-top: 22px;
     display: flex;
     justify-content: center;
     gap: 18px;
@@ -975,7 +987,8 @@ const pageStyles = `
     }
 
     .ltc-form-shell {
-      padding: 28px 22px;
+      width: min(96%, 1040px);
+      padding: 22px 18px;
     }
 
     .ltc-booking-header,
@@ -1028,7 +1041,8 @@ const pageStyles = `
     }
 
     .ltc-form-shell {
-      padding: 26px 18px;
+      width: 96%;
+      padding: 20px 16px;
     }
 
     .ltc-primary-button,

@@ -658,10 +658,10 @@ const pageStyles = `
 
   .ltc-footer {
     width: 100%;
+    margin: 0;
+    padding: 30px 0 12px;
     background: var(--footer-green);
     color: white;
-    padding: 30px 0 12px;
-    margin: 0;
   }
 
   .ltc-footer .ltc-container {
@@ -695,37 +695,37 @@ const pageStyles = `
   }
 
   .ltc-footer h4 {
+    margin: 0;
     color: white;
-    font-weight: 900;
     font-size: 20px;
     line-height: 1.2;
-    margin: 0;
+    font-weight: 900;
     text-transform: uppercase;
   }
 
   .ltc-footer h5 {
+    margin: 0 0 10px;
     color: #f4d484;
     font-size: 12px;
     line-height: 1.2;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: .14em;
-    margin: 0 0 10px;
   }
 
   .ltc-footer p,
   .ltc-footer-link {
     display: block;
+    margin: 5px 0;
     color: rgba(255,255,255,.68);
     font-size: 13px;
     line-height: 1.55;
-    margin: 5px 0;
   }
 
   .ltc-footer-small-text {
+    margin: 4px 0 !important;
     font-size: 12px !important;
     line-height: 1.42 !important;
-    margin: 4px 0 !important;
   }
 
   .ltc-footer-small-text strong {
@@ -734,14 +734,17 @@ const pageStyles = `
   }
 
   .ltc-footer-link {
+    width: auto;
+    min-height: 0;
     border: 0;
-    background: transparent;
     padding: 0;
-    cursor: pointer;
+    background: transparent;
     text-align: left;
+    cursor: pointer;
   }
 
-  .ltc-footer-link:hover {
+  .ltc-footer-link:hover,
+  .ltc-footer-link:focus-visible {
     color: white;
     text-decoration: underline;
   }
@@ -752,16 +755,17 @@ const pageStyles = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    margin-top: 6px;
     border: 1px solid rgba(255,255,255,.16);
     border-radius: 999px;
     background: rgba(255,255,255,.10);
     color: white;
     cursor: pointer;
     transition: .25s var(--ease);
-    margin-top: 6px;
   }
 
-  .ltc-facebook-link:hover {
+  .ltc-facebook-link:hover,
+  .ltc-facebook-link:focus-visible {
     color: #f4d484;
     border-color: rgba(244,212,132,.42);
     background: rgba(244,212,132,.12);
@@ -853,9 +857,12 @@ const pageStyles = `
   @media (max-width: 1100px) {
     .ltc-fields-grid,
     .ltc-price-breakdown,
-    .ltc-payment-grid,
-    .ltc-footer-grid {
+    .ltc-payment-grid {
       grid-template-columns: 1fr;
+    }
+
+    .ltc-footer-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -902,6 +909,7 @@ const pageStyles = `
     }
 
     .ltc-footer-grid {
+      grid-template-columns: 1fr;
       gap: 18px;
       padding-bottom: 22px;
     }
@@ -1747,6 +1755,10 @@ function Footer() {
             <img
               src={LUMISPIRE_LOGO}
               alt="Lumispire logo"
+              width="42"
+              height="42"
+              loading="lazy"
+              decoding="async"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
