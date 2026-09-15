@@ -360,6 +360,14 @@ export default function HotelOrCondo() {
   const [selectedDetails, setSelectedDetails] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [checkingBooking, setCheckingBooking] = useState(false);
+  const [modal, setModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    actionType: null,
+    actionLabel: "",
+  });
 
   const API_BASE = useMemo(() => {
     const raw = (
@@ -416,6 +424,50 @@ export default function HotelOrCondo() {
 
   const goToProfile = () => {
     navigate(getHotelToken() ? "/hotel-profile" : "/hotel-login");
+  };
+
+  const openModal = ({ title, message, actionType = null, actionLabel = "" }) => {
+    setModal({ open: true, title, message, actionType, actionLabel });
+  };
+
+  const closeModal = () => {
+    setModal({
+      open: false,
+      title: "",
+      message: "",
+      actionType: null,
+      actionLabel: "",
+    });
+  };
+
+  const handleModalAction = () => {
+    const actionType = modal.actionType;
+    closeModal();
+
+    if (actionType === "login") {
+      navigate("/hotel-login");
+    } else if (actionType === "profile") {
+      navigate("/hotel-profile");
+    }
+  };
+
+  const isUserIdVerified = (user) => {
+    const normalizedStatus = String(
+      user?.idVerificationStatus ||
+        user?.verificationStatus ||
+        user?.idStatus ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+
+    return (
+      user?.idVerified === true ||
+      user?.isIdVerified === true ||
+      user?.isIdentityVerified === true ||
+      normalizedStatus === "approved" ||
+      normalizedStatus === "verified"
+    );
   };
 
   const fetchPackages = async () => {
@@ -489,30 +541,98 @@ export default function HotelOrCondo() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const goToBookNow = (room = null) => {
+  const goToBookNow = async (room = null) => {
     const token = getHotelToken();
 
     if (!token) {
-      navigate("/hotel-login");
+      openModal({
+        title: "Login Required",
+        message: "Please log in to continue with your booking.",
+        actionType: "login",
+        actionLabel: "Go to Login",
+      });
       return;
     }
 
-    navigate("/hotel-booking-form", {
-      state: room
-        ? {
-            selectedCategory: "Hotel & Condo",
-            selectedRoomType: room.roomType || normalizeRoomType(room.title || ""),
-            selectedPackage: room.title || "",
-            selectedPackageTitle: room.title || "",
-            selectedPackageId: room.rates?.[0]?.packageId || "",
-            selectedDuration: "",
-            selectedPrice: 0,
-            selectedCapacity: room.capacity || "",
-            selectedDescription: room.description || "",
-            selectedInclusions: room.inclusions || [],
-          }
-        : {},
-    });
+    try {
+      setCheckingBooking(true);
+
+      const res = await fetch(`${API_BASE}/hotel-user-profile`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("hotelToken");
+
+        openModal({
+          title: "Session Expired",
+          message: "Your session is no longer valid. Please log in again to continue.",
+          actionType: "login",
+          actionLabel: "Go to Login",
+        });
+        return;
+      }
+
+      const data = await res.json();
+      const user = data?.user || data?.hotelUser || data?.profile || data;
+
+      if (!isUserIdVerified(user)) {
+        const idStatus = String(
+          user?.idVerificationStatus || user?.verificationStatus || user?.idStatus || ""
+        )
+          .trim()
+          .toLowerCase();
+
+        let message =
+          "Your account must be ID verified before you can place a booking request. Please upload a valid ID in your profile and wait for admin approval.";
+
+        if (idStatus === "pending") {
+          message =
+            "Your government ID is still waiting for admin approval. You can book once your account is verified.";
+        } else if (idStatus === "rejected") {
+          message =
+            "Your government ID was not approved. Please check the reason in your profile and submit a valid ID before booking.";
+        }
+
+        openModal({
+          title: "Verification Required",
+          message,
+          actionType: "profile",
+          actionLabel: "Go to Profile",
+        });
+        return;
+      }
+
+      navigate("/hotel-booking-form", {
+        state: room
+          ? {
+              selectedCategory: "Hotel & Condo",
+              selectedRoomType: room.roomType || normalizeRoomType(room.title || ""),
+              selectedPackage: room.title || "",
+              selectedPackageTitle: room.title || "",
+              selectedPackageId: room.rates?.[0]?.packageId || "",
+              selectedDuration: "",
+              selectedPrice: 0,
+              selectedCapacity: room.capacity || "",
+              selectedDescription: room.description || "",
+              selectedInclusions: room.inclusions || [],
+            }
+          : {},
+      });
+    } catch (error) {
+      console.error("Booking verification error:", error);
+
+      openModal({
+        title: "Unable to Proceed",
+        message: "Something went wrong while checking your account status. Please try again.",
+      });
+    } finally {
+      setCheckingBooking(false);
+    }
   };
 
   return (
@@ -922,7 +1042,8 @@ export default function HotelOrCondo() {
           transform: translateY(-3px);
         }
 
-        .ltc-book-button:disabled {
+        .ltc-book-button:disabled,
+        .ltc-modal-button:disabled {
           cursor: not-allowed;
           opacity: .6;
           transform: none;
@@ -1799,12 +1920,12 @@ export default function HotelOrCondo() {
 
               <button
                 onClick={() => goToBookNow()}
-                disabled={loadingPackages}
+                disabled={loadingPackages || checkingBooking}
                 type="button"
                 className="ltc-book-button"
                 style={fontMontserrat}
               >
-                Book Now
+                {checkingBooking ? "Checking..." : "Book Now"}
               </button>
             </div>
 
@@ -1883,10 +2004,18 @@ export default function HotelOrCondo() {
           getImageSrc={getImageSrc}
           formatPeso={formatPeso}
           API_BASE={API_BASE}
+          checkingBooking={checkingBooking}
         />
       )}
 
-      
+      {modal.open && (
+        <MessageModal
+          modal={modal}
+          closeModal={closeModal}
+          handleModalAction={handleModalAction}
+        />
+      )}
+
     </div>
   );
 }
@@ -2429,7 +2558,15 @@ function MenuItem({ label, onClick, active = false }) {
   );
 }
 
-function PackageDetailsModal({ item, onClose, onBook, getImageSrc, formatPeso, API_BASE }) {
+function PackageDetailsModal({
+  item,
+  onClose,
+  onBook,
+  getImageSrc,
+  formatPeso,
+  API_BASE,
+  checkingBooking,
+}) {
   return (
     <div className="ltc-modal-shell">
       <div className="ltc-modal-backdrop" onClick={onClose} />
@@ -2525,9 +2662,74 @@ function PackageDetailsModal({ item, onClose, onBook, getImageSrc, formatPeso, A
             Close
           </button>
 
-          <button onClick={onBook} type="button" className="ltc-modal-button" style={fontMontserrat}>
-            Book Now
+          <button
+            onClick={onBook}
+            type="button"
+            className="ltc-modal-button"
+            style={fontMontserrat}
+            disabled={checkingBooking}
+          >
+            {checkingBooking ? "Checking..." : "Book Now"}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MessageModal({ modal, closeModal, handleModalAction }) {
+  return (
+    <div className="ltc-modal-shell">
+      <div className="ltc-modal-backdrop" onClick={closeModal} />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="booking-verification-modal-title"
+        className="ltc-modal-card"
+        style={{ maxWidth: "460px" }}
+      >
+        <div className="ltc-modal-top">
+          <div>
+            <h3 id="booking-verification-modal-title" style={fontMontserrat}>
+              {modal.title}
+            </h3>
+
+            <p className="ltc-modal-desc" style={fontPontano}>
+              {modal.message}
+            </p>
+          </div>
+
+          <button
+            onClick={closeModal}
+            className="ltc-modal-close"
+            aria-label="Close modal"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="ltc-modal-actions">
+          <button
+            onClick={closeModal}
+            type="button"
+            className="ltc-secondary-button"
+            style={fontMontserrat}
+          >
+            Close
+          </button>
+
+          {modal.actionType && (
+            <button
+              onClick={handleModalAction}
+              type="button"
+              className="ltc-modal-button"
+              style={fontMontserrat}
+            >
+              {modal.actionLabel}
+            </button>
+          )}
         </div>
       </div>
     </div>

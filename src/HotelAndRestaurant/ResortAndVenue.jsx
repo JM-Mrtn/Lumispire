@@ -237,24 +237,19 @@ const ResortAndVenue = () => {
     navigate(token ? "/hotel-profile" : "/hotel-login");
   };
 
-  const isUserIdVerified = (user) => {
-    const normalizedStatus = String(
-      user?.idVerificationStatus ||
-        user?.verificationStatus ||
-        user?.idStatus ||
-        user?.status ||
-        ""
-    )
+  const getUserIdVerificationStatus = (user) => {
+    return String(user?.idVerificationStatus || "not_submitted")
       .trim()
       .toLowerCase();
+  };
 
+  const isUserIdVerified = (user) => {
+    const normalizedStatus = getUserIdVerificationStatus(user);
+
+    // Only trust ID-specific fields. The generic `verified` field is used for
+    // email/account verification and must not unlock booking access.
     return (
-      user?.idVerified === true ||
-      user?.isIdVerified === true ||
-      user?.isIdentityVerified === true ||
-      user?.verified === true ||
-      normalizedStatus === "approved" ||
-      normalizedStatus === "verified"
+      user?.isIdentityVerified === true || normalizedStatus === "verified"
     );
   };
 
@@ -411,10 +406,18 @@ const ResortAndVenue = () => {
       const user = data?.user || data?.hotelUser || data?.profile || data;
 
       if (!isUserIdVerified(user)) {
+        const verificationStatus = getUserIdVerificationStatus(user);
+
+        const verificationMessage =
+          verificationStatus === "pending"
+            ? "Your government ID is still waiting for admin approval. You can book only after your account is verified."
+            : verificationStatus === "rejected"
+            ? "Your ID verification was not approved. Please open your profile, review the verification reason, and submit a valid ID before booking."
+            : "Your account must be ID verified before you can book. Please upload a valid government ID in your profile and wait for admin approval.";
+
         openModal({
           title: "Verification Required",
-          message:
-            "Your account must be ID verified before you can place a booking request. Please upload a valid ID in your profile and wait for admin approval.",
+          message: verificationMessage,
           actionType: "profile",
           actionLabel: "Go to Profile",
         });

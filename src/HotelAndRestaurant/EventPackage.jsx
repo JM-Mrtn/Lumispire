@@ -198,6 +198,15 @@ export default function EventPackage() {
   const [packageError, setPackageError] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [checkingBooking, setCheckingBooking] = useState(false);
+
+  const [modal, setModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    actionType: null,
+    actionLabel: "",
+  });
 
   const API_BASE = useMemo(() => {
     const raw = (
@@ -253,6 +262,72 @@ export default function EventPackage() {
 
   const goToProfile = () => {
     navigate(getHotelToken() ? "/hotel-profile" : "/hotel-login");
+  };
+
+  const openModal = ({ title, message, actionType = null, actionLabel = "" }) => {
+    setModal({
+      open: true,
+      title,
+      message,
+      actionType,
+      actionLabel,
+    });
+  };
+
+  const closeModal = () => {
+    setModal({
+      open: false,
+      title: "",
+      message: "",
+      actionType: null,
+      actionLabel: "",
+    });
+  };
+
+  const handleModalAction = () => {
+    const actionType = modal.actionType;
+    closeModal();
+
+    if (actionType === "login") {
+      navigate("/hotel-login");
+    } else if (actionType === "profile") {
+      navigate("/hotel-profile");
+    }
+  };
+
+  const getIdVerificationStatus = (user) =>
+    String(
+      user?.idVerificationStatus ||
+        user?.identityVerificationStatus ||
+        user?.idStatus ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const isUserIdVerified = (user) => {
+    const status = getIdVerificationStatus(user);
+
+    return (
+      user?.isIdentityVerified === true ||
+      user?.idVerified === true ||
+      user?.isIdVerified === true ||
+      status === "verified"
+    );
+  };
+
+  const getVerificationMessage = (user) => {
+    const status = getIdVerificationStatus(user);
+
+    if (status === "pending") {
+      return "Your government ID is still pending admin review. You can book once your account has been verified.";
+    }
+
+    if (status === "rejected") {
+      return "Your government ID was not approved. Please review the reason in your profile and submit a new valid ID before booking.";
+    }
+
+    return "Your account must be ID verified before you can place a booking request. Please upload a valid ID in your profile and wait for admin approval.";
   };
 
   const getImageSrc = (pkg) => {
@@ -331,30 +406,91 @@ export default function EventPackage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const goToBookNow = (pkg = null) => {
+  const goToBookNow = async (pkg = null) => {
     const token = getHotelToken();
 
     if (!token) {
-      navigate("/hotel-login");
+      openModal({
+        title: "Login Required",
+        message: "Please log in to continue with your booking.",
+        actionType: "login",
+        actionLabel: "Go to Login",
+      });
       return;
     }
 
-    navigate("/event-form", {
-      state: pkg
-        ? {
-            selectedCategory: "Event Package",
-            selectedPackageId: pkg._id || pkg.id || "",
-            selectedPackage: pkg.title || pkg.name || "",
-            selectedPackageTitle: pkg.title || pkg.name || "",
-            selectedPackagePrice: Number(pkg.price || 0),
-            selectedPriceOptions: pkg.prices || [],
-            selectedCapacity: pkg.capacity || "",
-            selectedDuration: pkg.duration || "",
-            selectedDescription: pkg.description || "",
-            selectedInclusions: pkg.inclusions || [],
-          }
-        : {},
-    });
+    if (checkingBooking) return;
+
+    setCheckingBooking(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/hotel-user-profile`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("hotelToken");
+
+          openModal({
+            title: "Session Expired",
+            message: "Your session is no longer valid. Please log in again to continue.",
+            actionType: "login",
+            actionLabel: "Go to Login",
+          });
+          return;
+        }
+
+        throw new Error(data.message || "Unable to check your account verification.");
+      }
+
+      const user = data?.user || data?.hotelUser || data?.profile || data;
+
+      if (!isUserIdVerified(user)) {
+        openModal({
+          title: "Verification Required",
+          message: getVerificationMessage(user),
+          actionType: "profile",
+          actionLabel: "Go to Profile",
+        });
+        return;
+      }
+
+      navigate("/event-form", {
+        state: pkg
+          ? {
+              selectedCategory: "Event Package",
+              selectedPackageId: pkg._id || pkg.id || "",
+              selectedPackage: pkg.title || pkg.name || "",
+              selectedPackageTitle: pkg.title || pkg.name || "",
+              selectedPackagePrice: Number(pkg.price || 0),
+              selectedPriceOptions: pkg.prices || [],
+              selectedCapacity: pkg.capacity || "",
+              selectedDuration: pkg.duration || "",
+              selectedDescription: pkg.description || "",
+              selectedInclusions: pkg.inclusions || [],
+            }
+          : {},
+      });
+    } catch (error) {
+      console.error("Event booking verification error:", error);
+
+      openModal({
+        title: "Unable to Proceed",
+        message:
+          error.message ||
+          "Something went wrong while checking your account verification. Please try again.",
+      });
+    } finally {
+      setCheckingBooking(false);
+    }
   };
 
   return (
@@ -1632,12 +1768,12 @@ export default function EventPackage() {
 
               <button
                 onClick={() => goToBookNow()}
-                disabled={loadingPackages}
+                disabled={loadingPackages || checkingBooking}
                 type="button"
                 className="ltc-book-button"
                 style={fontMontserrat}
               >
-                Book Now
+                {checkingBooking ? "Checking..." : "Book Now"}
               </button>
             </div>
 
@@ -1719,6 +1855,14 @@ export default function EventPackage() {
             setSelectedPackage(null);
             goToBookNow(pkg);
           }}
+        />
+      )}
+
+      {modal.open && (
+        <MessageModal
+          modal={modal}
+          closeModal={closeModal}
+          handleModalAction={handleModalAction}
         />
       )}
     </div>
@@ -2356,6 +2500,65 @@ function PackageModal({ data, onClose, onBook, getImageSrc, API_BASE }) {
           <button onClick={onBook} type="button" className="ltc-modal-button" style={fontMontserrat}>
             Book Now
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MessageModal({ modal, closeModal, handleModalAction }) {
+  return (
+    <div className="ltc-modal-shell">
+      <div className="ltc-modal-backdrop" onClick={closeModal} />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="event-booking-modal-title"
+        className="ltc-modal-card"
+        style={{ maxWidth: "460px" }}
+      >
+        <div className="ltc-modal-top">
+          <div>
+            <h3 id="event-booking-modal-title" style={fontMontserrat}>
+              {modal.title}
+            </h3>
+
+            <p className="ltc-modal-desc" style={fontPontano}>
+              {modal.message}
+            </p>
+          </div>
+
+          <button
+            onClick={closeModal}
+            className="ltc-modal-close"
+            aria-label="Close modal"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="ltc-modal-actions">
+          <button
+            onClick={closeModal}
+            type="button"
+            className="ltc-secondary-button"
+            style={fontMontserrat}
+          >
+            Close
+          </button>
+
+          {modal.actionType ? (
+            <button
+              onClick={handleModalAction}
+              type="button"
+              className="ltc-modal-button"
+              style={fontMontserrat}
+            >
+              {modal.actionLabel}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
