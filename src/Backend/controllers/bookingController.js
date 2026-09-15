@@ -7,6 +7,13 @@ import {
   requireHotelAdminAuth,
   isValidObjectId,
 } from "../utils/hotelAuthHelpers.js";
+import {
+  buildBlockedDateInterval,
+  buildBlockedDateMessage,
+  findActiveBlockedDate,
+  getActiveBlockedDates,
+  getBlockedTimeLabel,
+} from "../utils/hotelBlockedDates.js";
 
 const BOOKING_GAP_MINUTES = 60;
 const BOOKING_GAP_MS = BOOKING_GAP_MINUTES * 60 * 1000;
@@ -729,6 +736,8 @@ export const getBookedDates = async (req, res) => {
       });
     }
 
+    const selectedPackage = await findPackageForVenue(venue);
+
     const previousFrom = getPreviousDateString(from);
     const nextTo = getNextDateString(to);
 
@@ -768,7 +777,49 @@ export const getBookedDates = async (req, res) => {
       })),
     ];
 
-    return res.status(200).json(buildCalendarSummary(rows));
+    const summary = buildCalendarSummary(rows);
+    const adminBlockedDates = await getActiveBlockedDates({
+      from,
+      to,
+      serviceType: "resort",
+      packageId: selectedPackage?._id ? String(selectedPackage._id) : "",
+      packageTitle: selectedPackage?.title || venue,
+    });
+
+    const blockedBookings = adminBlockedDates
+      .map((blocked) => {
+        const interval = buildBlockedDateInterval(blocked);
+        if (!interval) return null;
+
+        return {
+          _id: `admin-block-${blocked._id}`,
+          venue,
+          date: blocked.date,
+          category: "ADMIN BLOCK",
+          time: getBlockedTimeLabel(blocked.timeSlot),
+          slotPeriod: blocked.timeSlot === "ALL_DAY" ? "all-day" : "admin-block",
+          status: "CONFIRMED",
+          startDateTime: interval.startDateTime,
+          endDateTime: interval.endDateTime,
+          adminBlocked: true,
+          blockedReason: blocked.reason,
+          blockedNote: blocked.note || "",
+          message: buildBlockedDateMessage(blocked),
+        };
+      })
+      .filter(Boolean);
+
+    const bookedDates = new Set(summary.bookedDates || []);
+    adminBlockedDates
+      .filter((blocked) => String(blocked.timeSlot || "ALL_DAY") === "ALL_DAY")
+      .forEach((blocked) => bookedDates.add(blocked.date));
+
+    return res.status(200).json({
+      ...summary,
+      bookedDates: [...bookedDates],
+      bookings: [...summary.bookings, ...blockedBookings],
+      adminBlockedDates,
+    });
   } catch (err) {
     console.error("getBookedDates error:", err);
     return res.status(500).json({ message: "Error fetching booked dates." });
@@ -861,6 +912,22 @@ export const createResortBooking = async (req, res) => {
       return res.status(400).json({ message: "Date cannot be in the past." });
     }
 
+    const blockedDate = await findActiveBlockedDate({
+      date,
+      time,
+      serviceType: "resort",
+      packageId: selectedPackage?._id ? String(selectedPackage._id) : String(req.body.packageId || ""),
+      packageTitle: selectedPackage?.title || venue,
+    });
+
+    if (blockedDate) {
+      return res.status(409).json({
+        message: buildBlockedDateMessage(blockedDate),
+        reason: "ADMIN_BLOCKED_DATE",
+        blockedDate,
+      });
+    }
+
     const interval = buildBookingInterval(date, time);
     if (!interval) {
       return res.status(400).json({ message: "Invalid time range." });
@@ -908,6 +975,8 @@ export const createResortBooking = async (req, res) => {
       email: user.email,
       phone: user.phone,
       serviceType: "Resort & Venue",
+      packageId: selectedPackage?._id ? String(selectedPackage._id) : "",
+      packageTitle: selectedPackage?.title || venue,
       venue,
       date,
       category,
@@ -950,6 +1019,8 @@ export const createResortBooking = async (req, res) => {
       booking: {
         _id: booking._id,
         userId: booking.userId,
+        packageId: booking.packageId,
+        packageTitle: booking.packageTitle,
         venue: booking.venue,
         date: booking.date,
         category: booking.category,
@@ -1009,6 +1080,25 @@ export const checkResortAvailability = async (req, res) => {
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return res.status(400).json({ message: "Invalid date format." });
+    }
+
+    const selectedPackage = await findPackageForVenue(venue);
+
+    const blockedDate = await findActiveBlockedDate({
+      date,
+      time,
+      serviceType: "resort",
+      packageId: selectedPackage?._id ? String(selectedPackage._id) : String(req.query.packageId || ""),
+      packageTitle: selectedPackage?.title || venue,
+    });
+
+    if (blockedDate) {
+      return res.status(200).json({
+        available: false,
+        reason: "ADMIN_BLOCKED_DATE",
+        blockedDate,
+        message: buildBlockedDateMessage(blockedDate),
+      });
     }
 
     const validTimes = await getTimeOptions(venue, category);
@@ -1090,6 +1180,8 @@ const ADMIN_RESORT_LIST_PROJECTION = {
   lastName: 1,
   email: 1,
   phone: 1,
+  packageId: 1,
+  packageTitle: 1,
   venue: 1,
   date: 1,
   category: 1,

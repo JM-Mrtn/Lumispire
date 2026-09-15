@@ -12,6 +12,261 @@ const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
 const fontPoppins = { fontFamily: "'Poppins', sans-serif" };
 
+
+const EVENT_PACKAGE_POLICY_SECTIONS = [
+  {
+    title: "1. Reservation and Booking Process",
+    paragraphs: [
+      "Customers may submit an Event Package booking through LUMISPIRE by providing information including:",
+    ],
+    bullets: [
+      "Full name of customer or event organizer",
+      "Contact information",
+      "Email address",
+      "Event date",
+      "Event type",
+      "Selected event package",
+      "Preferred venue",
+      "Expected number of guests",
+      "Event schedule",
+      "Additional services",
+      "Special requests",
+    ],
+    after: [
+      "Examples of events may include celebrations, gatherings, corporate functions, receptions, and other approved events.",
+      "Customers must ensure that all information provided is accurate.",
+      "An Event Package booking is confirmed only after availability, package details, and required payment have been reviewed and approved.",
+    ],
+  },
+  {
+    title: "2. Customer and Event Information Requirements",
+    paragraphs: [
+      "The customer or authorized event representative must provide complete information necessary to arrange the event.",
+      "Additional identification or documentation may be requested when reasonably necessary.",
+      "Customers must immediately inform Hotel & Resort Services of significant changes to the event information.",
+      "Personal information will be processed according to the LUMISPIRE Hotel & Resort Privacy Policy.",
+    ],
+  },
+  {
+    title: "3. Venue and Package Availability",
+    paragraphs: [
+      "Event packages, venues, dates, amenities, equipment, and related services are subject to availability.",
+      "LTC Group Hotel & Resort Services may:",
+    ],
+    bullets: [
+      "Confirm or decline requested event dates",
+      "Recommend alternative schedules",
+      "Offer alternative packages or venue arrangements",
+      "Correct errors in package information or pricing",
+      "Modify availability when operationally necessary",
+    ],
+    after: [
+      "Submission of an event request does not guarantee reservation of the venue or package until confirmation is issued.",
+    ],
+  },
+  {
+    title: "4. Event Schedule and Venue Access",
+    subsections: [
+      { title: "Event Start Time:", text: "As stated in the confirmed booking" },
+      { title: "Event End Time:", text: "As stated in the confirmed booking" },
+    ],
+    after: [
+      "Customers and guests must observe the approved event schedule.",
+      "Setup, ingress, preparation, event duration, and egress schedules may be subject to venue rules.",
+      "Additional time beyond the confirmed schedule may result in additional charges and requires approval.",
+    ],
+  },
+  {
+    title: "5. Payment Policy",
+    paragraphs: [
+      "Event packages may require a deposit, partial payment, or full payment according to the applicable package.",
+    ],
+    subsections: [
+      {
+        title: "GCash Payment",
+        bullets: [
+          "Pay only through the officially provided GCash account",
+          "Submit valid proof of payment",
+          "Provide the correct transaction reference and amount",
+          "Allow payment verification",
+        ],
+      },
+      {
+        title: "Bank Transfer Payment",
+        bullets: [
+          "Transfer funds only to the authorized bank account",
+          "Submit proof of transfer",
+          "Provide accurate transaction details",
+          "Wait for confirmation",
+        ],
+      },
+    ],
+    after: [
+      "The booking is not fully secured until required payment has been verified.",
+      "Failure to complete payment within the required period may result in release of the event date or venue.",
+    ],
+  },
+  {
+    title: "6. Cancellation and Modification Policy",
+    paragraphs: ["Customers may request cancellation or modification of:"],
+    bullets: [
+      "Event date",
+      "Event schedule",
+      "Venue",
+      "Event package",
+      "Guest count",
+      "Food or service arrangements when applicable",
+      "Additional amenities",
+      "Other booking details",
+    ],
+    after: [
+      "All changes are subject to availability, operational capacity, package conditions, and approval.",
+      "A change in guest count or services may result in adjustment of the total price.",
+    ],
+  },
+  {
+    title: "7. Refund Policy",
+    paragraphs: [
+      "Refund eligibility depends on the applicable cancellation conditions, amount already paid, and timing of the cancellation.",
+      "Expenses already incurred in preparation for the event may affect refund eligibility where legally permitted and properly disclosed.",
+      "Approved refunds may be processed through the original payment method.",
+      "Complete transaction information is required for GCash and bank-transfer refunds.",
+    ],
+  },
+  {
+    title: "8. No-Show Policy",
+    paragraphs: [
+      "Failure to conduct or attend the event on the confirmed date without prior approved cancellation may be treated as a no-show.",
+      "In such circumstances:",
+    ],
+    bullets: [
+      "The venue reservation may be considered consumed or cancelled",
+      "Applicable deposits or advance payments may be forfeited according to the confirmed booking conditions",
+      "Prepared services may remain chargeable where applicable",
+    ],
+    after: [
+      "Customers should immediately contact Hotel & Resort Services when an event cannot proceed as scheduled.",
+    ],
+  },
+  {
+    title: "9. Early Termination of Event",
+    paragraphs: [
+      "If the customer voluntarily ends an event before its scheduled completion, unused time or services do not automatically qualify for a refund.",
+      "An event may also be terminated when necessary because of serious safety concerns, prohibited conduct, illegal activities, or significant violations of venue rules.",
+    ],
+  },
+  {
+    title: "10. Special Requests",
+    paragraphs: ["Customers may request:"],
+    bullets: [
+      "Event decorations",
+      "Seating arrangements",
+      "Table arrangements",
+      "Audio or visual equipment",
+      "Accessibility arrangements",
+      "Celebration setups",
+      "Additional amenities",
+      "Other event-related preferences",
+    ],
+    after: [
+      "Special requests remain subject to availability, approval, technical feasibility, and possible additional fees.",
+    ],
+  },
+  {
+    title: "11. Customer and Guest Responsibilities",
+    paragraphs: [
+      "The customer or event organizer is responsible for ensuring that event participants comply with applicable venue policies.",
+      "Customers agree to:",
+    ],
+    bullets: [
+      "Provide accurate event information",
+      "Observe venue capacity",
+      "Follow approved schedules",
+      "Maintain appropriate conduct",
+      "Respect employees and property",
+      "Follow safety requirements",
+      "Pay applicable additional charges",
+      "Take responsibility for damage caused by participants under their booking",
+      "Obtain any permits or approvals specifically required for their event where applicable",
+    ],
+    after: ["Illegal, dangerous, disruptive, or unauthorized activities are prohibited."],
+  },
+  {
+    title: "12. Children and Additional Guests Policy",
+    paragraphs: [
+      "The expected guest count must be declared accurately.",
+      "Any increase in attendance requires approval.",
+      "Venue capacity must not be exceeded.",
+      "Additional charges may apply when actual attendance exceeds the number covered by the confirmed event package.",
+      "Children must be properly supervised by responsible adults.",
+    ],
+  },
+  {
+    title: "13. Promotions and Special Offers",
+    paragraphs: ["Promotional Event Packages may be limited by:"],
+    bullets: [
+      "Specific event dates",
+      "Booking periods",
+      "Venue availability",
+      "Minimum or maximum guest requirements",
+      "Required payment schedules",
+      "Package-specific inclusions",
+      "Restrictions on modifications or refunds",
+    ],
+    after: ["Promotions cannot be combined unless specifically allowed."],
+  },
+  {
+    title: "14. Force Majeure",
+    paragraphs: [
+      "LTC Group shall not be held responsible for failure or delay in providing event services due to circumstances outside reasonable control, including:",
+    ],
+    bullets: [
+      "Typhoons",
+      "Flooding",
+      "Natural disasters",
+      "Government restrictions",
+      "Public emergencies",
+      "Serious utility interruptions",
+      "Other unforeseen events",
+    ],
+    after: [
+      "Where possible, the parties may discuss reasonable rescheduling or alternative arrangements.",
+    ],
+  },
+  {
+    title: "15. Privacy and Data Protection",
+    paragraphs: ["Personal information collected for Event Package bookings may be used for:"],
+    bullets: [
+      "Event reservation processing",
+      "Customer verification",
+      "Payment verification",
+      "Event coordination",
+      "Communication",
+      "Guest and venue management",
+      "Administrative records",
+    ],
+    after: [
+      "Information will be processed in accordance with the LUMISPIRE Hotel & Resort Privacy Policy and applicable Philippine data privacy laws.",
+    ],
+  },
+  {
+    title: "16. Policy Updates",
+    paragraphs: [
+      "LTC Group may revise this Event Package Booking Policy when operational, legal, service, pricing, or technical requirements change.",
+      "Updated policies may be made available through LUMISPIRE or other official channels.",
+    ],
+  },
+  {
+    title: "17. Contact Information",
+    contact: [
+      ["Service", "LTC Group – Hotel & Resort Services"],
+      ["Resort / Event Location", "Patio de Lorenzo, CXRC+76G, Bacoor, Cavite"],
+      ["Email", "lorenzoeventandvenue@gmail.com"],
+      ["Contact Numbers", "09338699988 / 09064191405"],
+    ],
+  },
+];
+
 const pageStyles = `
   @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
@@ -680,6 +935,199 @@ const pageStyles = `
     box-shadow: none;
   }
 
+
+  .ltc-policy-agreement {
+    margin-top: 26px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(35,95,62,.16);
+    border-radius: 18px;
+    background: rgba(255,255,255,.78);
+    padding: 12px 15px;
+  }
+
+  .ltc-policy-agreement input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    accent-color: var(--green-700);
+    cursor: pointer;
+  }
+
+  .ltc-policy-agreement-text {
+    margin: 0;
+    color: #475467;
+    font-size: 12px;
+    line-height: 1.5;
+    font-weight: 800;
+  }
+
+  .ltc-policy-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--green-800);
+    font: inherit;
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .ltc-policy-link:hover,
+  .ltc-policy-link:focus-visible {
+    color: var(--green-950);
+  }
+
+  .ltc-policy-modal-shell {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+  }
+
+  .ltc-policy-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2,18,11,.72);
+    backdrop-filter: blur(5px);
+  }
+
+  .ltc-policy-modal-card {
+    position: relative;
+    z-index: 1;
+    width: min(900px,100%);
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: 26px;
+    background: white;
+    box-shadow: 0 32px 90px rgba(0,0,0,.30);
+  }
+
+  .ltc-policy-modal-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 24px 26px 18px;
+    border-bottom: 1px solid rgba(35,95,62,.10);
+    background: linear-gradient(180deg,#fbfdfb,#f7faf8);
+  }
+
+  .ltc-policy-modal-eyebrow {
+    margin: 0;
+    color: var(--green-700);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .ltc-policy-modal-title {
+    margin: 7px 0 0;
+    color: var(--green-950);
+    font-size: clamp(24px,3vw,34px);
+    line-height: 1.08;
+    font-weight: 900;
+    letter-spacing: -.04em;
+  }
+
+  .ltc-policy-modal-meta {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .ltc-policy-modal-close {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: 12px;
+    background: rgba(35,95,62,.08);
+    color: var(--green-950);
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  .ltc-policy-modal-body {
+    overflow-y: auto;
+    padding: 24px 26px 28px;
+  }
+
+  .ltc-policy-intro,
+  .ltc-policy-final {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .ltc-policy-final {
+    margin-top: 22px;
+    color: var(--green-900);
+    font-weight: 900;
+  }
+
+  .ltc-policy-section {
+    margin-top: 24px;
+  }
+
+  .ltc-policy-section h4 {
+    margin: 0;
+    color: var(--green-950);
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  .ltc-policy-section h5 {
+    margin: 14px 0 0;
+    color: var(--green-900);
+    font-size: 14px;
+    font-weight: 900;
+  }
+
+  .ltc-policy-section p {
+    margin: 9px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .ltc-policy-section ul {
+    margin: 10px 0 0;
+    padding-left: 20px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .ltc-policy-contact {
+    margin-top: 10px;
+    display: grid;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .ltc-policy-modal-footer {
+    padding: 16px 26px 20px;
+    border-top: 1px solid rgba(35,95,62,.10);
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ltc-policy-modal-footer .ltc-primary-button {
+    min-width: 180px;
+  }
+
   .ltc-footer {
     width: 100%;
     margin: 0;
@@ -1045,6 +1493,8 @@ export default function EventSummary() {
   const [isDownPayment, setIsDownPayment] = useState(false);
   const [proofFile, setProofFile] = useState(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
 
   const fullTotalAmount = Number(bookingData?.totalAmount || bookingData?.price || 0);
   const amountToPay = isDownPayment ? Math.ceil(fullTotalAmount / 2) : fullTotalAmount;
@@ -1091,6 +1541,14 @@ export default function EventSummary() {
   const submitBooking = async () => {
     setSubmitAttempted(true);
     setStatus({ type: "", message: "" });
+
+    if (!policyAccepted) {
+      setStatus({
+        type: "error",
+        message: "Please agree to the LUMISPIRE Event Package Booking Policy before submitting.",
+      });
+      return;
+    }
 
     if (!paymentMethod) {
       setStatus({ type: "error", message: "Please select a payment method by clicking a QR card." });
@@ -1391,6 +1849,15 @@ export default function EventSummary() {
                 </div>
               </div>
 
+              <PolicyAgreement
+                accepted={policyAccepted}
+                onAcceptedChange={(value) => {
+                  setPolicyAccepted(value);
+                  if (value) setStatus({ type: "", message: "" });
+                }}
+                onOpen={() => setPolicyOpen(true)}
+              />
+
               {status.message ? (
                 <div className={`ltc-status ${statusClass}`} style={fontPoppins}>
                   {status.type === "error" ? (
@@ -1405,7 +1872,7 @@ export default function EventSummary() {
               <div className="ltc-actions">
                 <button
                   onClick={submitBooking}
-                  disabled={loading}
+                  disabled={loading || !policyAccepted}
                   type="button"
                   className="ltc-primary-button"
                   style={fontMontserrat}
@@ -1439,7 +1906,178 @@ export default function EventSummary() {
       ) : null}
 
       
+      {policyOpen ? (
+        <EventPackageBookingPolicyModal
+          onClose={() => setPolicyOpen(false)}
+          onAgree={() => {
+            setPolicyAccepted(true);
+            setPolicyOpen(false);
+            setStatus({ type: "", message: "" });
+          }}
+        />
+      ) : null}
+
     </div>
+  );
+}
+
+function PolicyAgreement({ accepted, onAcceptedChange, onOpen }) {
+  return (
+    <label className="ltc-policy-agreement" style={fontPoppins}>
+      <input
+        type="checkbox"
+        checked={accepted}
+        onChange={(event) => onAcceptedChange(event.target.checked)}
+      />
+
+      <p className="ltc-policy-agreement-text">
+        I have read and agree to the{" "}
+        <button
+          type="button"
+          className="ltc-policy-link"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onOpen();
+          }}
+        >
+          LUMISPIRE Event Package Booking Policy
+        </button>
+        .
+      </p>
+    </label>
+  );
+}
+
+function EventPackageBookingPolicyModal({ onClose, onAgree }) {
+  return (
+    <div className="ltc-policy-modal-shell">
+      <div className="ltc-policy-modal-backdrop" onClick={onClose} />
+
+      <div
+        className="ltc-policy-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="event-package-policy-title"
+      >
+        <div className="ltc-policy-modal-header">
+          <div>
+            <p className="ltc-policy-modal-eyebrow" style={fontMontserrat}>
+              LUMISPIRE Hotel & Resort Services of LTC Group
+            </p>
+
+            <h2
+              id="event-package-policy-title"
+              className="ltc-policy-modal-title"
+              style={fontMontserrat}
+            >
+              Event Package Booking Policy
+            </h2>
+
+            <p className="ltc-policy-modal-meta" style={fontPoppins}>
+              Effective Date: September 2026 · Last Updated: 2026
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="ltc-policy-modal-close"
+            aria-label="Close booking policy"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="ltc-policy-modal-body">
+          <p className="ltc-policy-intro" style={fontPontano}>
+            Welcome to LUMISPIRE Hotel & Resort Services of LTC Group. This Event Package Booking
+            Policy governs event package reservations, venue arrangements, guest information,
+            payments, cancellations, modifications, and related services booked through LUMISPIRE.
+            By submitting an Event Package reservation, you acknowledge that you have read,
+            understood, and agreed to this Booking Policy.
+          </p>
+
+          {EVENT_PACKAGE_POLICY_SECTIONS.map((section) => (
+            <PolicySection key={section.title} section={section} />
+          ))}
+
+          <p className="ltc-policy-final" style={fontPontano}>
+            By completing an Event Package reservation through LUMISPIRE, you confirm that you have
+            read, understood, and agreed to this Event Package Booking Policy.
+          </p>
+        </div>
+
+        <div className="ltc-policy-modal-footer">
+          <button
+            type="button"
+            className="ltc-primary-button"
+            onClick={onAgree}
+            style={fontMontserrat}
+          >
+            I Agree
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PolicySection({ section }) {
+  return (
+    <section className="ltc-policy-section">
+      <h4 style={fontMontserrat}>{section.title}</h4>
+
+      {section.paragraphs?.map((paragraph, index) => (
+        <p key={`p-${index}`} style={fontPontano}>
+          {paragraph}
+        </p>
+      ))}
+
+      {section.bullets?.length ? (
+        <ul style={fontPontano}>
+          {section.bullets.map((item, index) => (
+            <li key={`b-${index}`}>{item}</li>
+          ))}
+        </ul>
+      ) : null}
+
+      {section.subsections?.map((subsection, index) => (
+        <div key={`s-${index}`}>
+          <h5 style={fontMontserrat}>{subsection.title}</h5>
+
+          {subsection.text ? (
+            <p style={fontPontano}>
+              <strong>{subsection.text}</strong>
+            </p>
+          ) : null}
+
+          {subsection.bullets?.length ? (
+            <ul style={fontPontano}>
+              {subsection.bullets.map((item, bulletIndex) => (
+                <li key={`sb-${bulletIndex}`}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ))}
+
+      {section.after?.map((paragraph, index) => (
+        <p key={`a-${index}`} style={fontPontano}>
+          {paragraph}
+        </p>
+      ))}
+
+      {section.contact?.length ? (
+        <div className="ltc-policy-contact" style={fontPontano}>
+          {section.contact.map(([label, value]) => (
+            <span key={label}>
+              <strong>{label}:</strong> {value}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </section>
   );
 }
 

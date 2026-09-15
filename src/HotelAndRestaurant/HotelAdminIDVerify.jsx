@@ -166,6 +166,8 @@ export default function HotelAdminIDVerify() {
   const [loading, setLoading] = useState(true);
   const [pageStatus, setPageStatus] = useState({ type: "", message: "" });
   const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(10);
   const [actionLoadingId, setActionLoadingId] = useState("");
   const [rejectingUserId, setRejectingUserId] = useState("");
   const [rejectRemarks, setRejectRemarks] = useState("");
@@ -376,6 +378,54 @@ export default function HotelAdminIDVerify() {
       );
     });
   }, [users, query]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredUsers.length / recordsPerPage)
+  );
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    return filteredUsers.slice(startIndex, startIndex + recordsPerPage);
+  }, [filteredUsers, currentPage, recordsPerPage]);
+
+  const paginationStart =
+    filteredUsers.length === 0
+      ? 0
+      : (currentPage - 1) * recordsPerPage + 1;
+
+  const paginationEnd = Math.min(
+    currentPage * recordsPerPage,
+    filteredUsers.length
+  );
+
+  const visiblePageNumbers = useMemo(() => {
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    return Array.from(
+      { length: end - start + 1 },
+      (_, index) => start + index
+    );
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, recordsPerPage]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const fetchVerificationBlob = async (verificationId) => {
     const token = getAdminToken();
@@ -831,6 +881,42 @@ export default function HotelAdminIDVerify() {
             .hotel-id-verify-scroll {
               scrollbar-gutter: stable;
             }
+
+            .hotel-id-requests-table {
+              width: 100%;
+              table-layout: fixed;
+            }
+
+            .hotel-id-requests-table th,
+            .hotel-id-requests-table td {
+              overflow-wrap: anywhere;
+              word-break: break-word;
+            }
+
+            .hotel-id-user-meta {
+              display: grid;
+              gap: 3px;
+              min-width: 0;
+            }
+
+            .hotel-id-user-meta p {
+              min-width: 0;
+              margin: 0;
+            }
+
+            @media (max-width: 1100px) {
+              .hotel-id-requests-table th {
+                padding-left: 10px;
+                padding-right: 10px;
+                font-size: 10px;
+                letter-spacing: .08em;
+              }
+
+              .hotel-id-requests-table td {
+                padding: 14px 10px;
+                font-size: 11px;
+              }
+            }
           `}</style>
 
           <div className="min-h-full p-4 sm:p-5 lg:p-7">
@@ -900,9 +986,24 @@ export default function HotelAdminIDVerify() {
             />
           </div>
 
-          <p className="rounded-full border border-[#082719]/10 bg-white px-4 py-2 text-xs font-extrabold text-[#174A30] shadow-sm">
-            {filteredUsers.length} record{filteredUsers.length === 1 ? "" : "s"}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 rounded-full border border-[#082719]/10 bg-white px-3 py-2 text-xs font-bold text-black/55 shadow-sm">
+              <span>Rows</span>
+              <select
+                value={recordsPerPage}
+                onChange={(event) => setRecordsPerPage(Number(event.target.value))}
+                className="bg-transparent font-extrabold text-[#174A30] outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </label>
+
+            <p className="rounded-full border border-[#082719]/10 bg-white px-4 py-2 text-xs font-extrabold text-[#174A30] shadow-sm">
+              {filteredUsers.length} record{filteredUsers.length === 1 ? "" : "s"}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -920,37 +1021,36 @@ export default function HotelAdminIDVerify() {
           </div>
 
           <p className="rounded-full border border-[#082719]/10 bg-white px-4 py-2 text-xs font-extrabold text-[#174A30] shadow-sm">
-            {filteredUsers.length} request{filteredUsers.length === 1 ? "" : "s"}
+            {filteredUsers.length
+              ? `${paginationStart}-${paginationEnd} of ${filteredUsers.length}`
+              : "0 requests"}
           </p>
         </div>
 
-        <div className="overflow-x-auto bg-white/70">
-          <table className="w-full min-w-[1320px] border-separate border-spacing-0 text-sm">
+        <div className="bg-white/70">
+          <table className="hotel-id-requests-table border-separate border-spacing-0 text-sm">
             <thead>
               <tr className="bg-[#F6F3EA] text-left">
-                <Th>Name</Th>
-                <Th>Username</Th>
-                <Th>Email</Th>
-                <Th>Phone</Th>
-                <Th>Email</Th>
-                <Th>ID Status</Th>
-                <Th>Uploaded ID</Th>
-                <Th>AI Check</Th>
-                <Th>Remarks</Th>
-                <Th className="text-right">Actions</Th>
+                <Th className="w-[20%]">User</Th>
+                <Th className="w-[10%]">Email Status</Th>
+                <Th className="w-[10%]">ID Status</Th>
+                <Th className="w-[13%]">Uploaded ID</Th>
+                <Th className="w-[22%]">AI Check</Th>
+                <Th className="w-[13%]">Remarks</Th>
+                <Th className="w-[12%] text-right">Actions</Th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-[#082719]/5">
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="p-8 text-center text-black/50">
+                  <td colSpan={7} className="p-8 text-center text-black/50">
                     Loading users...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="p-8 text-center text-black/50">
+                  <td colSpan={7} className="p-8 text-center text-black/50">
                     <p className="font-bold text-[#082719]">No users found.</p>
                     <p className="mt-1 text-xs">
                       Try clearing the search field or refreshing the records.
@@ -958,7 +1058,7 @@ export default function HotelAdminIDVerify() {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => {
+                paginatedUsers.map((user) => {
                   const verification = user?.hotelIdVerificationId || null;
                   const verificationId = verification?._id || "";
                   const hasFile = Boolean(verificationId);
@@ -981,18 +1081,22 @@ export default function HotelAdminIDVerify() {
                   return (
                     <tr key={user._id} className="group transition hover:bg-[#F8FBF9]">
                       <Td>
-                        <p className="font-extrabold text-[#082719]">{fullName}</p>
+                        <div className="hotel-id-user-meta">
+                          <p className="font-extrabold text-[#082719]">{fullName}</p>
+                          <p className="text-[11px] font-bold text-black/50">
+                            @{user?.username || "—"}
+                          </p>
+                          <p
+                            className="text-[11px] font-semibold text-black/55"
+                            title={user?.email || ""}
+                          >
+                            {user?.email || "—"}
+                          </p>
+                          <p className="text-[11px] font-semibold text-black/55">
+                            {user?.phone || "—"}
+                          </p>
+                        </div>
                       </Td>
-
-                      <Td>{user?.username || "—"}</Td>
-
-                      <Td>
-                        <p className="max-w-[210px] truncate" title={user?.email || ""}>
-                          {user?.email || "—"}
-                        </p>
-                      </Td>
-
-                      <Td>{user?.phone || "—"}</Td>
 
                       <Td>
                         <span
@@ -1032,7 +1136,7 @@ export default function HotelAdminIDVerify() {
                             <button
                               type="button"
                               onClick={() => handlePreview(user)}
-                              className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-[#D7A84D]/70 bg-white text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#FFF7DC] hover:shadow-md"
+                              className="inline-flex h-9 w-full items-center justify-center rounded-full border border-[#D7A84D]/70 bg-white px-2 text-[11px] font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#FFF7DC] hover:shadow-md"
                             >
                               View ID
                             </button>
@@ -1040,12 +1144,12 @@ export default function HotelAdminIDVerify() {
                             <button
                               type="button"
                               onClick={() => handleOpenFile(user)}
-                              className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-[#082719]/15 bg-[#F8FBF9] text-xs font-extrabold text-[#174A30] shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                              className="inline-flex h-9 w-full items-center justify-center rounded-full border border-[#082719]/15 bg-[#F8FBF9] px-2 text-[11px] font-extrabold text-[#174A30] shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
                             >
                               Open File
                             </button>
 
-                            <span className="max-w-[150px] truncate text-[11px] font-bold text-black/45" title={verification?.idFile?.originalName || "Uploaded file"}>
+                            <span className="line-clamp-2 text-[10px] font-bold leading-4 text-black/45" title={verification?.idFile?.originalName || "Uploaded file"}>
                               {verification?.idFile?.originalName || "Uploaded file"}
                             </span>
                           </div>
@@ -1054,7 +1158,7 @@ export default function HotelAdminIDVerify() {
                         )}
                       </Td>
 
-                      <Td className="min-w-[280px]">
+                      <Td>
                         {hasFile ? (
                           <div className="space-y-2">
                             <span
@@ -1103,7 +1207,7 @@ export default function HotelAdminIDVerify() {
                             </div>
 
                             {verification?.aiSummary ? (
-                              <p className="text-xs font-semibold leading-relaxed text-black/50">
+                              <p className="line-clamp-3 text-[11px] font-semibold leading-4 text-black/50">
                                 {verification.aiSummary}
                               </p>
                             ) : null}
@@ -1119,7 +1223,7 @@ export default function HotelAdminIDVerify() {
                                 type="button"
                                 onClick={() => handleRunAiCheck(user)}
                                 disabled={aiBusy || !hasFile}
-                                className="inline-flex h-10 w-[132px] items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F4D484] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex h-9 w-full items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] px-2 text-[11px] font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F4D484] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 {aiBusy
                                   ? "Checking..."
@@ -1134,20 +1238,20 @@ export default function HotelAdminIDVerify() {
                         )}
                       </Td>
 
-                      <Td className="max-w-[240px]">
-                        <p className="line-clamp-4 text-xs font-semibold leading-5 text-black/55">
+                      <Td>
+                        <p className="line-clamp-4 text-[11px] font-semibold leading-4 text-black/55">
                           {user?.idVerificationRemarks || "—"}
                         </p>
                       </Td>
 
                       <Td className="text-right">
-                        <div className="flex flex-col items-end justify-center gap-2">
+                        <div className="flex w-full flex-col items-stretch justify-center gap-2">
                           {status === "verified" ? (
-                            <span className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-xs font-extrabold text-emerald-700">
+                            <span className="inline-flex h-9 w-full items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-2 text-[11px] font-extrabold text-emerald-700">
                               Verified
                             </span>
                           ) : aiApproved && !aiRejected ? (
-                            <span className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-xs font-extrabold text-emerald-700">
+                            <span className="inline-flex h-9 w-full items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-2 text-[11px] font-extrabold text-emerald-700">
                               {autoApproving ? "Auto..." : "AI Approved"}
                             </span>
                           ) : (
@@ -1155,7 +1259,7 @@ export default function HotelAdminIDVerify() {
                               type="button"
                               onClick={() => handleApprove(user)}
                               disabled={isBusy || !hasFile || aiRejected}
-                              className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-[#235F3E] bg-[#235F3E] text-xs font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#174A30] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="inline-flex h-9 w-full items-center justify-center rounded-full border border-[#235F3E] bg-[#235F3E] px-2 text-[11px] font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#174A30] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {isBusy ? "Saving..." : "Approve"}
                             </button>
@@ -1166,7 +1270,7 @@ export default function HotelAdminIDVerify() {
                               type="button"
                               onClick={() => openRejectModal(user._id)}
                               disabled={isBusy || !hasFile}
-                              className="inline-flex h-10 w-[104px] items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] text-xs font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F4D484] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="inline-flex h-9 w-full items-center justify-center rounded-full border border-[#D7A84D] bg-[#D7A84D] px-2 text-[11px] font-extrabold text-[#082719] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F4D484] hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Reject
                             </button>
@@ -1180,6 +1284,90 @@ export default function HotelAdminIDVerify() {
             </tbody>
           </table>
         </div>
+
+        {!loading && filteredUsers.length > 0 ? (
+          <div className="flex flex-col gap-3 border-t border-[#082719]/10 bg-[#F8FBF9]/85 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-bold text-black/50">
+              Showing{" "}
+              <span className="font-extrabold text-[#082719]">
+                {paginationStart}-{paginationEnd}
+              </span>{" "}
+              of{" "}
+              <span className="font-extrabold text-[#082719]">
+                {filteredUsers.length}
+              </span>{" "}
+              requests
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="h-9 rounded-full border border-[#082719]/15 bg-white px-4 text-xs font-extrabold text-[#174A30] transition hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-[#174A30]"
+              >
+                Previous
+              </button>
+
+              {visiblePageNumbers[0] > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    className="h-9 min-w-9 rounded-full border border-[#082719]/15 bg-white px-3 text-xs font-extrabold text-[#174A30] transition hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white"
+                  >
+                    1
+                  </button>
+                  {visiblePageNumbers[0] > 2 ? (
+                    <span className="px-1 text-xs font-bold text-black/35">...</span>
+                  ) : null}
+                </>
+              ) : null}
+
+              {visiblePageNumbers.map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  aria-current={currentPage === page ? "page" : undefined}
+                  className={`h-9 min-w-9 rounded-full border px-3 text-xs font-extrabold transition ${
+                    currentPage === page
+                      ? "border-[#082719] bg-[#082719] text-white"
+                      : "border-[#082719]/15 bg-white text-[#174A30] hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages ? (
+                <>
+                  {visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages - 1 ? (
+                    <span className="px-1 text-xs font-bold text-black/35">...</span>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="h-9 min-w-9 rounded-full border border-[#082719]/15 bg-white px-3 text-xs font-extrabold text-[#174A30] transition hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="h-9 rounded-full border border-[#082719]/15 bg-white px-4 text-xs font-extrabold text-[#174A30] transition hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-[#174A30]"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {rejectingUserId ? (

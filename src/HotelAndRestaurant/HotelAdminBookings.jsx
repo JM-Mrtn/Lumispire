@@ -32,6 +32,19 @@ const STATUS_FILTERS = [
   { id: "CANCELLED", label: "Cancelled" },
 ];
 
+const BLOCK_DATE_SERVICES = [
+  { id: "resort_venue", label: "Resort & Venue" },
+  { id: "event_package", label: "Event Package" },
+  { id: "hotel_condo", label: "Hotel & Condo" },
+];
+
+const BLOCK_DATE_REASONS = [
+  { id: "WALK_IN", label: "Walk-in Reservation" },
+  { id: "MAINTENANCE", label: "Maintenance" },
+  { id: "PRIVATE_EVENT", label: "Private Event" },
+  { id: "OTHER", label: "Other" },
+];
+
 function getHotelApiBase() {
   const raw = (
     import.meta.env.VITE_HOTEL_API_BASE ||
@@ -133,6 +146,180 @@ function formatDate(value) {
     month: "2-digit",
     day: "2-digit",
   });
+}
+
+function todayLocalISO() {
+  const d = new Date();
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tz).toISOString().slice(0, 10);
+}
+
+function getBlockedServiceLabel(serviceType = "") {
+  return (
+    BLOCK_DATE_SERVICES.find((item) => item.id === serviceType)?.label ||
+    "Booking Service"
+  );
+}
+
+function getBlockedReasonLabel(reason = "OTHER") {
+  return BLOCK_DATE_REASONS.find((item) => item.id === reason)?.label || "Other";
+}
+
+
+function getBlockedTimeLabel(timeSlot = "ALL_DAY") {
+  return String(timeSlot || "ALL_DAY").toUpperCase() === "ALL_DAY"
+    ? "All Day"
+    : String(timeSlot || "");
+}
+
+function getPackageTimeSlots(pkg = null) {
+  if (!pkg) return [];
+
+  const variants = Array.isArray(pkg.variants)
+    ? pkg.variants.filter((variant) => variant?.isActive !== false)
+    : [];
+
+  return Array.from(
+    new Set(
+      variants.flatMap((variant) =>
+        Array.isArray(variant?.timeSlots)
+          ? variant.timeSlots.map((slot) => String(slot || "").trim()).filter(Boolean)
+          : []
+      )
+    )
+  );
+}
+
+function bookingTypeToBlockedServiceType(type = "") {
+  if (type === "resort") return "resort_venue";
+  if (type === "event") return "event_package";
+  if (type === "hotel_room") return "hotel_condo";
+  return "";
+}
+
+function normalizePackageIdValue(value) {
+  if (!value) return "";
+
+  if (typeof value === "object") {
+    return String(value._id || value.id || "").trim();
+  }
+
+  return String(value).trim();
+}
+
+function normalizeComparableTitle(value = "") {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function packageMatchesSelection(row = {}, packageId = "", packageTitle = "") {
+  const rowPackageId = normalizePackageIdValue(row.packageId || row.raw?.packageId);
+  const selectedPackageId = normalizePackageIdValue(packageId);
+
+  if (rowPackageId && selectedPackageId && rowPackageId === selectedPackageId) {
+    return true;
+  }
+
+  const rowTitle = normalizeComparableTitle(
+    row.packageTitle ||
+      row.eventPackage ||
+      row.raw?.packageTitle ||
+      row.raw?.eventPackage ||
+      row.title ||
+      ""
+  );
+  const selectedTitle = normalizeComparableTitle(packageTitle);
+
+  return Boolean(rowTitle && selectedTitle && rowTitle === selectedTitle);
+}
+
+function parseClockMinutes(hourText, minuteText, meridiemText) {
+  let hour = Number(hourText);
+  const minute = Number(minuteText || 0);
+  const meridiem = String(meridiemText || "").toUpperCase();
+
+  if (
+    !Number.isFinite(hour) ||
+    !Number.isFinite(minute) ||
+    hour < 1 ||
+    hour > 12 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return null;
+  }
+
+  if (hour === 12) hour = 0;
+  if (meridiem === "PM") hour += 12;
+
+  return hour * 60 + minute;
+}
+
+function parseAdminTimeRange(value = "") {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+
+  if (text.toUpperCase().replace(/[\s-]+/g, "_") === "ALL_DAY") {
+    return { startMinutes: 0, endMinutes: 24 * 60, allDay: true };
+  }
+
+  const matches = [...text.matchAll(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/gi)];
+  if (matches.length < 2) return null;
+
+  const startMinutes = parseClockMinutes(matches[0][1], matches[0][2], matches[0][3]);
+  let endMinutes = parseClockMinutes(matches[1][1], matches[1][2], matches[1][3]);
+
+  if (startMinutes === null || endMinutes === null) return null;
+
+  if (/next\s+day/i.test(text) || endMinutes <= startMinutes) {
+    endMinutes += 24 * 60;
+  }
+
+  return { startMinutes, endMinutes, allDay: false };
+}
+
+function buildAdminTimeInterval(dateValue = "", timeValue = "") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateValue || ""))) return null;
+
+  const range = parseAdminTimeRange(timeValue);
+  if (!range) return null;
+
+  const baseMs = new Date(`${dateValue}T00:00:00+08:00`).getTime();
+
+  if (!Number.isFinite(baseMs)) return null;
+
+  return {
+    start: baseMs + range.startMinutes * 60 * 1000,
+    end: baseMs + range.endMinutes * 60 * 1000,
+    allDay: range.allDay,
+  };
+}
+
+function getBookingAdminInterval(booking = {}) {
+  const rawStart = booking.raw?.startDateTime || booking.startDateTime;
+  const rawEnd = booking.raw?.endDateTime || booking.endDateTime;
+  const startMs = rawStart ? new Date(rawStart).getTime() : NaN;
+  const endMs = rawEnd ? new Date(rawEnd).getTime() : NaN;
+
+  if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
+    return { start: startMs, end: endMs, allDay: false };
+  }
+
+  return buildAdminTimeInterval(booking.date || booking.eventDate || "", booking.time || "");
+}
+
+function intervalsOverlapWithAdminGap(a, b, gapMinutes = 0) {
+  if (!a || !b) return false;
+
+  const gapMs = Number(gapMinutes || 0) * 60 * 1000;
+  return a.start < b.end + gapMs && b.start < a.end + gapMs;
+}
+
+function manualBlockMatchesSelection(row = {}, serviceType = "", packageId = "", packageTitle = "") {
+  if (String(row.serviceType || "") !== String(serviceType || "")) return false;
+  return packageMatchesSelection(row, packageId, packageTitle);
 }
 
 function normalizeStatus(value) {
@@ -493,6 +680,8 @@ function normalizeBooking(booking = {}, fallbackType = "") {
       bookingType: "event",
       sourceType,
       serviceLabel: "Event Package",
+      packageId: String(booking.packageId || raw.packageId || ""),
+      packageTitle: booking.eventPackage || raw.eventPackage || booking.packageTitle || raw.packageTitle || "Event Package",
       title:
         booking.title ||
         booking.eventPackage ||
@@ -548,6 +737,8 @@ function normalizeBooking(booking = {}, fallbackType = "") {
       bookingType: "hotel_room",
       sourceType,
       serviceLabel: "Hotel & Condo",
+      packageId: String(booking.packageId || raw.packageId || ""),
+      packageTitle: booking.packageTitle || raw.packageTitle || roomType,
       title:
         booking.title ||
         `${roomType}${duration ? ` - ${duration}` : ""}`,
@@ -579,6 +770,8 @@ function normalizeBooking(booking = {}, fallbackType = "") {
     bookingType: "resort",
     sourceType,
     serviceLabel: "Resort & Venue",
+    packageId: String(booking.packageId || raw.packageId || ""),
+    packageTitle: booking.packageTitle || raw.packageTitle || booking.venue || raw.venue || "Resort & Venue",
     title:
       booking.title ||
       booking.venue ||
@@ -935,11 +1128,26 @@ export default function HotelAdminBookings() {
   const [busyId, setBusyId] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const [bookings, setBookings] = useState([]);
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [blockedDatesLoading, setBlockedDatesLoading] = useState(false);
+  const [blockedDateBusyId, setBlockedDateBusyId] = useState("");
+  const [servicePackages, setServicePackages] = useState([]);
+  const [packagesLoading, setPackagesLoading] = useState(false);
+  const [blockedDateForm, setBlockedDateForm] = useState({
+    date: "",
+    serviceType: "event_package",
+    packageId: "",
+    timeSlot: "",
+    reason: "WALK_IN",
+    note: "",
+  });
 
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [serviceFilter, setServiceFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("Recent");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(10);
 
   const [proofModal, setProofModal] = useState({
     open: false,
@@ -1010,6 +1218,131 @@ export default function HotelAdminBookings() {
     };
   };
 
+  const getBlockedDateEndpointCandidates = (blockedDateId = "") => {
+    const hotelBase = String(API_BASE || "").replace(/\/+$/, "");
+    const adminBase = hotelBase.includes("/api/hotel")
+      ? hotelBase.replace(/\/api\/hotel(?:$|\/.*)/, "/api/hotel-admin")
+      : hotelBase;
+    const suffix = blockedDateId
+      ? `/${encodeURIComponent(blockedDateId)}`
+      : "";
+
+    return Array.from(
+      new Set([
+        `${hotelBase}/admin/blocked-dates${suffix}`,
+        `${hotelBase}/blocked-dates${suffix}`,
+        `${adminBase}/admin/blocked-dates${suffix}`,
+        `${adminBase}/blocked-dates${suffix}`,
+      ])
+    );
+  };
+
+  const requestBlockedDateApi = async ({
+    blockedDateId = "",
+    query = "",
+    method = "GET",
+    body,
+  } = {}) => {
+    const candidates = getBlockedDateEndpointCandidates(blockedDateId);
+    let lastResult = null;
+
+    for (const baseUrl of candidates) {
+      const url = query ? `${baseUrl}?${query}` : baseUrl;
+      const response = await fetch(url, {
+        method,
+        headers: getAdminHeaders(),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      const routeMissing =
+        response.status === 404 &&
+        (!data?.message || /route not found|cannot\s+(get|post|delete)/i.test(data.message));
+
+      lastResult = { response, data, url };
+
+      if (routeMissing) {
+        continue;
+      }
+
+      return lastResult;
+    }
+
+    return lastResult;
+  };
+
+  const fetchServicePackages = async () => {
+    const token = getAdminToken();
+
+    if (!token) {
+      kickToAdminLogin();
+      return;
+    }
+
+    setPackagesLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/admin/packages`, {
+        method: "GET",
+        headers: getAdminHeaders(),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 401 || response.status === 403) {
+        kickToAdminLogin();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to load packages.");
+      }
+
+      setServicePackages(
+        Array.isArray(data.packages)
+          ? data.packages
+              .filter((item) => item?.isActive !== false)
+              .sort((a, b) => {
+                const orderA = Number(a.displayOrder || 0);
+                const orderB = Number(b.displayOrder || 0);
+
+                if (orderA !== orderB) return orderA - orderB;
+
+                return String(a.title || "").localeCompare(String(b.title || ""));
+              })
+          : []
+      );
+    } catch (error) {
+      console.error("fetchServicePackages error:", error);
+      setStatus({
+        type: "error",
+        message: error.message || "Network error while loading packages.",
+      });
+    } finally {
+      setPackagesLoading(false);
+    }
+  };
+
+  const blockablePackages = useMemo(() => {
+    return servicePackages.filter(
+      (item) => String(item.type || "") === blockedDateForm.serviceType
+    );
+  }, [servicePackages, blockedDateForm.serviceType]);
+
+  const selectedBlockedPackage = useMemo(() => {
+    return (
+      servicePackages.find(
+        (item) => String(item._id) === String(blockedDateForm.packageId)
+      ) || null
+    );
+  }, [servicePackages, blockedDateForm.packageId]);
+
+
+  const blockableTimeSlots = useMemo(
+    () => getPackageTimeSlots(selectedBlockedPackage),
+    [selectedBlockedPackage]
+  );
+
   const sortBookingsByRecent = (rows = []) =>
     uniqueBookings(rows)
       .filter((item) => item._id)
@@ -1029,6 +1362,225 @@ export default function HotelAdminBookings() {
 
       return sortBookingsByRecent([...otherSources, ...sourceRows]);
     });
+  };
+
+  const fetchBlockedDates = async () => {
+    const token = getAdminToken();
+
+    if (!token) {
+      kickToAdminLogin();
+      return;
+    }
+
+    setBlockedDatesLoading(true);
+
+    try {
+      const query = new URLSearchParams({ from: todayLocalISO() }).toString();
+      const result = await requestBlockedDateApi({ query, method: "GET" });
+      const response = result?.response;
+      const data = result?.data || {};
+
+      if (!response) {
+        throw new Error("Blocked-date API is unavailable.");
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        kickToAdminLogin();
+        return;
+      }
+
+      if (!response.ok) {
+        const missingRoute =
+          response.status === 404 &&
+          (!data?.message || /route not found|cannot\s+get/i.test(data.message));
+
+        throw new Error(
+          missingRoute
+            ? "Blocked-date API route is not registered on the running backend. Restart the updated backend server, then refresh this page."
+            : data.message || "Failed to load disabled dates."
+        );
+      }
+
+      setBlockedDates(
+        Array.isArray(data.blockedDates)
+          ? data.blockedDates.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)))
+          : []
+      );
+    } catch (error) {
+      console.error("fetchBlockedDates error:", error);
+      setStatus({
+        type: "error",
+        message: error.message || "Network error while loading disabled dates.",
+      });
+    } finally {
+      setBlockedDatesLoading(false);
+    }
+  };
+
+  const disableBookingDate = async () => {
+    const token = getAdminToken();
+
+    if (!token) {
+      kickToAdminLogin();
+      return;
+    }
+
+    if (!blockedDateForm.date) {
+      setStatus({ type: "error", message: "Please choose a date to disable." });
+      return;
+    }
+
+    if (!blockedDateForm.serviceType) {
+      setStatus({ type: "error", message: "Please choose a service." });
+      return;
+    }
+
+    if (!blockedDateForm.packageId || !selectedBlockedPackage) {
+      setStatus({
+        type: "error",
+        message: "Please choose the specific package you want to disable.",
+      });
+      return;
+    }
+
+    if (!blockedDateForm.timeSlot) {
+      setStatus({
+        type: "error",
+        message: "Please choose the specific time slot, or choose All Day.",
+      });
+      return;
+    }
+
+    const conflict = findSelectedSlotConflict(blockedDateForm.timeSlot);
+
+    if (conflict) {
+      setStatus({
+        type: "error",
+        message:
+          conflict.kind === "BOOKED"
+            ? `This package/time is already booked by ${conflict.detail}. Choose another available time slot.`
+            : `This package/time is already manually disabled (${conflict.detail}). Choose another available time slot.`,
+      });
+      return;
+    }
+
+    setBlockedDateBusyId("CREATE");
+    setStatus({ type: "", message: "" });
+
+    try {
+      const result = await requestBlockedDateApi({
+        method: "POST",
+        body: {
+          ...blockedDateForm,
+          packageTitle: selectedBlockedPackage.title || "",
+        },
+      });
+      const response = result?.response;
+      const data = result?.data || {};
+
+      if (!response) {
+        throw new Error("Blocked-date API is unavailable.");
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        kickToAdminLogin();
+        return;
+      }
+
+      if (!response.ok) {
+        setStatus({
+          type: "error",
+          message: data.message || "Failed to disable this date.",
+        });
+        return;
+      }
+
+      setBlockedDateForm((current) => ({
+        date: "",
+        serviceType: current.serviceType || "event_package",
+        packageId: "",
+        timeSlot: "",
+        reason: "WALK_IN",
+        note: "",
+      }));
+
+      await fetchBlockedDates();
+      setStatus({
+        type: "success",
+        message:
+          data.message ||
+          "Booking slot disabled successfully. Non-overlapping time slots remain available online.",
+      });
+    } catch (error) {
+      console.error("disableBookingDate error:", error);
+      setStatus({
+        type: "error",
+        message: "Network error while disabling this date.",
+      });
+    } finally {
+      setBlockedDateBusyId("");
+    }
+  };
+
+  const enableBookingDate = async (blockedDate) => {
+    if (!blockedDate?._id) return;
+
+    if (
+      !window.confirm(
+        `Enable ${formatDate(blockedDate.date)} — ${getBlockedTimeLabel(blockedDate.timeSlot)} for online booking again?`
+      )
+    ) {
+      return;
+    }
+
+    setBlockedDateBusyId(String(blockedDate._id));
+    setStatus({ type: "", message: "" });
+
+    try {
+      const result = await requestBlockedDateApi({
+        blockedDateId: blockedDate._id,
+        method: "DELETE",
+      });
+      const response = result?.response;
+      const data = result?.data || {};
+
+      if (!response) {
+        throw new Error("Blocked-date API is unavailable.");
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        kickToAdminLogin();
+        return;
+      }
+
+      if (!response.ok) {
+        setStatus({
+          type: "error",
+          message: data.message || "Failed to enable this date.",
+        });
+        return;
+      }
+
+      setBlockedDates((current) =>
+        current.filter((item) => String(item._id) !== String(blockedDate._id))
+      );
+      setStatus({
+        type: "success",
+        message: data.message || "Date enabled for online booking again.",
+      });
+    } catch (error) {
+      console.error("enableBookingDate error:", error);
+      setStatus({
+        type: "error",
+        message: "Network error while enabling this date.",
+      });
+    } finally {
+      setBlockedDateBusyId("");
+    }
+  };
+
+  const refreshManageBookings = async () => {
+    await Promise.all([fetchBookings(), fetchBlockedDates(), fetchServicePackages()]);
   };
 
   const fetchBookings = async () => {
@@ -1163,6 +1715,8 @@ export default function HotelAdminBookings() {
 
     initialFetchStartedRef.current = true;
     fetchBookings();
+    fetchBlockedDates();
+    fetchServicePackages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1206,6 +1760,210 @@ export default function HotelAdminBookings() {
 
     return result;
   }, [bookings]);
+
+  const upcomingScheduleEntries = useMemo(() => {
+    const today = todayLocalISO();
+
+    const manualEntries = blockedDates
+      .filter((item) => String(item.date || "") >= today)
+      .map((item) => ({
+        key: `manual-${item._id}`,
+        kind: "MANUAL",
+        date: item.date,
+        time: getBlockedTimeLabel(item.timeSlot),
+        serviceType: item.serviceType,
+        serviceLabel: getBlockedServiceLabel(item.serviceType),
+        packageTitle: item.packageTitle || "Specific package",
+        status: "DISABLED",
+        detail: getBlockedReasonLabel(item.reason),
+        note: item.note || "",
+        blockedDate: item,
+      }));
+
+    const bookingEntries = bookings
+      .filter((booking) => {
+        const date = String(booking.date || "");
+        return date >= today && booking.isActive !== false && normalizeStatus(booking.status) !== "CANCELLED";
+      })
+      .map((booking) => ({
+        key: `booking-${booking.bookingType}-${booking._id}`,
+        kind: "BOOKING",
+        date: booking.date,
+        time: booking.time || "—",
+        serviceType: bookingTypeToBlockedServiceType(booking.bookingType),
+        serviceLabel: booking.serviceLabel,
+        packageTitle: booking.packageTitle || booking.title || "Booking",
+        status: normalizeStatus(booking.status),
+        detail: booking.customerName || "Online guest",
+        note: booking.category || "",
+        booking,
+      }));
+
+    return [...manualEntries, ...bookingEntries].sort((a, b) => {
+      const dateCompare = String(a.date || "").localeCompare(String(b.date || ""));
+      if (dateCompare !== 0) return dateCompare;
+      return String(a.time || "").localeCompare(String(b.time || ""));
+    });
+  }, [blockedDates, bookings]);
+
+  const selectedServiceScheduleEntries = useMemo(() => {
+    return upcomingScheduleEntries.filter(
+      (entry) => String(entry.serviceType || "") === String(blockedDateForm.serviceType || "")
+    );
+  }, [upcomingScheduleEntries, blockedDateForm.serviceType]);
+
+  const selectedServiceDateGroups = useMemo(() => {
+    const grouped = new Map();
+
+    selectedServiceScheduleEntries.forEach((entry) => {
+      const date = String(entry.date || "");
+      if (!date) return;
+
+      if (!grouped.has(date)) {
+        grouped.set(date, {
+          date,
+          booked: 0,
+          disabled: 0,
+          entries: [],
+        });
+      }
+
+      const group = grouped.get(date);
+      group.entries.push(entry);
+      if (entry.kind === "MANUAL") group.disabled += 1;
+      else group.booked += 1;
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => a.date.localeCompare(b.date));
+  }, [selectedServiceScheduleEntries]);
+
+  const selectedDateServiceEntries = useMemo(() => {
+    if (!blockedDateForm.date) return [];
+
+    return selectedServiceScheduleEntries.filter(
+      (entry) => String(entry.date || "") === String(blockedDateForm.date || "")
+    );
+  }, [selectedServiceScheduleEntries, blockedDateForm.date]);
+
+  const findSelectedSlotConflict = (timeSlot) => {
+    if (
+      !blockedDateForm.date ||
+      !blockedDateForm.serviceType ||
+      !blockedDateForm.packageId ||
+      !selectedBlockedPackage ||
+      !timeSlot
+    ) {
+      return null;
+    }
+
+    const candidate = buildAdminTimeInterval(blockedDateForm.date, timeSlot);
+    if (!candidate) return null;
+
+    const packageTitle = selectedBlockedPackage.title || "";
+
+    const manualConflict = blockedDates.find((row) => {
+      if (
+        !manualBlockMatchesSelection(
+          row,
+          blockedDateForm.serviceType,
+          blockedDateForm.packageId,
+          packageTitle
+        )
+      ) {
+        return false;
+      }
+
+      const interval = buildAdminTimeInterval(row.date, row.timeSlot || "ALL_DAY");
+      return intervalsOverlapWithAdminGap(candidate, interval, 0);
+    });
+
+    if (manualConflict) {
+      return {
+        kind: "DISABLED",
+        label: `Already disabled: ${getBlockedTimeLabel(manualConflict.timeSlot)}`,
+        detail: getBlockedReasonLabel(manualConflict.reason),
+        row: manualConflict,
+      };
+    }
+
+    const bookingConflict = bookings.find((booking) => {
+      if (booking.isActive === false || normalizeStatus(booking.status) === "CANCELLED") {
+        return false;
+      }
+
+      if (
+        bookingTypeToBlockedServiceType(booking.bookingType) !==
+        blockedDateForm.serviceType
+      ) {
+        return false;
+      }
+
+      if (
+        !packageMatchesSelection(
+          booking,
+          blockedDateForm.packageId,
+          packageTitle
+        )
+      ) {
+        return false;
+      }
+
+      const interval = getBookingAdminInterval(booking);
+      return intervalsOverlapWithAdminGap(candidate, interval, 60);
+    });
+
+    if (bookingConflict) {
+      return {
+        kind: "BOOKED",
+        label: `Booked: ${bookingConflict.time || "existing reservation"}`,
+        detail: bookingConflict.customerName || "Online guest",
+        booking: bookingConflict,
+      };
+    }
+
+    return null;
+  };
+
+  const timeSlotOptions = useMemo(() => {
+    if (!blockedDateForm.date || !blockedDateForm.packageId || !selectedBlockedPackage) {
+      return [];
+    }
+
+    return blockableTimeSlots.map((slot) => ({
+      slot,
+      conflict: findSelectedSlotConflict(slot),
+    }));
+    // findSelectedSlotConflict intentionally reads the current booking/block state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    blockableTimeSlots,
+    blockedDateForm.date,
+    blockedDateForm.packageId,
+    blockedDateForm.serviceType,
+    selectedBlockedPackage,
+    blockedDates,
+    bookings,
+  ]);
+
+  const allDayConflict = useMemo(() => {
+    if (!blockedDateForm.date || !blockedDateForm.packageId || !selectedBlockedPackage) {
+      return null;
+    }
+
+    return findSelectedSlotConflict("ALL_DAY");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    blockedDateForm.date,
+    blockedDateForm.packageId,
+    blockedDateForm.serviceType,
+    selectedBlockedPackage,
+    blockedDates,
+    bookings,
+  ]);
+
+  const selectedTimeConflict = blockedDateForm.timeSlot
+    ? findSelectedSlotConflict(blockedDateForm.timeSlot)
+    : null;
 
   const filteredBookings = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -1281,6 +2039,54 @@ export default function HotelAdminBookings() {
 
     return rows;
   }, [bookings, statusFilter, serviceFilter, search, sortBy]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredBookings.length / recordsPerPage)
+  );
+
+  const paginatedBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    return filteredBookings.slice(startIndex, startIndex + recordsPerPage);
+  }, [filteredBookings, currentPage, recordsPerPage]);
+
+  const paginationStart =
+    filteredBookings.length === 0
+      ? 0
+      : (currentPage - 1) * recordsPerPage + 1;
+
+  const paginationEnd = Math.min(
+    currentPage * recordsPerPage,
+    filteredBookings.length
+  );
+
+  const visiblePageNumbers = useMemo(() => {
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    return Array.from(
+      { length: end - start + 1 },
+      (_, index) => start + index
+    );
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, serviceFilter, search, sortBy, recordsPerPage]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const closeProofModal = () => {
     setProofModal((prev) => {
@@ -1539,17 +2345,17 @@ export default function HotelAdminBookings() {
                     Manage Bookings
                   </h1>
                   <p className="mt-2 max-w-3xl text-sm font-semibold text-black/55">
-                    View payment terms, downpayments, balances, and proof of payment for all bookings.
+                    Manage online reservations, payments, proof of payment, and dates reserved for walk-ins or maintenance.
                   </p>
                 </div>
 
                 <button
                   type="button"
-                  onClick={fetchBookings}
-                  disabled={loading}
+                  onClick={refreshManageBookings}
+                  disabled={loading || blockedDatesLoading || packagesLoading}
                   className="h-10 shrink-0 rounded-full bg-gradient-to-br from-[#F4D484] to-[#D7A84D] px-6 text-xs font-extrabold text-[#102418] shadow-[0_16px_35px_rgba(215,168,77,.24)] transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
                 >
-                  {loading ? "REFRESHING..." : "REFRESH"}
+                  {loading || blockedDatesLoading || packagesLoading ? "REFRESHING..." : "REFRESH"}
                 </button>
               </div>
 
@@ -1562,6 +2368,366 @@ export default function HotelAdminBookings() {
           {status.message}
         </div>
       ) : null}
+
+      <section className="relative mb-6 overflow-hidden rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(8,39,25,0.12)] backdrop-blur-xl md:p-6">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#082719] via-[#235F3E] to-[#D7A84D]" />
+
+        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D7A84D]">
+              Availability Control
+            </p>
+            <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[#082719]">
+              Disable Booking Dates
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm font-semibold text-black/55">
+              Disable one specific package and time slot for a walk-in reservation, maintenance, private event, or another offline booking. Morning and night remain independent unless their times overlap. Choose All Day only when the whole date must be unavailable.
+            </p>
+          </div>
+
+          <span className="inline-flex w-fit rounded-full border border-[#082719]/10 bg-[#F8FBF9] px-4 py-2 text-xs font-extrabold text-[#174A30]">
+            {blockedDates.length} disabled slot{blockedDates.length === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,.9fr)_minmax(0,2.7fr)]">
+          <div>
+            <label className="mb-2 block text-xs font-bold text-black/60">Service</label>
+            <select
+              value={blockedDateForm.serviceType}
+              onChange={(event) =>
+                setBlockedDateForm((current) => ({
+                  ...current,
+                  serviceType: event.target.value,
+                  date: "",
+                  packageId: "",
+                  timeSlot: "",
+                }))
+              }
+              className="h-11 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm font-bold text-[#082719] outline-none focus:ring-2 focus:ring-[#082719]/20"
+            >
+              {BLOCK_DATE_SERVICES.map((item) => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="rounded-2xl border border-[#082719]/10 bg-[#F8FBF9]/80 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-black/45">
+                  Booked / Disabled Dates for {getBlockedServiceLabel(blockedDateForm.serviceType)}
+                </p>
+                <p className="mt-1 text-[11px] font-semibold text-black/45">
+                  Select the service first. Dates with reservations are shown here before you choose the date.
+                </p>
+              </div>
+              <span className="rounded-full border border-[#082719]/10 bg-white px-3 py-1 text-[10px] font-extrabold text-[#174A30]">
+                {selectedServiceDateGroups.length} date{selectedServiceDateGroups.length === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            {selectedServiceDateGroups.length === 0 ? (
+              <p className="mt-3 text-xs font-semibold text-black/45">
+                No upcoming online bookings or manual blocks for this service.
+              </p>
+            ) : (
+              <div className="mt-3 flex max-h-[104px] flex-wrap gap-2 overflow-auto pr-1">
+                {selectedServiceDateGroups.map((group) => (
+                  <button
+                    key={group.date}
+                    type="button"
+                    onClick={() =>
+                      setBlockedDateForm((current) => ({
+                        ...current,
+                        date: group.date,
+                        packageId: "",
+                        timeSlot: "",
+                      }))
+                    }
+                    className={`rounded-xl border px-3 py-2 text-left text-[11px] font-bold transition ${
+                      blockedDateForm.date === group.date
+                        ? "border-[#082719] bg-[#082719] text-white"
+                        : "border-[#082719]/10 bg-white text-[#174A30] hover:border-[#D7A84D]"
+                    }`}
+                    title="Click to inspect this date. Booked time slots will be unavailable below."
+                  >
+                    <span className="block font-extrabold">{formatDate(group.date)}</span>
+                    <span className={`mt-0.5 block ${blockedDateForm.date === group.date ? "text-white/75" : "text-black/45"}`}>
+                      {group.booked ? `${group.booked} booked` : ""}
+                      {group.booked && group.disabled ? " • " : ""}
+                      {group.disabled ? `${group.disabled} disabled` : ""}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-6">
+          <div>
+            <label className="mb-2 block text-xs font-bold text-black/60">Date</label>
+            <input
+              type="date"
+              min={todayLocalISO()}
+              value={blockedDateForm.date}
+              onChange={(event) =>
+                setBlockedDateForm((current) => ({
+                  ...current,
+                  date: event.target.value,
+                  packageId: "",
+                  timeSlot: "",
+                }))
+              }
+              className="h-11 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm font-bold text-[#082719] outline-none focus:ring-2 focus:ring-[#082719]/20"
+            />
+            {blockedDateForm.date && selectedDateServiceEntries.length ? (
+              <p className="mt-1 text-[10px] font-bold leading-4 text-amber-700">
+                This service already has {selectedDateServiceEntries.length} scheduled item{selectedDateServiceEntries.length === 1 ? "" : "s"} on this date. Occupied package/time slots are blocked below.
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-bold text-black/60">Specific Package</label>
+            <select
+              value={blockedDateForm.packageId}
+              disabled={!blockedDateForm.date || packagesLoading}
+              onChange={(event) =>
+                setBlockedDateForm((current) => ({
+                  ...current,
+                  packageId: event.target.value,
+                  timeSlot: "",
+                }))
+              }
+              className="h-11 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm font-bold text-[#082719] outline-none focus:ring-2 focus:ring-[#082719]/20 disabled:opacity-60"
+            >
+              <option value="">
+                {packagesLoading
+                  ? "Loading packages..."
+                  : !blockedDateForm.date
+                  ? "Choose date first"
+                  : blockablePackages.length
+                  ? "Select specific package"
+                  : "No active packages"}
+              </option>
+              {blockablePackages.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-bold text-black/60">Time Slot</label>
+            <select
+              value={blockedDateForm.timeSlot}
+              disabled={!blockedDateForm.packageId || packagesLoading}
+              onChange={(event) =>
+                setBlockedDateForm((current) => ({
+                  ...current,
+                  timeSlot: event.target.value,
+                }))
+              }
+              className="h-11 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm font-bold text-[#082719] outline-none focus:ring-2 focus:ring-[#082719]/20 disabled:opacity-60"
+            >
+              <option value="">Select available time slot</option>
+              <option value="ALL_DAY" disabled={Boolean(allDayConflict)}>
+                {allDayConflict
+                  ? `All Day — ${allDayConflict.kind === "BOOKED" ? "BOOKED" : "DISABLED"}`
+                  : "All Day (block every time)"}
+              </option>
+              {timeSlotOptions.map(({ slot, conflict }) => (
+                <option key={slot} value={slot} disabled={Boolean(conflict)}>
+                  {conflict
+                    ? `${slot} — ${conflict.kind === "BOOKED" ? "BOOKED" : "DISABLED"}`
+                    : slot}
+                </option>
+              ))}
+            </select>
+            {selectedTimeConflict ? (
+              <p className="mt-1 text-[10px] font-bold leading-4 text-rose-700">
+                {selectedTimeConflict.label} ({selectedTimeConflict.detail})
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-bold text-black/60">Reason</label>
+            <select
+              value={blockedDateForm.reason}
+              onChange={(event) =>
+                setBlockedDateForm((current) => ({ ...current, reason: event.target.value }))
+              }
+              className="h-11 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm font-bold text-[#082719] outline-none focus:ring-2 focus:ring-[#082719]/20"
+            >
+              {BLOCK_DATE_REASONS.map((item) => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-bold text-black/60">Note (optional)</label>
+            <input
+              value={blockedDateForm.note}
+              maxLength={500}
+              onChange={(event) =>
+                setBlockedDateForm((current) => ({ ...current, note: event.target.value }))
+              }
+              placeholder="e.g. Walk-in guest / pool maintenance"
+              className="h-11 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-[#082719]/20"
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={disableBookingDate}
+              disabled={
+                !blockedDateForm.serviceType ||
+                !blockedDateForm.date ||
+                !blockedDateForm.packageId ||
+                !blockedDateForm.timeSlot ||
+                Boolean(selectedTimeConflict) ||
+                blockedDateBusyId === "CREATE"
+              }
+              className="h-11 w-full rounded-2xl bg-[#082719] px-5 text-xs font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#174A30] disabled:translate-y-0 disabled:opacity-50"
+            >
+              {blockedDateBusyId === "CREATE" ? "DISABLING..." : "DISABLE SLOT"}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-5 border-t border-[#082719]/10 pt-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
+              Manually Disabled Slots
+            </p>
+          </div>
+
+          {blockedDatesLoading ? (
+            <div className="rounded-2xl bg-[#F8FBF9] px-4 py-5 text-sm font-semibold text-black/50">
+              Loading disabled dates...
+            </div>
+          ) : blockedDates.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#082719]/15 bg-[#F8FBF9]/70 px-4 py-5 text-sm font-semibold text-black/50">
+              No future package/time slots are manually disabled.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {blockedDates.map((item) => (
+                <article
+                  key={item._id}
+                  className="rounded-2xl border border-[#082719]/10 bg-[#F8FBF9] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-black tracking-[-0.03em] text-[#082719]">
+                        {formatDate(item.date)}
+                      </p>
+                      <p className="mt-1 text-xs font-extrabold text-[#174A30]">
+                        {getBlockedServiceLabel(item.serviceType)}
+                      </p>
+                      <p className="mt-1 text-sm font-black text-[#082719]">
+                        {item.packageTitle || "Specific package"}
+                      </p>
+                      <p className="mt-2 text-xs font-extrabold text-[#7A5A13]">
+                        {getBlockedTimeLabel(item.timeSlot)}
+                      </p>
+                    </div>
+
+                    <span className="rounded-full border border-[#D7A84D]/50 bg-[#FFF7DC] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#7A5A13]">
+                      {getBlockedReasonLabel(item.reason)}
+                    </span>
+                  </div>
+
+                  {item.note ? (
+                    <p className="mt-3 text-xs font-semibold leading-5 text-black/55">
+                      {item.note}
+                    </p>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    disabled={blockedDateBusyId === String(item._id)}
+                    onClick={() => enableBookingDate(item)}
+                    className="mt-4 h-9 w-full rounded-full border border-[#235F3E] bg-white text-xs font-extrabold text-[#174A30] transition hover:bg-[#235F3E] hover:text-white disabled:opacity-50"
+                  >
+                    {blockedDateBusyId === String(item._id) ? "ENABLING..." : "ENABLE SLOT"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 border-t border-[#082719]/10 pt-5">
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-black/50">
+                Upcoming Disabled / Booked Schedule
+              </p>
+              <p className="mt-1 text-xs font-semibold text-black/45">
+                Manual blocks and pending/confirmed online bookings are shown together with their exact time.
+              </p>
+            </div>
+            <span className="w-fit rounded-full border border-[#082719]/10 bg-white px-3 py-1 text-[11px] font-extrabold text-[#174A30]">
+              {upcomingScheduleEntries.length} upcoming
+            </span>
+          </div>
+
+          {upcomingScheduleEntries.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#082719]/15 bg-[#F8FBF9]/70 px-4 py-5 text-sm font-semibold text-black/50">
+              No upcoming disabled slots or active bookings.
+            </div>
+          ) : (
+            <div className="max-h-[430px] overflow-auto rounded-2xl border border-[#082719]/10 bg-white">
+              <table className="w-full min-w-[860px] text-left text-xs">
+                <thead className="sticky top-0 bg-[#F6F3EA] text-black/55">
+                  <tr>
+                    <th className="px-4 py-3 font-extrabold uppercase tracking-wide">Date</th>
+                    <th className="px-4 py-3 font-extrabold uppercase tracking-wide">Time</th>
+                    <th className="px-4 py-3 font-extrabold uppercase tracking-wide">Service</th>
+                    <th className="px-4 py-3 font-extrabold uppercase tracking-wide">Package</th>
+                    <th className="px-4 py-3 font-extrabold uppercase tracking-wide">Source / Guest</th>
+                    <th className="px-4 py-3 font-extrabold uppercase tracking-wide">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {upcomingScheduleEntries.map((entry) => (
+                    <tr key={entry.key} className="border-t border-[#082719]/10">
+                      <td className="px-4 py-3 font-extrabold text-[#082719]">{formatDate(entry.date)}</td>
+                      <td className="px-4 py-3 font-bold text-[#174A30]">{entry.time}</td>
+                      <td className="px-4 py-3 font-bold">{entry.serviceLabel}</td>
+                      <td className="px-4 py-3">
+                        <p className="font-extrabold text-[#082719]">{entry.packageTitle}</p>
+                        {entry.note ? <p className="mt-1 text-[11px] font-semibold text-black/45">{entry.note}</p> : null}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-black/60">
+                        {entry.kind === "MANUAL" ? `Manual: ${entry.detail}` : entry.detail}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full border px-3 py-1 text-[10px] font-extrabold ${
+                          entry.kind === "MANUAL"
+                            ? "border-amber-200 bg-amber-50 text-amber-700"
+                            : entry.status === "CONFIRMED"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-sky-200 bg-sky-50 text-sky-700"
+                        }`}>
+                          {entry.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <StatCard label="All Bookings" value={counts.total} />
@@ -1688,9 +2854,24 @@ export default function HotelAdminBookings() {
             </h3>
           </div>
 
-          <p className="rounded-full border border-[#082719]/10 bg-white px-4 py-2 text-xs font-extrabold text-[#174A30] shadow-sm">
-            {filteredBookings.length} record{filteredBookings.length === 1 ? "" : "s"}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 rounded-full border border-[#082719]/10 bg-white px-3 py-2 text-xs font-bold text-black/55 shadow-sm">
+              <span>Rows</span>
+              <select
+                value={recordsPerPage}
+                onChange={(event) => setRecordsPerPage(Number(event.target.value))}
+                className="bg-transparent font-extrabold text-[#174A30] outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </label>
+
+            <p className="rounded-full border border-[#082719]/10 bg-white px-4 py-2 text-xs font-extrabold text-[#174A30] shadow-sm">
+              {filteredBookings.length} record{filteredBookings.length === 1 ? "" : "s"}
+            </p>
+          </div>
         </div>
 
         <div className="overflow-x-auto bg-white/70">
@@ -1733,7 +2914,7 @@ export default function HotelAdminBookings() {
                   </td>
                 </tr>
               ) : (
-                filteredBookings.map((booking) => {
+                paginatedBookings.map((booking) => {
                   const busy =
                     busyId === `${booking.bookingType}:${booking._id}`;
 
@@ -1863,6 +3044,90 @@ export default function HotelAdminBookings() {
             </tbody>
           </table>
         </div>
+
+        {!loading && filteredBookings.length > 0 ? (
+          <div className="flex flex-col gap-3 border-t border-[#082719]/10 bg-[#F8FBF9]/85 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-bold text-black/50">
+              Showing{" "}
+              <span className="font-extrabold text-[#082719]">
+                {paginationStart}-{paginationEnd}
+              </span>{" "}
+              of{" "}
+              <span className="font-extrabold text-[#082719]">
+                {filteredBookings.length}
+              </span>{" "}
+              records
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="h-9 rounded-full border border-[#082719]/15 bg-white px-4 text-xs font-extrabold text-[#174A30] transition hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-[#174A30]"
+              >
+                Previous
+              </button>
+
+              {visiblePageNumbers[0] > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    className="h-9 min-w-9 rounded-full border border-[#082719]/15 bg-white px-3 text-xs font-extrabold text-[#174A30] transition hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white"
+                  >
+                    1
+                  </button>
+                  {visiblePageNumbers[0] > 2 ? (
+                    <span className="px-1 text-xs font-bold text-black/35">...</span>
+                  ) : null}
+                </>
+              ) : null}
+
+              {visiblePageNumbers.map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  aria-current={currentPage === page ? "page" : undefined}
+                  className={`h-9 min-w-9 rounded-full border px-3 text-xs font-extrabold transition ${
+                    currentPage === page
+                      ? "border-[#082719] bg-[#082719] text-white"
+                      : "border-[#082719]/15 bg-white text-[#174A30] hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages ? (
+                <>
+                  {visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages - 1 ? (
+                    <span className="px-1 text-xs font-bold text-black/35">...</span>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="h-9 min-w-9 rounded-full border border-[#082719]/15 bg-white px-3 text-xs font-extrabold text-[#174A30] transition hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="h-9 rounded-full border border-[#082719]/15 bg-white px-4 text-xs font-extrabold text-[#174A30] transition hover:border-[#082719]/35 hover:bg-[#082719] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-[#174A30]"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
               {proofModal.open ? (

@@ -656,6 +656,223 @@ const pageStyles = `
     box-shadow: none;
   }
 
+
+  .ltc-policy-card {
+    margin-top: 26px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    border-radius: 17px;
+    border: 1px solid rgba(35,95,62,.16);
+    background: rgba(248,250,249,.96);
+    padding: 12px 16px;
+    box-shadow: none;
+  }
+
+  .ltc-policy-card.error {
+    border-color: rgba(239,68,68,.48);
+    box-shadow: 0 0 0 3px rgba(239,68,68,.07);
+  }
+
+  .ltc-policy-consent {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #475467;
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .ltc-policy-consent input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    flex: 0 0 auto;
+    accent-color: var(--green-700);
+  }
+
+  .ltc-policy-link {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--green-800);
+    font: inherit;
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .ltc-policy-link:hover,
+  .ltc-policy-link:focus-visible {
+    color: var(--green-950);
+  }
+
+  .ltc-policy-error {
+    margin: 8px 0 0 28px;
+    color: #b42318;
+    font-size: 12px;
+    line-height: 1.45;
+    font-weight: 900;
+  }
+
+  .ltc-policy-modal-shell {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+  }
+
+  .ltc-policy-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2,18,11,.72);
+    backdrop-filter: blur(5px);
+  }
+
+  .ltc-policy-modal-card {
+    position: relative;
+    z-index: 1;
+    width: min(900px, 100%);
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: 26px;
+    background: white;
+    box-shadow: 0 32px 90px rgba(0,0,0,.30);
+  }
+
+  .ltc-policy-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 24px 26px 18px;
+    border-bottom: 1px solid rgba(35,95,62,.10);
+    background:
+      radial-gradient(circle at 92% 0%, rgba(215,168,77,.12), transparent 30%),
+      linear-gradient(180deg,#fbfdfb,#f7faf8);
+  }
+
+  .ltc-policy-modal-eyebrow {
+    margin: 0;
+    color: var(--green-700);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .ltc-policy-modal-title {
+    margin: 7px 0 0;
+    color: var(--green-950);
+    font-size: clamp(24px, 3vw, 34px);
+    line-height: 1.08;
+    font-weight: 900;
+    letter-spacing: -.04em;
+  }
+
+  .ltc-policy-modal-meta {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+    font-weight: 700;
+  }
+
+  .ltc-policy-modal-close {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: 12px;
+    background: rgba(35,95,62,.08);
+    color: var(--green-950);
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  .ltc-policy-modal-body {
+    overflow-y: auto;
+    padding: 24px 26px 28px;
+  }
+
+  .ltc-policy-intro,
+  .ltc-policy-final {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .ltc-policy-final {
+    margin-top: 22px;
+    color: var(--green-900);
+    font-weight: 900;
+  }
+
+  .ltc-policy-section {
+    margin-top: 24px;
+  }
+
+  .ltc-policy-section h4 {
+    margin: 0;
+    color: var(--green-950);
+    font-size: 18px;
+    line-height: 1.3;
+    font-weight: 900;
+  }
+
+  .ltc-policy-section h5 {
+    margin: 14px 0 0;
+    color: var(--green-900);
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 900;
+  }
+
+  .ltc-policy-section p {
+    margin: 9px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .ltc-policy-section ul {
+    margin: 10px 0 0;
+    padding-left: 20px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .ltc-policy-contact {
+    margin-top: 10px;
+    display: grid;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .ltc-policy-modal-footer {
+    padding: 16px 26px 20px;
+    border-top: 1px solid rgba(35,95,62,.10);
+    background: white;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ltc-policy-modal-footer .ltc-primary-button {
+    min-width: 180px;
+  }
+
   .ltc-footer {
     width: 100%;
     margin: 0;
@@ -1017,6 +1234,8 @@ export default function HotelBookingSummary() {
   const [isDownPayment, setIsDownPayment] = useState(false);
   const [proofFile, setProofFile] = useState(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
 
   const fullTotalAmount = Number(
     bookingData?.price || bookingData?.totalAmount || 0
@@ -1075,6 +1294,15 @@ export default function HotelBookingSummary() {
   const submitBooking = async () => {
     setSubmitAttempted(true);
     setStatus({ type: "", message: "" });
+
+    if (!policyAccepted) {
+      setStatus({
+        type: "error",
+        message:
+          "You must read and agree to the LUMISPIRE Hotel / Condo Booking Policy before submitting your booking.",
+      });
+      return;
+    }
 
     if (!paymentMethod) {
       setStatus({
@@ -1423,6 +1651,18 @@ export default function HotelBookingSummary() {
                 </div>
               </div>
 
+              <PolicyAgreement
+                accepted={policyAccepted}
+                onAcceptedChange={(value) => {
+                  setPolicyAccepted(value);
+                  if (value && status.type === "error") {
+                    setStatus({ type: "", message: "" });
+                  }
+                }}
+                onOpen={() => setPolicyOpen(true)}
+                showError={submitAttempted && !policyAccepted}
+              />
+
               {status.message ? (
                 <div className={`ltc-status ${statusClass}`} style={fontPoppins}>
                   {status.type === "error" ? (
@@ -1437,7 +1677,7 @@ export default function HotelBookingSummary() {
               <div className="ltc-actions">
                 <button
                   onClick={submitBooking}
-                  disabled={loading}
+                  disabled={loading || !policyAccepted}
                   type="button"
                   className="ltc-primary-button"
                   style={fontMontserrat}
@@ -1469,7 +1709,361 @@ export default function HotelBookingSummary() {
           goToProfile={goToProfile}
         />
       ) : null}
+
+      {policyOpen ? (
+        <HotelCondoBookingPolicyModal
+          onClose={() => setPolicyOpen(false)}
+          onAgree={() => {
+            setPolicyAccepted(true);
+            setPolicyOpen(false);
+            setStatus({ type: "", message: "" });
+          }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function PolicyAgreement({
+  accepted,
+  onAcceptedChange,
+  onOpen,
+  showError,
+}) {
+  return (
+    <>
+      <section className={`ltc-policy-card ${showError ? "error" : ""}`}>
+        <label className="ltc-policy-consent" style={fontPoppins}>
+          <input
+            type="checkbox"
+            checked={accepted}
+            onChange={(event) => onAcceptedChange(event.target.checked)}
+          />
+          <span>
+            I have read and agree to the{` `}
+            <button
+              type="button"
+              className="ltc-policy-link"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onOpen();
+              }}
+            >
+              LUMISPIRE Hotel / Condo Booking Policy
+            </button>
+            .
+          </span>
+        </label>
+      </section>
+
+      {showError ? (
+        <p className="ltc-policy-error" style={fontPoppins}>
+          Agreement to the Hotel / Condo Booking Policy is required before you can submit this booking.
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function HotelCondoBookingPolicyModal({ onClose, onAgree }) {
+  return (
+    <div className="ltc-policy-modal-shell">
+      <div className="ltc-policy-modal-backdrop" onClick={onClose} />
+
+      <div
+        className="ltc-policy-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hotel-condo-policy-title"
+      >
+        <div className="ltc-policy-modal-header">
+          <div>
+            <p className="ltc-policy-modal-eyebrow" style={fontMontserrat}>
+              LUMISPIRE Hotel & Resort Services of LTC Group
+            </p>
+            <h2
+              id="hotel-condo-policy-title"
+              className="ltc-policy-modal-title"
+              style={fontMontserrat}
+            >
+              Hotel / Condo Booking Policy
+            </h2>
+            <p className="ltc-policy-modal-meta" style={fontPoppins}>
+              Effective Date: September 2026 · Last Updated: 2026
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="ltc-policy-modal-close"
+            aria-label="Close booking policy"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="ltc-policy-modal-body">
+          <p className="ltc-policy-intro" style={fontPontano}>
+            Welcome to LUMISPIRE Hotel & Resort Services of LTC Group. This Hotel / Condo Booking
+            Policy governs accommodation reservations, payments, cancellations, modifications,
+            check-in and check-out procedures, and related transactions completed through LUMISPIRE.
+            By making a Hotel / Condo reservation, you acknowledge that you have read, understood,
+            and agreed to this Booking Policy.
+          </p>
+
+          <PolicySection title="1. Reservation and Booking Process">
+            <p>Guests may submit a Hotel / Condo reservation by providing information including:</p>
+            <ul>
+              <li>Full name</li>
+              <li>Contact number</li>
+              <li>Email address</li>
+              <li>Check-in date</li>
+              <li>Check-out date</li>
+              <li>Number of guests</li>
+              <li>Selected room or accommodation</li>
+              <li>Additional services</li>
+              <li>Special requests</li>
+            </ul>
+            <p>
+              Guests are responsible for ensuring all information is accurate before submitting
+              their reservation. Submission of the form does not automatically guarantee
+              availability. The reservation will be considered confirmed only after it has been
+              reviewed, approved, and any required payment has been verified.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="2. Guest Information Requirements">
+            <p>Guests may be required to provide:</p>
+            <ul>
+              <li>Valid identification</li>
+              <li>Complete contact information</li>
+              <li>Booking confirmation</li>
+              <li>Information regarding accompanying guests</li>
+              <li>Other information reasonably required for security and guest management</li>
+            </ul>
+            <p>
+              Guest information will be processed in accordance with the LUMISPIRE Hotel & Resort Privacy Policy.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="3. Room Availability and Booking Confirmation">
+            <p>Rooms and accommodation units are subject to availability. LTC Group Hotel & Resort Services may:</p>
+            <ul>
+              <li>Confirm or decline reservations</li>
+              <li>Correct booking or pricing errors</li>
+              <li>Update room availability</li>
+              <li>Offer an alternative accommodation when necessary</li>
+              <li>Request clarification or additional information</li>
+            </ul>
+            <p>
+              Confirmed booking details will be communicated through the contact information
+              associated with the reservation or through LUMISPIRE.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="4. Check-in and Check-out Policy">
+            <h5 style={fontMontserrat}>Check-in Time:</h5>
+            <p><strong>[Insert Time]</strong></p>
+            <h5 style={fontMontserrat}>Check-out Time:</h5>
+            <p><strong>[Insert Time]</strong></p>
+            <p>
+              Guests must comply with the established check-in and check-out schedule. Valid
+              identification and booking confirmation may be required upon check-in. Early check-in
+              and late check-out are subject to availability and approval and may require additional payment.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="5. Payment Policy">
+            <p>Payments may be required before a reservation can be confirmed.</p>
+            <h5 style={fontMontserrat}>GCash Payment</h5>
+            <ul>
+              <li>Use only the officially designated GCash account</li>
+              <li>Enter the correct payment amount</li>
+              <li>Submit valid proof of payment</li>
+              <li>Provide the correct transaction reference</li>
+            </ul>
+            <h5 style={fontMontserrat}>Bank Transfer Payment</h5>
+            <ul>
+              <li>Send payment to the official bank account</li>
+              <li>Upload or submit proof of successful transfer</li>
+              <li>Provide the required transaction details</li>
+              <li>Allow sufficient time for payment verification</li>
+            </ul>
+            <p>
+              A payment is not considered verified simply because proof of payment has been uploaded.
+              The Hotel & Resort team must confirm the transaction. Bookings that remain unpaid after
+              the allowed payment period may be cancelled.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="6. Cancellation and Modification Policy">
+            <p>Guests may request cancellation or changes to:</p>
+            <ul>
+              <li>Check-in date</li>
+              <li>Check-out date</li>
+              <li>Room or accommodation</li>
+              <li>Number of guests</li>
+              <li>Additional services</li>
+            </ul>
+            <p>
+              All changes are subject to availability and approval. Applicable charges may depend on
+              the amount of advance notice and the reservation conditions.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="7. Refund Policy">
+            <p>
+              Eligible refunds will be evaluated according to the booking, cancellation, and payment
+              conditions applicable to the reservation. Approved refunds may be processed through the
+              original payment method. GCash and bank-transfer refunds require verification of
+              transaction details. Processing periods may vary.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="8. No-Show Policy">
+            <p>
+              Guests who fail to arrive on their scheduled check-in date without notifying Hotel &
+              Resort Services may be treated as no-shows. This may result in:
+            </p>
+            <ul>
+              <li>Cancellation of the reservation</li>
+              <li>Release of the reserved room</li>
+              <li>Forfeiture of deposits or advance payments where applicable</li>
+              <li>Application of relevant booking conditions</li>
+            </ul>
+          </PolicySection>
+
+          <PolicySection title="9. Early Departure Policy">
+            <p>
+              Leaving before the confirmed check-out date does not automatically entitle the guest
+              to a refund. Any refund for unused accommodation will depend on the applicable policy
+              and approval.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="10. Special Requests">
+            <p>Guests may request:</p>
+            <ul>
+              <li>Room preferences</li>
+              <li>Additional amenities</li>
+              <li>Accessibility assistance</li>
+              <li>Celebration arrangements</li>
+              <li>Additional bedding where available</li>
+              <li>Other reasonable accommodation requests</li>
+            </ul>
+            <p>Special requests are not guaranteed and remain subject to availability.</p>
+          </PolicySection>
+
+          <PolicySection title="11. Guest Responsibilities">
+            <p>Guests must:</p>
+            <ul>
+              <li>Provide accurate information</li>
+              <li>Follow property rules</li>
+              <li>Respect employees and other guests</li>
+              <li>Avoid excessive noise or disruptive conduct</li>
+              <li>Maintain rooms and facilities properly</li>
+              <li>Pay for applicable additional services</li>
+              <li>Be responsible for damage caused during their stay</li>
+              <li>Avoid illegal or prohibited activities</li>
+            </ul>
+            <p>
+              Serious violations may result in termination of accommodation without prejudice to
+              applicable charges or other remedies permitted by law.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="12. Children and Additional Guests Policy">
+            <p>
+              Guests must declare the correct number of occupants. Room capacity requirements must
+              be observed. Additional guests or extra accommodations may result in additional fees.
+              Children-related rates or restrictions may depend on the accommodation selected.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="13. Promotions and Special Offers">
+            <p>Promotional rates may contain additional conditions concerning:</p>
+            <ul>
+              <li>Booking periods</li>
+              <li>Stay dates</li>
+              <li>Payments</li>
+              <li>Cancellations</li>
+              <li>Modifications</li>
+              <li>Guest eligibility</li>
+              <li>Availability</li>
+            </ul>
+            <p>Guests should review all promotional conditions before booking.</p>
+          </PolicySection>
+
+          <PolicySection title="14. Force Majeure">
+            <p>
+              LTC Group shall not be responsible for service interruptions caused by events beyond
+              its reasonable control, including natural disasters, severe weather, government
+              actions, emergencies, utility disruptions, and similar events. Reasonable assistance
+              will be provided when circumstances permit.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="15. Privacy and Data Protection">
+            <p>Booking information may be processed for:</p>
+            <ul>
+              <li>Reservation management</li>
+              <li>Guest verification</li>
+              <li>Accommodation services</li>
+              <li>Payment verification</li>
+              <li>Communication</li>
+              <li>Security and recordkeeping</li>
+            </ul>
+            <p>
+              Information will be handled according to the LUMISPIRE Hotel & Resort Privacy Policy
+              and applicable data protection laws.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="16. Policy Updates">
+            <p>
+              LTC Group may update this Hotel / Condo Booking Policy when operational, legal,
+              technical, or service requirements change.
+            </p>
+          </PolicySection>
+
+          <PolicySection title="17. Contact Information">
+            <div className="ltc-policy-contact" style={fontPontano}>
+              <span><strong>Service:</strong> LTC Group – Hotel & Resort Services</span>
+              <span><strong>Hotel Location:</strong> 5441 Curie St, Makati City, 1235 Metro Manila</span>
+              <span><strong>Email:</strong> lorenzoeventandvenue@gmail.com</span>
+              <span><strong>Contact Numbers:</strong> 09338699988 / 09064191405</span>
+            </div>
+          </PolicySection>
+
+          <p className="ltc-policy-final" style={fontPontano}>
+            By completing a Hotel / Condo reservation through LUMISPIRE, you confirm that you have
+            read, understood, and agreed to this Hotel / Condo Booking Policy.
+          </p>
+        </div>
+
+        <div className="ltc-policy-modal-footer">
+          <button
+            type="button"
+            className="ltc-primary-button"
+            onClick={onAgree}
+            style={fontMontserrat}
+          >
+            I Agree
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PolicySection({ title, children }) {
+  return (
+    <section className="ltc-policy-section">
+      <h4 style={fontMontserrat}>{title}</h4>
+      {children}
+    </section>
   );
 }
 

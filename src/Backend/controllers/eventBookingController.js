@@ -8,6 +8,12 @@ import {
   requireHotelAdminAuth,
   isValidObjectId,
 } from "../utils/hotelAuthHelpers.js";
+import {
+  blockedDateConflictsWithTime,
+  buildBlockedDateMessage,
+  findActiveBlockedDate,
+  getActiveBlockedDates,
+} from "../utils/hotelBlockedDates.js";
 
 const BOOKING_GAP_MINUTES = 60;
 const BOOKING_GAP_MS = BOOKING_GAP_MINUTES * 60 * 1000;
@@ -870,6 +876,13 @@ export const getEventBookedDates = async (req, res) => {
       : EVENT_TIME_SLOTS_ALL;
 
     const rows = await getEventBookingsForAvailability({ venue, from, to });
+    const adminBlockedDates = await getActiveBlockedDates({
+      from,
+      to,
+      serviceType: "event",
+      packageId: cleanText(req.query.packageId || req.query.selectedPackageId || ""),
+      packageTitle: cleanText(req.query.eventPackage || req.query.selectedPackageTitle || ""),
+    });
     const fullBookedDates = [];
     const blockedTimeSlotsByDate = {};
     const availableTimeSlotsByDate = {};
@@ -883,7 +896,13 @@ export const getEventBookedDates = async (req, res) => {
       cursor.setDate(cursor.getDate() + 1)
     ) {
       const iso = cursor.toISOString().slice(0, 10);
-      const blocked = getBlockedTimeSlotsForDate(rows, iso, candidateSlots);
+      const bookingBlocked = getBlockedTimeSlotsForDate(rows, iso, candidateSlots);
+      const manualBlocked = candidateSlots.filter((slot) =>
+        adminBlockedDates.some((blocked) =>
+          blockedDateConflictsWithTime(blocked, iso, slot)
+        )
+      );
+      const blocked = Array.from(new Set([...bookingBlocked, ...manualBlocked]));
       const available = candidateSlots.filter((slot) => !blocked.includes(slot));
 
       if (blocked.length) blockedTimeSlotsByDate[iso] = blocked;
@@ -903,6 +922,7 @@ export const getEventBookedDates = async (req, res) => {
       timeSlots: candidateSlots,
       timeVariationLabel: timeOptions.timeVariationLabel,
       selectedVariant: timeOptions.selectedVariant,
+      adminBlockedDates,
     });
   } catch (err) {
     console.error("getEventBookedDates error:", err);
@@ -931,6 +951,10 @@ export const checkEventAvailability = async (req, res) => {
     const time = cleanText(req.query.time || "");
     const requestedPax = toNumber(req.query.pax || req.query.totalPax || 0);
     const requestedBasePax = toNumber(req.query.basePax || 0);
+    const packageId = cleanText(req.query.packageId || req.query.selectedPackageId || "");
+    const eventPackage = cleanText(
+      req.query.eventPackage || req.query.selectedPackageTitle || ""
+    );
 
     if (!venue || !eventDate) {
       return res.status(400).json({
@@ -953,6 +977,24 @@ export const checkEventAvailability = async (req, res) => {
         success: false,
         available: false,
         message: "Event date cannot be in the past.",
+      });
+    }
+
+    const blockedDate = await findActiveBlockedDate({
+      date: eventDate,
+      time,
+      serviceType: "event",
+      packageId,
+      packageTitle: eventPackage,
+    });
+
+    if (blockedDate) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        reason: "ADMIN_BLOCKED_DATE",
+        message: buildBlockedDateMessage(blockedDate),
+        blockedDate,
       });
     }
 
@@ -1145,6 +1187,24 @@ export const createEventBooking = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Event date cannot be in the past.",
+      });
+    }
+
+    const blockedDate = await findActiveBlockedDate({
+      date: eventDate,
+      time,
+      serviceType: "event",
+      packageId,
+      packageTitle: eventPackage,
+    });
+
+    if (blockedDate) {
+      return res.status(409).json({
+        success: false,
+        available: false,
+        reason: "ADMIN_BLOCKED_DATE",
+        message: buildBlockedDateMessage(blockedDate),
+        blockedDate,
       });
     }
 

@@ -1992,10 +1992,10 @@ function BookingPolicyConsent({ agreed, onChange, onOpen, showError }) {
 
         <div className="ltc-policy-consent-text">
           <label htmlFor="resort-booking-policy-consent">
-            I have read and agree to the 
+            I have read and agree to the  
           </label>
           <button type="button" className="ltc-policy-link" onClick={onOpen}>
-            LUMISPIRE Resort Booking Policy
+             LUMISPIRE Resort Booking Policy
           </button>
           <span>.</span>
         </div>

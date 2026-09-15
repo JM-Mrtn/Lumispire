@@ -16,6 +16,9 @@ const resortBookingSchema = new mongoose.Schema(
 
     serviceType: { type: String, default: "Resort & Venue" },
 
+    packageId: { type: String, trim: true, default: "", index: true },
+    packageTitle: { type: String, trim: true, default: "" },
+
     venue: { type: String, required: true, trim: true },
     date: { type: String, required: true, trim: true },
     category: { type: String, required: true, trim: true },

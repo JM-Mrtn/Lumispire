@@ -600,8 +600,8 @@ function FilterButton({ active, children, onClick }) {
 
 function BookingLineChart({ data = [], activeService = "ALL" }) {
   const width = 860;
-  const height = 330;
-  const padding = { top: 34, right: 34, bottom: 54, left: 56 };
+  const height = 300;
+  const padding = { top: 30, right: 32, bottom: 48, left: 54 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const yAxisMax = 100;
@@ -1438,24 +1438,25 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           }
 
           .ltc-admin-chart-panel {
-            margin-top: 22px;
+            margin-top: 20px;
+            padding: 20px;
           }
 
           .ltc-admin-chart-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 18px;
-            margin-bottom: 18px;
+            gap: 16px;
+            margin-bottom: 14px;
           }
 
           .ltc-admin-chart-total {
-            min-width: 135px;
-            border-radius: 18px;
+            min-width: 125px;
+            border-radius: 16px;
             background: rgba(35,95,62,.08);
             border: 1px solid rgba(35,95,62,.10);
             color: var(--green-800);
-            padding: 14px 16px;
+            padding: 12px 14px;
             text-align: right;
           }
 
@@ -1471,7 +1472,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           .ltc-admin-chart-total strong {
             display: block;
             margin-top: 3px;
-            font-size: 28px;
+            font-size: 25px;
             line-height: 1;
             font-weight: 900;
             letter-spacing: -.045em;
@@ -1480,9 +1481,9 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           .ltc-admin-chart-controls {
             display: grid;
             grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(130px, .55fr)) auto;
-            gap: 12px;
+            gap: 10px;
             align-items: end;
-            margin-bottom: 16px;
+            margin-bottom: 13px;
           }
 
           .ltc-admin-search-wrap,
@@ -1544,15 +1545,15 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           .ltc-admin-chart-mini-grid {
             display: grid;
             grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 16px;
+            gap: 8px;
+            margin-bottom: 13px;
           }
 
           .ltc-admin-chart-mini-card {
-            border-radius: 18px;
+            border-radius: 16px;
             border: 1px solid rgba(35,95,62,.08);
             background: rgba(255,255,255,.84);
-            padding: 12px 14px;
+            padding: 10px 12px;
             box-shadow: 0 12px 26px rgba(8,39,25,.05);
           }
 
@@ -1568,7 +1569,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           .ltc-admin-chart-mini-card strong {
             display: block;
             margin-top: 3px;
-            font-size: 24px;
+            font-size: 21px;
             line-height: 1;
             font-weight: 900;
           }
@@ -1584,7 +1585,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             border-radius: 10px;
             border: 1px solid rgba(16,24,40,.08);
             background: #ffffff;
-            padding: 18px 18px 14px;
+            padding: 14px 15px 11px;
             box-shadow: 0 12px 26px rgba(8,39,25,.06);
           }
 
@@ -1625,7 +1626,8 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
 
           .ltc-admin-line-chart {
             width: 100%;
-            min-height: 300px;
+            min-height: 255px;
+            max-height: 285px;
             display: block;
           }
 
@@ -1668,17 +1670,17 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           }
 
           .ltc-admin-chart-table {
-            margin-top: 12px;
+            margin-top: 9px;
             display: grid;
             grid-template-columns: repeat(7, minmax(0, 1fr));
-            gap: 9px;
+            gap: 7px;
           }
 
           .ltc-admin-chart-stat {
-            border-radius: 16px;
+            border-radius: 14px;
             background: rgba(255,255,255,.84);
             border: 1px solid rgba(35,95,62,.08);
-            padding: 10px 12px;
+            padding: 8px 10px;
             text-align: center;
           }
 
@@ -1710,11 +1712,11 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           }
 
           .ltc-admin-chart-results {
-            margin-top: 18px;
-            border-radius: 26px;
+            margin-top: 14px;
+            border-radius: 22px;
             border: 1px solid rgba(35,95,62,.08);
             background: rgba(246,250,247,.72);
-            padding: 18px;
+            padding: 14px;
           }
 
           .ltc-admin-chart-results-head {
@@ -1727,8 +1729,8 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
 
           .ltc-admin-chart-result-list {
             display: grid;
-            gap: 10px;
-            max-height: 360px;
+            gap: 8px;
+            max-height: 310px;
             overflow-y: auto;
             padding-right: 6px;
           }
@@ -1800,20 +1802,25 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             transform: translateY(-2px);
           }
 
+          .ltc-admin-calendar-panel {
+            margin-top: 20px;
+            padding: 20px;
+          }
+
           .ltc-admin-calendar-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1.6fr) minmax(320px, .9fr);
-            gap: 18px;
+            grid-template-columns: minmax(0, 1.62fr) minmax(300px, .88fr);
+            gap: 14px;
           }
 
           .ltc-admin-calendar-box,
           .ltc-admin-side-panel {
-            border-radius: 26px;
+            border-radius: 22px;
             border: 1px solid rgba(35,95,62,.08);
             background:
               radial-gradient(circle at 100% 0%, rgba(215,168,77,.12), transparent 26%),
               rgba(246,250,247,.88);
-            padding: 20px;
+            padding: 16px;
           }
 
           .ltc-admin-month-head,
@@ -1822,8 +1829,8 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            gap: 14px;
-            margin-bottom: 16px;
+            gap: 12px;
+            margin-bottom: 12px;
           }
 
           .ltc-admin-month-title,
@@ -1831,7 +1838,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           .ltc-admin-next-title {
             margin: 0;
             color: var(--green-950);
-            font-size: 25px;
+            font-size: 23px;
             line-height: 1.1;
             font-weight: 900;
             letter-spacing: -.04em;
@@ -1840,22 +1847,22 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           .ltc-admin-calendar-days {
             display: grid;
             grid-template-columns: repeat(7, minmax(0, 1fr));
-            gap: 9px;
+            gap: 7px;
           }
 
           .ltc-admin-weekday {
-            padding: 8px 4px;
+            padding: 6px 4px;
             text-align: center;
             color: rgba(16,24,40,.46);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: .08em;
           }
 
           .ltc-admin-day {
-            min-height: 118px;
-            padding: 10px;
+            min-height: 102px;
+            padding: 8px;
             text-align: left;
             cursor: pointer;
             transition: .28s var(--ease);
@@ -1884,12 +1891,12 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 30px;
-            height: 30px;
+            width: 27px;
+            height: 27px;
             border-radius: 999px;
             background: #eef8f2;
             color: var(--green-800);
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 900;
           }
 
@@ -1914,9 +1921,9 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           .ltc-admin-day-items,
           .ltc-admin-side-list,
           .ltc-admin-summary-list {
-            margin-top: 12px;
+            margin-top: 9px;
             display: grid;
-            gap: 8px;
+            gap: 7px;
           }
 
           .ltc-admin-day-chip {
@@ -1975,7 +1982,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
 
           .ltc-admin-booking-card,
           .ltc-admin-empty {
-            padding: 18px;
+            padding: 14px;
           }
 
           .ltc-admin-empty {
@@ -2440,7 +2447,7 @@ const HotelAdminDashboard = memo(function HotelAdminDashboard() {
           </div>
         </section>
 
-        <section className="ltc-admin-panel ltc-perf-defer">
+        <section className="ltc-admin-panel ltc-admin-calendar-panel ltc-perf-defer">
           <div className="ltc-admin-panel-head">
             <div>
               <p className="ltc-admin-panel-kicker">Booking Calendar</p>

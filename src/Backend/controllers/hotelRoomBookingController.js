@@ -7,6 +7,13 @@ import {
   requireHotelAdminAuth,
   isValidObjectId,
 } from "../utils/hotelAuthHelpers.js";
+import {
+  buildBlockedDateInterval,
+  buildBlockedDateMessage,
+  findActiveBlockedDate,
+  getActiveBlockedDates,
+  getBlockedTimeLabel,
+} from "../utils/hotelBlockedDates.js";
 
 const BOOKING_GAP_MINUTES = 60;
 const BOOKING_GAP_MS = BOOKING_GAP_MINUTES * 60 * 1000;
@@ -570,9 +577,48 @@ export const getHotelRoomBookedDates = async (req, res) => {
       },
     }).select("_id roomType duration date time status startDateTime endDateTime");
 
+    const summary = buildCalendarSummary(rows);
+    const adminBlockedDates = await getActiveBlockedDates({
+      from,
+      to,
+      serviceType: "hotel_room",
+      packageId: cleanText(req.query.packageId || req.query.selectedPackageId || ""),
+      packageTitle: cleanText(req.query.packageTitle || req.query.selectedPackageTitle || ""),
+    });
+
+    const blockedBookings = adminBlockedDates
+      .map((blocked) => {
+        const interval = buildBlockedDateInterval(blocked);
+        if (!interval) return null;
+
+        return {
+          _id: `admin-block-${blocked._id}`,
+          roomType,
+          duration: "ADMIN BLOCK",
+          date: blocked.date,
+          time: getBlockedTimeLabel(blocked.timeSlot),
+          status: "CONFIRMED",
+          startDateTime: interval.startDateTime,
+          endDateTime: interval.endDateTime,
+          adminBlocked: true,
+          blockedReason: blocked.reason,
+          blockedNote: blocked.note || "",
+          message: buildBlockedDateMessage(blocked),
+        };
+      })
+      .filter(Boolean);
+
+    const bookedDates = new Set(summary.bookedDates || []);
+    adminBlockedDates
+      .filter((blocked) => String(blocked.timeSlot || "ALL_DAY") === "ALL_DAY")
+      .forEach((blocked) => bookedDates.add(blocked.date));
+
     return res.status(200).json({
       success: true,
-      ...buildCalendarSummary(rows),
+      ...summary,
+      bookedDates: [...bookedDates],
+      bookings: [...summary.bookings, ...blockedBookings],
+      adminBlockedDates,
     });
   } catch (err) {
     console.error("getHotelRoomBookedDates error:", err);
@@ -669,6 +715,24 @@ export const createHotelRoomBooking = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Date cannot be in the past.",
+      });
+    }
+
+    const blockedDate = await findActiveBlockedDate({
+      date,
+      time,
+      serviceType: "hotel_room",
+      packageId: resolved.packageId ? String(resolved.packageId) : "",
+      packageTitle: resolved.packageTitle || resolved.selectedPackage?.title || resolved.roomType,
+    });
+
+    if (blockedDate) {
+      return res.status(409).json({
+        success: false,
+        available: false,
+        reason: "ADMIN_BLOCKED_DATE",
+        message: buildBlockedDateMessage(blockedDate),
+        blockedDate,
       });
     }
 
@@ -842,11 +906,33 @@ export const checkHotelRoomAvailability = async (req, res) => {
     const duration = normalizeDuration(req.query.duration);
     const date = cleanText(req.query.date);
     const time = normalizeSubmittedTime(duration, req.query.time || "");
+    const packageId = cleanText(req.query.packageId || req.query.selectedPackageId || "");
+    const packageTitle = cleanText(
+      req.query.packageTitle || req.query.selectedPackageTitle || ""
+    );
 
     if (!roomType || !duration || !date || !time) {
       return res.status(400).json({
         success: false,
         message: "roomType, duration, date, and time are required.",
+      });
+    }
+
+    const blockedDate = await findActiveBlockedDate({
+      date,
+      time,
+      serviceType: "hotel_room",
+      packageId,
+      packageTitle,
+    });
+
+    if (blockedDate) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        reason: "ADMIN_BLOCKED_DATE",
+        message: buildBlockedDateMessage(blockedDate),
+        blockedDate,
       });
     }
 
