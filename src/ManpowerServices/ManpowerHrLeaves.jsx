@@ -254,14 +254,14 @@ function HrSidebarButton({ active = false, children, onClick, icon = "dashboard"
     <button
       type="button"
       onClick={onClick}
-      className={`group flex min-h-[46px] w-full items-center gap-3 rounded-[23px] px-5 text-left text-[12px] font-black tracking-tight transition duration-300 ${
+      className={`group flex min-h-[52px] w-full items-center gap-4 rounded-[26px] px-6 text-left text-[13px] font-black tracking-tight transition duration-300 ${
         active
           ? "bg-white text-[#071f14] shadow-[0_18px_38px_rgba(0,0,0,0.20)]"
           : "text-white hover:translate-x-1 hover:bg-white/10"
       }`}
     >
       <span
-        className={`grid h-7 w-7 shrink-0 place-items-center transition duration-300 ${
+        className={`grid h-8 w-8 shrink-0 place-items-center transition duration-300 ${
           active ? "text-[#071f14]" : "text-white/85 group-hover:text-[#f4d484]"
         }`}
       >
@@ -624,7 +624,7 @@ export default function ManpowerHrLeaves() {
   }
 
   return (
-    <div className="min-h-screen bg-[#edf3ee] font-sans text-[#071f14]">
+    <div className="min-h-screen overflow-x-hidden bg-[#edf3ee] font-sans text-[#071f14]">
       <style>{`
         @keyframes hrLeaveFadeUp {
           from { opacity: 0; transform: translateY(18px); }
@@ -639,16 +639,28 @@ export default function ManpowerHrLeaves() {
       {mobileSidebarOpen ? (
         <button type="button" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} className="fixed inset-0 z-40 bg-[#071f14]/60 backdrop-blur-sm lg:hidden" />
       ) : null}
-      <div className="grid min-h-screen lg:grid-cols-[270px_1fr]">
-        <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[270px] flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)] transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <div className="min-h-screen">
+        <aside className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[270px] flex-col overflow-hidden bg-[#082719] px-7 py-9 text-white shadow-[18px_0_55px_rgba(7,31,20,0.28)] transition-transform duration-300 lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <button type="button" onClick={() => setMobileSidebarOpen(false)} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl font-black lg:hidden">×</button>
-          <div className="text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#f4d484]">
-              Manpower Services HR
-            </p>
-            <h1 className="mt-3 text-[17px] font-black leading-tight tracking-tight text-white">
-              LTC Manpower Services
-            </h1>
+          <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/[0.06] p-3">
+            <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+              <img
+                src="/LTCLogo.webp"
+                alt="LTC Manpower Services"
+                className="h-full w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
+            </div>
+            <div className="min-w-0 text-left">
+              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#f4d484]">
+                Manpower Services HR
+              </p>
+              <h1 className="mt-1 text-[15px] font-black leading-tight tracking-tight text-white">
+                LTC Manpower Services
+              </h1>
+            </div>
           </div>
 
           <nav className="mt-12 flex-1 space-y-4">
@@ -686,7 +698,7 @@ export default function ManpowerHrLeaves() {
           </div>
         </aside>
 
-        <main className="min-w-0 px-5 py-6 lg:px-8">
+        <main className="min-w-0 px-5 py-6 lg:ml-[270px] lg:px-8">
           <div className="mb-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm lg:hidden">
             <button type="button" onClick={() => setMobileSidebarOpen(true)} className="rounded-full bg-[#082719] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-white">Menu</button>
             <p className="text-sm font-black text-[#071f14]">Leave Management</p>

@@ -13,8 +13,17 @@ function normalizeApiBase(raw) {
 }
 
 
-const TRAINING_LOGO = "/HotelLogo.png";
-const HERO_IMAGE = "/HotelLanding1.png";
+const TRAINING_LOGO = "/TamsiLogo.png";
+const HERO_IMAGE = "/TrainingBanner.png";
+
+const FOOTER_LOGO_IMAGE = "/TrainingLumispireLogo.png";
+const TRAINING_CONTACT_INFO = {
+  email1: "lorengladius@ltcmultiservices.com",
+  email2: "ltc.tamsi@gmail.com",
+  phone: "+639516281271 / +639959808051",
+  addressLine1: "2/F 5441 CURRIE STREET,",
+  addressLine2: "PALANAN, MAKATI CITY",
+};
 
 const fontMontserrat = { fontFamily: "'Montserrat', sans-serif" };
 const fontPontano = { fontFamily: "'Pontano Sans', sans-serif" };
@@ -423,6 +432,89 @@ const pageStyles = `
     .ltc-section { padding: 34px 0 48px; }
     .ltc-form-shell { border-radius: 24px; }
   }
+
+
+  /* ===== Unified Training account shell ===== */
+  .ltc-change-password-page,
+  .ltc-forgot-page {
+    --portal-gutter: clamp(16px,3vw,40px);
+    background:
+      radial-gradient(circle at 10% 0%, rgba(215,168,77,.11), transparent 27%),
+      radial-gradient(circle at 92% 14%, rgba(35,95,62,.10), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#ffffff 45%,#f4f9f6 100%);
+  }
+  .ltc-change-password-page .ltc-container,
+  .ltc-forgot-page .ltc-container { width:min(1280px,calc(100% - (var(--portal-gutter) * 2))); max-width:1280px; margin-left:auto; margin-right:auto; }
+  .ltc-change-password-page .ltc-header .ltc-container,
+  .ltc-forgot-page .ltc-header .ltc-container { width:100%; max-width:none; margin:0; padding-left:var(--portal-gutter); padding-right:var(--portal-gutter); }
+  .ltc-change-password-page .ltc-header,
+  .ltc-forgot-page .ltc-header { background:#082719; }
+  .ltc-change-password-page .ltc-logo-icon,
+  .ltc-forgot-page .ltc-logo-icon { object-fit:contain; }
+  .ltc-change-password-page .ltc-hero,
+  .ltc-forgot-page .ltc-hero { min-height:300px; display:flex; align-items:center; padding:72px 0 68px; }
+  .ltc-change-password-page .ltc-hero-content,
+  .ltc-forgot-page .ltc-hero-content { max-width:920px; margin-left:auto; margin-right:auto; text-align:center; }
+  .ltc-change-password-page .ltc-hero-title,
+  .ltc-forgot-page .ltc-hero-title { font-size:clamp(40px,5.4vw,68px); line-height:1.02; letter-spacing:-.055em; }
+  .ltc-change-password-page .ltc-hero-text,
+  .ltc-forgot-page .ltc-hero-text { max-width:760px; margin-left:auto; margin-right:auto; font-size:16px; }
+  .ltc-change-password-page .ltc-section,
+  .ltc-forgot-page .ltc-section { padding:60px 0 70px; }
+  .ltc-change-password-page .ltc-form-shell,
+  .ltc-forgot-page .ltc-form-shell { border-radius:28px; background:rgba(255,255,255,.95); border:1px solid rgba(14,51,33,.10); box-shadow:0 18px 48px rgba(8,39,25,.11); }
+  .ltc-change-password-page .ltc-footer,
+  .ltc-forgot-page .ltc-footer { width:100%; background:#082719; color:white; padding:30px 0 12px; text-align:left; }
+  .ltc-change-password-page .ltc-footer .ltc-container,
+  .ltc-forgot-page .ltc-footer .ltc-container { width:100%; max-width:none; margin:0; padding-left:var(--portal-gutter); padding-right:var(--portal-gutter); }
+  @media (max-width:900px) {
+    .ltc-change-password-page .ltc-desktop-nav,
+    .ltc-forgot-page .ltc-desktop-nav { display:none; }
+    .ltc-forgot-page .ltc-menu-button { display:grid; place-items:center; }
+    .ltc-change-password-page .ltc-hero,
+    .ltc-forgot-page .ltc-hero { min-height:250px; padding:58px 0 54px; }
+  }
+  @media (max-width:600px) {
+    .ltc-change-password-page,
+    .ltc-forgot-page { --portal-gutter:16px; }
+    .ltc-change-password-page .ltc-logo h1,
+    .ltc-forgot-page .ltc-logo h1 { font-size:14px; }
+    .ltc-change-password-page .ltc-hero-title,
+    .ltc-forgot-page .ltc-hero-title { font-size:clamp(34px,11vw,46px); }
+  }
+
+  .ltc-change-password-page .ltc-footer-grid { width:100%; display:grid; grid-template-columns:1.35fr .75fr 1.05fr 1fr .7fr; gap:22px clamp(24px,4vw,68px); padding-bottom:24px; border-bottom:1px solid rgba(255,255,255,.1); }
+  .ltc-change-password-page .ltc-footer-brand { display:flex; align-items:center; gap:14px; border:0; background:transparent; color:white; padding:0; cursor:pointer; text-align:left; }
+  .ltc-change-password-page .ltc-footer-brand img { width:110px; height:auto; object-fit:contain; }
+  .ltc-change-password-page .ltc-footer h4 { margin:0; color:white; font-size:20px; font-weight:900; text-transform:uppercase; }
+  .ltc-change-password-page .ltc-footer h5 { margin:0 0 10px; color:#f4d484; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.14em; }
+  .ltc-change-password-page .ltc-footer p,.ltc-change-password-page .ltc-footer-link { display:block; margin:5px 0; color:rgba(255,255,255,.68); font-size:13px; line-height:1.55; }
+  .ltc-change-password-page .ltc-footer-link { border:0; background:transparent; padding:0; cursor:pointer; text-align:left; }
+  .ltc-change-password-page .ltc-copyright { padding-top:14px; display:flex; justify-content:space-between; gap:12px; color:rgba(255,255,255,.52); font-size:12px; }
+  @media(max-width:1000px){.ltc-change-password-page .ltc-footer-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:700px){.ltc-change-password-page .ltc-footer-grid{grid-template-columns:1fr}.ltc-change-password-page .ltc-copyright{flex-direction:column}}
+
+  /* ===== Unified Trainee hero animation ===== */
+  @keyframes ltcUnifiedHeroEnter {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ltc-change-password-page .ltc-hero-content {
+    animation: ltcUnifiedHeroEnter .72s var(--ease) both !important;
+  }
+
+  .ltc-change-password-page .ltc-hero-slide {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .ltc-change-password-page .ltc-hero::after {
+    animation: none !important;
+    transform: none !important;
+  }
+
 `;
 
 const TrainingChangePassword = () => {
@@ -881,7 +973,7 @@ const TrainingChangePassword = () => {
         </section>
       </main>
 
-      <Footer />
+      <Footer navigate={navigate} />
     </div>
   );
 };
@@ -959,15 +1051,54 @@ function NavButton({ label, onClick, className = "" }) {
   );
 }
 
-function Footer() {
+function Footer({ navigate }) {
+  const links = [
+    ["Home", "/training"],
+    ["Course", "/training-course"],
+    ["Certificate Validation", "/training-certificate-validation"],
+    ["Sign In", "/trainee-login"],
+  ];
+
   return (
     <footer className="ltc-footer">
-      <div className="ltc-container">
-        <p style={fontPoppins}>© {new Date().getFullYear()} Training and Assessment Portal. All rights reserved.</p>
+      <div className="ltc-container ltc-footer-grid">
+        <div>
+          <button type="button" onClick={() => navigate("/training")} className="ltc-footer-brand">
+            <img src={FOOTER_LOGO_IMAGE} alt="Training Lumispire Logo" />
+            <div>
+              <h4 style={fontMontserrat}>TRAINING &amp; ASSESSMENT</h4>
+              <p style={fontPontano}>Practical training, assessment, and learner support.</p>
+            </div>
+          </button>
+        </div>
+        <div>
+          <h5 style={fontMontserrat}>Menu</h5>
+          {links.map(([label, path]) => (
+            <button key={path} type="button" onClick={() => navigate(path)} className="ltc-footer-link" style={fontPontano}>{label}</button>
+          ))}
+        </div>
+        <div>
+          <h5 style={fontMontserrat}>Contact Information</h5>
+          <p style={fontPontano}>{TRAINING_CONTACT_INFO.email1}</p>
+          <p style={fontPontano}>{TRAINING_CONTACT_INFO.email2}</p>
+          <p style={fontPontano}>{TRAINING_CONTACT_INFO.phone}</p>
+        </div>
+        <div>
+          <h5 style={fontMontserrat}>Address</h5>
+          <p style={fontPontano}>{TRAINING_CONTACT_INFO.addressLine1}</p>
+          <p style={fontPontano}>{TRAINING_CONTACT_INFO.addressLine2}</p>
+        </div>
+        <div>
+          <h5 style={fontMontserrat}>Follow Us</h5>
+          <a className="ltc-footer-link" href="https://www.facebook.com/profile.php?id=61571746334920" target="_blank" rel="noreferrer">Facebook</a>
+        </div>
+      </div>
+      <div className="ltc-container ltc-copyright">
+        <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
       </div>
     </footer>
   );
 }
-
 
 export default TrainingChangePassword;

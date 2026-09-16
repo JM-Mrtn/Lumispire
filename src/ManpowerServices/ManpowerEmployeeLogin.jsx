@@ -586,6 +586,81 @@ const manpowerLoginStyles = `
     .manpower-employee-login-card { border-radius: 24px; padding: 26px 20px; }
     .manpower-employee-login-card-title { font-size: 28px; }
   }
+
+
+  /* ===== Unified LTC Manpower header for employee login ===== */
+  .manpower-employee-login-header {
+    position: sticky !important; top:0 !important; z-index:80 !important; width:100% !important;
+    background:#082719 !important; border-bottom:1px solid rgba(255,255,255,.10) !important;
+    box-shadow:0 10px 34px rgba(7,31,20,.14) !important;
+  }
+  .manpower-employee-login-header .manpower-employee-login-container { width:100% !important; max-width:none !important; margin:0 !important; padding-left:32px !important; padding-right:32px !important; }
+  .manpower-employee-login-nav { min-height:76px !important; padding:0 !important; display:flex !important; align-items:center !important; justify-content:space-between !important; gap:24px !important; }
+  .manpower-employee-login-logo { display:flex !important; align-items:center !important; gap:13px !important; color:#fff !important; text-decoration:none !important; }
+  .manpower-employee-login-logo-icon { width:42px !important; height:42px !important; min-width:42px !important; border-radius:999px !important; background:#fff !important; object-fit:cover !important; box-shadow:0 0 0 5px rgba(255,255,255,.08),0 12px 24px rgba(0,0,0,.12) !important; }
+  .manpower-employee-login-logo h1 { margin:0 !important; color:#fff !important; font-size:18px !important; line-height:1 !important; font-weight:900 !important; letter-spacing:-.04em !important; text-transform:uppercase !important; }
+  .manpower-employee-login-logo p { margin:3px 0 0 !important; color:rgba(255,255,255,.72) !important; font-size:11px !important; line-height:1.3 !important; }
+  .manpower-employee-login-desktop-nav { margin-left:auto !important; display:flex !important; align-items:center !important; gap:8px !important; }
+  .manpower-employee-login-nav-link { display:inline-flex !important; align-items:center !important; justify-content:center !important; min-height:40px !important; padding:0 14px !important; border-radius:999px !important; color:rgba(255,255,255,.78) !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.08em !important; text-transform:uppercase !important; text-decoration:none !important; }
+  .manpower-employee-login-nav-link:hover { color:#fff !important; background:rgba(255,255,255,.13) !important; }
+  .manpower-employee-login-back-button { min-width:104px !important; color:#102418 !important; background:linear-gradient(135deg,#f4d484,#d7a84d) !important; box-shadow:0 14px 28px rgba(215,168,77,.18) !important; }
+  .manpower-employee-login-back-button:hover { color:#102418 !important; background:linear-gradient(135deg,#f8dc8c,#d7a84d) !important; }
+  .manpower-employee-login-menu-button { display:none !important; width:44px !important; height:44px !important; min-width:44px !important; padding:0 !important; border:0 !important; border-radius:12px !important; background:rgba(255,255,255,.10) !important; color:#fff !important; }
+  .manpower-employee-login-menu-button svg { width:24px !important; height:24px !important; }
+  .manpower-employee-login-mobile-nav.open { position:fixed !important; top:72px !important; right:0 !important; bottom:0 !important; z-index:100 !important; display:block !important; width:min(310px,86vw) !important; padding:20px !important; overflow-y:auto !important; background:#fff !important; box-shadow:-20px 0 60px rgba(0,0,0,.25) !important; border-top:0 !important; }
+  .manpower-employee-login-mobile-nav button { min-height:48px !important; margin-bottom:8px !important; padding:0 14px !important; border-radius:14px !important; color:#101828 !important; background:transparent !important; font-size:13px !important; font-weight:800 !important; text-transform:uppercase !important; letter-spacing:.06em !important; }
+  .manpower-employee-login-mobile-nav button:hover { color:#fff !important; background:#174a30 !important; }
+  .manpower-employee-login-mobile-nav button:last-child { color:#102418 !important; background:linear-gradient(135deg,#f4d484,#d7a84d) !important; }
+  @media (max-width:1024px) {
+    .manpower-employee-login-desktop-nav { display:none !important; }
+    .manpower-employee-login-menu-button { display:grid !important; place-items:center !important; margin-left:auto !important; }
+  }
+  @media (max-width:680px) {
+    .manpower-employee-login-header .manpower-employee-login-container { padding-left:16px !important; padding-right:16px !important; }
+    .manpower-employee-login-nav { min-height:72px !important; }
+    .manpower-employee-login-logo-icon { width:42px !important; height:42px !important; }
+    .manpower-employee-login-logo h1 { font-size:14px !important; }
+    .manpower-employee-login-logo p { display:block !important; font-size:10px !important; }
+  }
+
+
+  /* ===== FINAL UNIFIED EMPLOYEE LOGIN HEADER ===== */
+  .manpower-employee-login-header { position:sticky !important; top:0 !important; z-index:100 !important; width:100% !important; height:76px !important; min-height:76px !important; margin:0 !important; background:#082719 !important; border-bottom:1px solid rgba(255,255,255,.10) !important; box-shadow:0 10px 34px rgba(7,31,20,.14) !important; }
+  .manpower-employee-login-header .manpower-employee-login-container { width:100% !important; max-width:none !important; height:100% !important; margin:0 !important; padding:0 32px !important; }
+  .manpower-employee-login-nav { width:100% !important; height:76px !important; min-height:76px !important; padding:0 !important; display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:24px !important; }
+  .manpower-employee-login-logo { min-width:0 !important; flex:0 0 auto !important; display:inline-flex !important; align-items:center !important; gap:13px !important; padding:0 !important; border:0 !important; background:transparent !important; color:#fff !important; text-align:left !important; text-decoration:none !important; cursor:pointer !important; }
+  .manpower-employee-login-logo-icon { width:42px !important; height:42px !important; min-width:42px !important; min-height:42px !important; border-radius:999px !important; background:#fff !important; object-fit:cover !important; box-shadow:0 0 0 5px rgba(255,255,255,.08),0 12px 24px rgba(0,0,0,.12) !important; }
+  .manpower-employee-login-logo h1 { margin:0 !important; color:#fff !important; font-size:18px !important; line-height:1 !important; font-weight:900 !important; letter-spacing:-.04em !important; text-transform:uppercase !important; white-space:nowrap !important; }
+  .manpower-employee-login-logo p { margin:3px 0 0 !important; color:rgba(255,255,255,.72) !important; font-size:11px !important; line-height:1.3 !important; white-space:nowrap !important; }
+  .manpower-employee-login-desktop-nav { margin-left:auto !important; display:flex !important; align-items:center !important; justify-content:flex-end !important; gap:8px !important; }
+  .manpower-employee-login-nav-link { min-height:40px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; padding:0 14px !important; border:0 !important; border-radius:999px !important; background:transparent !important; color:rgba(255,255,255,.78) !important; font-size:12px !important; font-weight:800 !important; line-height:1 !important; letter-spacing:.08em !important; text-transform:uppercase !important; text-decoration:none !important; white-space:nowrap !important; }
+  .manpower-employee-login-nav-link:hover { color:#fff !important; background:rgba(255,255,255,.13) !important; }
+  .manpower-employee-login-back-button { min-width:104px !important; margin-left:4px !important; color:#102418 !important; background:linear-gradient(135deg,#f4d484,#d7a84d) !important; box-shadow:0 14px 28px rgba(215,168,77,.18) !important; }
+  .manpower-employee-login-back-button:hover { color:#102418 !important; background:linear-gradient(135deg,#f8dc8c,#d7a84d) !important; }
+  .manpower-employee-login-menu-button { display:none !important; width:44px !important; height:44px !important; min-width:44px !important; margin-left:auto !important; padding:0 !important; border:1px solid rgba(255,255,255,.12) !important; border-radius:14px !important; background:rgba(255,255,255,.10) !important; color:#fff !important; }
+  .manpower-employee-login-menu-button svg { width:24px !important; height:24px !important; }
+  .manpower-employee-login-mobile-nav { display:none !important; }
+  .manpower-employee-login-mobile-nav.open { position:fixed !important; top:72px !important; right:0 !important; bottom:0 !important; z-index:150 !important; display:block !important; width:min(320px,88vw) !important; padding:22px !important; overflow-y:auto !important; background:#fff !important; box-shadow:-24px 0 70px rgba(0,0,0,.28) !important; }
+  .manpower-employee-login-mobile-nav button { width:100% !important; min-height:48px !important; display:flex !important; align-items:center !important; margin:0 0 8px !important; padding:0 14px !important; border:0 !important; border-radius:14px !important; background:transparent !important; color:#101828 !important; font-size:13px !important; font-weight:800 !important; letter-spacing:.06em !important; text-align:left !important; text-transform:uppercase !important; }
+  .manpower-employee-login-mobile-nav button:hover { color:#fff !important; background:#174a30 !important; }
+  .manpower-employee-login-mobile-nav button:last-child { color:#102418 !important; background:linear-gradient(135deg,#f4d484,#d7a84d) !important; }
+  @media (max-width:1000px) {
+    .manpower-employee-login-header { height:72px !important; min-height:72px !important; }
+    .manpower-employee-login-header .manpower-employee-login-container { padding-left:22px !important; padding-right:22px !important; }
+    .manpower-employee-login-nav { height:72px !important; min-height:72px !important; }
+    .manpower-employee-login-desktop-nav { display:none !important; }
+    .manpower-employee-login-menu-button { display:grid !important; place-items:center !important; }
+  }
+  @media (max-width:700px) {
+    .manpower-employee-login-header { height:68px !important; min-height:68px !important; }
+    .manpower-employee-login-header .manpower-employee-login-container { padding-left:16px !important; padding-right:16px !important; }
+    .manpower-employee-login-nav { height:68px !important; min-height:68px !important; gap:14px !important; }
+    .manpower-employee-login-logo-icon { width:40px !important; height:40px !important; min-width:40px !important; min-height:40px !important; }
+    .manpower-employee-login-logo h1 { font-size:14px !important; }
+    .manpower-employee-login-logo p { display:none !important; }
+    .manpower-employee-login-mobile-nav.open { top:68px !important; }
+  }
+
 `;
 
 export default function ManpowerEmployeeLogin({ onLogin }) {
@@ -762,8 +837,8 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
               />
 
               <span>
-                <h1>LTC Manpower</h1>
-                <p>Professional staffing and workforce solutions.</p>
+                <h1>LTC MANPOWER SERVICES</h1>
+                <p>Employee workforce portal.</p>
               </span>
             </button>
 
@@ -792,8 +867,11 @@ export default function ManpowerEmployeeLogin({ onLogin }) {
               type="button"
               onClick={() => setMobileOpen((prev) => !prev)}
               className="manpower-employee-login-menu-button"
+              aria-label="Open menu"
             >
-              Menu
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </button>
           </div>
         </div>

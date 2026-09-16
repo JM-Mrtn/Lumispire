@@ -303,19 +303,25 @@ export default function TrainingAdminProfessors() {
         }
 
         .ta-prof-table-scroll {
-          overflow-x: auto;
-          scrollbar-width: thin;
+          width: 100%;
+          overflow-x: visible;
         }
 
         .ta-prof-table {
-          min-width: 1320px;
+          width: 100%;
+          min-width: 0;
         }
 
         .ta-prof-row {
           display: grid;
-          grid-template-columns: 1.3fr .9fr 1.35fr 1.3fr 1.15fr .7fr 178px;
-          gap: 18px;
+          grid-template-columns: 1.15fr .72fr 1.08fr 1fr 1.15fr .62fr .9fr;
+          gap: 10px;
           align-items: center;
+          width: 100%;
+        }
+
+        .ta-prof-row > * {
+          min-width: 0;
         }
 
         .ta-prof-data-row {
@@ -343,47 +349,54 @@ export default function TrainingAdminProfessors() {
 
         .ta-prof-actions {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
+          grid-template-columns: 1fr;
+          gap: 6px;
           align-items: center;
           justify-items: stretch;
+          min-width: 0;
         }
 
         .ta-prof-password {
-          display: flex;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
           min-width: 0;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
         }
 
         .ta-prof-password-value {
-          min-width: 92px;
+          grid-column: 1 / -1;
+          width: 100%;
+          min-width: 0;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
           border-radius: 10px;
           background: #fff6dc;
-          padding: 7px 9px;
+          padding: 7px 8px;
           color: #6f4a00;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 900;
         }
 
         .ta-prof-password-button {
-          height: 44px;
+          width: 100%;
+          height: 34px;
+          min-width: 0;
           border-radius: 9px;
           border: 1px solid rgba(8, 39, 25, 0.14);
           background: #fff;
-          padding: 0 8px;
+          padding: 0 6px;
           color: #2a4f33;
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 900;
         }
 
         .ta-prof-action {
-          height: 44px;
-          min-width: 82px;
+          width: 100%;
+          height: 36px;
+          min-width: 0;
           border-radius: 999px;
           font-size: 11px;
           font-weight: 900;
@@ -442,10 +455,63 @@ export default function TrainingAdminProfessors() {
           box-shadow: none;
         }
 
+        .ta-prof-row > div {
+          overflow-wrap: anywhere;
+        }
+
+        .ta-prof-row .break-words {
+          word-break: break-word;
+          overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 1180px) {
+          .ta-prof-row {
+            grid-template-columns: 1.08fr .68fr 1fr .92fr 1.08fr .58fr .82fr;
+            gap: 8px;
+            font-size: 12px;
+          }
+
+          .ta-prof-action {
+            font-size: 10px;
+          }
+        }
+
         @media (max-width: 900px) {
           .ta-prof-stat {
             min-height: 102px;
             padding: 20px;
+          }
+
+          .ta-prof-table .ta-prof-row:first-child {
+            display: none;
+          }
+
+          .ta-prof-data-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            padding: 18px !important;
+          }
+
+          .ta-prof-data-row > div:first-child,
+          .ta-prof-data-row > div:nth-child(3),
+          .ta-prof-data-row > div:nth-child(4),
+          .ta-prof-data-row > div:nth-child(5),
+          .ta-prof-data-row > div:nth-child(7) {
+            grid-column: 1 / -1;
+          }
+
+          .ta-prof-actions {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .ta-prof-data-row {
+            grid-template-columns: 1fr;
+          }
+
+          .ta-prof-data-row > div {
+            grid-column: 1 !important;
           }
         }
       `}</style>

@@ -1480,7 +1480,692 @@ export default function ManpowerEmployeeProfile() {
       .ltc-profile-info-card { min-height: 84px; }
     }
 
-  `;
+  
+
+  /* ===== Unified LTC Manpower Employee Portal ===== */
+  .ltc-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 80 !important;
+    width: 100% !important;
+    background: #082719 !important;
+    border-bottom: 1px solid rgba(255,255,255,.10) !important;
+    box-shadow: 0 10px 34px rgba(7,31,20,.14) !important;
+  }
+
+  .ltc-header .ltc-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+
+  .ltc-nav {
+    min-height: 76px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 24px !important;
+  }
+
+  .ltc-logo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 13px !important;
+    flex: 0 0 auto !important;
+    color: #fff !important;
+    text-decoration: none !important;
+  }
+
+  .ltc-logo-icon {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 999px !important;
+    background: #fff !important;
+    object-fit: cover !important;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12) !important;
+  }
+
+  .ltc-logo h1 {
+    margin: 0 !important;
+    color: #fff !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.04em !important;
+    text-transform: uppercase !important;
+  }
+
+  .ltc-logo p {
+    margin: 3px 0 0 !important;
+    color: rgba(255,255,255,.72) !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  .ltc-desktop-nav {
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+
+  .ltc-profile-wrap {
+    display: flex !important;
+    align-items: center !important;
+    margin-left: 4px !important;
+  }
+
+  .ltc-nav-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+    padding: 0 14px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: rgba(255,255,255,.78) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    transition: background .25s ease, color .25s ease, transform .25s ease !important;
+  }
+
+  .ltc-nav-link:hover,
+  .ltc-nav-link.active {
+    color: #fff !important;
+    background: rgba(255,255,255,.13) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .ltc-profile-wrap .ltc-nav-link,
+  .ltc-nav-link.ltc-profile-button {
+    min-width: 104px !important;
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+    box-shadow: 0 14px 28px rgba(215,168,77,.18) !important;
+  }
+
+  .ltc-profile-wrap .ltc-nav-link:hover,
+  .ltc-profile-wrap .ltc-nav-link.active,
+  .ltc-nav-link.ltc-profile-button:hover,
+  .ltc-nav-link.ltc-profile-button.active {
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f8dc8c,#d7a84d) !important;
+  }
+
+  .ltc-menu-button {
+    display: none !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.10) !important;
+    color: #fff !important;
+    cursor: pointer !important;
+  }
+
+  .ltc-menu-button svg { width: 24px !important; height: 24px !important; }
+
+  .ltc-sidebar-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 100 !important;
+    background: rgba(0,0,0,.42) !important;
+  }
+
+  .ltc-sidebar-panel {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: min(310px,86vw) !important;
+    height: 100% !important;
+    padding: 20px !important;
+    overflow-y: auto !important;
+    background: #fff !important;
+    box-shadow: -20px 0 60px rgba(0,0,0,.25) !important;
+  }
+
+  .ltc-sidebar-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 16px !important;
+    border-bottom: 1px solid rgba(16,24,40,.10) !important;
+  }
+
+  .ltc-sidebar-title {
+    margin: 0 !important;
+    color: #071f14 !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: .14em !important;
+  }
+
+  .ltc-sidebar-close {
+    width: 44px !important;
+    height: 44px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: #f2f4f7 !important;
+    color: #101828 !important;
+    cursor: pointer !important;
+  }
+
+  .ltc-sidebar-link {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    margin-bottom: 8px !important;
+    padding: 0 14px !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: transparent !important;
+    color: #101828 !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+  }
+
+  .ltc-sidebar-link:hover,
+  .ltc-sidebar-link.active {
+    color: #fff !important;
+    background: #174a30 !important;
+  }
+
+  .ltc-hero {
+    position: relative !important;
+    min-height: 300px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+    color: #fff !important;
+    background: linear-gradient(120deg,#03180f 0%,#082719 42%,#155f3b 100%) !important;
+  }
+
+  .ltc-hero-slide {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: -4 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    opacity: .28 !important;
+    filter: saturate(.9) contrast(1.08) !important;
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .ltc-hero::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: -3 !important;
+    background: linear-gradient(120deg,rgba(2,18,11,.96) 0%,rgba(5,37,23,.88) 42%,rgba(12,64,39,.76) 100%) !important;
+  }
+
+  .ltc-hero::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: -16% -10% -24% !important;
+    z-index: -2 !important;
+    background:
+      radial-gradient(circle at 16% 82%,rgba(19,120,72,.32),transparent 24%),
+      radial-gradient(circle at 72% 18%,rgba(28,108,68,.24),transparent 30%),
+      radial-gradient(circle at 88% 44%,rgba(244,212,132,.12),transparent 28%) !important;
+    pointer-events: none !important;
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .ltc-hero-content {
+    position: relative !important;
+    z-index: 2 !important;
+    width: min(960px,92%) !important;
+    max-width: 960px !important;
+    min-height: 300px !important;
+    margin: 0 auto !important;
+    padding: 58px 0 62px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .ltc-eyebrow {
+    min-height: 0 !important;
+    padding: 8px 14px !important;
+    border: 1px solid rgba(255,255,255,.18) !important;
+    border-radius: 999px !important;
+    background: rgba(255,255,255,.10) !important;
+    color: #f4d484 !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    letter-spacing: .18em !important;
+    text-transform: uppercase !important;
+  }
+
+  .ltc-hero-title {
+    margin: 14px 0 0 !important;
+    max-width: 900px !important;
+    color: #fff !important;
+    font-size: clamp(40px,5.2vw,64px) !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.055em !important;
+    text-align: center !important;
+    text-shadow: 0 8px 26px rgba(0,0,0,.22) !important;
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .ltc-hero-title span { color: #f4d484 !important; }
+
+  .ltc-hero-text {
+    max-width: 720px !important;
+    margin: 18px auto 0 !important;
+    color: rgba(255,255,255,.82) !important;
+    font-size: 16px !important;
+    line-height: 1.75 !important;
+    text-align: center !important;
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .ltc-section,
+  .ltc-profile-overview,
+  .ltc-payroll-overview {
+    padding-top: 56px !important;
+    padding-bottom: 72px !important;
+  }
+
+  .ltc-home-shell,
+  .ltc-profile-shell,
+  .ltc-payroll-panel,
+  .ltc-form-shell {
+    border-radius: 28px !important;
+    border: 1px solid rgba(35,95,62,.10) !important;
+    background: rgba(255,255,255,.90) !important;
+    box-shadow: 0 18px 45px rgba(8,39,25,.12) !important;
+  }
+
+  .ltc-field { animation: none !important; transform: none !important; }
+
+  .ltc-footer {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 30px 0 12px !important;
+    background: #082719 !important;
+    color: #fff !important;
+    text-align: left !important;
+  }
+
+  .ltc-footer .ltc-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+
+  .ltc-footer-grid {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr !important;
+    gap: 22px !important;
+    padding-bottom: 24px !important;
+    border-bottom: 1px solid rgba(255,255,255,.10) !important;
+  }
+
+  .ltc-footer-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+  }
+
+  .ltc-footer-brand img {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 999px !important;
+    background: #fff !important;
+    object-fit: cover !important;
+  }
+
+  .ltc-footer h4 {
+    margin: 0 !important;
+    color: #fff !important;
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+  }
+
+  .ltc-footer h5 {
+    margin: 0 0 10px !important;
+    color: #f4d484 !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    letter-spacing: .14em !important;
+    text-transform: uppercase !important;
+  }
+
+  .ltc-footer p,
+  .ltc-footer a,
+  .ltc-footer-link {
+    display: block !important;
+    margin: 5px 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: rgba(255,255,255,.68) !important;
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+    text-align: left !important;
+    text-decoration: none !important;
+  }
+
+  .ltc-footer a:hover,
+  .ltc-footer-link:hover { color: #fff !important; text-decoration: underline !important; }
+
+  .ltc-copyright {
+    width: 100% !important;
+    padding-top: 14px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    color: rgba(255,255,255,.52) !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  @media (max-width: 1180px) {
+    .ltc-footer-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-header .ltc-container,
+    .ltc-footer .ltc-container { padding-left: 22px !important; padding-right: 22px !important; }
+    .ltc-nav { min-height: 72px !important; }
+    .ltc-desktop-nav,
+    .ltc-profile-wrap { display: none !important; }
+    .ltc-menu-button { display: grid !important; place-items: center !important; margin-left: auto !important; }
+    .ltc-hero { min-height: 260px !important; }
+    .ltc-hero-content { min-height: 260px !important; padding: 48px 0 52px !important; }
+    .ltc-footer-grid { grid-template-columns: 1fr !important; gap: 18px !important; padding-bottom: 22px !important; }
+    .ltc-copyright { flex-direction: column !important; }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-header .ltc-container,
+    .ltc-footer .ltc-container { padding-left: 16px !important; padding-right: 16px !important; }
+    .ltc-logo h1 { font-size: 14px !important; }
+    .ltc-logo p { font-size: 10px !important; }
+    .ltc-hero { min-height: 235px !important; }
+    .ltc-hero-content { min-height: 235px !important; padding: 42px 0 46px !important; }
+    .ltc-hero-title { font-size: clamp(34px,11vw,48px) !important; }
+    .ltc-hero-text { font-size: 14px !important; }
+    .ltc-section,
+    .ltc-profile-overview,
+    .ltc-payroll-overview { padding-top: 42px !important; padding-bottom: 56px !important; }
+  }
+
+
+  /* ===== FINAL UNIFIED EMPLOYEE HEADER ===== */
+  .ltc-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    width: 100% !important;
+    height: 76px !important;
+    min-height: 76px !important;
+    margin: 0 !important;
+    background: #082719 !important;
+    border-bottom: 1px solid rgba(255,255,255,.10) !important;
+    box-shadow: 0 10px 34px rgba(7,31,20,.14) !important;
+  }
+  .ltc-header .ltc-container {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 32px !important;
+  }
+  .ltc-nav {
+    width: 100% !important;
+    height: 76px !important;
+    min-height: 76px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 24px !important;
+  }
+  .ltc-logo {
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 13px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #fff !important;
+    text-align: left !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+  }
+  .ltc-logo-icon {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    border-radius: 999px !important;
+    background: #fff !important;
+    object-fit: cover !important;
+    box-shadow: 0 0 0 5px rgba(255,255,255,.08), 0 12px 24px rgba(0,0,0,.12) !important;
+  }
+  .ltc-logo > div,
+  .ltc-logo > span {
+    min-width: 0 !important;
+    display: block !important;
+  }
+  .ltc-logo h1 {
+    margin: 0 !important;
+    color: #fff !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.04em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+  }
+  .ltc-logo p {
+    margin: 3px 0 0 !important;
+    color: rgba(255,255,255,.72) !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+  }
+  .ltc-desktop-nav {
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+  .ltc-profile-wrap {
+    margin-left: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    flex: 0 0 auto !important;
+  }
+  .ltc-nav-link {
+    min-height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 14px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: rgba(255,255,255,.78) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    transition: color .25s ease, background .25s ease, transform .25s ease !important;
+  }
+  .ltc-nav-link:hover,
+  .ltc-nav-link.active {
+    color: #fff !important;
+    background: rgba(255,255,255,.13) !important;
+    transform: translateY(-1px) !important;
+  }
+  .ltc-profile-wrap .ltc-nav-link,
+  .ltc-nav-link.ltc-profile-button {
+    min-width: 104px !important;
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f4d484,#d7a84d) !important;
+    box-shadow: 0 14px 28px rgba(215,168,77,.18) !important;
+  }
+  .ltc-profile-wrap .ltc-nav-link:hover,
+  .ltc-profile-wrap .ltc-nav-link.active,
+  .ltc-nav-link.ltc-profile-button:hover,
+  .ltc-nav-link.ltc-profile-button.active {
+    color: #102418 !important;
+    background: linear-gradient(135deg,#f8dc8c,#d7a84d) !important;
+  }
+  .ltc-menu-button {
+    display: none !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    margin-left: auto !important;
+    padding: 0 !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+    border-radius: 14px !important;
+    background: rgba(255,255,255,.10) !important;
+    color: #fff !important;
+    cursor: pointer !important;
+  }
+  .ltc-menu-button svg { width: 24px !important; height: 24px !important; }
+  .ltc-sidebar-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 150 !important;
+    background: rgba(0,0,0,.48) !important;
+    backdrop-filter: blur(5px) !important;
+  }
+  .ltc-sidebar-panel {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: min(320px,88vw) !important;
+    height: 100% !important;
+    padding: 22px !important;
+    overflow-y: auto !important;
+    background: #fff !important;
+    box-shadow: -24px 0 70px rgba(0,0,0,.28) !important;
+  }
+  .ltc-sidebar-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 16px !important;
+    border-bottom: 1px solid rgba(16,24,40,.10) !important;
+  }
+  .ltc-sidebar-title {
+    margin: 0 !important;
+    color: #071f14 !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: .14em !important;
+  }
+  .ltc-sidebar-close {
+    width: 44px !important;
+    height: 44px !important;
+    border: 0 !important;
+    border-radius: 13px !important;
+    background: #f2f4f7 !important;
+    color: #101828 !important;
+    cursor: pointer !important;
+  }
+  .ltc-sidebar-link {
+    width: 100% !important;
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 0 8px !important;
+    padding: 0 14px !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: transparent !important;
+    color: #101828 !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    letter-spacing: .06em !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+  }
+  .ltc-sidebar-link:hover,
+  .ltc-sidebar-link.active {
+    color: #fff !important;
+    background: #174a30 !important;
+  }
+  @media (max-width: 1000px) {
+    .ltc-header { height: 72px !important; min-height: 72px !important; }
+    .ltc-header .ltc-container { padding-left: 22px !important; padding-right: 22px !important; }
+    .ltc-nav { height: 72px !important; min-height: 72px !important; }
+    .ltc-desktop-nav,
+    .ltc-profile-wrap { display: none !important; }
+    .ltc-menu-button { display: grid !important; place-items: center !important; }
+  }
+  @media (max-width: 700px) {
+    .ltc-header { height: 68px !important; min-height: 68px !important; }
+    .ltc-header .ltc-container { padding-left: 16px !important; padding-right: 16px !important; }
+    .ltc-nav { height: 68px !important; min-height: 68px !important; gap: 14px !important; }
+    .ltc-logo-icon { width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; }
+    .ltc-logo h1 { font-size: 14px !important; }
+    .ltc-logo p { display: none !important; }
+  }
+
+`;
 
   return (
     <div className="ltc-manpower-employee-home" style={fontPontano}>
@@ -1504,7 +2189,7 @@ export default function ManpowerEmployeeProfile() {
               />
               <div>
                 <h1 style={fontMontserrat}>LTC MANPOWER SERVICES</h1>
-                <p style={fontPontano}>Professional staffing and workforce solutions.</p>
+                <p style={fontPontano}>Employee workforce portal.</p>
               </div>
             </Link>
 

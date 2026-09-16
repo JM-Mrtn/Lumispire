@@ -585,6 +585,213 @@ const pageStyles = `
     .ltc-home-shell { padding: 26px 18px; }
     .ltc-quick-grid { grid-template-columns: 1fr; }
   }
+
+
+  /* ===== Unified Trainee Portal shell ===== */
+  .ltc-trainee-home-page {
+    --portal-content: 1280px;
+    --portal-gutter: clamp(16px, 3vw, 40px);
+    background:
+      radial-gradient(circle at 10% 0%, rgba(215,168,77,.11), transparent 27%),
+      radial-gradient(circle at 92% 14%, rgba(35,95,62,.10), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#ffffff 45%,#f4f9f6 100%);
+  }
+
+  .ltc-trainee-home-page .ltc-container {
+    width: min(var(--portal-content), calc(100% - (var(--portal-gutter) * 2)));
+    max-width: var(--portal-content);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .ltc-trainee-home-page .ltc-header {
+    width: 100%;
+    background: #082719;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 10px 30px rgba(7,31,20,.16);
+  }
+
+  .ltc-trainee-home-page .ltc-header .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: var(--portal-gutter);
+    padding-right: var(--portal-gutter);
+  }
+
+  .ltc-trainee-home-page .ltc-nav {
+    min-height: 76px;
+    gap: 20px;
+  }
+
+  .ltc-trainee-home-page .ltc-logo-icon {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+  }
+
+  .ltc-trainee-home-page .ltc-logo h1 {
+    font-size: 18px;
+    letter-spacing: -.035em;
+  }
+
+  .ltc-trainee-home-page .ltc-desktop-nav { gap: 6px; }
+  .ltc-trainee-home-page .ltc-nav-link {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 13px;
+  }
+
+  .ltc-trainee-home-page .ltc-profile-button {
+    color: #102418;
+    background: linear-gradient(135deg,#f4d484,#d7a84d);
+    box-shadow: 0 12px 26px rgba(215,168,77,.18);
+  }
+
+  .ltc-trainee-home-page .ltc-hero {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    padding: 72px 0 68px;
+    background: linear-gradient(120deg,#03180f 0%,#082719 44%,#155f3b 100%);
+  }
+
+  .ltc-trainee-home-page .ltc-hero-content {
+    max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  .ltc-trainee-home-page .ltc-hero-title {
+    margin-top: 0;
+    font-size: clamp(40px,5.4vw,68px);
+    line-height: 1.02;
+    letter-spacing: -.055em;
+  }
+
+  .ltc-trainee-home-page .ltc-hero-text {
+    max-width: 760px;
+    margin: 18px auto 0;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .ltc-trainee-home-page .ltc-section { padding: 64px 0 72px; }
+
+  .ltc-trainee-home-page .ltc-home-shell,
+  .ltc-trainee-home-page .ltc-profile-shell {
+    border-radius: 26px;
+    border: 1px solid rgba(14,51,33,.10);
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 18px 48px rgba(8,39,25,.10);
+  }
+
+  .ltc-trainee-home-page .ltc-footer {
+    width: 100%;
+    background: #082719;
+    padding: 30px 0 12px;
+  }
+
+  .ltc-trainee-home-page .ltc-footer .ltc-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: var(--portal-gutter);
+    padding-right: var(--portal-gutter);
+  }
+
+  .ltc-trainee-home-page .ltc-footer-grid {
+    width: 100%;
+    grid-template-columns: 1.35fr .72fr 1.05fr 1fr .65fr;
+    column-gap: clamp(24px,4vw,68px);
+  }
+
+  .ltc-trainee-home-page .ltc-sidebar-panel {
+    width: min(320px,86vw);
+    background: #ffffff;
+    color: #101828;
+    padding: 20px;
+    box-shadow: -20px 0 60px rgba(0,0,0,.24);
+  }
+
+  .ltc-trainee-home-page .ltc-sidebar-title { color: #071f14; }
+  .ltc-trainee-home-page .ltc-sidebar-close {
+    color: #101828;
+    background: #f2f4f3;
+    border-color: rgba(16,24,40,.08);
+  }
+  .ltc-trainee-home-page .ltc-sidebar-links { margin-top: 22px; gap: 8px; }
+  .ltc-trainee-home-page .ltc-sidebar-link {
+    border: 0;
+    background: transparent;
+    color: #101828;
+    border-radius: 14px;
+    padding: 13px 14px;
+  }
+  .ltc-trainee-home-page .ltc-sidebar-link:hover,
+  .ltc-trainee-home-page .ltc-sidebar-link.active {
+    color: #ffffff;
+    background: #174a30;
+    transform: none;
+  }
+
+  @media (max-width: 1080px) {
+    .ltc-trainee-home-page .ltc-desktop-nav { gap: 2px; }
+    .ltc-trainee-home-page .ltc-nav-link { font-size: 11px; padding-left: 10px; padding-right: 10px; }
+    .ltc-trainee-home-page .ltc-footer-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  }
+
+  @media (max-width: 900px) {
+    .ltc-trainee-home-page .ltc-header .ltc-container { padding-left: 22px; padding-right: 22px; }
+    .ltc-trainee-home-page .ltc-desktop-nav,
+    .ltc-trainee-home-page .ltc-profile-wrap { display: none; }
+    .ltc-trainee-home-page .ltc-menu-button { display: grid !important; place-items: center; }
+    .ltc-trainee-home-page .ltc-hero { min-height: 260px; padding: 62px 0 58px; }
+    .ltc-trainee-home-page .ltc-section { padding: 52px 0 60px; }
+    .ltc-trainee-home-page .ltc-footer-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-trainee-home-page { --portal-gutter: 16px; }
+    .ltc-trainee-home-page .ltc-nav { min-height: 68px; }
+    .ltc-trainee-home-page .ltc-logo h1 { font-size: 14px; }
+    .ltc-trainee-home-page .ltc-logo p { display: none; }
+    .ltc-trainee-home-page .ltc-hero { min-height: 230px; padding: 50px 0 48px; }
+    .ltc-trainee-home-page .ltc-hero-title { font-size: clamp(34px,11vw,46px); }
+    .ltc-trainee-home-page .ltc-hero-text { font-size: 15px; }
+    .ltc-trainee-home-page .ltc-footer .ltc-container { padding-left: 16px; padding-right: 16px; }
+    .ltc-trainee-home-page .ltc-copyright { flex-direction: column; }
+  }
+
+  /* ===== Unified Trainee hero animation ===== */
+  @keyframes ltcUnifiedHeroEnter {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ltc-trainee-home-page .ltc-hero-content {
+    animation: ltcUnifiedHeroEnter .72s var(--ease) both !important;
+  }
+
+  .ltc-trainee-home-page .ltc-hero-slide {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .ltc-trainee-home-page .ltc-hero:hover .ltc-hero-slide {
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .ltc-trainee-home-page .ltc-hero::after {
+    animation: none !important;
+    transform: none !important;
+  }
+
 `;
 
 function getToken() {

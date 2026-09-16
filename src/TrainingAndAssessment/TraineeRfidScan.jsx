@@ -489,6 +489,44 @@ const pageStyles = `
     .rfid-log-head { flex-direction: column; }
     .rfid-actions { grid-template-columns: 1fr; }
   }
+
+
+  /* ===== Unified training utility shell ===== */
+  .ltc-trainee-rfid-page { --portal-gutter:clamp(16px,3vw,40px); }
+  .ltc-trainee-rfid-page .ltc-container { width:min(1280px,calc(100% - (var(--portal-gutter) * 2))); max-width:1280px; margin-left:auto; margin-right:auto; }
+  .ltc-rfid-header { position:sticky; top:0; z-index:50; width:100%; background:#082719; border-bottom:1px solid rgba(255,255,255,.1); box-shadow:0 10px 30px rgba(7,31,20,.16); }
+  .ltc-rfid-header-inner { width:100%; min-height:76px; padding:0 var(--portal-gutter); display:flex; align-items:center; justify-content:space-between; gap:20px; }
+  .ltc-rfid-brand { display:flex; align-items:center; gap:13px; border:0; background:transparent; color:white; padding:0; cursor:pointer; text-align:left; }
+  .ltc-rfid-brand img { width:42px; height:42px; border-radius:999px; background:white; object-fit:contain; box-shadow:0 0 0 5px rgba(255,255,255,.08); }
+  .ltc-rfid-brand strong { display:block; font-size:18px; line-height:1; font-weight:900; text-transform:uppercase; letter-spacing:-.04em; }
+  .ltc-rfid-brand span { display:block; margin-top:4px; color:rgba(255,255,255,.7); font-size:11px; }
+  .ltc-rfid-header-action { border:0; border-radius:999px; min-height:42px; padding:0 18px; background:linear-gradient(135deg,#f4d484,#d7a84d); color:#102418; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; cursor:pointer; }
+  .ltc-trainee-rfid-page .ltc-hero { min-height:280px; display:flex; align-items:center; padding:66px 0 62px; }
+  .ltc-trainee-rfid-page .ltc-section { padding:58px 0 68px; }
+  .ltc-rfid-footer { width:100%; background:#082719; color:rgba(255,255,255,.58); padding:18px var(--portal-gutter); display:flex; justify-content:space-between; gap:12px; font-size:12px; }
+  @media(max-width:600px){ .ltc-trainee-rfid-page{--portal-gutter:16px}.ltc-rfid-brand span{display:none}.ltc-rfid-brand strong{font-size:14px}.ltc-rfid-footer{flex-direction:column} }
+
+  /* ===== Unified Trainee hero animation ===== */
+  @keyframes ltcUnifiedHeroEnter {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ltc-trainee-rfid-page .ltc-hero-content {
+    animation: ltcUnifiedHeroEnter .72s var(--ease) both !important;
+  }
+
+  .ltc-trainee-rfid-page .ltc-hero-slide {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .ltc-trainee-rfid-page .ltc-hero::after {
+    animation: none !important;
+    transform: none !important;
+  }
+
 `;
 
 function normalizeUid(value = "") {
@@ -725,6 +763,19 @@ export default function TraineeRfidScan() {
     <div className="ltc-trainee-rfid-page">
       <style>{pageStyles}</style>
 
+      <header className="ltc-rfid-header">
+        <div className="ltc-rfid-header-inner">
+          <button type="button" className="ltc-rfid-brand" onClick={() => navigate("/professor-attendance")}>
+            <img src="/TamsiLogo.png" alt="TAMSI Logo" />
+            <span>
+              <strong style={fontMontserrat}>TRAINING &amp; ASSESSMENT</strong>
+              <span style={fontPontano}>RFID attendance station</span>
+            </span>
+          </button>
+          <button type="button" className="ltc-rfid-header-action" onClick={() => navigate("/professor-attendance")} style={fontPoppins}>Back to Attendance</button>
+        </div>
+      </header>
+
       <main>
         <section className="ltc-hero">
           <img
@@ -894,6 +945,11 @@ export default function TraineeRfidScan() {
           </div>
         </section>
       </main>
+
+      <footer className="ltc-rfid-footer">
+        <span>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span>Developed by CRMS Tech Alliance</span>
+      </footer>
     </div>
   );
 }

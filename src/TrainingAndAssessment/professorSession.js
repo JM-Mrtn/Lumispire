@@ -80,8 +80,12 @@ export async function fetchJson(url, options = {}) {
     options?.headers?.authorization ||
     "";
   const cacheKey = `${method}::${url}::${authHeader}`;
+  // Requests that carry an AbortSignal must never share a pending GET promise.
+  // React StrictMode can mount, abort, and immediately remount a session guard;
+  // reusing the first aborted promise would cancel the second session check too.
+  const cacheableGet = method === "GET" && !options?.signal;
 
-  if (method === "GET") {
+  if (cacheableGet) {
     const pending = pendingGetMap.get(cacheKey);
     if (pending) return pending;
 
@@ -105,7 +109,7 @@ export async function fetchJson(url, options = {}) {
     return data;
   })();
 
-  if (method !== "GET") {
+  if (!cacheableGet) {
     return run;
   }
 

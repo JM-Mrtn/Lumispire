@@ -104,7 +104,7 @@ const TraineeForgotPassword = () => {
   const [status, setStatus] = useState({ type: "", message: "" });
   const [cooldown, setCooldown] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const [heroIndex, setHeroIndex] = useState(0);
+  const [heroIndex] = useState(0);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -114,13 +114,6 @@ const TraineeForgotPassword = () => {
     return () => clearInterval(t);
   }, [cooldown]);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000);
-
-    return () => window.clearInterval(timer);
-  }, []);
 
   const validateForm = () => {
     if (!email.trim()) return "Trainee email is required.";
@@ -1156,6 +1149,79 @@ const TraineeForgotPassword = () => {
           display: grid;
           gap: 12px;
         }
+
+
+  /* ===== Unified Training account shell ===== */
+  .ltc-change-password-page,
+  .ltc-forgot-page {
+    --portal-gutter: clamp(16px,3vw,40px);
+    background:
+      radial-gradient(circle at 10% 0%, rgba(215,168,77,.11), transparent 27%),
+      radial-gradient(circle at 92% 14%, rgba(35,95,62,.10), transparent 30%),
+      linear-gradient(180deg,#f8fbf9 0%,#ffffff 45%,#f4f9f6 100%);
+  }
+  .ltc-change-password-page .ltc-container,
+  .ltc-forgot-page .ltc-container { width:min(1280px,calc(100% - (var(--portal-gutter) * 2))); max-width:1280px; margin-left:auto; margin-right:auto; }
+  .ltc-change-password-page .ltc-header .ltc-container,
+  .ltc-forgot-page .ltc-header .ltc-container { width:100%; max-width:none; margin:0; padding-left:var(--portal-gutter); padding-right:var(--portal-gutter); }
+  .ltc-change-password-page .ltc-header,
+  .ltc-forgot-page .ltc-header { background:#082719; }
+  .ltc-change-password-page .ltc-logo-icon,
+  .ltc-forgot-page .ltc-logo-icon { object-fit:contain; }
+  .ltc-change-password-page .ltc-hero,
+  .ltc-forgot-page .ltc-hero { min-height:300px; display:flex; align-items:center; padding:72px 0 68px; }
+  .ltc-change-password-page .ltc-hero-content,
+  .ltc-forgot-page .ltc-hero-content { max-width:920px; margin-left:auto; margin-right:auto; text-align:center; }
+  .ltc-change-password-page .ltc-hero-title,
+  .ltc-forgot-page .ltc-hero-title { font-size:clamp(40px,5.4vw,68px); line-height:1.02; letter-spacing:-.055em; }
+  .ltc-change-password-page .ltc-hero-text,
+  .ltc-forgot-page .ltc-hero-text { max-width:760px; margin-left:auto; margin-right:auto; font-size:16px; }
+  .ltc-change-password-page .ltc-section,
+  .ltc-forgot-page .ltc-section { padding:60px 0 70px; }
+  .ltc-change-password-page .ltc-form-shell,
+  .ltc-forgot-page .ltc-form-shell { border-radius:28px; background:rgba(255,255,255,.95); border:1px solid rgba(14,51,33,.10); box-shadow:0 18px 48px rgba(8,39,25,.11); }
+  .ltc-change-password-page .ltc-footer,
+  .ltc-forgot-page .ltc-footer { width:100%; background:#082719; color:white; padding:30px 0 12px; text-align:left; }
+  .ltc-change-password-page .ltc-footer .ltc-container,
+  .ltc-forgot-page .ltc-footer .ltc-container { width:100%; max-width:none; margin:0; padding-left:var(--portal-gutter); padding-right:var(--portal-gutter); }
+  @media (max-width:900px) {
+    .ltc-change-password-page .ltc-desktop-nav,
+    .ltc-forgot-page .ltc-desktop-nav { display:none; }
+    .ltc-forgot-page .ltc-menu-button { display:grid; place-items:center; }
+    .ltc-change-password-page .ltc-hero,
+    .ltc-forgot-page .ltc-hero { min-height:250px; padding:58px 0 54px; }
+  }
+  @media (max-width:600px) {
+    .ltc-change-password-page,
+    .ltc-forgot-page { --portal-gutter:16px; }
+    .ltc-change-password-page .ltc-logo h1,
+    .ltc-forgot-page .ltc-logo h1 { font-size:14px; }
+    .ltc-change-password-page .ltc-hero-title,
+    .ltc-forgot-page .ltc-hero-title { font-size:clamp(34px,11vw,46px); }
+  }
+
+
+        /* ===== Unified Trainee hero animation ===== */
+        @keyframes ltcUnifiedHeroEnter {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ltc-forgot-page .ltc-hero-content {
+          animation: ltcUnifiedHeroEnter .72s var(--ease) both !important;
+        }
+
+        .ltc-forgot-page .ltc-hero-slide {
+          animation: none !important;
+          transition: none !important;
+          transform: none !important;
+        }
+
+        .ltc-forgot-page .ltc-hero::after {
+          animation: none !important;
+          transform: none !important;
+        }
+
 `}</style>
 
       <Header navigate={navigate} goToProfile={goToProfile} openMenu={() => setIsOpen(true)} />

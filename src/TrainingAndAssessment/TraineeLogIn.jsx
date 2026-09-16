@@ -709,6 +709,55 @@ const traineeResortStyles = `
       font-size: 28px;
     }
   }
+
+
+  /* ===== Unified trainee login shell ===== */
+  .ltc-trainee-login-page { --portal-gutter:clamp(16px,3vw,40px); }
+  .ltc-trainee-login-container { width:min(1280px,calc(100% - (var(--portal-gutter) * 2))); max-width:1280px; margin-left:auto; margin-right:auto; }
+  .ltc-trainee-login-header .ltc-trainee-login-container { width:100%; max-width:none; margin:0; padding-left:var(--portal-gutter); padding-right:var(--portal-gutter); }
+  .ltc-trainee-login-logo-icon { object-fit:contain; }
+  .ltc-trainee-login-logo h1 { font-size:18px; }
+  .ltc-trainee-login-hero { min-height:calc(100vh - 76px); padding:64px 0; }
+  .ltc-trainee-login-grid { gap:56px; }
+  .ltc-trainee-login-card { border-radius:28px; padding:34px; background:rgba(255,255,255,.95); border:1px solid rgba(255,255,255,.22); }
+  .ltc-trainee-login-footer { width:100%; background:#082719; color:#fff; padding:30px 0 12px; }
+  .ltc-trainee-login-footer-inner { width:100%; padding-left:var(--portal-gutter); padding-right:var(--portal-gutter); display:grid; grid-template-columns:1.35fr .8fr 1.15fr 1fr; gap:clamp(24px,4vw,64px); padding-bottom:24px; }
+  .ltc-trainee-login-footer-brand { display:flex; align-items:center; gap:14px; border:0; background:transparent; color:white; padding:0; text-align:left; cursor:pointer; }
+  .ltc-trainee-login-footer-brand img { width:100px; height:auto; object-fit:contain; }
+  .ltc-trainee-login-footer h3 { margin:0 0 10px; color:#f4d484; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.14em; }
+  .ltc-trainee-login-footer p,.ltc-trainee-login-footer button,.ltc-trainee-login-footer a { color:rgba(255,255,255,.68); font-size:13px; line-height:1.55; }
+  .ltc-trainee-login-footer button { display:block; border:0; background:transparent; padding:0; margin:5px 0; cursor:pointer; text-align:left; }
+  .ltc-trainee-login-footer-copy { border-top:1px solid rgba(255,255,255,.1); padding:14px var(--portal-gutter) 0; display:flex; justify-content:space-between; gap:12px; color:rgba(255,255,255,.5); font-size:12px; }
+  @media(max-width:900px){
+    .ltc-trainee-login-grid{grid-template-columns:1fr; gap:34px;}
+    .ltc-trainee-login-hero-copy{text-align:center;}
+    .ltc-trainee-login-copy{margin-left:auto;margin-right:auto;}
+    .ltc-trainee-login-points{margin-left:auto;margin-right:auto;}
+    .ltc-trainee-login-footer-inner{grid-template-columns:1fr 1fr;}
+  }
+  @media(max-width:600px){
+    .ltc-trainee-login-page{--portal-gutter:16px;}
+    .ltc-trainee-login-footer-inner{grid-template-columns:1fr;}
+    .ltc-trainee-login-footer-copy{flex-direction:column;}
+  }
+
+  /* ===== Unified Trainee hero animation ===== */
+  @keyframes ltcUnifiedHeroEnter {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ltc-trainee-login-page .ltc-trainee-login-grid {
+    animation: ltcUnifiedHeroEnter .72s var(--ease) both !important;
+  }
+
+  .ltc-trainee-login-page .ltc-trainee-login-hero-bg,
+  .ltc-trainee-login-page .ltc-trainee-login-hero::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
 `;
 
 export default function TrainingLogIn() {
@@ -865,7 +914,7 @@ export default function TrainingLogIn() {
               aria-label="TAMSI Home"
             >
               <img
-                src="/TamsiLogo.webp"
+                src="/TamsiLogo.png"
                 alt="TAMSI Logo"
                 width="42"
                 height="42"
@@ -971,7 +1020,7 @@ export default function TrainingLogIn() {
       <main>
         <section className="ltc-trainee-login-hero">
           <img
-            src="/TrainingAds.webp"
+            src="/TrainingBanner.png"
             alt=""
             aria-hidden="true"
             width="552"
@@ -1143,6 +1192,46 @@ export default function TrainingLogIn() {
           </div>
         </section>
       </main>
+
+      <LoginFooter navigate={navigate} />
     </div>
   );
 }
+
+function LoginFooter({ navigate }) {
+  return (
+    <footer className="ltc-trainee-login-footer">
+      <div className="ltc-trainee-login-footer-inner">
+        <button type="button" onClick={() => navigate("/training")} className="ltc-trainee-login-footer-brand">
+          <img src="/TrainingLumispireLogo.png" alt="Training Lumispire Logo" />
+          <span>
+            <strong style={{ display: "block", fontSize: 18, fontWeight: 900 }}>TRAINING &amp; ASSESSMENT</strong>
+            <span style={{ display: "block", marginTop: 6, color: "rgba(255,255,255,.68)", fontSize: 13 }}>Practical training, assessment, and learner support.</span>
+          </span>
+        </button>
+        <div>
+          <h3>Menu</h3>
+          <button type="button" onClick={() => navigate("/training")}>Home</button>
+          <button type="button" onClick={() => navigate("/training-course")}>Course</button>
+          <button type="button" onClick={() => navigate("/training-certificate-validation")}>Certificate Validation</button>
+        </div>
+        <div>
+          <h3>Contact Information</h3>
+          <p>lorengladius@ltcmultiservices.com</p>
+          <p>ltc.tamsi@gmail.com</p>
+          <p>+639516281271 / +639959808051</p>
+        </div>
+        <div>
+          <h3>Address</h3>
+          <p>2/F 5441 CURRIE STREET,</p>
+          <p>PALANAN, MAKATI CITY</p>
+        </div>
+      </div>
+      <div className="ltc-trainee-login-footer-copy">
+        <span>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+        <span>Developed by CRMS Tech Alliance</span>
+      </div>
+    </footer>
+  );
+}
+

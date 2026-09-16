@@ -649,10 +649,34 @@ export default function TraineeCertificate() {
   }
 
   return (
-    <div className="min-h-screen bg-[#eef1e7] p-4 text-[#395345] sm:p-6">
+    <div className="cert-page-shell">
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
+
+
+          .cert-page-shell { min-height:100vh; background:linear-gradient(180deg,#f8fbf9 0%,#eef5f0 100%); color:#101828; }
+          .cert-header { position:sticky; top:0; z-index:50; width:100%; background:#082719; border-bottom:1px solid rgba(255,255,255,.1); box-shadow:0 10px 30px rgba(7,31,20,.16); }
+          .cert-header-inner { width:100%; min-height:76px; padding:0 clamp(16px,3vw,40px); display:flex; align-items:center; justify-content:space-between; gap:20px; }
+          .cert-brand { display:flex; align-items:center; gap:13px; border:0; background:transparent; color:white; padding:0; text-align:left; cursor:pointer; }
+          .cert-brand img { width:42px; height:42px; border-radius:999px; background:white; object-fit:contain; box-shadow:0 0 0 5px rgba(255,255,255,.08); }
+          .cert-brand strong { display:block; font-size:18px; line-height:1; font-weight:900; text-transform:uppercase; letter-spacing:-.04em; }
+          .cert-brand span { display:block; margin-top:4px; color:rgba(255,255,255,.7); font-size:11px; }
+          .cert-nav { display:flex; align-items:center; gap:6px; }
+          .cert-nav button { min-height:42px; border:0; border-radius:999px; padding:0 13px; background:transparent; color:rgba(255,255,255,.8); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; cursor:pointer; }
+          .cert-nav button:hover { color:white; background:rgba(255,255,255,.12); }
+          .cert-nav .profile { color:#102418; background:linear-gradient(135deg,#f4d484,#d7a84d); }
+          .cert-main { padding:44px clamp(16px,3vw,40px) 64px; }
+          .cert-toolbar { border-radius:24px; border:1px solid rgba(14,51,33,.1); background:#fff; box-shadow:0 16px 38px rgba(8,39,25,.09); }
+          .cert-footer { width:100%; background:#082719; color:white; padding:26px clamp(16px,3vw,40px) 14px; }
+          .cert-footer-grid { display:grid; grid-template-columns:1.3fr .8fr 1.2fr 1fr; gap:24px clamp(24px,4vw,64px); padding-bottom:20px; }
+          .cert-footer h3 { margin:0 0 8px; color:#f4d484; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.14em; }
+          .cert-footer p,.cert-footer button { color:rgba(255,255,255,.68); font-size:13px; line-height:1.55; }
+          .cert-footer button { display:block; border:0; background:transparent; padding:0; margin:5px 0; cursor:pointer; text-align:left; }
+          .cert-footer-copy { border-top:1px solid rgba(255,255,255,.1); padding-top:12px; display:flex; justify-content:space-between; gap:12px; color:rgba(255,255,255,.5); font-size:12px; }
+          @media(max-width:900px){.cert-nav{display:none}.cert-footer-grid{grid-template-columns:1fr 1fr}}
+          @media(max-width:600px){.cert-brand strong{font-size:14px}.cert-brand span{display:none}.cert-main{padding-top:28px}.cert-footer-grid{grid-template-columns:1fr}.cert-footer-copy{flex-direction:column}}
 
           @media print {
             @page {
@@ -665,7 +689,7 @@ export default function TraineeCertificate() {
               background: white !important;
             }
 
-            .print-hide {
+            .print-hide, .cert-header, .cert-footer {
               display: none !important;
             }
 
@@ -683,8 +707,27 @@ export default function TraineeCertificate() {
         `}
       </style>
 
+      <header className="cert-header">
+        <div className="cert-header-inner">
+          <button type="button" className="cert-brand" onClick={() => navigate("/trainee-home")}>
+            <img src="/TamsiLogo.png" alt="TAMSI Logo" />
+            <span><strong>TRAINING &amp; ASSESSMENT</strong><span>Trainee portal</span></span>
+          </button>
+          <nav className="cert-nav" aria-label="Trainee navigation">
+            <button type="button" onClick={() => navigate("/trainee-home")}>Home</button>
+            <button type="button" onClick={() => navigate("/trainee-roadmap")}>Roadmap</button>
+            <button type="button" onClick={() => navigate("/trainee-attendance")}>Attendance</button>
+            <button type="button" onClick={() => navigate("/trainee-modules")}>Modules</button>
+            <button type="button" onClick={() => navigate("/trainee-assignment")}>Assignment</button>
+            <button type="button" onClick={() => navigate("/trainee-progress")}>Progress</button>
+            <button type="button" className="profile" onClick={() => navigate("/trainee-profile")}>Profile</button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="cert-main">
       <div className="print-wrap mx-auto w-full max-w-[1700px]">
-        <div className="print-hide mb-5 flex flex-col gap-3 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-[#dde3d6] sm:flex-row sm:items-center sm:justify-between">
+        <div className="cert-toolbar print-hide mb-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-extrabold text-[#25382d]">
               {certificateTitle}
@@ -730,6 +773,34 @@ export default function TraineeCertificate() {
 
         <CertificateTemplate certificate={certificate} captureRef={captureRef} />
       </div>
+      </main>
+
+      <footer className="cert-footer">
+        <div className="cert-footer-grid">
+          <div>
+            <h3>Training &amp; Assessment</h3>
+            <p>Practical training, assessment, and learner support.</p>
+          </div>
+          <div>
+            <h3>Menu</h3>
+            <button type="button" onClick={() => navigate("/training")}>Training Home</button>
+            <button type="button" onClick={() => navigate("/training-course")}>Course</button>
+            <button type="button" onClick={() => navigate("/training-certificate-validation")}>Certificate Validation</button>
+          </div>
+          <div>
+            <h3>Contact Information</h3>
+            <p>lorengladius@ltcmultiservices.com</p>
+            <p>ltc.tamsi@gmail.com</p>
+            <p>+639516281271 / +639959808051</p>
+          </div>
+          <div>
+            <h3>Address</h3>
+            <p>2/F 5441 CURRIE STREET,</p>
+            <p>PALANAN, MAKATI CITY</p>
+          </div>
+        </div>
+        <div className="cert-footer-copy"><span>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span><span>Developed by CRMS Tech Alliance</span></div>
+      </footer>
     </div>
   );
 }
