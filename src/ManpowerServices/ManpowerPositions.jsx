@@ -823,7 +823,7 @@ const MANPOWER_PUBLIC_THEME = `
   /* Floating LTC home button */
   .ltc-floating-home-button {
     right: 20px !important;
-    bottom: 22px !important;
+    bottom: 92px !important;
     width: 56px !important;
     height: 56px !important;
     border-radius: 999px !important;
@@ -834,7 +834,7 @@ const MANPOWER_PUBLIC_THEME = `
 
   .ltc-floating-home-button {
     position: fixed !important;
-    z-index: 10000 !important;
+    z-index: 9998 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1031,8 +1031,8 @@ const MANPOWER_PUBLIC_THEME = `
     }
 
     .ltc-floating-home-button {
-      right: 16px !important;
-      bottom: 16px !important;
+      right: 20px !important;
+      bottom: 88px !important;
       width: 52px !important;
       height: 52px !important;
     }

@@ -1281,9 +1281,22 @@ export default function ManpowerHrApplications() {
       : "Applicant Details";
 
   const modalWidthClass =
-    activeModal === "view" || activeModal === "requirement"
+    activeModal === "view"
+      ? "max-w-[1180px]"
+      : activeModal === "requirement"
       ? "max-w-6xl"
       : "max-w-2xl";
+
+  useEffect(() => {
+    if (!activeModal) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [activeModal]);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#edf3ee] font-sans text-[#071f14]">
@@ -1748,44 +1761,45 @@ export default function ManpowerHrApplications() {
         }
 
         @keyframes hrModalCardIn {
-          from { opacity: 0; transform: translateY(22px) scale(.975); }
+          from { opacity: 0; transform: translateY(18px) scale(.985); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .ltc-hr-modal-overlay {
-          animation: hrModalOverlayIn .22s ease-out both;
-          backdrop-filter: blur(8px);
+          animation: hrModalOverlayIn .2s ease-out both;
+          backdrop-filter: blur(10px);
         }
 
         .ltc-hr-action-modal {
           position: relative;
-          border: 1px solid rgba(255,255,255,.82);
-          box-shadow: 0 34px 90px rgba(8,39,25,.32);
-          animation: hrModalCardIn .34s cubic-bezier(.22,1,.36,1) both;
-          background:
-            radial-gradient(circle at top right, rgba(244,212,132,.16), transparent 30%),
-            linear-gradient(180deg,#ffffff 0%,#f8fbf9 100%);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.84);
+          background: #f5f9f6;
+          box-shadow: 0 36px 100px rgba(4,24,15,.38);
+          animation: hrModalCardIn .3s cubic-bezier(.22,1,.36,1) both;
         }
 
         .ltc-hr-action-modal::before {
           content: "";
           position: absolute;
           inset: 0 0 auto;
-          height: 7px;
-          background: linear-gradient(90deg,#235f3e,#2f754c,#d7a84d);
-          z-index: 5;
+          height: 6px;
+          background: linear-gradient(90deg,#235f3e,#2f754c 55%,#d7a84d);
+          z-index: 8;
         }
 
         .ltc-hr-modal-header {
-          position: sticky;
-          top: 0;
-          z-index: 4;
+          position: relative;
+          z-index: 7;
+          flex: 0 0 auto;
           background:
-            radial-gradient(circle at 88% 20%, rgba(244,212,132,.24), transparent 28%),
-            linear-gradient(135deg,#071f14,#174a30 58%,#315b42);
+            radial-gradient(circle at 90% 10%, rgba(244,212,132,.22), transparent 28%),
+            linear-gradient(135deg,#071f14 0%,#123d28 52%,#315b42 100%);
           color: white;
-          padding: 28px;
-          border: 0;
+          padding: 24px 26px 22px;
+          border-bottom: 1px solid rgba(255,255,255,.08);
         }
 
         .ltc-hr-modal-header p,
@@ -1793,93 +1807,190 @@ export default function ManpowerHrApplications() {
           color: inherit;
         }
 
-        .ltc-hr-modal-header .ltc-hr-modal-eyebrow {
-          color: #f4d484;
+        .ltc-hr-modal-eyebrow {
+          color: #f4d484 !important;
           text-shadow: 0 8px 24px rgba(0,0,0,.16);
         }
 
-        .ltc-hr-modal-header .ltc-hr-modal-subtitle {
-          color: rgba(255,255,255,.76);
-          max-width: 900px;
+        .ltc-hr-modal-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .ltc-hr-modal-meta span {
+          display: inline-flex;
+          align-items: center;
+          min-height: 28px;
+          max-width: 100%;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 999px;
+          background: rgba(255,255,255,.09);
+          padding: 5px 10px;
+          color: rgba(255,255,255,.82);
+          font-size: 11px;
+          font-weight: 800;
+          line-height: 1.2;
+          overflow-wrap: anywhere;
         }
 
         .ltc-hr-modal-close {
-          min-height: 44px;
+          flex: 0 0 auto;
+          min-height: 42px;
           border-radius: 999px;
-          background: rgba(255,255,255,.94);
+          background: rgba(255,255,255,.96);
           color: #071f14;
-          box-shadow: 0 16px 34px rgba(0,0,0,.16);
-          transition: transform .28s cubic-bezier(.22,1,.36,1), background .28s cubic-bezier(.22,1,.36,1), box-shadow .28s cubic-bezier(.22,1,.36,1);
+          box-shadow: 0 14px 30px rgba(0,0,0,.16);
+          transition: transform .24s cubic-bezier(.22,1,.36,1), background .24s cubic-bezier(.22,1,.36,1), box-shadow .24s cubic-bezier(.22,1,.36,1);
         }
 
         .ltc-hr-modal-close:hover {
           transform: translateY(-2px);
           background: #f4d484;
-          box-shadow: 0 20px 44px rgba(0,0,0,.20);
+          box-shadow: 0 18px 38px rgba(0,0,0,.20);
         }
 
-        .ltc-hr-action-modal > .grid,
-        .ltc-hr-action-modal > .space-y-4,
-        .ltc-hr-action-modal > .rounded-2xl,
-        .ltc-hr-action-modal > .overflow-hidden,
-        .ltc-hr-action-modal > .text-center {
-          margin: 24px;
+        .ltc-hr-modal-body {
+          min-height: 0;
+          flex: 1 1 auto;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          padding: 22px;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(215,168,77,.06), transparent 24%),
+            linear-gradient(180deg,#f8fbf9 0%,#f3f7f4 100%);
+          scrollbar-width: thin;
+          scrollbar-color: #8aa192 transparent;
         }
 
-        .ltc-hr-action-modal section.rounded-2xl,
-        .ltc-hr-action-modal div.rounded-2xl {
-          border: 1px solid rgba(215,226,218,.85);
-          box-shadow: 0 16px 40px rgba(8,39,25,.08);
-          transition: transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s cubic-bezier(.22,1,.36,1), border-color .28s cubic-bezier(.22,1,.36,1);
+        .ltc-hr-modal-body::-webkit-scrollbar { width: 9px; }
+        .ltc-hr-modal-body::-webkit-scrollbar-track { background: transparent; }
+        .ltc-hr-modal-body::-webkit-scrollbar-thumb {
+          border: 2px solid transparent;
+          border-radius: 999px;
+          background: #8aa192;
+          background-clip: padding-box;
         }
 
-        .ltc-hr-action-modal section.rounded-2xl:hover,
-        .ltc-hr-action-modal div.rounded-2xl:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 24px 58px rgba(8,39,25,.12);
-          border-color: rgba(215,168,77,.48);
+        .ltc-applicant-view { align-items: start; }
+        .ltc-applicant-column { min-width: 0; }
+
+        .ltc-applicant-panel {
+          position: relative;
+          overflow: hidden;
+          border: 1px solid #dce7df;
+          border-radius: 22px;
+          background: rgba(255,255,255,.96);
+          box-shadow: 0 10px 28px rgba(8,39,25,.07);
         }
 
-        .ltc-hr-action-modal h3,
-        .ltc-hr-action-modal .font-black {
-          letter-spacing: -0.02em;
+        .ltc-applicant-panel::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto;
+          height: 3px;
+          background: linear-gradient(90deg,#235f3e,#d7a84d);
+          opacity: .92;
+        }
+
+        .ltc-applicant-panel h3 {
+          color: #071f14 !important;
+          font-size: 15px;
+          letter-spacing: -.025em;
+        }
+
+        .ltc-applicant-details-grid {
+          display: grid;
+          gap: 10px;
+        }
+
+        .ltc-applicant-details-grid > p {
+          min-width: 0;
+          border: 1px solid #e3ebe5;
+          border-radius: 15px;
+          background: #f8fbf9;
+          padding: 11px 13px;
+          color: #46594c;
+          line-height: 1.45;
+          overflow-wrap: anywhere;
+        }
+
+        .ltc-applicant-details-grid > p > span:first-child {
+          display: block;
+          margin-bottom: 4px;
+          color: #748579 !important;
+          font-size: 9px;
+          font-weight: 900 !important;
+          letter-spacing: .09em;
+          text-transform: uppercase;
+        }
+
+        .ltc-applicant-status-list {
+          display: grid;
+          gap: 9px;
+        }
+
+        .ltc-applicant-status-list > p {
+          min-width: 0;
+          border-bottom: 1px solid #e6eee8;
+          padding-bottom: 9px;
+          color: #56695b;
+          line-height: 1.45;
+          overflow-wrap: anywhere;
+        }
+
+        .ltc-applicant-status-list > p:last-child {
+          border-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        .ltc-applicant-actions-grid button {
+          min-height: 46px !important;
+          border: 1px solid transparent;
+          box-shadow: none;
+        }
+
+        .ltc-applicant-preview-frame {
+          border: 1px solid #dce7df;
+          border-radius: 16px;
+          background: #f8fbf9;
+          padding: 10px;
         }
 
         .ltc-hr-action-modal input,
         .ltc-hr-action-modal textarea,
         .ltc-hr-action-modal select {
-          border-radius: 18px !important;
+          border-radius: 16px !important;
           border-color: #d7e2da !important;
-          background: rgba(255,255,255,.94) !important;
-          min-height: 52px;
-          box-shadow: 0 10px 24px rgba(8,39,25,.05);
-          transition: transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s cubic-bezier(.22,1,.36,1), border-color .24s cubic-bezier(.22,1,.36,1);
+          background: rgba(255,255,255,.98) !important;
+          min-height: 50px;
+          box-shadow: 0 8px 20px rgba(8,39,25,.045);
+          transition: box-shadow .22s cubic-bezier(.22,1,.36,1), border-color .22s cubic-bezier(.22,1,.36,1);
         }
 
         .ltc-hr-action-modal textarea {
-          min-height: 128px;
+          min-height: 126px;
           resize: vertical;
         }
 
         .ltc-hr-action-modal input:focus,
         .ltc-hr-action-modal textarea:focus,
         .ltc-hr-action-modal select:focus {
-          transform: translateY(-1px);
           border-color: #d7a84d !important;
-          box-shadow: 0 18px 38px rgba(8,39,25,.11) !important;
+          box-shadow: 0 0 0 4px rgba(215,168,77,.13), 0 14px 30px rgba(8,39,25,.07) !important;
           outline: none !important;
         }
 
         .ltc-hr-action-modal button:not(.ltc-hr-modal-close) {
           border-radius: 999px !important;
-          min-height: 46px;
-          transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s cubic-bezier(.22,1,.36,1), filter .25s cubic-bezier(.22,1,.36,1);
+          transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s cubic-bezier(.22,1,.36,1), filter .22s cubic-bezier(.22,1,.36,1);
         }
 
         .ltc-hr-action-modal button:not(.ltc-hr-modal-close):hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 18px 38px rgba(8,39,25,.16);
-          filter: saturate(1.05);
+          transform: translateY(-1px);
+          box-shadow: 0 12px 26px rgba(8,39,25,.12);
+          filter: saturate(1.03);
         }
 
         .ltc-hr-action-modal button:disabled {
@@ -1889,7 +2000,7 @@ export default function ManpowerHrApplications() {
 
         .ltc-hr-action-modal .bg-[#f8faf6],
         .ltc-hr-action-modal .bg-[#f8fbf9] {
-          background: linear-gradient(135deg,#fbfdfb,#f3f8f4) !important;
+          background: #ffffff !important;
         }
 
         .ltc-hr-action-modal .bg-[#eef4ff] {
@@ -1902,13 +2013,16 @@ export default function ManpowerHrApplications() {
           border-color: rgba(157,47,47,.18) !important;
         }
 
+        @media (max-width: 1279px) {
+          .ltc-hr-modal-body { padding: 18px; }
+        }
+
         @media (max-width: 640px) {
-          .ltc-hr-modal-header { padding: 24px 18px; }
-          .ltc-hr-action-modal > .grid,
-          .ltc-hr-action-modal > .space-y-4,
-          .ltc-hr-action-modal > .rounded-2xl,
-          .ltc-hr-action-modal > .overflow-hidden,
-          .ltc-hr-action-modal > .text-center { margin: 18px; }
+          .ltc-hr-modal-header { padding: 20px 18px 18px; }
+          .ltc-hr-modal-body { padding: 14px; }
+          .ltc-hr-modal-meta { gap: 6px; }
+          .ltc-hr-modal-meta span { font-size: 10px; }
+          .ltc-applicant-panel { border-radius: 18px; }
         }
       `}</style>
 
@@ -1927,9 +2041,9 @@ export default function ManpowerHrApplications() {
       ) : null}
 
       {activeModal && (
-        <div className="ltc-hr-modal-overlay fixed inset-0 z-40 flex items-center justify-center bg-[#071f14]/70 p-4">
+        <div className="ltc-hr-modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-[#071f14]/72 p-3 sm:p-5 lg:p-8">
           <div
-            className={`ltc-hr-action-modal max-h-[92vh] w-full ${modalWidthClass} overflow-y-auto rounded-[32px] bg-white text-[#24352c] shadow-xl`}
+            className={`ltc-hr-action-modal max-h-[90vh] w-full ${modalWidthClass} rounded-[30px] text-[#24352c]`}
           >
             <div className="ltc-hr-modal-header flex items-start justify-between gap-4">
               <div>
@@ -1940,9 +2054,11 @@ export default function ManpowerHrApplications() {
                   {modalTitle}
                 </h2>
                 {selectedApp && (
-                  <p className="ltc-hr-modal-subtitle mt-2 text-sm font-semibold leading-6">
-                    {getApplicantName(selectedApp)} • {selectedApp.vacancy || "Job"} • {selectedApp.email || "Email"}
-                  </p>
+                  <div className="ltc-hr-modal-meta">
+                    <span>{getApplicantName(selectedApp)}</span>
+                    <span>{selectedApp.vacancy || "Job"}</span>
+                    <span>{selectedApp.email || "Email"}</span>
+                  </div>
                 )}
               </div>
 
@@ -1955,17 +2071,18 @@ export default function ManpowerHrApplications() {
               </button>
             </div>
 
+            <div className="ltc-hr-modal-body">
             {loadingApplication || !selectedApp ? (
               <div className="rounded-2xl border border-[#d7decf] bg-[#f8faf6] px-4 py-8 text-center text-sm font-bold text-[#5f6f61]">
                 Loading application details...
               </div>
             ) : activeModal === "view" ? (
-              <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-                <div className="space-y-6">
-                  <section className="rounded-2xl bg-[#f8faf6] p-4">
+              <div className="ltc-applicant-view grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(330px,0.7fr)]">
+                <div className="ltc-applicant-column space-y-5">
+                  <section className="ltc-applicant-panel p-5 sm:p-6">
                     <h3 className="font-black text-[#24352c]">Applicant Details</h3>
 
-                    <div className="mt-4 grid gap-3 text-sm text-[#56695b] md:grid-cols-2">
+                    <div className="ltc-applicant-details-grid mt-4 text-sm md:grid-cols-2">
                       <p>
                         <span className="font-black text-[#24352c]">Full Name:</span>{" "}
                         {selectedApp.firstName} {selectedApp.middleName || ""} {selectedApp.lastName}
@@ -2005,7 +2122,7 @@ export default function ManpowerHrApplications() {
                     </div>
                   </section>
 
-                  <section className="rounded-2xl bg-[#f8faf6] p-4">
+                  <section className="ltc-applicant-panel p-5 sm:p-6">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-black text-[#24352c]">AI Resume Screening</h3>
                       <span
@@ -2048,7 +2165,7 @@ export default function ManpowerHrApplications() {
                     </div>
                   </section>
 
-                  <section className="rounded-2xl bg-[#f8faf6] p-4">
+                  <section className="ltc-applicant-panel p-5 sm:p-6">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-black text-[#24352c]">AI ID Verifier Result</h3>
                       <span
@@ -2092,7 +2209,7 @@ export default function ManpowerHrApplications() {
                     </div>
                   </section>
 
-                  <section className="rounded-2xl bg-[#f8faf6] p-4">
+                  <section className="ltc-applicant-panel p-5 sm:p-6">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-black text-[#24352c]">Job Assessment Result</h3>
                       <span
@@ -2130,10 +2247,10 @@ export default function ManpowerHrApplications() {
                   </section>
                 </div>
 
-                <div className="space-y-6">
-                  <section className="rounded-2xl bg-[#f8faf6] p-4">
+                <div className="ltc-applicant-column space-y-5">
+                  <section className="ltc-applicant-panel p-5 sm:p-6">
                     <h3 className="font-black text-[#24352c]">Application Status</h3>
-                    <div className="mt-4 space-y-3 text-sm text-[#56695b]">
+                    <div className="ltc-applicant-status-list mt-4 text-sm">
                       <p>
                         <span className="font-black text-[#24352c]">Status:</span>{" "}
                         <span
@@ -2167,12 +2284,12 @@ export default function ManpowerHrApplications() {
                     </div>
                   </section>
 
-                  <section className="rounded-2xl bg-[#f8faf6] p-4">
+                  <section className="ltc-applicant-panel p-5 sm:p-6">
                     <h3 className="font-black text-[#24352c]">Separate Actions</h3>
                     <p className="mt-2 text-sm font-semibold text-[#5f6f61]">
                       Choose an action below. Each workflow opens in a separate designed modal for a cleaner HR review process.
                     </p>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="ltc-applicant-actions-grid mt-4 grid gap-3 sm:grid-cols-2">
                       <button
                         type="button"
                         onClick={() => loadApplicationDetails(selectedApp._id, "ai")}
@@ -2204,7 +2321,7 @@ export default function ManpowerHrApplications() {
                     </div>
                   </section>
 
-                  <section className="rounded-2xl bg-[#f8faf6] p-4">
+                  <section className="ltc-applicant-panel p-5 sm:p-6">
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="font-black text-[#24352c]">Uploaded Valid ID Preview</h3>
                       {idPreviewUrl && (
@@ -2224,7 +2341,7 @@ export default function ManpowerHrApplications() {
                       </p>
                     )}
 
-                    <div className="mt-4 rounded-xl border border-[#d9e3d5] bg-white p-4">
+                    <div className="ltc-applicant-preview-frame mt-4">
                       {idPreviewLoading ? (
                         <p className="text-sm text-[#6b7a6d]">Loading valid ID preview...</p>
                       ) : idPreviewError ? (
@@ -2233,7 +2350,7 @@ export default function ManpowerHrApplications() {
                         <img
                           src={idPreviewUrl}
                           alt="Uploaded Valid ID"
-                          className="max-h-[360px] w-full rounded-xl bg-[#f8faf6] object-contain"
+                          className="max-h-[300px] w-full rounded-xl bg-white object-contain"
                         />
                       ) : validIdRow ? (
                         <p className="text-sm text-[#6b7a6d]">Preview is not available for this file.</p>
@@ -2243,7 +2360,7 @@ export default function ManpowerHrApplications() {
                     </div>
                   </section>
 
-                  <section className="rounded-2xl bg-[#f8faf6] p-4">
+                  <section className="ltc-applicant-panel p-5 sm:p-6">
                     <h3 className="font-black text-[#24352c]">Uploaded Requirements</h3>
                     {requirementRows.length ? (
                       <div className="mt-4 overflow-hidden rounded-xl border border-[#d9e3d5] bg-white">
@@ -2685,6 +2802,7 @@ export default function ManpowerHrApplications() {
                 </div>
               </div>
             ) : null}
+            </div>
           </div>
         </div>
       )}

@@ -2418,6 +2418,238 @@ function PayrollModal({
   );
 }
 
+
+const homeReferenceFooterStyles = `
+  /* Exact visual reference: ManpowerEmployeeHome.jsx footer */
+  .emp-home-footer {
+    width: 100%;
+    margin: 0;
+    padding: 30px 0 12px;
+    background: #082719;
+    color: #fff;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .emp-home-footer * { box-sizing: border-box; }
+
+  .emp-home-footer-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .emp-home-footer-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.2fr .8fr 1.2fr 1fr .8fr;
+    gap: 22px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+  }
+
+  .emp-home-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .emp-home-footer-brand img {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: #fff;
+  }
+
+  .emp-home-footer h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 20px;
+    line-height: 1.2;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .emp-home-footer h5 {
+    margin: 0 0 10px;
+    color: #f4d484;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 900;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .emp-home-footer p,
+  .emp-home-footer-link {
+    display: block;
+    margin: 5px 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: rgba(255,255,255,.68);
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: left;
+    text-decoration: none;
+  }
+
+  button.emp-home-footer-link {
+    width: auto;
+    cursor: pointer;
+  }
+
+  .emp-home-footer-link:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+
+  .emp-home-footer-copyright {
+    width: 100%;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 1180px) {
+    .emp-home-footer-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .emp-home-footer {
+      padding: 28px 0 12px;
+    }
+
+    .emp-home-footer-container {
+      padding-left: 22px;
+      padding-right: 22px;
+    }
+
+    .emp-home-footer-grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+      padding-bottom: 22px;
+    }
+
+    .emp-home-footer-copyright {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .emp-home-footer-container {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+  }
+`;
+
+function HomeReferenceFooter({ onNavigate }) {
+  const footerHeadingFont = { fontFamily: "Arial, Helvetica, sans-serif" };
+  const footerBodyFont = { fontFamily: "Arial, Helvetica, sans-serif" };
+
+  return (
+    <>
+      <style>{homeReferenceFooterStyles}</style>
+      <footer className="emp-home-footer">
+        <div className="emp-home-footer-container emp-home-footer-grid">
+          <div>
+            <button
+              type="button"
+              onClick={() => onNavigate("/manpower-employee-home")}
+              className="emp-home-footer-brand"
+            >
+              <img
+                src={LOGO_IMAGE}
+                width="128"
+                height="128"
+                decoding="async"
+                alt="Manpower Logo"
+                onError={(event) => {
+                  event.currentTarget.src =
+                    "https://placehold.co/80x80/ffffff/4d6f55?text=M";
+                }}
+              />
+              <h4 style={footerHeadingFont}>LTC Manpower</h4>
+            </button>
+          </div>
+
+          <div>
+            <h5 style={footerHeadingFont}>Menu</h5>
+            <div>
+              <button type="button" onClick={() => onNavigate("/manpower-employee-home")} className="emp-home-footer-link" style={footerBodyFont}>Home</button>
+              <button type="button" onClick={() => onNavigate("/manpower-employee-payroll")} className="emp-home-footer-link" style={footerBodyFont}>Payroll</button>
+              <button type="button" onClick={() => onNavigate("/manpower-employee-leave")} className="emp-home-footer-link" style={footerBodyFont}>Leave</button>
+              <button type="button" onClick={() => onNavigate("/manpower-employee-profile")} className="emp-home-footer-link" style={footerBodyFont}>Profile</button>
+            </div>
+          </div>
+
+          <div>
+            <h5 style={footerHeadingFont}>Contact Information</h5>
+            <div>
+              <p style={footerBodyFont}>lorengladius@ltcmultiservices.com</p>
+              <p style={footerBodyFont}>ltc.tamsi@gmail.com</p>
+              <p style={footerBodyFont}>+639516281271 / +639959808051</p>
+            </div>
+          </div>
+
+          <div>
+            <h5 style={footerHeadingFont}>Address</h5>
+            <div>
+              <p style={footerBodyFont}>2/F 5441 Currie Street,</p>
+              <p style={footerBodyFont}>Palanan, Makati City</p>
+            </div>
+          </div>
+
+          <div>
+            <h5 style={footerHeadingFont}>Follow Us</h5>
+            <div>
+              <a
+                href="https://www.facebook.com/profile.php?id=61571746334920"
+                target="_blank"
+                rel="noreferrer"
+                className="emp-home-footer-link"
+                style={footerBodyFont}
+              >
+                Facebook Page
+              </a>
+              <a
+                href="mailto:lorengladius@ltcmultiservices.com"
+                className="emp-home-footer-link"
+                style={footerBodyFont}
+              >
+                Email LTC Manpower
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="emp-home-footer-container emp-home-footer-copyright">
+          <span style={footerBodyFont}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
+          <span style={footerBodyFont}>Developed by CRMS Tech Alliance</span>
+        </div>
+      </footer>
+    </>
+  );
+}
+
 export default function ManpowerEmployeePayroll() {
   const navigate = useNavigate();
 
@@ -2875,55 +3107,7 @@ export default function ManpowerEmployeePayroll() {
           </div>
         </section>
       </main>
-
-      <footer className="ltc-footer">
-        <div className="ltc-container ltc-footer-grid">
-          <div>
-            <Link to={EMPLOYEE_HOME_ROUTE} className="ltc-footer-brand">
-              <img
-                src={LOGO_IMAGE}
-                width="128"
-                height="128"
-                decoding="async"
-                alt="Manpower Logo"
-                onError={(event) => {
-                  event.currentTarget.src =
-                    "https://placehold.co/80x80/ffffff/4d6f55?text=M";
-                }}
-              />
-              <h4 style={fontMontserrat}>LTC Manpower</h4>
-            </Link>
-          </div>
-
-          <FooterColumn title="Menu">
-            <Link to={EMPLOYEE_HOME_ROUTE} style={fontPontano}>Home</Link>
-            <Link to={EMPLOYEE_PAYROLL_ROUTE} style={fontPontano}>Payroll</Link>
-            <Link to={EMPLOYEE_LEAVE_ROUTE} style={fontPontano}>Leave</Link>
-            <Link to={EMPLOYEE_PROFILE_ROUTE} style={fontPontano}>Profile</Link>
-          </FooterColumn>
-
-          <FooterColumn title="Contact Information">
-            <p style={fontPontano}>ltc.tamsi@gmail.com</p>
-            <p style={fontPontano}>lorengladius@ltcmultiservices.com</p>
-            <p style={fontPontano}>+639516281271 / +639959808051</p>
-          </FooterColumn>
-
-          <FooterColumn title="Address">
-            <p style={fontPontano}>2/F 5441 Currie Street,</p>
-            <p style={fontPontano}>Palanan, Makati City</p>
-          </FooterColumn>
-
-          <FooterColumn title="Follow Us">
-            <a href="https://www.facebook.com/profile.php?id=61571746334920" target="_blank" rel="noreferrer" style={fontPontano}>Facebook Page</a>
-            <a href="mailto:lorengladius@ltcmultiservices.com" style={fontPontano}>Email LTC Manpower</a>
-          </FooterColumn>
-        </div>
-
-        <div className="ltc-container ltc-copyright">
-          <span style={fontPontano}>© 2026 LTC GROUP OF COMPANIES. All rights reserved.</span>
-          <span style={fontPontano}>Developed by CRMS Tech Alliance</span>
-        </div>
-      </footer>
+      <HomeReferenceFooter onNavigate={(path) => navigate(path)} />
 
       {selectedRow ? (
         <PayrollModal

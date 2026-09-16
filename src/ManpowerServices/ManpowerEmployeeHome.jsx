@@ -1273,6 +1273,31 @@ const pageStyles = `
     .ltc-logo p { display: none !important; }
   }
 
+  /* ===== HOME PAGE SPACING FIX ===== */
+  .ltc-section {
+    min-height: 0 !important;
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+  }
+
+  .ltc-home-shell {
+    margin-bottom: 0 !important;
+  }
+
+  @media (max-width: 900px) {
+    .ltc-section {
+      padding-top: 42px !important;
+      padding-bottom: 42px !important;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .ltc-section {
+      padding-top: 34px !important;
+      padding-bottom: 34px !important;
+    }
+  }
+
 `;
 
 function Header({ goTo, onOpenMenu }) {

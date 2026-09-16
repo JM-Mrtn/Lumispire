@@ -824,7 +824,7 @@ const MANPOWER_PUBLIC_THEME = `
   /* Floating LTC home button */
   .ltc-floating-home-button {
     right: 20px !important;
-    bottom: 22px !important;
+    bottom: 92px !important;
     width: 56px !important;
     height: 56px !important;
     border-radius: 999px !important;
@@ -835,7 +835,7 @@ const MANPOWER_PUBLIC_THEME = `
 
   .ltc-floating-home-button {
     position: fixed !important;
-    z-index: 10000 !important;
+    z-index: 9998 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1032,8 +1032,8 @@ const MANPOWER_PUBLIC_THEME = `
     }
 
     .ltc-floating-home-button {
-      right: 16px !important;
-      bottom: 16px !important;
+      right: 20px !important;
+      bottom: 88px !important;
       width: 52px !important;
       height: 52px !important;
     }
@@ -1227,19 +1227,19 @@ const FALLBACK_HIGHLIGHTS = [
     _id: "fallback-1",
     title: "Reliable Staffing Support",
     subtitle: "Dependable workforce solutions that help businesses operate with confidence.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1200&q=82",
   },
   {
     _id: "fallback-2",
     title: "Skilled People, Better Results",
     subtitle: "Connecting companies with qualified workers who are ready to contribute.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=82",
   },
   {
     _id: "fallback-3",
     title: "Professional Workforce Assistance",
     subtitle: "Responsive manpower support built around the needs of every client.",
-    imageUrl: "",
+    imageUrl: "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=82",
   },
 ];
 
@@ -1364,22 +1364,35 @@ function ServiceCard({ title, description, to }) {
 
 function HighlightCard({ highlight, index }) {
   const imageSrc = resolveImageSource(highlight?.imageUrl);
+  const [activeImageSrc, setActiveImageSrc] = useState(imageSrc || HERO_IMAGE);
   const [imageFailed, setImageFailed] = useState(false);
-  const showImage = Boolean(imageSrc) && !imageFailed;
+
+  useEffect(() => {
+    setActiveImageSrc(imageSrc || HERO_IMAGE);
+    setImageFailed(false);
+  }, [imageSrc]);
+
+  const showImage = Boolean(activeImageSrc) && !imageFailed;
 
   return (
     <article className="ltc-highlight-card">
       <div className={`ltc-highlight-media ${showImage ? "" : "is-css-only"}`}>
         {showImage ? (
           <img
-            src={imageSrc}
+            src={activeImageSrc}
             alt={highlight?.title || `Manpower highlight ${index + 1}`}
             width="480"
             height="320"
             loading="lazy"
             decoding="async"
             fetchPriority="low"
-            onError={() => setImageFailed(true)}
+            onError={() => {
+              if (activeImageSrc !== HERO_IMAGE) {
+                setActiveImageSrc(HERO_IMAGE);
+                return;
+              }
+              setImageFailed(true);
+            }}
           />
         ) : (
           <div className="ltc-highlight-empty" aria-hidden="true">
