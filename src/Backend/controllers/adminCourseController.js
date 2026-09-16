@@ -127,7 +127,6 @@ async function createProfessorForCourse(courseName, override = {}) {
     mustChangePassword: true,
     courseAssignments: [courseName],
     accountSource: "manual",
-    envAccountKey: "",
   });
 
   return { professor, tempPassword };

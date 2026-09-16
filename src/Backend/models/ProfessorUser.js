@@ -59,9 +59,8 @@ const professorUserSchema = new mongoose.Schema(
     },
     envAccountKey: {
       type: String,
-      default: "",
+      default: undefined,
       trim: true,
-      index: true,
     },
   },
   { timestamps: true }

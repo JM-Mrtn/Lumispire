@@ -120,7 +120,6 @@ export async function createAdminProfessor(req, res) {
       mustChangePassword: true,
       courseAssignments: validCourseAssignments,
       accountSource: "manual",
-      envAccountKey: "",
     });
 
     return res.status(201).json({
@@ -186,7 +185,7 @@ export async function updateAdminProfessor(req, res) {
     professor.courseAssignments = validCourseAssignments;
     professor.active = req.body?.active === undefined ? professor.active !== false : Boolean(req.body.active);
     professor.accountSource = "manual";
-    professor.envAccountKey = "";
+    professor.envAccountKey = undefined;
 
     await professor.save();
 
